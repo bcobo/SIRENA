@@ -1927,6 +1927,8 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	{
 		foundPulses->pulses_detected[i].pulse_duration = gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i);
 
+		foundPulses->pulses_detected[i].avg_4samplesDerivative = gsl_vector_get(samp1DERgsl,i);
+
 		// 'grade1' will be known after running 'runEnergy' (but initialize for library creation!)
 		foundPulses->pulses_detected[i].grade1 = 0;
 		if (i!= 0)
@@ -6738,6 +6740,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 		cout<<"grade2_1: "<<(*pulsesInRecord)->pulses_detected[i].grade2_1<<endl;
 		cout<<"pulseGrade: "<<pulseGrade<<endl;
 		cout<<"resize_mf: "<<resize_mf<<endl;*/
+                //cout<<"resize_mf0: "<<resize_mf<<endl;
 
 		// Pulse: Load the proper piece of the record in 'pulse'
 		tstartSamplesRecord = floor((*pulsesInRecord)->pulses_detected[i].Tstart/record->delta_t+0.5)-tstartRecordSamples;
@@ -6865,7 +6868,20 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 					// Choose the base-2 system value closest (lower than or equal) to the pulse length
 					//if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0) 
 					//if ((strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0) && (resize_mf != (*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration))
-					if ((strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0) 
+					/*if ((strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0) 
+					    && ((((*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration != -999) && (resize_mf != (*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration))
+					    && (resize_mf != (*reconstruct_init)->library_collection->pulse_templates[0].template_duration)))
+					{
+						resize_mf = pow(2,floor(log2(resize_mf)));
+						gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf);
+						temp = gsl_vector_subvector(pulse,0,resize_mf);
+						gsl_vector_memcpy(pulse_aux,&temp.vector);
+						gsl_vector_free(pulse);
+						pulse = gsl_vector_alloc(resize_mf);
+						gsl_vector_memcpy(pulse,pulse_aux);
+						gsl_vector_free(pulse_aux);
+					}*/
+                                        if(((strcmp((*reconstruct_init)->OFStrategy,"FREE") == 0) || (strcmp((*reconstruct_init)->OFStrategy,"BYGRADE") == 0)) 
 					    && ((((*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration != -999) && (resize_mf != (*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration))
 					    && (resize_mf != (*reconstruct_init)->library_collection->pulse_templates[0].template_duration)))
 					{
@@ -6878,6 +6894,20 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 						gsl_vector_memcpy(pulse,pulse_aux);
 						gsl_vector_free(pulse_aux);
 					}
+					/*else if ((strcmp((*reconstruct_init)->OFStrategy,"FIXED") == 0) 
+					    && ((((*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration != -999) && (resize_mf != (*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration))
+					    && (resize_mf != (*reconstruct_init)->library_collection->pulse_templates[0].template_duration)))
+					{
+						resize_mf = pow(2,floor(log2(resize_mf)));
+						gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf);
+						temp = gsl_vector_subvector(pulse,0,resize_mf);
+						gsl_vector_memcpy(pulse_aux,&temp.vector);
+						gsl_vector_free(pulse);
+						pulse = gsl_vector_alloc(resize_mf);
+						gsl_vector_memcpy(pulse,pulse_aux);
+						gsl_vector_free(pulse_aux);
+					}*/
+					//cout<<"resize_mf1: "<<resize_mf<<endl;
 				  
 					// It is not necessary to check the allocation because '(*reconstruct_init)->pulse_length'='PulseLength'(input parameter) has been checked previously
 					if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		filtergsl= gsl_vector_alloc(resize_mf);
@@ -8595,9 +8625,24 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 {
 	string message = "";
 	char valERROR[256];
-	
+        /*cout<<"reconstruct_init->grading->ngrades: "<<reconstruct_init->grading->ngrades<<endl;
+        cout<<"reconstruct_init->grading->value0: "<<gsl_vector_get(reconstruct_init->grading->value,0)<<endl;
+        cout<<"reconstruct_init->grading->value1: "<<gsl_vector_get(reconstruct_init->grading->value,1)<<endl;
+        cout<<"reconstruct_init->grading->value2: "<<gsl_vector_get(reconstruct_init->grading->value,2)<<endl;
+        cout<<"reconstruct_init->grading->value3: "<<gsl_vector_get(reconstruct_init->grading->value,3)<<endl;
+        cout<<"reconstruct_init->grading->gradeData0_0: "<<gsl_matrix_get(reconstruct_init->grading->gradeData,0,0)<<endl;
+        cout<<"reconstruct_init->grading->gradeData0_1: "<<gsl_matrix_get(reconstruct_init->grading->gradeData,0,1)<<endl;
+        cout<<"reconstruct_init->grading->gradeData1_0: "<<gsl_matrix_get(reconstruct_init->grading->gradeData,1,0)<<endl;
+        cout<<"reconstruct_init->grading->gradeData1_1: "<<gsl_matrix_get(reconstruct_init->grading->gradeData,1,1)<<endl;
+        cout<<"reconstruct_init->grading->gradeData2_0: "<<gsl_matrix_get(reconstruct_init->grading->gradeData,2,0)<<endl;
+        cout<<"reconstruct_init->grading->gradeData2_1: "<<gsl_matrix_get(reconstruct_init->grading->gradeData,2,1)<<endl;
+        cout<<"reconstruct_init->grading->gradeData3_0: "<<gsl_matrix_get(reconstruct_init->grading->gradeData,3,0)<<endl;
+        cout<<"reconstruct_init->grading->gradeData3_1: "<<gsl_matrix_get(reconstruct_init->grading->gradeData,3,1)<<endl;*/
+        	
 	// For the moment, in the 'xifu_detector_hex_baseline.xml' there is not info about all the pixels (SPA, LPA1, LPA2 or LPA3)
-	int L2 = gsl_matrix_get(reconstruct_init->grading->gradeData,2,1);	// 'gradelim_post' if 'value'(grading num) = 3
+	//int L2 = gsl_matrix_get(reconstruct_init->grading->gradeData,2,1);	// 'gradelim_post' if 'value'(grading num) = 3
+        int L2 = gsl_matrix_get(reconstruct_init->grading->gradeData,3,1);	// 'gradelim_post' if 'value'(grading num) = 4
+        int LIMITED = gsl_matrix_get(reconstruct_init->grading->gradeData,2,1);	// 'gradelim_post' if 'value'(grading num) = 3
 	int M1 = gsl_matrix_get(reconstruct_init->grading->gradeData,1,1);	// 'gradelim_post' if 'value'(grading num) = 2
 	int H1 = gsl_matrix_get(reconstruct_init->grading->gradeData,0,1);	// 'gradelim_post' if 'value'(grading num) = 1
 	gsl_vector *gradelim;
@@ -8608,16 +8653,19 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 	        message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
 		EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 	}
-	if (gradelim->size < 3)
+	//if (gradelim->size < 3)
+        if (gradelim->size < 4)
 	{
 		sprintf(valERROR,"%d",__LINE__+7);
 		string str(valERROR);
 		message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
 		EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 	}
-	gsl_vector_set(gradelim,0,gsl_matrix_get(reconstruct_init->grading->gradeData,0,0));	//'gradelim_pre' of High res
+	/*gsl_vector_set(gradelim,0,gsl_matrix_get(reconstruct_init->grading->gradeData,0,0));	//'gradelim_pre' of High res
 	gsl_vector_set(gradelim,1,gsl_matrix_get(reconstruct_init->grading->gradeData,1,0));	//'gradelim_pre' of Medium res
-	gsl_vector_set(gradelim,2,gsl_matrix_get(reconstruct_init->grading->gradeData,2,0));	//'gradelim_pre' of Low res
+	gsl_vector_set(gradelim,2,gsl_matrix_get(reconstruct_init->grading->gradeData,2,0));	//'gradelim_pre' of Low res*/
+        for (int i=0;i<reconstruct_init->grading->ngrades;i++)
+                gsl_vector_set(gradelim,i,gsl_matrix_get(reconstruct_init->grading->gradeData,i,0));	
 	int gradelim_pre = gsl_vector_max(gradelim);
 	gsl_vector_free(gradelim);
 	
@@ -8651,24 +8699,34 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 			*pulseGrade = 2;
 			if (OFlength_strategy == 0) 		*OFlength = grade1;
 			else if (OFlength_strategy == 1) 	*OFlength = pow(2,floor(log2(grade1)));
-			else if (OFlength_strategy == 2)	*OFlength = H1/4;	// 256 = 1024/4
+			//else if (OFlength_strategy == 2)	*OFlength = H1/4;	// 256 = 1024/4
+                        else if (OFlength_strategy == 2)	*OFlength = M1;	
 			else if (OFlength_strategy == 3) 	*OFlength = reconstruct_init->OFLength;
 		}
+		else if (grade1 >= LIMITED)	// Limited res
+                {
+                        *pulseGrade = 3;
+			if (OFlength_strategy == 0) 		*OFlength = grade1;
+			else if (OFlength_strategy == 1) 	*OFlength = pow(2,floor(log2(grade1)));
+			//else if (OFlength_strategy == 2)	*OFlength = H1/4;	// 256 = 1024/4
+                        else if (OFlength_strategy == 2)	*OFlength = LIMITED;
+			else if (OFlength_strategy == 3) 	*OFlength = reconstruct_init->OFLength;
+                }
 		else if (grade1 > L2)	// Low res
 		{
-			*pulseGrade = 3;
+			*pulseGrade = 4;
 			if (OFlength_strategy == 0)		*OFlength = grade1;
 			else if (OFlength_strategy == 1) 	*OFlength = pow(2,floor(log2(grade1)));
-			//else if (OFlength_strategy == 2) 	*OFlength = L2;
-			else if (OFlength_strategy == 2) 	*OFlength = grade1;
+			else if (OFlength_strategy == 2) 	*OFlength = L2;
+			//else if (OFlength_strategy == 2) 	*OFlength = grade1;
 			else if (OFlength_strategy == 3) 	*OFlength = reconstruct_init->OFLength;
 		}
 		else if (grade1 <= L2)	//Pileup
 		{
 			*pulseGrade = -2;
-			if (OFlength_strategy == 0)		*OFlength = grade1;
+                        if (OFlength_strategy == 0)		*OFlength = grade1;
 			else if (OFlength_strategy == 1) 	*OFlength = pow(2,floor(log2(grade1)));
-			else if (OFlength_strategy == 2) 	*OFlength = H1;
+			else if (OFlength_strategy == 2) 	*OFlength = grade1; //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
 			else if (OFlength_strategy == 3) 	*OFlength = reconstruct_init->OFLength;
 		}  
 	}

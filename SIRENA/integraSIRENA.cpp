@@ -167,12 +167,22 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	if (exists)
 	{	
 		if (mode == 1)		largeFilter = pulse_length;
-		reconstruct_init->library_collection = getLibraryCollection(library_file, mode, hduPRECALWN, hduPRCLOFWM, largeFilter, filter_domain, pulse_length, energy_method, ofnoise, filter_method, oflib, &ofinterp, filtEev, status);
+		reconstruct_init->library_collection = getLibraryCollection(library_file, mode, hduPRECALWN, hduPRCLOFWM, largeFilter, filter_domain, pulse_length, energy_method, ofnoise, filter_method, oflib, &ofinterp, filtEev, oflength, status);
 		if (*status)
 		{
 			EP_EXIT_ERROR((char*)"Error in getLibraryCollection",EPFAIL); 
 		}
-	
+                
+                double double_oflength = (double) oflength;
+                double log2_double_oflength = log2(double_oflength);
+                //cout<<"log2_double_oflength: "<<log2(double_oflength)<<endl;
+                //cout<<"(int) log2_double_oflength: "<<(int) log2(double_oflength)<<endl;
+                
+                if ((mode == 1) && (oflib == 1) && (strcmp(oflength_strategy,"FIXED") == 0) && ((log2_double_oflength - (int) log2_double_oflength) != 0))
+                {
+                        EP_EXIT_ERROR("If OFLib=yes, OFLength must be a power of 2",EPFAIL);
+                }
+                             
 		if ((mode == 1) && (pulse_length > reconstruct_init->library_collection->pulse_templates[0].template_duration))
 		{
 			if ((oflib == 1) 
@@ -417,6 +427,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	else
 	{
 		if (event_list->energies != NULL) 	delete [] event_list->energies;
+                if (event_list->avgs_4samplesDerivative != NULL) 	delete [] event_list->avgs_4samplesDerivative;
 		if (event_list->grades1 != NULL) 	delete [] event_list->grades1;
 		if (event_list->grades2 != NULL) 	delete [] event_list->grades2;
 		if (event_list->pulse_heights != NULL) 	delete [] event_list->pulse_heights;
@@ -479,6 +490,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	// Free & Fill TesEventList structure
 	event_list->index = pulsesInRecord->ndetpulses;
 	event_list->energies = new double[event_list->index];
+        event_list->avgs_4samplesDerivative = new double[event_list->index];
 	event_list->grades1  = new int[event_list->index];
 	event_list->grades2  = new int[event_list->index];
 	event_list->pulse_heights  = new double[event_list->index];
@@ -506,6 +518,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 				event_list->energies[ip] = 999.;
 			}
 
+			event_list->avgs_4samplesDerivative[ip] = pulsesInRecord->pulses_detected[ip].avg_4samplesDerivative;
 			event_list->grades1[ip]  = pulsesInRecord->pulses_detected[ip].grade1;
 			event_list->grades2[ip]  = pulsesInRecord->pulses_detected[ip].grade2;
 			event_list->pulse_heights[ip]  = pulsesInRecord->pulses_detected[ip].pulse_height;
@@ -537,8 +550,10 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 		{
 		        // Free & Fill TesEventList structure
 			event_list->index = (*pulsesAll)->ndetpulses;
-			event_list->event_indexes = new int[event_list->index];
+			//event_list->event_indexes = new int[event_list->index];
+                        event_list->event_indexes = new double[event_list->index];
 			event_list->energies = new double[event_list->index];
+                        event_list->avgs_4samplesDerivative = new double[event_list->index];
 			event_list->grades1  = new int[event_list->index];
 			event_list->grades2  = new int[event_list->index];
 			event_list->pulse_heights  = new double[event_list->index];
@@ -562,6 +577,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 					event_list->energies[ip] = 999.;
 				}
 
+				event_list->avgs_4samplesDerivative[ip]  = (*pulsesAll)->pulses_detected[ip].avg_4samplesDerivative;
 				event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
 				event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
 				event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
@@ -925,7 +941,7 @@ extern "C" void freeOptimalFilterSIRENA(OptimalFilterSIRENA* OFilterColl)
 * 	      It has been fixed in 'tesreconstruction' as 'DAB' (but it would be possible to work with 'MF')
 * - status: Input/output status
 ******************************************************************************/
-LibraryCollection* getLibraryCollection(const char* const filename, int mode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char* filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int* const status)
+LibraryCollection* getLibraryCollection(const char* const filename, int mode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char* filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int oflength, int* const status)
 {  	
         // Create LibraryCollection structure
 	LibraryCollection* library_collection = new LibraryCollection;
@@ -1080,6 +1096,12 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 	      EP_PRINT_ERROR("Cannot get number of cols in library file",*status);
 	      return(library_collection);
 	}
+	
+	if ((oflib == 1) && (oflength > template_duration) && (oflength != template_durationPLSMXLFF))
+        {
+                EP_PRINT_ERROR("It is not possible the OFLength provided because it does not match with the existing library",EPFAIL);
+		*status=EPFAIL; return(library_collection);
+        }
     
         if ((ncols == 7) || (ncols == 9) || (ncols == 10) || (ncols == 19))
 	{
@@ -3049,6 +3071,7 @@ PulseDetected::PulseDetected():
 		maxDER(0.0f),
 		samp1DER(0.0f),
 		energy(0.0f),
+		avg_4samplesDerivative(0.0f),
 		quality(0.0f)
 {
 
