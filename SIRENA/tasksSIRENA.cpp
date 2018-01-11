@@ -132,595 +132,629 @@ MAP OF SECTIONS IN THIS FILE:
 * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
 * - pulsesInRecord: Member of 'PulsesCollection' structure to store all the pulses found in the input record
 ******************************************************************************/
-void runDetect(TesRecord* record, int nRecord, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
+void runDetect(TesRecord* record, int nRecord, int lastRecord, 
+               PulsesCollection *pulsesAll, 
+               ReconstructInitSIRENA** reconstruct_init, 
+               PulsesCollection** pulsesInRecord)
 {       
-	int inputPulseLength = (*reconstruct_init)->pulse_length;
-	if ((*reconstruct_init)->mode == 0)	(*reconstruct_init)->pulse_length = (*reconstruct_init)->largeFilter;
-	  
-	string message="";
-	char valERROR[256];
-	int status=EPOK;  
-			
-	// Declare variables
-	fitsfile *inLibObject = NULL;	// Object which contains information of the library FITS file
-	bool appendToLibrary = false;	// Calibration library FITS file new (appendToLibrary=false) or not (appendToLibrary=true)
+  int inputPulseLength = (*reconstruct_init)->pulse_length;
+  if ((*reconstruct_init)->mode == 0)
+    (*reconstruct_init)->pulse_length = (*reconstruct_init)->largeFilter;
+  
+  string message="";
+  char valERROR[256];
+  int status=EPOK;  
+  
+  // Declare variables
+  fitsfile *inLibObject = NULL;	// Object which contains information of the library FITS file
+  bool appendToLibrary = false;	// Calibration library FITS file new (appendToLibrary=false) or not (appendToLibrary=true)
+  
+  fitsfile *dtcObject = NULL;	// Object which contains information of the intermediate FITS file ('dtc' comes from 'detectFile')
+  char dtcName[256];
+  strncpy(dtcName,(*reconstruct_init)->detectFile,255);
+  dtcName[255]='\0';
+  
+  int eventsz = record->trigger_size;
+  double tstartRecord;
+  // It is not necessary to check the allocation because 'record->trigger_size'='eventsz' has been checked previously
+  gsl_vector *invector = gsl_vector_alloc(eventsz);	// Record
+  
+  if (((*reconstruct_init)->tstartPulse1 != 0) 
+      && (((*reconstruct_init)->tstartPulse1 > record->trigger_size) 
+          || ((*reconstruct_init)->tstartPulse2 > record->trigger_size) 
+          || ((*reconstruct_init)->tstartPulse3 > record->trigger_size)))
+    {
+      message = "tstartPulsx can not be greater than the record size";
+      EP_EXIT_ERROR(message,EPFAIL);
+    }
+  //assert(((*reconstruct_init)->tstartPulse1 <= record->trigger_size) && ((*reconstruct_init)->tstartPulse2 <= record->trigger_size) && ((*reconstruct_init)->tstartPulse3 <= record->trigger_size));
+  
+  // Create library if it is necessary
+  if (((*reconstruct_init)->mode == 0) && (lastRecord == 1))
+    {
+      if (createLibrary(*reconstruct_init, &appendToLibrary, &inLibObject, inputPulseLength))
+        {
+          message = "Cannot run routine createLibrary to create pulses library";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+    }
 
-	fitsfile *dtcObject = NULL;	// Object which contains information of the intermediate FITS file ('dtc' comes from 'detectFile')
-	char dtcName[256];
-	strncpy(dtcName,(*reconstruct_init)->detectFile,255);
-	dtcName[255]='\0';
-
-	int eventsz = record->trigger_size;
-	double tstartRecord;
-	// It is not necessary to check the allocation because 'record->trigger_size'='eventsz' has been checked previously
-	gsl_vector *invector = gsl_vector_alloc(eventsz);	// Record
-	
-	if (((*reconstruct_init)->tstartPulse1 != 0) && (((*reconstruct_init)->tstartPulse1 > record->trigger_size) || ((*reconstruct_init)->tstartPulse2 > record->trigger_size) || ((*reconstruct_init)->tstartPulse3 > record->trigger_size)))
-	{
-		message = "tstartPulsx can not be greater than the record size";
-		EP_EXIT_ERROR(message,EPFAIL);
-	}
-	//assert(((*reconstruct_init)->tstartPulse1 <= record->trigger_size) && ((*reconstruct_init)->tstartPulse2 <= record->trigger_size) && ((*reconstruct_init)->tstartPulse3 <= record->trigger_size));
-	
-	// Create library if it is necessary
-	if (((*reconstruct_init)->mode == 0) && (lastRecord == 1))
-	{
-		if (createLibrary(*reconstruct_init, &appendToLibrary, &inLibObject, inputPulseLength))
-		{
-			message = "Cannot run routine createLibrary to create pulses library";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-	}
-
-	// Create intermediate output FITS file if 'required (reconstruct_init->intermediate'=1)
-	if ((*reconstruct_init)->intermediate == 1)
-	{
-		if (createDetectFile(*reconstruct_init, nRecord, 1/record->delta_t, &dtcObject, inputPulseLength))
-		{
-			message = "Cannot create file " +  string((*reconstruct_init)->detectFile);
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-	}
-
-	// Filter and differentiate the 'models' of the library (only for the first record)
-	if ((*reconstruct_init)->mode == 1)
-	{
-		if (filderLibrary(reconstruct_init,1/record->delta_t))
-		{
-			message = "Cannot run routine filderLibrary to filter & differentiate library if the 1st record";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-	}
-
-	// Store the input record in 'invector'
-	if (loadRecord(record, &tstartRecord, &invector))
-	{
-		message = "Cannot run routine loadRecord";
-		EP_EXIT_ERROR(message,EPFAIL);
-	}
-	eventsz = invector->size;	// Just in case the last record has been filled in with 0's => Re-allocate invector
-
-	// Convert I into R if 'EnergyMethod' = I2R or I2RALL or I2RNOL or I2RFITTED
-	// It is not necessary to check the allocation because 'invector' size must be > 0
-	gsl_vector *invectorWithoutConvert2R = gsl_vector_alloc(invector->size);
-	gsl_vector_memcpy(invectorWithoutConvert2R,invector);
-	if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
-		|| (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
-	{
-		if (convertI2R(reconstruct_init, &record, &invector))
-		{
-			message = "Cannot run routine convertI2R";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-	}
-	
-	// Process each record
-	if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, invectorWithoutConvert2R, *pulsesInRecord, nRecord))
-	{
-		message = "Cannot run routine procRecord for record processing";
-		EP_EXIT_ERROR(message,EPFAIL);
-	}
-    
-	gsl_vector_free(invectorWithoutConvert2R);
-	if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
-		|| (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
-	{
-		strcpy((*reconstruct_init)->EnergyMethod,"OPTFILT"); // From this point forward, I2R, I2RALL, I2RNOL and I2RFITTED are completely equivalent to OPTFILT
-	}
-
-	if (((*reconstruct_init)->intermediate == 1) && (lastRecord == 1))
-	{		
-		// Write output keywords (their values have been previously checked)
-		char keyname[10];
-		
-		char extname[10];
-		strncpy(extname,"PULSES",9);
-		extname[9]='\0';
-		if (fits_movnam_hdu(dtcObject, ANY_HDU,extname, 0, &status))
-		{
-			message = "Cannot move to HDU " + string(extname) +" in " + string(dtcName);
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		
-		long totalpulses;
-		if (fits_get_num_rows(dtcObject,&totalpulses, &status))
-		{
-			message = "Cannot get number of rows in " + string(dtcName);
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-
-		int ttpls1 = (int) totalpulses;
-		strcpy(keyname,"EVENTCNT");
-		if (ttpls1 < 0)
-		{
-			message = "Legal values for EVENTCNT (PULSES) are integer numbers greater than or equal to 0";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		
-		if(fits_write_key(dtcObject,TINT,keyname,&ttpls1,NULL,&status))
-		{
-			message = "Cannot write keyword " + string(keyname) +" in " + string(dtcName);
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-	}
-
-	if ((lastRecord == 1) && (*reconstruct_init)->mode == 0 && (pulsesAll->ndetpulses + (*pulsesInRecord)->ndetpulses >0))	// CALIBRATION mode => Calculate the pulse template by averaging some found pulses
-	{	
-		// It is not necessary to check the allocation because 'PulseLength' (input parameter) has been checked previously                    
-		gsl_vector *pulsetemplateMaxLengthFixedFilter = gsl_vector_alloc((*reconstruct_init)->largeFilter);
-		gsl_vector *pulsetemplate = gsl_vector_alloc((*reconstruct_init)->pulse_length);
-		double pulseheighttemplate = 0;
-		gsl_matrix *weight = gsl_matrix_alloc(inputPulseLength,inputPulseLength);
-		gsl_matrix *covariance = gsl_matrix_alloc(inputPulseLength,inputPulseLength);
-		gsl_matrix_set_zero(weight);
-		gsl_matrix_set_zero(covariance);
-    
-		if (calculateTemplate (*reconstruct_init, pulsesAll, *pulsesInRecord, 1/record->delta_t, &pulsetemplate, &pulseheighttemplate, &covariance, &weight, inputPulseLength, &pulsetemplateMaxLengthFixedFilter))
-		{
-			message = "Cannot run routine calculateTemplate in CALIBRATION mode";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		
-		(*reconstruct_init)->pulse_length = inputPulseLength;
-		
-		//if (writeLibrary(*reconstruct_init, 1/record->delta_t, pulseheighttemplate, pulsetemplate, covariance, weight, appendToLibrary, &inLibObject, pulsetemplateMaxLengthFixedFilter))
-		if (writeLibrary(reconstruct_init, 1/record->delta_t, pulseheighttemplate, pulsetemplate, covariance, weight, appendToLibrary, &inLibObject, pulsetemplateMaxLengthFixedFilter))
-		{
-			message = "Cannot run routine writeLibrary in CALIBRATION mode";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-
-		gsl_vector_free(pulsetemplate);
-		gsl_matrix_free(weight);
-		gsl_matrix_free(covariance);
-
-		gsl_vector_free(pulsetemplateMaxLengthFixedFilter);
-	}
-	
-	if ((*reconstruct_init)->mode == 0)	(*reconstruct_init)->pulse_length = inputPulseLength;
-	
-	// PCA is used  when pulses are farther than 'PulseLength'!!!!!!!!!!
-	if ((lastRecord == 1) && (strcmp((*reconstruct_init)->EnergyMethod,"PCA") == 0) && ((pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses))>0)	// PCA
-	{
-		(*reconstruct_init)->pulse_length = inputPulseLength;
-		
-		// In order to not have restrictions when providing (*reconstruct_init)->energyPCAx
-		double energyPCA1, energyPCA2;
-		if ((*reconstruct_init)->energyPCA2 < (*reconstruct_init)->energyPCA1)
-		{
-			energyPCA1 = (*reconstruct_init)->energyPCA2;
-			energyPCA2 = (*reconstruct_init)->energyPCA1;
-		}
-		else
-		{
-			energyPCA1 = (*reconstruct_init)->energyPCA1;
-			energyPCA2 = (*reconstruct_init)->energyPCA2;
-		}
-		
-		// Covariance data
-		// It is not necessary to check the allocation because 'PulseLength' (input parameter) has been checked previously 
-		gsl_vector *pulsetemplate = gsl_vector_alloc((*reconstruct_init)->pulse_length);
-		gsl_vector_set_zero(pulsetemplate);
-		gsl_matrix *covarianceData = gsl_matrix_alloc((*reconstruct_init)->pulse_length,(*reconstruct_init)->pulse_length);
-		gsl_matrix *weightData = gsl_matrix_alloc((*reconstruct_init)->pulse_length,(*reconstruct_init)->pulse_length);
-		gsl_vector *nonpileup;
-		if ((nonpileup = gsl_vector_alloc((pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses))) == 0)
-		{  
-			sprintf(valERROR,"%d",__LINE__-2);
-			string str(valERROR);
-			message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		gsl_vector_set_all(nonpileup,1);
-		if (weightMatrix(*reconstruct_init, false, pulsesAll, *pulsesInRecord, (pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses), nonpileup , pulsetemplate, &covarianceData, &weightData))
-		{
-			message = "Cannot run weightMatrix routine";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		gsl_vector_free(pulsetemplate);
-		gsl_matrix_free(weightData);
-		
-		// Eigenvalues and eigenvectors
-		gsl_vector *eigenvalues;
-		gsl_matrix *eigenvectors;	// Eigenvectors in columns
-		if (eigenVV(covarianceData,&eigenvectors,&eigenvalues))
-		{
-			message = "Cannot run eigenVV routine";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		gsl_matrix_free(covarianceData);
-		gsl_vector_free(eigenvalues);
-		
-		// RSxN (S=2)
-		gsl_matrix *RowFeatureVectors;		// Eigenvectors in rows
-		if ((RowFeatureVectors = gsl_matrix_alloc(eigenvectors->size2,eigenvectors->size1)) == 0)
-		{  
-			sprintf(valERROR,"%d",__LINE__-2);
-			string str(valERROR);
-			message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		//gsl_matrix *RowFeatureVectors = gsl_matrix_alloc(eigenvectors->size2,eigenvectors->size1);	// Eigenvectors in rows
-		gsl_matrix_transpose_memcpy(RowFeatureVectors,eigenvectors);
-		gsl_matrix_free(eigenvectors);
-		
-		// It is not necessary to check the allocation because 'PulseLength'(input parameter) and '(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulsesc' have been checked previously 
-                // S0^1-M0 S0^2-M0...............S0^(nonpileupPulses)-M0
-                // S1^1-M1 S1^2-M1...............S1^(nonpileupPulses)-M1
-                // ...................................................
-                // S1023^1-M1023 S1023^2-M1023...S1023^(nonpileupPulses)-M1023
-		gsl_matrix *RowDataAdjust = gsl_matrix_alloc((*reconstruct_init)->pulse_length,(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));	 
-																				
-		for (int m=0;m<(*reconstruct_init)->pulse_length;m++)
-		{
-			for (int p=0;p<pulsesAll->ndetpulses;p++)
-			{
-				if (gsl_vector_get(nonpileup,p) == 1)
-				{	
-					if (m == pulsesAll->pulses_detected[p].pulse_adc->size)
-					{
-						sprintf(valERROR,"%d",__LINE__+5);
-						string str(valERROR);
-						message = "PCA should be used with pulses farther than 'PulseLength' => Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
-						EP_EXIT_ERROR(message,EPFAIL);
-					}
-					gsl_matrix_set(RowDataAdjust,m,p,gsl_vector_get(pulsesAll->pulses_detected[p].pulse_adc,m));
-				}
-			}
-			for (int p=0;p<(*pulsesInRecord)->ndetpulses;p++)
-			{
-				if (gsl_vector_get(nonpileup,pulsesAll->ndetpulses+p) == 1)
-				{
-					if (m == (*pulsesInRecord)->pulses_detected[p].pulse_adc->size)
-					{
-						sprintf(valERROR,"%d",__LINE__+5);
-						string str(valERROR);
-						message = "PCA should be used with pulses farther than 'PulseLength' => Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
-						EP_EXIT_ERROR(message,EPFAIL);
-					}
-					gsl_matrix_set(RowDataAdjust,m,pulsesAll->ndetpulses+p,gsl_vector_get((*pulsesInRecord)->pulses_detected[p].pulse_adc,m));
-				}
-			}
-		}
-		gsl_vector_free(nonpileup);
-		
-		// It is not necessary to check the allocation because the allocation of 'RowFeatureVectors' and '(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses' have been checked previously
-		gsl_matrix *RSrxN = gsl_matrix_alloc(RowFeatureVectors->size1,(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));
-		if (RowFeatureVectors->size2 != RowDataAdjust->size1)
-		{
-			sprintf(valERROR,"%d",__LINE__+5);
-			string str(valERROR);
-			message = "Wrong dimensions to compute matrix-matrix product in line " + str + " (" + __FILE__ + ")";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		gsl_blas_dgemm (CblasNoTrans, CblasNoTrans,1.0, RowFeatureVectors, RowDataAdjust,0.0, RSrxN);
-		gsl_matrix_free(RowFeatureVectors);
-		gsl_matrix_free(RowDataAdjust);
-		
-		// Store RSxN in a FITS file
-		FILE * temporalFile;
-		char temporalFileName[255];
-		char val[256];
-		sprintf(temporalFileName,"rsxn.txt");
-		temporalFile = fopen (temporalFileName,"w");
-		for (int i = 0; i < RSrxN->size2; i++) // All the pulses in a column
-		{
-			sprintf(val,"%e %e",gsl_matrix_get(RSrxN,0,i),gsl_matrix_get(RSrxN,1,i));
-			strcat(val,"\n");
-			fputs(val,temporalFile);
-		}
-		fclose(temporalFile);
-		
-		// AE straight line: Pto0(x,y) and Pto10(x,y)
-		double a,b;	//y=ax+b
-		// It is not necessary to check the allocation because '(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses' has been checked previously
-		gsl_vector *xfit = gsl_vector_alloc((pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));
-		gsl_vector *yfit = gsl_vector_alloc((pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));
-		gsl_matrix_get_row(xfit,RSrxN,0);
-		gsl_matrix_get_row(yfit,RSrxN,1);
-		if (polyFitLinear (xfit, yfit, &a, &b))
-		{
-			message = "Cannot run routine polyFitLinear";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-                gsl_vector *Pto0 = gsl_vector_alloc(2);
-		gsl_vector *Pto10 = gsl_vector_alloc(2);
-		// It is not necessary to check the allocation because the allocation of 'RSrxN' has been checked previously
-		gsl_vector *xRSrxN = gsl_vector_alloc(RSrxN->size2);
-		gsl_matrix_get_row(xRSrxN,RSrxN,0);
-		gsl_vector_set(Pto0,0,gsl_vector_get(xRSrxN,gsl_vector_min_index(xRSrxN)));
-		gsl_vector_set(Pto0,1,a*gsl_vector_get(Pto0,0)+b);
-		gsl_vector_set(Pto10,0,gsl_vector_get(xRSrxN,gsl_vector_max_index(xRSrxN))-gsl_vector_get(Pto0,0));
-		gsl_vector_set(Pto10,1,a*gsl_vector_get(xRSrxN,gsl_vector_max_index(xRSrxN))+b-gsl_vector_get(Pto0,1));
-		
-		// Calculus of the rotation angle
-		gsl_vector *u = gsl_vector_alloc(2);
-		gsl_vector_set(u,0,1);
-		gsl_vector_set(u,1,0);
-		gsl_vector *v = gsl_vector_alloc(2);
-		gsl_vector_memcpy(v,Pto10);
-		gsl_vector_free(Pto10);
-		double dotResult;
-		gsl_blas_ddot (u, v, &dotResult);
-		double alfa;
-		alfa = acos(dotResult/(gsl_blas_dnrm2(u)*gsl_blas_dnrm2(v)));
-		
-		// Rotation
-		gsl_matrix *RotationMatrix = gsl_matrix_alloc(2,2);
-		gsl_matrix_set(RotationMatrix,0,0,cos(alfa));
-		gsl_matrix_set(RotationMatrix,0,1,sin(alfa));
-		gsl_matrix_set(RotationMatrix,1,0,-sin(alfa));
-		gsl_matrix_set(RotationMatrix,1,1,cos(alfa));
-		// It is not necessary to check the allocation because the allocation of 'RSrxN' has been checked previously
-		gsl_matrix *pointsTranslated = gsl_matrix_alloc(2,RSrxN->size2);
-		for (int i = 0; i < RSrxN->size2; i++)
-		{
-			gsl_matrix_set(pointsTranslated,0,i,gsl_matrix_get(RSrxN,0,i)-gsl_vector_get(Pto0,0));
-			gsl_matrix_set(pointsTranslated,1,i,gsl_matrix_get(RSrxN,1,i)-gsl_vector_get(Pto0,1));
-		}
-		gsl_vector_free(Pto0);
-		// It is not necessary to check the allocation because the allocation of 'RSrxN' has been checked previously
-		gsl_matrix *pointsTranslatedRotated = gsl_matrix_alloc(2,RSrxN->size2);
-		gsl_blas_dgemm (CblasNoTrans, CblasNoTrans,1.0, RotationMatrix, pointsTranslated,0.0, pointsTranslatedRotated);
-		/*for (int i = 0; i < RSrxN->size2; i++)
-		{
-			gsl_matrix_set(pointsTranslatedRotated,0,i,gsl_matrix_get(pointsTranslatedRotated,0,i)+gsl_vector_get(Pto0,0));
-		}
-		sprintf(temporalFileName,"rsxnTransformed.txt");
-		temporalFile = fopen (temporalFileName,"w");
-		for (int i = 0; i < RSrxN->size2; i++) // All the pulses in a column
-		{
-			sprintf(val,"%e %e",gsl_matrix_get(pointsTranslatedRotated,0,i),gsl_matrix_get(pointsTranslatedRotated,1,i));
-			strcat(val,"\n");
-			fputs(val,temporalFile);
-		}
-		fclose(temporalFile);*/
-		gsl_matrix_free(pointsTranslated);
-		gsl_matrix_free(RSrxN);
-		// It is not necessary to check the allocation because the allocation of 'pointsTranslatedRotated' has been checked previously
-		gsl_vector *pointsTranslatedRotated1aux = gsl_vector_alloc(pointsTranslatedRotated->size2);
-		gsl_vector *pointsTranslatedRotated2aux = gsl_vector_alloc(pointsTranslatedRotated->size2);
-		int num1 = 0;
-		int num2 = 0;
-		gsl_vector *xpointsTranslatedRotated = gsl_vector_alloc(pointsTranslatedRotated->size2);
-		gsl_matrix_get_row(xpointsTranslatedRotated,pointsTranslatedRotated,0);
-		double midpoint = gsl_vector_min(xpointsTranslatedRotated)+(gsl_vector_max(xpointsTranslatedRotated)-gsl_vector_min(xpointsTranslatedRotated))/2;
-		for (int i = 0; i < xpointsTranslatedRotated->size; i++)
-		{
-			if (gsl_vector_get(xpointsTranslatedRotated,i) <= midpoint)
-			{
-				if (num1 >= pointsTranslatedRotated1aux->size)
-				{
-					sprintf(valERROR,"%d",__LINE__+5);
-					string str(valERROR);
-					message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
-					EP_EXIT_ERROR(message,EPFAIL);
-				}
-				gsl_vector_set(pointsTranslatedRotated1aux,num1,gsl_vector_get(xpointsTranslatedRotated,i));
-				num1++;
-			}
-			else
-			{
-				if (num2 >= pointsTranslatedRotated2aux->size)
-				{
-					sprintf(valERROR,"%d",__LINE__+5);
-					string str(valERROR);
-					message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
-					EP_EXIT_ERROR(message,EPFAIL);
-				}
-				gsl_vector_set(pointsTranslatedRotated2aux,num2,gsl_vector_get(xpointsTranslatedRotated,i));
-				num2++;
-			}
-		}
-		gsl_vector_free(xpointsTranslatedRotated);
-		gsl_vector *pointsTranslatedRotated1;
-		gsl_vector *pointsTranslatedRotated2;
-		if ((pointsTranslatedRotated1 = gsl_vector_alloc(num1)) == 0)
-		{
-			sprintf(valERROR,"%d",__LINE__-2);
-			string str(valERROR);
-			message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		if ((pointsTranslatedRotated2 = gsl_vector_alloc(num2)) == 0)
-		{
-			sprintf(valERROR,"%d",__LINE__-2);
-			string str(valERROR);
-			message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		
-		gsl_vector_view temp;
-		if ((num1 < 1) || (num1 > pointsTranslatedRotated1aux->size))
-		{
-			sprintf(valERROR,"%d",__LINE__+5);
-			string str(valERROR);
-			message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		temp = gsl_vector_subvector(pointsTranslatedRotated1aux,0,num1);
-		if (gsl_vector_memcpy(pointsTranslatedRotated1,&temp.vector) != 0)
-		{
-			sprintf(valERROR,"%d",__LINE__-2);
-			string str(valERROR);
-			message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		if ((num2 < 1) || (num1 > pointsTranslatedRotated2aux->size))
-		{
-			sprintf(valERROR,"%d",__LINE__+5);
-			string str(valERROR);
-			message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		temp = gsl_vector_subvector(pointsTranslatedRotated2aux,0,num2);
-		if (gsl_vector_memcpy(pointsTranslatedRotated2,&temp.vector) != 0)
-		{
-			sprintf(valERROR,"%d",__LINE__-2);
-			string str(valERROR);
-			message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		gsl_vector_free(pointsTranslatedRotated1aux);
-		gsl_vector_free(pointsTranslatedRotated2aux);
-		
-		// Histograms of the two clusters (two energies)
-		int nbins = 80;
-		assert(nbins > 0);
-		// It is not necessary to check the allocation because 'nbins' has been checked previously
-		gsl_vector *xhisto1 = gsl_vector_alloc(nbins);
-		gsl_vector *yhisto1 = gsl_vector_alloc(nbins);
-		gsl_vector *xhisto2 = gsl_vector_alloc(nbins);
-		gsl_vector *yhisto2 = gsl_vector_alloc(nbins);
-		bool histo1neg = false;
-		bool histo2neg = false;
-		double histo1constant;
-		double histo2constant;
-		if (gsl_vector_isnonneg(pointsTranslatedRotated1) != 1)
-		{
-			histo1neg = true;
-			histo1constant = fabs(gsl_vector_min(pointsTranslatedRotated1));
-			gsl_vector_add_constant(pointsTranslatedRotated1,histo1constant);
-		}
-		if (createHisto(pointsTranslatedRotated1, nbins, &xhisto1, &yhisto1))
-		{
-			message = "Cannot run createHisto routine";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		if (histo1neg == true) 
-		{
-			gsl_vector_add_constant(xhisto1,-histo1constant);
-			gsl_vector_add_constant(pointsTranslatedRotated1,-histo1constant);
-		}
-		sprintf(temporalFileName,"histo1.txt");
-		temporalFile = fopen (temporalFileName,"w");
-		for (int i = 0; i < xhisto1->size; i++) 
-		{
-			sprintf(val,"%e %e",gsl_vector_get(xhisto1,i),gsl_vector_get(yhisto1,i));
-			strcat(val,"\n");
-			fputs(val,temporalFile);
-		}
-		fclose(temporalFile);
-		if (gsl_vector_isnonneg(pointsTranslatedRotated2) != 1)
-		{
-			histo2neg = true;
-			histo2constant = fabs(gsl_vector_min(pointsTranslatedRotated2));
-			gsl_vector_add_constant(pointsTranslatedRotated2,histo2constant);
-		}
-		if (createHisto(pointsTranslatedRotated2, nbins, &xhisto2, &yhisto2))
-		{
-			message = "Cannot run createHisto routine";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		if (histo2neg == true) 
-		{
-			gsl_vector_add_constant(xhisto2,-histo2constant);
-			gsl_vector_add_constant(pointsTranslatedRotated2,-histo2constant);
-		}
-		sprintf(temporalFileName,"histo2.txt");
-		temporalFile = fopen (temporalFileName,"w");
-		for (int i = 0; i < xhisto2->size; i++) 
-		{
-			sprintf(val,"%e %e",gsl_vector_get(xhisto2,i),gsl_vector_get(yhisto2,i));
-			strcat(val,"\n");
-			fputs(val,temporalFile);
-		}
-		fclose(temporalFile);
-		double data1[num1];
-		double data2[num2];
-		if (num1 > pointsTranslatedRotated1->size)
-		{
-			sprintf(valERROR,"%d",__LINE__+7);
-			string str(valERROR);
-			message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		for (int i = 0; i < num1; i++)
-		{
-			data1[i] = gsl_vector_get(pointsTranslatedRotated1,i);
-		}
-		if (num2 > pointsTranslatedRotated2->size)
-		{
-			sprintf(valERROR,"%d",__LINE__+7);
-			string str(valERROR);
-			message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		for (int i = 0; i < num2; i++)
-		{
-			data2[i] = gsl_vector_get(pointsTranslatedRotated2,i);
-		}
-		double sigma1 = gsl_stats_sd(data1, 1, num1);
-		double sigma2 = gsl_stats_sd(data2, 1, num2);
-		double maxcenter1 = gsl_stats_mean(data1, 1, num1);
-		double maxcenter2 = gsl_stats_mean(data2, 1, num2);
-		
-		// Conversion factor from arbitrary unit to eV
-		double convertAU2eV = (energyPCA2 - energyPCA1)/(maxcenter2-maxcenter1);	
-		
-		gsl_vector_free(pointsTranslatedRotated1);
-		gsl_vector_free(pointsTranslatedRotated2);
-		gsl_vector_free(xhisto1);
-		gsl_vector_free(yhisto1);
-		gsl_vector_free(xhisto2);
-		gsl_vector_free(yhisto2);
-		
-		// Energy calculation
-		for (int i = 0; i < pulsesAll->ndetpulses; i++)
-		{
-			pulsesAll->pulses_detected[i].energy = gsl_matrix_get(pointsTranslatedRotated,0,i)*convertAU2eV/1e3 + energyPCA1/1e3;		//keV
-		}
-		for (int i = 0; i < (*pulsesInRecord)->ndetpulses; i++)
-		{
-			(*pulsesInRecord)->pulses_detected[i].energy = gsl_matrix_get(pointsTranslatedRotated,0,pulsesAll->ndetpulses+i)*convertAU2eV/1e3 + energyPCA1/1e3;	//keV
-		}
-		  
-		gsl_matrix_free(pointsTranslatedRotated);
-	}
-	
-// 	if (lastRecord == 1)
-//         {   
-//                 cout<<"nrows "<<nRecord<<endl;
-//                 cout<<pulsesAll->ndetpulses+(*pulsesInRecord)->ndetpulses<<endl;
-//         }
-
-	// Close intermediate output FITS file if it is necessary
-	if ((*reconstruct_init)->intermediate == 1)
-	{
-		if (fits_close_file(dtcObject,&status))
-		{
-			message = "Cannot close file " + string(dtcName);
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-	}
-
-	// Free allocated GSL vectors
-	gsl_vector_free(invector);
-
-	return;
+  // Create intermediate output FITS file if 'required (reconstruct_init->intermediate'=1)
+  if ((*reconstruct_init)->intermediate == 1)
+    {
+      if (createDetectFile(*reconstruct_init, nRecord, 1/record->delta_t, &dtcObject, inputPulseLength))
+        {
+          message = "Cannot create file " +  string((*reconstruct_init)->detectFile);
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+    }
+  
+  // Filter and differentiate the 'models' of the library (only for the first record)
+  if ((*reconstruct_init)->mode == 1)
+    {
+      if (filderLibrary(reconstruct_init,1/record->delta_t))
+        {
+          message = "Cannot run routine filderLibrary to filter & differentiate library if the 1st record";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+    }
+  
+  // Store the input record in 'invector'
+  if (loadRecord(record, &tstartRecord, &invector))
+    {
+      message = "Cannot run routine loadRecord";
+      EP_EXIT_ERROR(message,EPFAIL);
+    }
+  eventsz = invector->size;	// Just in case the last record has been filled in with 0's => Re-allocate invector
+  
+  // Convert I into R if 'EnergyMethod' = I2R or I2RALL or I2RNOL or I2RFITTED
+  // It is not necessary to check the allocation because 'invector' size must be > 0
+  gsl_vector *invectorWithoutConvert2R = gsl_vector_alloc(invector->size);
+  gsl_vector_memcpy(invectorWithoutConvert2R,invector);
+  if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) 
+      || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) 
+      || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
+      || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
+    {
+      if (convertI2R(reconstruct_init, &record, &invector))
+        {
+          message = "Cannot run routine convertI2R";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+    }
+  
+  // Process each record
+  if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, invectorWithoutConvert2R, *pulsesInRecord, nRecord))
+    {
+      message = "Cannot run routine procRecord for record processing";
+      EP_EXIT_ERROR(message,EPFAIL);
+    }
+  
+  gsl_vector_free(invectorWithoutConvert2R);
+  if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) 
+      || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) 
+      || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
+      || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
+    {
+      strcpy((*reconstruct_init)->EnergyMethod,"OPTFILT"); // From this point forward, I2R, I2RALL, I2RNOL and I2RFITTED are completely equivalent to OPTFILT
+    }
+  
+  if (((*reconstruct_init)->intermediate == 1) && (lastRecord == 1))
+    {
+      // Write output keywords (their values have been previously checked)
+      char keyname[10];
+      
+      char extname[10];
+      strncpy(extname,"PULSES",9);
+      extname[9]='\0';
+      if (fits_movnam_hdu(dtcObject, ANY_HDU,extname, 0, &status))
+        {
+          message = "Cannot move to HDU " + string(extname) +" in " + string(dtcName);
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      
+      long totalpulses;
+      if (fits_get_num_rows(dtcObject,&totalpulses, &status))
+        {
+          message = "Cannot get number of rows in " + string(dtcName);
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      
+      int ttpls1 = (int) totalpulses;
+      strcpy(keyname,"EVENTCNT");
+      if (ttpls1 < 0)
+        {
+          message = "Legal values for EVENTCNT (PULSES) are integer numbers greater than or equal to 0";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      
+      if(fits_write_key(dtcObject,TINT,keyname,&ttpls1,NULL,&status))
+        {
+          message = "Cannot write keyword " + string(keyname) +" in " + string(dtcName);
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+    }
+  
+  if ((lastRecord == 1) 
+      && (*reconstruct_init)->mode == 0 
+      && (pulsesAll->ndetpulses + (*pulsesInRecord)->ndetpulses >0))	// CALIBRATION mode => Calculate the pulse template by averaging some found pulses
+    {
+      // It is not necessary to check the allocation because 'PulseLength' (input parameter) has been checked previously                    
+      gsl_vector *pulsetemplateMaxLengthFixedFilter = gsl_vector_alloc((*reconstruct_init)->largeFilter);
+      gsl_vector *pulsetemplate = gsl_vector_alloc((*reconstruct_init)->pulse_length);
+      double pulseheighttemplate = 0;
+      gsl_matrix *weight = gsl_matrix_alloc(inputPulseLength,inputPulseLength);
+      gsl_matrix *covariance = gsl_matrix_alloc(inputPulseLength,inputPulseLength);
+      gsl_matrix_set_zero(weight);
+      gsl_matrix_set_zero(covariance);
+      
+      if (calculateTemplate (*reconstruct_init, pulsesAll, 
+                             *pulsesInRecord, 1/record->delta_t, &pulsetemplate, 
+                             &pulseheighttemplate, &covariance, &weight, 
+                             inputPulseLength, &pulsetemplateMaxLengthFixedFilter))
+        {
+          message = "Cannot run routine calculateTemplate in CALIBRATION mode";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      
+      (*reconstruct_init)->pulse_length = inputPulseLength;
+      
+      //if (writeLibrary(*reconstruct_init, 1/record->delta_t, pulseheighttemplate, pulsetemplate, covariance, weight, appendToLibrary, &inLibObject, pulsetemplateMaxLengthFixedFilter))
+      if (writeLibrary(reconstruct_init, 1/record->delta_t, pulseheighttemplate,
+                       pulsetemplate, covariance, weight, appendToLibrary, 
+                       &inLibObject, pulsetemplateMaxLengthFixedFilter))
+        {
+          message = "Cannot run routine writeLibrary in CALIBRATION mode";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      
+      gsl_vector_free(pulsetemplate);
+      gsl_matrix_free(weight);
+      gsl_matrix_free(covariance);
+      
+      gsl_vector_free(pulsetemplateMaxLengthFixedFilter);
+    }
+  
+  if ((*reconstruct_init)->mode == 0)
+    (*reconstruct_init)->pulse_length = inputPulseLength;
+  
+  // PCA is used  when pulses are farther than 'PulseLength'!!!!!!!!!!
+  if ((lastRecord == 1) 
+      && (strcmp((*reconstruct_init)->EnergyMethod,"PCA") == 0) 
+      && ((pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses))>0)	// PCA
+    {
+      (*reconstruct_init)->pulse_length = inputPulseLength;
+      
+      // In order to not have restrictions when providing (*reconstruct_init)->energyPCAx
+      double energyPCA1, energyPCA2;
+      if ((*reconstruct_init)->energyPCA2 < (*reconstruct_init)->energyPCA1)
+        {
+          energyPCA1 = (*reconstruct_init)->energyPCA2;
+          energyPCA2 = (*reconstruct_init)->energyPCA1;
+        }
+      else
+        {
+          energyPCA1 = (*reconstruct_init)->energyPCA1;
+          energyPCA2 = (*reconstruct_init)->energyPCA2;
+        }
+      
+      // Covariance data
+      // It is not necessary to check the allocation because 'PulseLength' (input parameter) has been checked previously 
+      gsl_vector *pulsetemplate = gsl_vector_alloc((*reconstruct_init)->pulse_length);
+      gsl_vector_set_zero(pulsetemplate);
+      gsl_matrix *covarianceData = gsl_matrix_alloc((*reconstruct_init)->pulse_length,(*reconstruct_init)->pulse_length);
+      gsl_matrix *weightData = gsl_matrix_alloc((*reconstruct_init)->pulse_length,(*reconstruct_init)->pulse_length);
+      gsl_vector *nonpileup;
+      if ((nonpileup = gsl_vector_alloc((pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses))) == 0)
+        {  
+          sprintf(valERROR,"%d",__LINE__-2);
+          string str(valERROR);
+          message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      gsl_vector_set_all(nonpileup,1);
+      if (weightMatrix(*reconstruct_init, false, pulsesAll, *pulsesInRecord, 
+                       (pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses), 
+                       nonpileup , pulsetemplate, &covarianceData, &weightData))
+        {
+          message = "Cannot run weightMatrix routine";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      gsl_vector_free(pulsetemplate);
+      gsl_matrix_free(weightData);
+      
+      // Eigenvalues and eigenvectors
+      gsl_vector *eigenvalues;
+      gsl_matrix *eigenvectors;	// Eigenvectors in columns
+      if (eigenVV(covarianceData,&eigenvectors,&eigenvalues))
+        {
+          message = "Cannot run eigenVV routine";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      gsl_matrix_free(covarianceData);
+      gsl_vector_free(eigenvalues);
+      
+      // RSxN (S=2)
+      gsl_matrix *RowFeatureVectors;		// Eigenvectors in rows
+      if ((RowFeatureVectors = gsl_matrix_alloc(eigenvectors->size2,eigenvectors->size1)) == 0)
+        {  
+          sprintf(valERROR,"%d",__LINE__-2);
+          string str(valERROR);
+          message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      //gsl_matrix *RowFeatureVectors = gsl_matrix_alloc(eigenvectors->size2,eigenvectors->size1);	// Eigenvectors in rows
+      gsl_matrix_transpose_memcpy(RowFeatureVectors,eigenvectors);
+      gsl_matrix_free(eigenvectors);
+      
+      // It is not necessary to check the allocation because 'PulseLength'(input parameter) and '(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulsesc' have been checked previously 
+      // S0^1-M0 S0^2-M0...............S0^(nonpileupPulses)-M0
+      // S1^1-M1 S1^2-M1...............S1^(nonpileupPulses)-M1
+      // ...................................................
+      // S1023^1-M1023 S1023^2-M1023...S1023^(nonpileupPulses)-M1023
+      gsl_matrix *RowDataAdjust = gsl_matrix_alloc((*reconstruct_init)->pulse_length,(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));	 
+      
+      for (int m=0;m<(*reconstruct_init)->pulse_length;m++)
+        {
+          for (int p=0;p<pulsesAll->ndetpulses;p++)
+            {
+              if (gsl_vector_get(nonpileup,p) == 1)
+                {	
+                  if (m == pulsesAll->pulses_detected[p].pulse_adc->size)
+                    {
+                      sprintf(valERROR,"%d",__LINE__+5);
+                      string str(valERROR);
+                      message = "PCA should be used with pulses farther than 'PulseLength' => Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
+                      EP_EXIT_ERROR(message,EPFAIL);
+                    }
+                  gsl_matrix_set(RowDataAdjust,m,p,gsl_vector_get(pulsesAll->pulses_detected[p].pulse_adc,m));
+                }
+            }
+          for (int p=0;p<(*pulsesInRecord)->ndetpulses;p++)
+            {
+              if (gsl_vector_get(nonpileup,pulsesAll->ndetpulses+p) == 1)
+                {
+                  if (m == (*pulsesInRecord)->pulses_detected[p].pulse_adc->size)
+                    {
+                      sprintf(valERROR,"%d",__LINE__+5);
+                      string str(valERROR);
+                      message = "PCA should be used with pulses farther than 'PulseLength' => Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
+                      EP_EXIT_ERROR(message,EPFAIL);
+                    }
+                  gsl_matrix_set(RowDataAdjust,m,pulsesAll->ndetpulses+p,gsl_vector_get((*pulsesInRecord)->pulses_detected[p].pulse_adc,m));
+                }
+            }
+        }
+      gsl_vector_free(nonpileup);
+      
+      // It is not necessary to check the allocation because the allocation of 'RowFeatureVectors' and '(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses' have been checked previously
+      gsl_matrix *RSrxN = gsl_matrix_alloc(RowFeatureVectors->size1,(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));
+      if (RowFeatureVectors->size2 != RowDataAdjust->size1)
+        {
+          sprintf(valERROR,"%d",__LINE__+5);
+          string str(valERROR);
+          message = "Wrong dimensions to compute matrix-matrix product in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      gsl_blas_dgemm (CblasNoTrans, CblasNoTrans,1.0, RowFeatureVectors, RowDataAdjust,0.0, RSrxN);
+      gsl_matrix_free(RowFeatureVectors);
+      gsl_matrix_free(RowDataAdjust);
+      
+      // Store RSxN in a FITS file
+      FILE * temporalFile;
+      char temporalFileName[255];
+      char val[256];
+      sprintf(temporalFileName,"rsxn.txt");
+      temporalFile = fopen (temporalFileName,"w");
+      for (int i = 0; i < RSrxN->size2; i++) // All the pulses in a column
+        {
+          sprintf(val,"%e %e",gsl_matrix_get(RSrxN,0,i),gsl_matrix_get(RSrxN,1,i));
+          strcat(val,"\n");
+          fputs(val,temporalFile);
+        }
+      fclose(temporalFile);
+      
+      // AE straight line: Pto0(x,y) and Pto10(x,y)
+      double a,b;	//y=ax+b
+      // It is not necessary to check the allocation because '(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses' has been checked previously
+      gsl_vector *xfit = gsl_vector_alloc((pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));
+      gsl_vector *yfit = gsl_vector_alloc((pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));
+      gsl_matrix_get_row(xfit,RSrxN,0);
+      gsl_matrix_get_row(yfit,RSrxN,1);
+      if (polyFitLinear (xfit, yfit, &a, &b))
+        {
+          message = "Cannot run routine polyFitLinear";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      gsl_vector *Pto0 = gsl_vector_alloc(2);
+      gsl_vector *Pto10 = gsl_vector_alloc(2);
+      // It is not necessary to check the allocation because the allocation of 'RSrxN' has been checked previously
+      gsl_vector *xRSrxN = gsl_vector_alloc(RSrxN->size2);
+      gsl_matrix_get_row(xRSrxN,RSrxN,0);
+      gsl_vector_set(Pto0,0,gsl_vector_get(xRSrxN,gsl_vector_min_index(xRSrxN)));
+      gsl_vector_set(Pto0,1,a*gsl_vector_get(Pto0,0)+b);
+      gsl_vector_set(Pto10,0,gsl_vector_get(xRSrxN,gsl_vector_max_index(xRSrxN))-gsl_vector_get(Pto0,0));
+      gsl_vector_set(Pto10,1,a*gsl_vector_get(xRSrxN,gsl_vector_max_index(xRSrxN))+b-gsl_vector_get(Pto0,1));
+      
+      // Calculus of the rotation angle
+      gsl_vector *u = gsl_vector_alloc(2);
+      gsl_vector_set(u,0,1);
+      gsl_vector_set(u,1,0);
+      gsl_vector *v = gsl_vector_alloc(2);
+      gsl_vector_memcpy(v,Pto10);
+      gsl_vector_free(Pto10);
+      double dotResult;
+      gsl_blas_ddot (u, v, &dotResult);
+      double alfa;
+      alfa = acos(dotResult/(gsl_blas_dnrm2(u)*gsl_blas_dnrm2(v)));
+      
+      // Rotation
+      gsl_matrix *RotationMatrix = gsl_matrix_alloc(2,2);
+      gsl_matrix_set(RotationMatrix,0,0,cos(alfa));
+      gsl_matrix_set(RotationMatrix,0,1,sin(alfa));
+      gsl_matrix_set(RotationMatrix,1,0,-sin(alfa));
+      gsl_matrix_set(RotationMatrix,1,1,cos(alfa));
+      // It is not necessary to check the allocation because the allocation of 'RSrxN' has been checked previously
+      gsl_matrix *pointsTranslated = gsl_matrix_alloc(2,RSrxN->size2);
+      for (int i = 0; i < RSrxN->size2; i++)
+        {
+          gsl_matrix_set(pointsTranslated,0,i,gsl_matrix_get(RSrxN,0,i)-gsl_vector_get(Pto0,0));
+          gsl_matrix_set(pointsTranslated,1,i,gsl_matrix_get(RSrxN,1,i)-gsl_vector_get(Pto0,1));
+        }
+      gsl_vector_free(Pto0);
+      // It is not necessary to check the allocation because the allocation of 'RSrxN' has been checked previously
+      gsl_matrix *pointsTranslatedRotated = gsl_matrix_alloc(2,RSrxN->size2);
+      gsl_blas_dgemm (CblasNoTrans, CblasNoTrans,1.0, RotationMatrix, pointsTranslated,0.0, pointsTranslatedRotated);
+      /*for (int i = 0; i < RSrxN->size2; i++)
+        {
+        gsl_matrix_set(pointsTranslatedRotated,0,i,gsl_matrix_get(pointsTranslatedRotated,0,i)+gsl_vector_get(Pto0,0));
+        }
+        sprintf(temporalFileName,"rsxnTransformed.txt");
+        temporalFile = fopen (temporalFileName,"w");
+        for (int i = 0; i < RSrxN->size2; i++) // All the pulses in a column
+        {
+        sprintf(val,"%e %e",gsl_matrix_get(pointsTranslatedRotated,0,i),gsl_matrix_get(pointsTranslatedRotated,1,i));
+        strcat(val,"\n");
+        fputs(val,temporalFile);
+        }
+        fclose(temporalFile);*/
+      gsl_matrix_free(pointsTranslated);
+      gsl_matrix_free(RSrxN);
+      // It is not necessary to check the allocation because the allocation of 'pointsTranslatedRotated' has been checked previously
+      gsl_vector *pointsTranslatedRotated1aux = gsl_vector_alloc(pointsTranslatedRotated->size2);
+      gsl_vector *pointsTranslatedRotated2aux = gsl_vector_alloc(pointsTranslatedRotated->size2);
+      int num1 = 0;
+      int num2 = 0;
+      gsl_vector *xpointsTranslatedRotated = gsl_vector_alloc(pointsTranslatedRotated->size2);
+      gsl_matrix_get_row(xpointsTranslatedRotated,pointsTranslatedRotated,0);
+      double midpoint = gsl_vector_min(xpointsTranslatedRotated)+(gsl_vector_max(xpointsTranslatedRotated)-gsl_vector_min(xpointsTranslatedRotated))/2;
+      for (int i = 0; i < xpointsTranslatedRotated->size; i++)
+        {
+          if (gsl_vector_get(xpointsTranslatedRotated,i) <= midpoint)
+            {
+              if (num1 >= pointsTranslatedRotated1aux->size)
+                {
+                  sprintf(valERROR,"%d",__LINE__+5);
+                  string str(valERROR);
+                  message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
+                  EP_EXIT_ERROR(message,EPFAIL);
+                }
+              gsl_vector_set(pointsTranslatedRotated1aux,num1,gsl_vector_get(xpointsTranslatedRotated,i));
+              num1++;
+            }
+          else
+            {
+              if (num2 >= pointsTranslatedRotated2aux->size)
+                {
+                  sprintf(valERROR,"%d",__LINE__+5);
+                  string str(valERROR);
+                  message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
+                  EP_EXIT_ERROR(message,EPFAIL);
+                }
+              gsl_vector_set(pointsTranslatedRotated2aux,num2,gsl_vector_get(xpointsTranslatedRotated,i));
+              num2++;
+            }
+        }
+      gsl_vector_free(xpointsTranslatedRotated);
+      gsl_vector *pointsTranslatedRotated1;
+      gsl_vector *pointsTranslatedRotated2;
+      if ((pointsTranslatedRotated1 = gsl_vector_alloc(num1)) == 0)
+        {
+          sprintf(valERROR,"%d",__LINE__-2);
+          string str(valERROR);
+          message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      if ((pointsTranslatedRotated2 = gsl_vector_alloc(num2)) == 0)
+        {
+          sprintf(valERROR,"%d",__LINE__-2);
+          string str(valERROR);
+          message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      
+      gsl_vector_view temp;
+      if ((num1 < 1) || (num1 > pointsTranslatedRotated1aux->size))
+        {
+          sprintf(valERROR,"%d",__LINE__+5);
+          string str(valERROR);
+          message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      temp = gsl_vector_subvector(pointsTranslatedRotated1aux,0,num1);
+      if (gsl_vector_memcpy(pointsTranslatedRotated1,&temp.vector) != 0)
+        {
+          sprintf(valERROR,"%d",__LINE__-2);
+          string str(valERROR);
+          message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      if ((num2 < 1) || (num1 > pointsTranslatedRotated2aux->size))
+        {
+          sprintf(valERROR,"%d",__LINE__+5);
+          string str(valERROR);
+          message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      temp = gsl_vector_subvector(pointsTranslatedRotated2aux,0,num2);
+      if (gsl_vector_memcpy(pointsTranslatedRotated2,&temp.vector) != 0)
+        {
+          sprintf(valERROR,"%d",__LINE__-2);
+          string str(valERROR);
+          message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      gsl_vector_free(pointsTranslatedRotated1aux);
+      gsl_vector_free(pointsTranslatedRotated2aux);
+      
+      // Histograms of the two clusters (two energies)
+      int nbins = 80;
+      assert(nbins > 0);
+      // It is not necessary to check the allocation because 'nbins' has been checked previously
+      gsl_vector *xhisto1 = gsl_vector_alloc(nbins);
+      gsl_vector *yhisto1 = gsl_vector_alloc(nbins);
+      gsl_vector *xhisto2 = gsl_vector_alloc(nbins);
+      gsl_vector *yhisto2 = gsl_vector_alloc(nbins);
+      bool histo1neg = false;
+      bool histo2neg = false;
+      double histo1constant;
+      double histo2constant;
+      if (gsl_vector_isnonneg(pointsTranslatedRotated1) != 1)
+        {
+          histo1neg = true;
+          histo1constant = fabs(gsl_vector_min(pointsTranslatedRotated1));
+          gsl_vector_add_constant(pointsTranslatedRotated1,histo1constant);
+        }
+      if (createHisto(pointsTranslatedRotated1, nbins, &xhisto1, &yhisto1))
+        {
+          message = "Cannot run createHisto routine";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      if (histo1neg == true) 
+        {
+          gsl_vector_add_constant(xhisto1,-histo1constant);
+          gsl_vector_add_constant(pointsTranslatedRotated1,-histo1constant);
+        }
+      sprintf(temporalFileName,"histo1.txt");
+      temporalFile = fopen (temporalFileName,"w");
+      for (int i = 0; i < xhisto1->size; i++) 
+        {
+          sprintf(val,"%e %e",gsl_vector_get(xhisto1,i),gsl_vector_get(yhisto1,i));
+          strcat(val,"\n");
+          fputs(val,temporalFile);
+        }
+      fclose(temporalFile);
+      if (gsl_vector_isnonneg(pointsTranslatedRotated2) != 1)
+        {
+          histo2neg = true;
+          histo2constant = fabs(gsl_vector_min(pointsTranslatedRotated2));
+          gsl_vector_add_constant(pointsTranslatedRotated2,histo2constant);
+        }
+      if (createHisto(pointsTranslatedRotated2, nbins, &xhisto2, &yhisto2))
+        {
+          message = "Cannot run createHisto routine";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      if (histo2neg == true) 
+        {
+          gsl_vector_add_constant(xhisto2,-histo2constant);
+          gsl_vector_add_constant(pointsTranslatedRotated2,-histo2constant);
+        }
+      sprintf(temporalFileName,"histo2.txt");
+      temporalFile = fopen (temporalFileName,"w");
+      for (int i = 0; i < xhisto2->size; i++) 
+        {
+          sprintf(val,"%e %e",gsl_vector_get(xhisto2,i),gsl_vector_get(yhisto2,i));
+          strcat(val,"\n");
+          fputs(val,temporalFile);
+        }
+      fclose(temporalFile);
+      double data1[num1];
+      double data2[num2];
+      if (num1 > pointsTranslatedRotated1->size)
+        {
+          sprintf(valERROR,"%d",__LINE__+7);
+          string str(valERROR);
+          message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      for (int i = 0; i < num1; i++)
+        {
+          data1[i] = gsl_vector_get(pointsTranslatedRotated1,i);
+        }
+      if (num2 > pointsTranslatedRotated2->size)
+        {
+          sprintf(valERROR,"%d",__LINE__+7);
+          string str(valERROR);
+          message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      for (int i = 0; i < num2; i++)
+        {
+          data2[i] = gsl_vector_get(pointsTranslatedRotated2,i);
+        }
+      double sigma1 = gsl_stats_sd(data1, 1, num1);
+      double sigma2 = gsl_stats_sd(data2, 1, num2);
+      double maxcenter1 = gsl_stats_mean(data1, 1, num1);
+      double maxcenter2 = gsl_stats_mean(data2, 1, num2);
+      
+      // Conversion factor from arbitrary unit to eV
+      double convertAU2eV = (energyPCA2 - energyPCA1)/(maxcenter2-maxcenter1);	
+      
+      gsl_vector_free(pointsTranslatedRotated1);
+      gsl_vector_free(pointsTranslatedRotated2);
+      gsl_vector_free(xhisto1);
+      gsl_vector_free(yhisto1);
+      gsl_vector_free(xhisto2);
+      gsl_vector_free(yhisto2);
+      
+      // Energy calculation
+      for (int i = 0; i < pulsesAll->ndetpulses; i++)
+        {
+          pulsesAll->pulses_detected[i].energy = gsl_matrix_get(pointsTranslatedRotated,0,i)*convertAU2eV/1e3 + energyPCA1/1e3;		//keV
+        }
+      for (int i = 0; i < (*pulsesInRecord)->ndetpulses; i++)
+        {
+          (*pulsesInRecord)->pulses_detected[i].energy = gsl_matrix_get(pointsTranslatedRotated,0,pulsesAll->ndetpulses+i)*convertAU2eV/1e3 + energyPCA1/1e3;	//keV
+        }
+      
+      gsl_matrix_free(pointsTranslatedRotated);
+    }
+  
+  // 	if (lastRecord == 1)
+  //         {   
+  //                 cout<<"nrows "<<nRecord<<endl;
+  //                 cout<<pulsesAll->ndetpulses+(*pulsesInRecord)->ndetpulses<<endl;
+  //         }
+  
+  // Close intermediate output FITS file if it is necessary
+  if ((*reconstruct_init)->intermediate == 1)
+    {
+      if (fits_close_file(dtcObject,&status))
+        {
+          message = "Cannot close file " + string(dtcName);
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      dtcObject = 0;
+    }
+  
+  // Free allocated GSL vectors
+  gsl_vector_free(invector);
+  
+  return;
 }
 /*xxxx end of SECTION A xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
+/* Run detection for the production mode only in multithread mode*/
+void run_detection(TesRecord* record, 
+                   int nRecord, 
+                   int lastRecord, 
+                   PulsesCollection *pulsesAll, 
+                   ReconstructInitSIRENA** reconstruct_init, 
+                   PulsesCollection** pulsesInRecord)
+{
+  
+}
 
 /***** SECTION A1 ************************************************************
 * createLibrary: This function creates the calibration library FITS file, if it does not exist yet. Otherwise, it opens it (to add a new row).
@@ -1109,332 +1143,332 @@ int createLibrary(ReconstructInitSIRENA* reconstruct_init, bool *appendToLibrary
 ***************************************************************************/
 int createDetectFile(ReconstructInitSIRENA* reconstruct_init, int nRecord, double samprate, fitsfile **dtcObject, int inputPulseLength)
 {
-	int status = EPOK;
-	string message = "";
-
-	char dtcName[256];
-	strncpy(dtcName,reconstruct_init->detectFile,255);
-	dtcName[255]='\0'; // enforce zero ending string in case of buffer overflows
-
-	// Create intermediate output FITS file: If it does not exist yet
-	// If dtcName does not finish as '.fits' and the file dtcName+'.fits' already exists =>
-	// => Data are appended to dtcName file => Must not be allowed
-	// '.fits' => 5 characters
-	if (strlen(dtcName)<6)
-	{
-		// dtcName has 5 or less characters => Does not contain '.fits' =>Append '.fits' to dtcName
-		strcat(dtcName,".fits");
-	}
-	else
-	{
-		// Check if dtcName has '.fits' and if not, append it
-		if (strncmp(strndup(dtcName+strlen(dtcName)-5, 5),".fits",5) != 0)
-		{
-			// dtcName does not finish as '.fits' => Append '.fits' to dtcName
-			char dtcNameaux[256];
-			snprintf(dtcNameaux,256,dtcName);
-			strcat(dtcNameaux,".fits");
-			strncpy(dtcName,dtcNameaux,255);
-			dtcName[255]='\0';
-		}
-	}
-
-	// If firstRecord => Create intermediate file (if file already exists => check clobber)
-	if (fileExists(string(dtcName)) && (reconstruct_init->clobber == 1))
-	{
-		if (remove(dtcName))
-		{
-			message = "Output intermediate file already exists & cannot be deleted ("+string(strerror(errno))+")";
-			EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-		}
-	}
-	else if (fileExists(string(dtcName)) && (reconstruct_init->clobber == 0))
-	{
-		message = "Output intermediate file already exists: must not be overwritten";
-		EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-	}
-	
-	if (!fileExists(string(dtcName)))
-	{
-		if (fits_create_file(dtcObject, dtcName, &status))
-		{
-			message = "Cannot create output intermediate file " + string(dtcName);
-			EP_PRINT_ERROR(message,status); return(EPFAIL);
-		}
-		message = "Create Detect Fits File: " + string(dtcName);
-	}
-
-	// Create HDU PULSES
-	// To work with tables (HDUs)
-	char *tt[1];
-	char *tf[1];
-	char *tu[1];
-	
-	// To write keywords
-	char keyname[10];
-	char keyvalstr[1000];
-	char extname[10];
-
-	if (fits_open_file(dtcObject,dtcName,READWRITE,&status))
-	{
-		message = "Cannot open output intermediate file " + string(dtcName);
-		EP_PRINT_ERROR(message,status); return(EPFAIL);
-	}
-
-	if (reconstruct_init->clobber == 1)
-	{
-		strncpy(extname,"PULSES",9);
-		extname[9]='\0';
-		
-		// PULSES HDU
-		if (fits_create_tbl(*dtcObject, BINARY_TBL,0,0,tt,tf,tu,extname,&status))
-		{
-			message = "Cannot create table " + string(extname) + " in output intermediate file " + string(dtcName);
-			EP_PRINT_ERROR(message,status); return(EPFAIL);
-		}
-
-		if (fits_movnam_hdu(*dtcObject, ANY_HDU,extname, 0, &status))
-		{
-			message = "Cannot move to HDU " + string(extname) + " in output intermediate file " + string(dtcName);
-			EP_PRINT_ERROR(message,status); return(EPFAIL);
-		}
-
-		strncpy(keyname,"MODE",9);
-		keyname[9]='\0';
-		fits_write_key(*dtcObject,TINT,keyname,&(reconstruct_init->mode),NULL,&status);
-		
-		strncpy(keyname,"EVENTSZ",9);
-		keyname[9]='\0';
-		assert(reconstruct_init->pulse_length > 0);
-		fits_write_key(*dtcObject,TINT,keyname,&(reconstruct_init->pulse_length),NULL,&status);
-		if (reconstruct_init->mode == 0)
-		{
-			strcpy(keyname,"ENERGY");
-			fits_write_key(*dtcObject,TDOUBLE,keyname,&(reconstruct_init-> monoenergy),NULL,&status);
-		}
-		strncpy(keyname,"SAMPRATE",9);
-		keyname[9]='\0';
-		assert(samprate > 0);
-		fits_write_key(*dtcObject,TDOUBLE,keyname,&samprate,NULL,&status);
-		if (status != 0)
-		{
-			message = "Cannot write keyword some keyword in output intermediate file " + string(dtcName);
-			EP_PRINT_ERROR(message,status); return(EPFAIL);
-		}
-
-		// TESTINFO HDU
-		strncpy(extname,"TESTINFO",9);
-		extname[9]='\0';
-		if (fits_create_tbl(*dtcObject, BINARY_TBL,0,0,tt,tf,tu,extname,&status))
-		{
-			message = "Cannot create table " + string(extname) + " in output intermediate file " + string(dtcName);
-			EP_PRINT_ERROR(message,status); return(EPFAIL);
-		}
-
-		// Primary HDU
-		strncpy(extname,"Primary",9);
-		extname[9]='\0';
-		if (fits_movabs_hdu(*dtcObject, 1, NULL, &status))
-		{
-			message = "Cannot move to HDU " + string(extname) + " in output intermediate file " + string(dtcName);
-			EP_PRINT_ERROR(message,status); return(EPFAIL);
-		}
-		
-		strncpy(keyname,"HISTORY",9);
-		keyname[9]='\0';
-		const char * charhistory= "HISTORY Starting parameter list";
-		strncpy(keyvalstr,charhistory,999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		string strhistory;
-		char comment[MAXMSG];
-		
-		sprintf(comment, "RecordFile = %s", reconstruct_init->record_file);
-		fits_write_comment(*dtcObject, comment, &status);
-		
-		sprintf(comment, "TesEventFile = %s", reconstruct_init->event_file);
-		fits_write_comment(*dtcObject, comment, &status);
-		
-		sprintf(comment, "LibraryFile = %s", reconstruct_init->library_file);
-		fits_write_comment(*dtcObject, comment, &status);
-		
-		sprintf(comment, "NoiseFile = %s", reconstruct_init->noise_file);
-		fits_write_comment(*dtcObject, comment, &status);
-
-		char str_mode[125];		snprintf(str_mode,125,"%d",reconstruct_init->mode);
-		strhistory = string("mode = ") + string(str_mode);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		strhistory=string("FilterDomain = ") + reconstruct_init->FilterDomain;
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		strhistory=string("FilterMethod = ") + reconstruct_init->FilterMethod;
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		strhistory=string("EnergyMethod = ") + reconstruct_init->EnergyMethod;
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_LagsOrNot[125];      	snprintf(str_LagsOrNot,125,"%d",reconstruct_init->LagsOrNot);
-		strhistory=string("LagsOrNot = ") + string(str_LagsOrNot);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_OFIter[125];     	snprintf(str_OFIter,125,"%d",reconstruct_init->OFIter);
-		strhistory=string("OFIter = ") + string(str_OFIter);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_OFLib[125];      	snprintf(str_OFLib,125,"%d",reconstruct_init->OFLib);
-		strhistory=string("OFLib = ") + string(str_OFLib);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-				
-		strhistory=string("OFInterp = ") + reconstruct_init->OFInterp;
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-				
-		strhistory=string("OFStrategy = ") + reconstruct_init->OFStrategy;
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-				
-		char str_OFLength[125];		snprintf(str_OFLength,125,"%d",reconstruct_init->OFLength);
-		strhistory=string("OFLength = ") + string(str_OFLength);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-
-		char str_maxPulsesPerRecord[125];	snprintf(str_maxPulsesPerRecord,125,"%d",reconstruct_init->maxPulsesPerRecord);
-		strhistory=string("maxPulsesPerRecord = ") + string(str_maxPulsesPerRecord);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_pulse_length[125];	snprintf(str_pulse_length,125,"%d",inputPulseLength);
-		strhistory=string("PulseLength = ") + string(str_pulse_length);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_scaleFactor[125];	snprintf(str_scaleFactor,125,"%f",reconstruct_init->scaleFactor);
-		strhistory=string("scaleFactor = ") + string(str_scaleFactor);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_samplesUp[125];	snprintf(str_samplesUp,125,"%f",reconstruct_init->samplesUp);
-		strhistory=string("samplesUp = ") + string(str_samplesUp);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_nSgms[125];	    	snprintf(str_nSgms,125,"%f",reconstruct_init->nSgms);
-		strhistory=string("nSgms = ") + string(str_nSgms);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_LrsT[125];		snprintf(str_LrsT,125,"%e",reconstruct_init->LrsT);
-		strhistory=string("LrsT = ") + string(str_LrsT);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_LbT[125];		snprintf(str_LbT,125,"%e",reconstruct_init->LbT);
-		strhistory=string("LbT = ") + string(str_LbT);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_monoenergy[125];	snprintf(str_monoenergy,125,"%f",reconstruct_init->monoenergy);
-		strhistory=string("monoenergy = ") + string(str_monoenergy);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_largeFilter[125];	snprintf(str_largeFilter,125,"%d",reconstruct_init->largeFilter);
-		strhistory=string("largeFilter = ") + string(str_largeFilter);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_intermediate[125];      snprintf(str_intermediate,125,"%d",reconstruct_init->intermediate);
-		strhistory=string("intermediate = ") + string(str_intermediate);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		sprintf(comment, "detectFile = %s", reconstruct_init->detectFile);
-		fits_write_comment(*dtcObject, comment, &status);
-		
-		sprintf(comment, "fiterFile = %s", reconstruct_init->filterFile);
-		fits_write_comment(*dtcObject, comment, &status);
-		
-		char str_clobber[125];      	snprintf(str_clobber,125,"%d",reconstruct_init->clobber);
-		strhistory=string("clobber = ") + string(str_clobber);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_SaturationValue[125];	snprintf(str_SaturationValue,125,"%e",reconstruct_init->SaturationValue);
-		strhistory=string("SaturationValue = ") + string(str_SaturationValue);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_tstartPulse1[125];	
-		if (reconstruct_init->tstartPulse1 == 0)			  	snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1);
-		else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") == 0)		snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1+2);
-		else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") != 0)		snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1+1);
-		strhistory=string("tstartPulse1 = ") + string(str_tstartPulse1);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_tstartPulse2[125];	
-		if (reconstruct_init->tstartPulse2 == 0)			  	snprintf(str_tstartPulse2,125,"%d",reconstruct_init->tstartPulse2);
-		else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") == 0)		snprintf(str_tstartPulse2,125,"%d",reconstruct_init->tstartPulse2+2);
-		else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") != 0)		snprintf(str_tstartPulse2,125,"%d",reconstruct_init->tstartPulse2+1);
-		strhistory=string("tstartPulse2 = ") + string(str_tstartPulse2);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		char str_tstartPulse3[125];	
-		if (reconstruct_init->tstartPulse3 == 0)			  	snprintf(str_tstartPulse3,125,"%d",reconstruct_init->tstartPulse3);
-		else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") == 0)		snprintf(str_tstartPulse3,125,"%d",reconstruct_init->tstartPulse3+2);
-		else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") != 0)		snprintf(str_tstartPulse3,125,"%d",reconstruct_init->tstartPulse3+1);
-		strhistory=string("tstartPulse3 = ") + string(str_tstartPulse3);
-		strncpy(keyvalstr,strhistory.c_str(),999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		charhistory= "HISTORY Ending parameter list";
-		strncpy(keyvalstr,charhistory,999);
-		keyvalstr[999]='\0';
-		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
-		
-		if (status != 0)
-		{
-			message = "Cannot write some keyword in output intermediate file " + string(dtcName);
-			EP_PRINT_ERROR(message,status); return(EPFAIL);
-		}
-	}
-
-	return EPOK;
+  int status = EPOK;
+  string message = "";
+  
+  char dtcName[256];
+  strncpy(dtcName,reconstruct_init->detectFile,255);
+  dtcName[255]='\0'; // enforce zero ending string in case of buffer overflows
+  
+  // Create intermediate output FITS file: If it does not exist yet
+  // If dtcName does not finish as '.fits' and the file dtcName+'.fits' already exists =>
+  // => Data are appended to dtcName file => Must not be allowed
+  // '.fits' => 5 characters
+  if (strlen(dtcName)<6)
+    {
+      // dtcName has 5 or less characters => Does not contain '.fits' =>Append '.fits' to dtcName
+      strcat(dtcName,".fits");
+    }
+  else
+    {
+      // Check if dtcName has '.fits' and if not, append it
+      if (strncmp(strndup(dtcName+strlen(dtcName)-5, 5),".fits",5) != 0)
+        {
+          // dtcName does not finish as '.fits' => Append '.fits' to dtcName
+          char dtcNameaux[256];
+          snprintf(dtcNameaux,256,dtcName);
+          strcat(dtcNameaux,".fits");
+          strncpy(dtcName,dtcNameaux,255);
+          dtcName[255]='\0';
+        }
+    }
+  
+  // If firstRecord => Create intermediate file (if file already exists => check clobber)
+  if (fileExists(string(dtcName)) && (reconstruct_init->clobber == 1))
+    {
+      if (remove(dtcName))
+        {
+          message = "Output intermediate file already exists & cannot be deleted ("+string(strerror(errno))+")";
+          EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+        }
+    }
+  else if (fileExists(string(dtcName)) && (reconstruct_init->clobber == 0))
+    {
+      message = "Output intermediate file already exists: must not be overwritten";
+      EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+    }
+  
+  if (!fileExists(string(dtcName)))
+    {
+      if (fits_create_file(dtcObject, dtcName, &status))
+        {
+          message = "Cannot create output intermediate file " + string(dtcName);
+          EP_PRINT_ERROR(message,status); return(EPFAIL);
+        }
+      message = "Create Detect Fits File: " + string(dtcName);
+    }
+  
+  // Create HDU PULSES
+  // To work with tables (HDUs)
+  char *tt[1];
+  char *tf[1];
+  char *tu[1];
+  
+  // To write keywords
+  char keyname[10];
+  char keyvalstr[1000];
+  char extname[10];
+  
+  if (fits_open_file(dtcObject,dtcName,READWRITE,&status))
+    {
+      message = "Cannot open output intermediate file " + string(dtcName);
+      EP_PRINT_ERROR(message,status); return(EPFAIL);
+    }
+  
+  if (reconstruct_init->clobber == 1)
+    {
+      strncpy(extname,"PULSES",9);
+      extname[9]='\0';
+                
+      // PULSES HDU
+      if (fits_create_tbl(*dtcObject, BINARY_TBL,0,0,tt,tf,tu,extname,&status))
+        {
+          message = "Cannot create table " + string(extname) + " in output intermediate file " + string(dtcName);
+          EP_PRINT_ERROR(message,status); return(EPFAIL);
+        }
+      
+      if (fits_movnam_hdu(*dtcObject, ANY_HDU,extname, 0, &status))
+        {
+          message = "Cannot move to HDU " + string(extname) + " in output intermediate file " + string(dtcName);
+          EP_PRINT_ERROR(message,status); return(EPFAIL);
+        }
+      
+      strncpy(keyname,"MODE",9);
+      keyname[9]='\0';
+      fits_write_key(*dtcObject,TINT,keyname,&(reconstruct_init->mode),NULL,&status);
+      
+      strncpy(keyname,"EVENTSZ",9);
+      keyname[9]='\0';
+      assert(reconstruct_init->pulse_length > 0);
+      fits_write_key(*dtcObject,TINT,keyname,&(reconstruct_init->pulse_length),NULL,&status);
+      if (reconstruct_init->mode == 0)
+        {
+          strcpy(keyname,"ENERGY");
+          fits_write_key(*dtcObject,TDOUBLE,keyname,&(reconstruct_init-> monoenergy),NULL,&status);
+        }
+      strncpy(keyname,"SAMPRATE",9);
+      keyname[9]='\0';
+      assert(samprate > 0);
+      fits_write_key(*dtcObject,TDOUBLE,keyname,&samprate,NULL,&status);
+      if (status != 0)
+        {
+          message = "Cannot write keyword some keyword in output intermediate file " + string(dtcName);
+          EP_PRINT_ERROR(message,status); return(EPFAIL);
+        }
+      
+      // TESTINFO HDU
+      strncpy(extname,"TESTINFO",9);
+      extname[9]='\0';
+      if (fits_create_tbl(*dtcObject, BINARY_TBL,0,0,tt,tf,tu,extname,&status))
+        {
+          message = "Cannot create table " + string(extname) + " in output intermediate file " + string(dtcName);
+          EP_PRINT_ERROR(message,status); return(EPFAIL);
+        }
+      
+      // Primary HDU
+      strncpy(extname,"Primary",9);
+      extname[9]='\0';
+      if (fits_movabs_hdu(*dtcObject, 1, NULL, &status))
+        {
+          message = "Cannot move to HDU " + string(extname) + " in output intermediate file " + string(dtcName);
+          EP_PRINT_ERROR(message,status); return(EPFAIL);
+        }
+      
+      strncpy(keyname,"HISTORY",9);
+      keyname[9]='\0';
+      const char * charhistory= "HISTORY Starting parameter list";
+      strncpy(keyvalstr,charhistory,999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      string strhistory;
+      char comment[MAXMSG];
+      
+      sprintf(comment, "RecordFile = %s", reconstruct_init->record_file);
+      fits_write_comment(*dtcObject, comment, &status);
+      
+      sprintf(comment, "TesEventFile = %s", reconstruct_init->event_file);
+      fits_write_comment(*dtcObject, comment, &status);
+      
+      sprintf(comment, "LibraryFile = %s", reconstruct_init->library_file);
+      fits_write_comment(*dtcObject, comment, &status);
+      
+      sprintf(comment, "NoiseFile = %s", reconstruct_init->noise_file);
+      fits_write_comment(*dtcObject, comment, &status);
+      
+      char str_mode[125];		snprintf(str_mode,125,"%d",reconstruct_init->mode);
+      strhistory = string("mode = ") + string(str_mode);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      strhistory=string("FilterDomain = ") + reconstruct_init->FilterDomain;
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      strhistory=string("FilterMethod = ") + reconstruct_init->FilterMethod;
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      strhistory=string("EnergyMethod = ") + reconstruct_init->EnergyMethod;
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_LagsOrNot[125];      	snprintf(str_LagsOrNot,125,"%d",reconstruct_init->LagsOrNot);
+      strhistory=string("LagsOrNot = ") + string(str_LagsOrNot);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_OFIter[125];     	snprintf(str_OFIter,125,"%d",reconstruct_init->OFIter);
+      strhistory=string("OFIter = ") + string(str_OFIter);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_OFLib[125];      	snprintf(str_OFLib,125,"%d",reconstruct_init->OFLib);
+      strhistory=string("OFLib = ") + string(str_OFLib);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      strhistory=string("OFInterp = ") + reconstruct_init->OFInterp;
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      strhistory=string("OFStrategy = ") + reconstruct_init->OFStrategy;
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_OFLength[125];		snprintf(str_OFLength,125,"%d",reconstruct_init->OFLength);
+      strhistory=string("OFLength = ") + string(str_OFLength);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_maxPulsesPerRecord[125];	snprintf(str_maxPulsesPerRecord,125,"%d",reconstruct_init->maxPulsesPerRecord);
+      strhistory=string("maxPulsesPerRecord = ") + string(str_maxPulsesPerRecord);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_pulse_length[125];	snprintf(str_pulse_length,125,"%d",inputPulseLength);
+      strhistory=string("PulseLength = ") + string(str_pulse_length);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_scaleFactor[125];	snprintf(str_scaleFactor,125,"%f",reconstruct_init->scaleFactor);
+      strhistory=string("scaleFactor = ") + string(str_scaleFactor);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_samplesUp[125];	snprintf(str_samplesUp,125,"%f",reconstruct_init->samplesUp);
+      strhistory=string("samplesUp = ") + string(str_samplesUp);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_nSgms[125];	    	snprintf(str_nSgms,125,"%f",reconstruct_init->nSgms);
+      strhistory=string("nSgms = ") + string(str_nSgms);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_LrsT[125];		snprintf(str_LrsT,125,"%e",reconstruct_init->LrsT);
+      strhistory=string("LrsT = ") + string(str_LrsT);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_LbT[125];		snprintf(str_LbT,125,"%e",reconstruct_init->LbT);
+      strhistory=string("LbT = ") + string(str_LbT);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_monoenergy[125];	snprintf(str_monoenergy,125,"%f",reconstruct_init->monoenergy);
+      strhistory=string("monoenergy = ") + string(str_monoenergy);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_largeFilter[125];	snprintf(str_largeFilter,125,"%d",reconstruct_init->largeFilter);
+      strhistory=string("largeFilter = ") + string(str_largeFilter);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_intermediate[125];      snprintf(str_intermediate,125,"%d",reconstruct_init->intermediate);
+      strhistory=string("intermediate = ") + string(str_intermediate);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      sprintf(comment, "detectFile = %s", reconstruct_init->detectFile);
+      fits_write_comment(*dtcObject, comment, &status);
+      
+      sprintf(comment, "fiterFile = %s", reconstruct_init->filterFile);
+      fits_write_comment(*dtcObject, comment, &status);
+      
+      char str_clobber[125];      	snprintf(str_clobber,125,"%d",reconstruct_init->clobber);
+      strhistory=string("clobber = ") + string(str_clobber);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_SaturationValue[125];	snprintf(str_SaturationValue,125,"%e",reconstruct_init->SaturationValue);
+      strhistory=string("SaturationValue = ") + string(str_SaturationValue);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_tstartPulse1[125];	
+      if (reconstruct_init->tstartPulse1 == 0)			  	snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1);
+      else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") == 0)		snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1+2);
+      else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") != 0)		snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1+1);
+      strhistory=string("tstartPulse1 = ") + string(str_tstartPulse1);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_tstartPulse2[125];	
+      if (reconstruct_init->tstartPulse2 == 0)			  	snprintf(str_tstartPulse2,125,"%d",reconstruct_init->tstartPulse2);
+      else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") == 0)		snprintf(str_tstartPulse2,125,"%d",reconstruct_init->tstartPulse2+2);
+      else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") != 0)		snprintf(str_tstartPulse2,125,"%d",reconstruct_init->tstartPulse2+1);
+      strhistory=string("tstartPulse2 = ") + string(str_tstartPulse2);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      char str_tstartPulse3[125];	
+      if (reconstruct_init->tstartPulse3 == 0)			  	snprintf(str_tstartPulse3,125,"%d",reconstruct_init->tstartPulse3);
+      else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") == 0)		snprintf(str_tstartPulse3,125,"%d",reconstruct_init->tstartPulse3+2);
+      else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") != 0)		snprintf(str_tstartPulse3,125,"%d",reconstruct_init->tstartPulse3+1);
+      strhistory=string("tstartPulse3 = ") + string(str_tstartPulse3);
+      strncpy(keyvalstr,strhistory.c_str(),999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      charhistory= "HISTORY Ending parameter list";
+      strncpy(keyvalstr,charhistory,999);
+      keyvalstr[999]='\0';
+      fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+      
+      if (status != 0)
+        {
+          message = "Cannot write some keyword in output intermediate file " + string(dtcName);
+          EP_PRINT_ERROR(message,status); return(EPFAIL);
+        }
+    }
+  
+  return EPOK;
 }
 /*xxxx end of SECTION A2 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
@@ -2172,9 +2206,9 @@ int writePulses(ReconstructInitSIRENA** reconstruct_init, double samprate, doubl
 		// Free allocated GSL vectors
 		gsl_matrix_free (vgslout2);
 
-		delete [] obj.nameTable;
-		delete [] obj.nameCol;
-		delete [] obj.unit;
+		delete [] obj.nameTable; obj.nameTable = 0;
+		delete [] obj.nameCol; obj.nameCol = 0;
+		delete [] obj.unit; obj.unit = 0;
 	}
 
 	return (EPOK);
@@ -2258,9 +2292,10 @@ int writeTestInfo(ReconstructInitSIRENA* reconstruct_init, gsl_vector *recordDER
 	gsl_matrix_free(matrixToWrite);
 	gsl_vector_free(vectorToWrite);
 
-	delete [] obj.nameTable;
-	delete [] obj.nameCol;//cout<<"tend1: "<<gsl_vector_get(tendgsl,i)<<endl;
-	delete [] obj.unit;
+	delete [] obj.nameTable; obj.nameTable = 0;
+	delete [] obj.nameCol; obj.nameCol = 0;
+        //cout<<"tend1: "<<gsl_vector_get(tendgsl,i)<<endl;
+	delete [] obj.unit; obj.unit = 0;
 
 	return (EPOK);
 }
@@ -2417,7 +2452,11 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 			// It is note necessary to check 'memcpy' because it is the non pile-up case
 			if (i < pulsesAll->ndetpulses)
 			{
-				gsl_vector_memcpy(pulse,pulsesAll->pulses_detected[i].pulse_adc);	
+                          
+                          printf("copy %zu - %zu\n",
+                                 pulse->size, 
+                                 pulsesAll->pulses_detected[i].pulse_adc->size);
+                          gsl_vector_memcpy(pulse,pulsesAll->pulses_detected[i].pulse_adc);	
 			}
 			else
 			{
@@ -3572,6 +3611,7 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 		message = "Cannot close file " + string(inLibName);
 		EP_PRINT_ERROR(message,status);return(EPFAIL);
 	}
+        *inLibObject = 0;
 	
 	return (EPOK);
 }
@@ -4177,23 +4217,23 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 			gsl_vector_free(weightMatrixes_row);
 			gsl_matrix_free(R);
 		}
-		delete [] objPRCLOFWM.unit;
+		delete [] objPRCLOFWM.unit; objPRCLOFWM.unit = 0;
 	}
 	
 	gsl_vector_free(fixedlengths);
 	
 	// Free memory
-	delete [] obj.nameTable;
-	delete [] obj.nameCol;
-	delete [] obj.unit;
-	delete [] objFREQ.nameTable;
-	delete [] objFREQ.nameCol;
-	delete [] objFREQ.unit;
-	delete [] objTIME.nameTable;
-	delete [] objTIME.nameCol;
-	delete [] objTIME.unit;
-	delete [] objPRCLOFWM.nameTable;
-	delete [] objPRCLOFWM.nameCol;
+	delete [] obj.nameTable; obj.nameTable = 0;
+	delete [] obj.nameCol; obj.nameCol = 0;
+	delete [] obj.unit; obj.unit = 0;
+	delete [] objFREQ.nameTable; objFREQ.nameTable = 0;
+	delete [] objFREQ.nameCol; objFREQ.nameCol = 0;
+	delete [] objFREQ.unit; objFREQ.unit = 0;
+	delete [] objTIME.nameTable; objTIME.nameTable = 0;
+	delete [] objTIME.nameCol; objTIME.nameCol = 0;
+	delete [] objTIME.unit; objTIME.unit = 0;
+	delete [] objPRCLOFWM.nameTable; objPRCLOFWM.nameTable = 0;
+	delete [] objPRCLOFWM.nameCol; objPRCLOFWM.nameCol = 0;
 	
 	return (EPOK);
 }
@@ -5574,25 +5614,25 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 	
 	gsl_vector_free(fixedlengths);
 	
-	delete [] obj.nameTable;
-	delete [] obj.nameCol;
-	delete [] obj.unit;
+	delete [] obj.nameTable; obj.nameTable = 0;
+	delete [] obj.nameCol; obj.nameCol = 0;
+	delete [] obj.unit; obj.unit = 0;
 	
-	delete [] objFREQ.nameTable;
-	delete [] objFREQ.nameCol;
-	delete [] objFREQ.unit;
+	delete [] objFREQ.nameTable; objFREQ.nameTable = 0;
+	delete [] objFREQ.nameCol; objFREQ.nameCol = 0;
+	delete [] objFREQ.unit; objFREQ.unit = 0;
 	
-	delete [] objTIME.nameTable;
-	delete [] objTIME.nameCol;
-	delete [] objTIME.unit;
+	delete [] objTIME.nameTable; objTIME.nameTable = 0;
+	delete [] objTIME.nameCol; objTIME.nameCol = 0;
+	delete [] objTIME.unit; objTIME.unit = 0;
 	
-	delete [] objWN.nameTable;
-	delete [] objWN.nameCol;
-	delete [] objWN.unit;
+	delete [] objWN.nameTable; objWN.nameTable = 0;
+	delete [] objWN.nameCol; objWN.nameCol = 0;
+	delete [] objWN.unit; objWN.unit = 0;
 	
-	delete [] objOFWM.nameTable;
-	delete [] objOFWM.nameCol;
-	delete [] objOFWM.unit;
+	delete [] objOFWM.nameTable; objOFWM.nameTable = 0;
+	delete [] objOFWM.nameCol; objOFWM.nameCol = 0;
+	delete [] objOFWM.unit; objOFWM.unit = 0;
 		
 	return (EPOK);
 }
@@ -9548,13 +9588,14 @@ int writeFilterHDU(ReconstructInitSIRENA **reconstruct_init, int pulse_index, do
 		message = "Cannot close file " + string(dtcName);
 		EP_PRINT_ERROR(message,status);return(EPFAIL);
 	}
+        *dtcObject = 0;
 
 	(*reconstruct_init)->clobber = 2;
 	
 	// Free memory
-	delete [] obj.nameTable;
-	delete [] obj.nameCol;
-	delete [] obj.unit;
+	delete [] obj.nameTable; obj.nameTable = 0;
+	delete [] obj.nameCol; obj.nameCol = 0;
+	delete [] obj.unit; obj.unit = 0;
 
 	return(EPOK);
 }

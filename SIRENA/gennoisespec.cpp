@@ -301,7 +301,7 @@ int main (int argc, char **argv)
 		message = "Cannot close file " + string(infileName);
 		EP_EXIT_ERROR(message,status);
 	}
-
+        infileObject = 0;
 	// Generate CSD representation	
 	if (NumMeanSamples == 0)
 	{
@@ -507,11 +507,11 @@ int main (int argc, char **argv)
 		message = "Cannot close file " + string(gnoiseName);
 		EP_EXIT_ERROR(message,status);
 	}	
-
+        gnoiseObject = 0;
 	// Free memory
-	delete [] obj.nameTable;
-	delete [] obj.nameCol;
-	delete [] obj.unit;
+	delete [] obj.nameTable; obj.nameTable = 0;
+	delete [] obj.nameCol; obj.nameCol = 0;
+	delete [] obj.unit; obj.unit = 0;
 
 	// Finalize the task
 	time_t t_end = time(NULL);

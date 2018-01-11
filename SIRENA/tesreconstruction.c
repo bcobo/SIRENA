@@ -39,22 +39,18 @@ int tesreconstruction_main() {
     // Get program parameters.
     status=getpar(&par);
     CHECK_STATUS_BREAK(status);
-    
     // Sixt standard keywords structure
     SixtStdKeywords* keywords = newSixtStdKeywords(&status);
     CHECK_STATUS_BREAK(status);
-
     // Open record file
     TesTriggerFile* record_file = openexistingTesTriggerFile(par.RecordFile,keywords,&status);
     CHECK_STATUS_BREAK(status);
-
     //Open outfile
     TesEventFile * outfile = opennewTesEventFile(par.TesEventFile,
     		keywords,
     		par.clobber,
     		&status);
     CHECK_STATUS_BREAK(status);
-
     // Initialize PP data structures needed for pulse filtering
     ReconstructInit* reconstruct_init = newReconstructInit(&status);
     CHECK_STATUS_BREAK(status);
@@ -66,7 +62,6 @@ int tesreconstruction_main() {
     CHECK_STATUS_BREAK(status);  
     OptimalFilterSIRENA* optimalFilter = newOptimalFilterSIRENA(&status);
     CHECK_STATUS_BREAK(status);// define a second structure for calibration
-    
     if(!strcmp(par.Rcmethod,"PP")){
 	  initializeReconstruction(reconstruct_init,par.OptimalFilterFile,par.PulseLength,
     		par.PulseTemplateFile,par.Threshold,par.Calfac,par.NormalExclusion,
@@ -77,7 +72,6 @@ int tesreconstruction_main() {
 		par.FilterDomain, par.FilterMethod, par.EnergyMethod, par.filtEev, par.OFNoise, par.LagsOrNot, par.OFIter, par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength,
 		par.monoenergy, par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, par.filterFile, par.clobber, par.EventListSize, par.SaturationValue,
 		par.tstartPulse1, par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
-	  
 	  // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
 	  reconstruct_init_sirena->grading = NULL;
 	  reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
@@ -261,7 +255,7 @@ int getpar(struct Parameters* const par)
     SIXT_ERROR("failed reading the history parameter");
     return(status);
   }
-  
+
   status=ape_trad_query_double("SaturationValue", &par->SaturationValue);
   if (EXIT_SUCCESS!=status) {
     SIXT_ERROR("failed reading the SaturationValue parameter");
@@ -269,7 +263,6 @@ int getpar(struct Parameters* const par)
   }
 
   if(strcmp(par->Rcmethod,"PP")==0){
-    
 	// PP  reconstruction method
 	status=ape_trad_query_string("OptimalFilterFile", &sbuffer);
 	if (EXIT_SUCCESS!=status) {
