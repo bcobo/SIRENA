@@ -326,6 +326,7 @@ typedef struct PulseDetected
   int numLagsUsed;
 #ifdef __cplusplus
   PulseDetected();
+  PulseDetected& operator=(const PulseDetected& other);
   // FIXME
   ~PulseDetected();
 #endif
@@ -344,6 +345,7 @@ typedef struct PulsesCollection
   PulseDetected* pulses_detected;
 #ifdef __cplusplus
   PulsesCollection();
+  PulsesCollection& operator=(const PulsesCollection& other);
   // FIXME
   ~PulsesCollection();
 #endif

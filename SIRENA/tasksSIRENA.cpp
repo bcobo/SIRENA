@@ -2453,9 +2453,9 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 			if (i < pulsesAll->ndetpulses)
 			{
                           
-                          printf("copy %zu - %zu\n",
-                                 pulse->size, 
-                                 pulsesAll->pulses_detected[i].pulse_adc->size);
+                          //printf("copy %zu - %zu\n",
+                          //       pulse->size, 
+                          //       pulsesAll->pulses_detected[i].pulse_adc->size);
                           gsl_vector_memcpy(pulse,pulsesAll->pulses_detected[i].pulse_adc);	
 			}
 			else

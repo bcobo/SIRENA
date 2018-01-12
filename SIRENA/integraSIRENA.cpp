@@ -411,6 +411,10 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
     }
 
   // Detect pulses in record
+  //ReconstructInitSIRENA* rec = new ReconstructInitSIRENA();
+  //*rec = *(reconstruct_init);
+  //delete rec;
+  //printf("Rec pointers %p - %p\n", &rec, reconstruct_init);
   runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
   
   if(pulsesInRecord->ndetpulses == 0) // No pulses found in record
@@ -2780,10 +2784,15 @@ ReconstructInitSIRENA::ReconstructInitSIRENA():
 ReconstructInitSIRENA&
 ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
 {
+  //printf("operator ReconstructInitSIRENA\n");
   if (this != &other){
-    if(library_collection) delete library_collection;
-    library_collection = new LibraryCollection();
-    *library_collection = (*other.library_collection);
+    if(library_collection) {
+      delete library_collection; library_collection = 0;
+    }
+    if(other.library_collection){
+      library_collection = new LibraryCollection();
+      *library_collection = (*other.library_collection);
+    }
 
     threshold = other.threshold;
     strcpy(library_file,other.library_file);
@@ -2810,9 +2819,13 @@ ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
     strcpy(detectionMode, other.detectionMode);
     
     //NoiseSpec
-    if(noise_spectrum) delete noise_spectrum;
-    noise_spectrum = new NoiseSpec();
-    *noise_spectrum = (*other.noise_spectrum);
+    if(noise_spectrum) {
+      delete noise_spectrum; noise_spectrum = 0;
+    }
+    if(other.noise_spectrum){
+      noise_spectrum = new NoiseSpec();
+      *noise_spectrum = (*other.noise_spectrum);
+    }
 
     strcpy(FilterDomain, other.FilterDomain);
     strcpy(FilterMethod, other.FilterMethod);
@@ -2847,9 +2860,13 @@ ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
     strcpy(XMLFile, other.XMLFile);
     
     //Grading
-    if(grading) delete grading;
-    grading = new Grading();
-    *grading = (*other.grading);
+    if(grading) {
+      delete grading; grading = 0;
+    }
+    if(other.grading){
+      grading = new Grading();
+      *grading = (*other.grading);
+    }
     
   }
   return *this;
@@ -2915,158 +2932,303 @@ LibraryCollection::LibraryCollection():
 
 LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
 {
-return *this;
+  //printf("operator LibraryCollection\n");
   if (this != &other){
+    //printf("%i - %i\n", ntemplates, ntemplates);
     ntemplates = other.ntemplates;
     nfixedfilters = other.nfixedfilters;
     
-    if(energies) gsl_vector_free(energies);
-    energies = gsl_vector_alloc(other.energies->size);
-    gsl_vector_memcpy(energies, other.energies);
-    
-    if(pulse_heights) gsl_vector_free(pulse_heights);
-    pulse_heights = gsl_vector_alloc(other.pulse_heights->size);
-    gsl_vector_memcpy(pulse_heights, other.pulse_heights);
-    
+    if(energies) {
+      gsl_vector_free(energies); energies = 0;
+    }
+    if(other.energies){
+      energies = gsl_vector_alloc(other.energies->size);
+      gsl_vector_memcpy(energies, other.energies);
+    }
+    if(pulse_heights) { 
+      gsl_vector_free(pulse_heights); pulse_heights = 0;
+    }
+    if(other.pulse_heights){
+      pulse_heights = gsl_vector_alloc(other.pulse_heights->size);
+      gsl_vector_memcpy(pulse_heights, other.pulse_heights);
+    }
     //PulseTemplate* pulse_templatesMaxLengthFixedFilter;
-    if(pulse_templatesMaxLengthFixedFilter) 
-      delete pulse_templatesMaxLengthFixedFilter;
-    pulse_templatesMaxLengthFixedFilter = new PulseTemplate();
-    *pulse_templatesMaxLengthFixedFilter = 
-      (*other.pulse_templatesMaxLengthFixedFilter);
+    if(ntemplates > 0 && pulse_templatesMaxLengthFixedFilter) {
+      delete [] pulse_templatesMaxLengthFixedFilter;
+      pulse_templatesMaxLengthFixedFilter = 0;
+    }
+    if(other.pulse_templatesMaxLengthFixedFilter){
+      pulse_templatesMaxLengthFixedFilter = new PulseTemplate[ntemplates];
+      for (unsigned int i = 0; i < ntemplates; ++i){
+        pulse_templatesMaxLengthFixedFilter[i] = 
+          other.pulse_templatesMaxLengthFixedFilter[i];
+      }
+    }
+    //*pulse_templatesMaxLengthFixedFilter = 
+    //(*other.pulse_templatesMaxLengthFixedFilter);
     //PulseTemplate* pulse_templates;
-    if(pulse_templates) 
-      delete pulse_templates;
-    pulse_templates = new PulseTemplate();
-    *pulse_templates = (*other.pulse_templates);
+    if(ntemplates > 0 && pulse_templates) {
+      delete [] pulse_templates; pulse_templates = 0;
+    }
+    if(pulse_templates){
+      pulse_templates = new PulseTemplate[ntemplates];
+      for (unsigned int i = 0; i < ntemplates; ++i){
+        pulse_templates[i] = other.pulse_templates[i];
+      }
+    }
+    //*pulse_templates = (*other.pulse_templates);
     //PulseTemplate* pulse_templates_filder;
-    if(pulse_templates_filder) 
-      delete pulse_templates_filder;
-    pulse_templates_filder = new PulseTemplate();
-    *pulse_templates_filder = (*other.pulse_templates_filder);
+    if(ntemplates > 0 && pulse_templates_filder) {
+      delete [] pulse_templates_filder; pulse_templates_filder = 0;
+    }
+    if (other.pulse_templates_filder){
+      pulse_templates_filder = new PulseTemplate[ntemplates];
+      for (unsigned int i = 0; i < ntemplates; ++i){
+        pulse_templates_filder[i] = other.pulse_templates_filder[i];
+      }
+    }
+    //*pulse_templates_filder = (*other.pulse_templates_filder);
     
-    if(maxDERs) gsl_vector_free(maxDERs);
-    maxDERs = gsl_vector_alloc(other.maxDERs->size);
-    gsl_vector_memcpy(maxDERs, other.maxDERs);
+    if(maxDERs) {
+      gsl_vector_free(maxDERs); maxDERs = 0;
+    }
+    if (other.maxDERs){
+      maxDERs = gsl_vector_alloc(other.maxDERs->size);
+      gsl_vector_memcpy(maxDERs, other.maxDERs);
+    }
     
-    if(samp1DERs) gsl_vector_free(samp1DERs);
-    samp1DERs = gsl_vector_alloc(other.samp1DERs->size);
-    gsl_vector_memcpy(samp1DERs, other.samp1DERs);
+    if(samp1DERs) {
+      gsl_vector_free(samp1DERs); samp1DERs = 0;
+    }
+    if(other.samp1DERs){
+      samp1DERs = gsl_vector_alloc(other.samp1DERs->size);
+      gsl_vector_memcpy(samp1DERs, other.samp1DERs);
+    }
     
     //PulseTemplate* pulse_templates_B0;
-    if(pulse_templates_B0) 
-      delete pulse_templates_B0;
-    pulse_templates_B0 = new PulseTemplate();
-    *pulse_templates_B0 = (*other.pulse_templates_B0);
+    if(ntemplates > 0 && pulse_templates_B0){
+      delete [] pulse_templates_B0; pulse_templates = 0;
+    }
+    if(other.pulse_templates_B0){
+      pulse_templates_B0 = new PulseTemplate[ntemplates];
+      for (unsigned int i = 0; i < ntemplates; ++i){
+        pulse_templates_B0[i] = other.pulse_templates_B0[i];
+      }
+    }
+    //*pulse_templates_B0 = (*other.pulse_templates_B0);
     //MatchedFilter* matched_filters;
-    if(matched_filters) 
-      delete matched_filters;
-    matched_filters = new MatchedFilter();
-    *matched_filters = (*other.matched_filters);
+    if(ntemplates > 0 && matched_filters) {
+      delete [] matched_filters; matched_filters = 0;
+    }
+    if(other.matched_filters){
+      matched_filters = new MatchedFilter[ntemplates];
+      for (unsigned int i = 0; i < ntemplates; ++i){
+        matched_filters[i] = other.matched_filters[i];
+      }
+    }
+    //*matched_filters = (*other.matched_filters);
     //MatchedFilter* matched_filters_B0;
-    if(matched_filters_B0) 
-      delete matched_filters_B0;
-    matched_filters_B0 = new MatchedFilter();
-    *matched_filters_B0 = (*other.matched_filters_B0);
+    if(ntemplates > 0 && matched_filters_B0){ 
+      delete [] matched_filters_B0; matched_filters_B0 = 0;
+    }
+    if(other.matched_filters_B0){
+      matched_filters_B0 = new MatchedFilter[ntemplates];
+      for (unsigned int i = 0; i < ntemplates; ++i){
+        matched_filters_B0[i] = other.matched_filters_B0[i];
+      }
+    }
+    //*matched_filters_B0 = (*other.matched_filters_B0);
     //OptimalFilterSIRENA* optimal_filters;
-    if(optimal_filters) 
-      delete matched_filters_B0;
-    optimal_filters = new OptimalFilterSIRENA();
-    *optimal_filters = (*other.optimal_filters);
+    if(ntemplates > 0 && optimal_filters) {
+      delete [] optimal_filters; optimal_filters = 0;
+    }
+    if(other.optimal_filters){
+      optimal_filters = new OptimalFilterSIRENA[ntemplates];
+      for (unsigned int i = 0; i < ntemplates; ++i){
+        optimal_filters[i] = other.optimal_filters[i];
+      }
+    }
+    //*optimal_filters = (*other.optimal_filters);
     //OptimalFilterSIRENA* optimal_filtersFREQ;
-    if(optimal_filtersFREQ) 
-      delete optimal_filtersFREQ;
-    optimal_filtersFREQ = new OptimalFilterSIRENA();
-    *optimal_filtersFREQ = (*other.optimal_filtersFREQ);
+    if(ntemplates > 0 && optimal_filtersFREQ) {
+      delete [] optimal_filtersFREQ; optimal_filtersFREQ = 0;
+    }
+    if(other.optimal_filtersFREQ){
+      optimal_filtersFREQ = new OptimalFilterSIRENA[ntemplates];
+      for (unsigned int i = 0; i < ntemplates; ++i){
+        optimal_filtersFREQ[i] = other.optimal_filtersFREQ[i];
+      }
+    }
+    //*optimal_filtersFREQ = (*other.optimal_filtersFREQ);
     //OptimalFilterSIRENA* optimal_filtersTIME;
-    if(optimal_filtersTIME) 
-      delete optimal_filtersTIME;
-    optimal_filtersTIME = new OptimalFilterSIRENA();
-    *optimal_filtersTIME = (*other.optimal_filtersTIME);
+    if(ntemplates > 0 && optimal_filtersTIME) {
+      delete [] optimal_filtersTIME; optimal_filtersTIME = 0;
+    }
+    if (other.optimal_filtersTIME){
+      optimal_filtersTIME = new OptimalFilterSIRENA[ntemplates];
+      for (unsigned int i = 0; i < ntemplates; ++i){
+        optimal_filtersTIME[i] = other.optimal_filtersTIME[i];
+      }
+    }
+    //*optimal_filtersTIME = (*other.optimal_filtersTIME);
     
-    if(V) gsl_matrix_free(V);
-    V = gsl_matrix_alloc(other.V->size1,
-                         other.V->size2);
-    gsl_matrix_memcpy(V, other.V);
+    if(V) {
+      gsl_matrix_free(V); V = 0;
+    }
+    if(other.V){
+      V = gsl_matrix_alloc(other.V->size1,
+                           other.V->size2);
+      gsl_matrix_memcpy(V, other.V);
+    }
     
-    if(W) gsl_matrix_free(W);
-    W = gsl_matrix_alloc(other.W->size1,
-                         other.W->size2);
-    gsl_matrix_memcpy(W, other.W);    
+    if(W) {
+      gsl_matrix_free(W); W = 0;
+    }
+    if (other.W){
+      W = gsl_matrix_alloc(other.W->size1,
+                           other.W->size2);
+      gsl_matrix_memcpy(W, other.W);    
+    }
     
-    if(WAB) gsl_matrix_free(WAB);
-    WAB = gsl_matrix_alloc(other.WAB->size1,
-                           other.WAB->size2);
-    gsl_matrix_memcpy(WAB, other.WAB);
+    if(WAB) {
+      gsl_matrix_free(WAB); WAB = 0;
+    }
+    if(other.WAB){
+      WAB = gsl_matrix_alloc(other.WAB->size1,
+                             other.WAB->size2);
+      gsl_matrix_memcpy(WAB, other.WAB);
+    }
     
-    if(T) gsl_matrix_free(T);
-    T = gsl_matrix_alloc(other.T->size1,
-                         other.T->size2);
-    gsl_matrix_memcpy(T, other.T);
+    if(T) {
+      gsl_matrix_free(T); T = 0;
+    }
+    if(other.T){
+      T = gsl_matrix_alloc(other.T->size1,
+                           other.T->size2);
+      gsl_matrix_memcpy(T, other.T);
+    }
     
-    if(t) gsl_vector_free(t);
-    t = gsl_vector_alloc(other.t->size);
-    gsl_vector_memcpy(t, other.t);
+    if(t) {
+      gsl_vector_free(t); t = 0;
+    }
+    if(other.t){
+      t = gsl_vector_alloc(other.t->size);
+      gsl_vector_memcpy(t, other.t);
+    }
     
-    if(X) gsl_matrix_free(X);
-    X = gsl_matrix_alloc(other.X->size1,
-                         other.X->size2);
-    gsl_matrix_memcpy(X, other.X);
+    if(X) {
+      gsl_matrix_free(X); X = 0;
+    }
+    if(other.X){
+      X = gsl_matrix_alloc(other.X->size1,
+                           other.X->size2);
+      gsl_matrix_memcpy(X, other.X);
+    }
     
-    if(Y) gsl_matrix_free(Y);
-    Y = gsl_matrix_alloc(other.Y->size1,
-                         other.Y->size2);
-    gsl_matrix_memcpy(Y, other.Y);
+    if(Y) {
+      gsl_matrix_free(Y); Y = 0;
+    }
+    if(other.Y){
+      Y = gsl_matrix_alloc(other.Y->size1,
+                           other.Y->size2);
+      gsl_matrix_memcpy(Y, other.Y);
+    }
     
-    if(Z) gsl_matrix_free(Z);
-    Z = gsl_matrix_alloc(other.Z->size1,
-                         other.Z->size2);
-    gsl_matrix_memcpy(Z, other.Z);
+    if(Z) {
+      gsl_matrix_free(Z); Z = 0;
+    }
+    if(other.Z){
+      Z = gsl_matrix_alloc(other.Z->size1,
+                           other.Z->size2);
+      gsl_matrix_memcpy(Z, other.Z);
+    }
     
-    if(r) gsl_vector_free(r);
-    r = gsl_vector_alloc(other.r->size);
-    gsl_vector_memcpy(r, other.r);
+    if(r) {
+      gsl_vector_free(r); r = 0;
+    }
+    if(other.r){
+      r = gsl_vector_alloc(other.r->size);
+      gsl_vector_memcpy(r, other.r);
+    }
     
-    if(PAB) gsl_matrix_free(PAB);
-    PAB = gsl_matrix_alloc(other.PAB->size1,
-                         other.PAB->size2);
-    gsl_matrix_memcpy(PAB, other.PAB);
+    if(PAB) {
+      gsl_matrix_free(PAB); PAB = 0;
+    }
+    if(other.PAB){
+      PAB = gsl_matrix_alloc(other.PAB->size1,
+                             other.PAB->size2);
+      gsl_matrix_memcpy(PAB, other.PAB);
+    }
     
-    if(PABMXLFF) gsl_matrix_free(PABMXLFF);
-    PABMXLFF = gsl_matrix_alloc(other.PABMXLFF->size1,
-                                other.PABMXLFF->size2);
-    gsl_matrix_memcpy(PABMXLFF, other.PABMXLFF);
+    if(PABMXLFF) {
+      gsl_matrix_free(PABMXLFF); PABMXLFF = 0;
+    }
+    if(other.PABMXLFF){
+      PABMXLFF = gsl_matrix_alloc(other.PABMXLFF->size1,
+                                  other.PABMXLFF->size2);
+      gsl_matrix_memcpy(PABMXLFF, other.PABMXLFF);
+    }
     
-    if(DAB) gsl_matrix_free(DAB);
-    DAB = gsl_matrix_alloc(other.DAB->size1,
-                           other.DAB->size2);
-    gsl_matrix_memcpy(DAB, other.DAB);
+    if(DAB) {
+      gsl_matrix_free(DAB); DAB = 0;
+    }
+    if(other.DAB){
+      DAB = gsl_matrix_alloc(other.DAB->size1,
+                             other.DAB->size2);
+      gsl_matrix_memcpy(DAB, other.DAB);
+    }
     
     //OptimalFilterSIRENA* optimal_filtersab;
-    if(optimal_filtersab) 
-      delete optimal_filtersab;
-    optimal_filtersab = new OptimalFilterSIRENA();
-    *optimal_filtersab = (*other.optimal_filtersab);
+    if(ntemplates > 0 && optimal_filtersab) {
+      delete [] optimal_filtersab; optimal_filtersab = 0;
+    }
+    if(other.optimal_filtersab){
+      optimal_filtersab = new OptimalFilterSIRENA[ntemplates];
+      for (unsigned int i = 0; i < ntemplates; ++i){
+        optimal_filtersab[i] = other.optimal_filtersab[i];
+      }
+    }
+    //*optimal_filtersab = (*other.optimal_filtersab);
     //OptimalFilterSIRENA* optimal_filtersabTIME;
-    if(optimal_filtersabTIME) 
-      delete optimal_filtersabTIME;
-    optimal_filtersabTIME = new OptimalFilterSIRENA();
-    *optimal_filtersabTIME = (*other.optimal_filtersabTIME);
+    if(ntemplates > 0 && optimal_filtersabTIME) {
+      delete [] optimal_filtersabTIME; optimal_filtersabTIME = 0;
+    }
+    if(other.optimal_filtersabTIME){
+      optimal_filtersabTIME = new OptimalFilterSIRENA[ntemplates];
+      for (unsigned int i = 0; i < ntemplates; ++i){
+        optimal_filtersabTIME[i] = other.optimal_filtersabTIME[i];
+      }
+    }
+    //*optimal_filtersabTIME = (*other.optimal_filtersabTIME);
     //OptimalFilterSIRENA* optimal_filtersabFREQ;
-    if(optimal_filtersabFREQ) 
-      delete optimal_filtersabFREQ;
-    optimal_filtersabFREQ = new OptimalFilterSIRENA();
-    *optimal_filtersabFREQ = (*other.optimal_filtersabFREQ);
+    if(ntemplates > 0 && optimal_filtersabFREQ) {
+      delete [] optimal_filtersabFREQ; optimal_filtersabFREQ = 0;
+    }
+    if(other.optimal_filtersabFREQ){
+      optimal_filtersabFREQ = new OptimalFilterSIRENA[ntemplates];
+      for (unsigned int i = 0; i < ntemplates; ++i){
+        optimal_filtersabFREQ[i] = other.optimal_filtersabFREQ[i];
+      }
+    }
+    //*optimal_filtersabFREQ = (*other.optimal_filtersabFREQ);
     
-    if(PRECALWN) gsl_matrix_free(PRECALWN);
-    PRECALWN = gsl_matrix_alloc(other.PRECALWN->size1,
-                                other.PRECALWN->size2);
-    gsl_matrix_memcpy(PRECALWN, other.PRECALWN);
+    if(PRECALWN) {
+      gsl_matrix_free(PRECALWN); PRECALWN = 0;
+    }
+    if(other.PRECALWN){
+      PRECALWN = gsl_matrix_alloc(other.PRECALWN->size1,
+                                  other.PRECALWN->size2);
+      gsl_matrix_memcpy(PRECALWN, other.PRECALWN);
+    }
     
-    if(PRCLOFWM) gsl_matrix_free(PRCLOFWM);
-    PRCLOFWM = gsl_matrix_alloc(other.PRCLOFWM->size1,
-                                other.PRCLOFWM->size2);
-    gsl_matrix_memcpy(PRCLOFWM, other.PRCLOFWM);
+    if(PRCLOFWM) {
+      gsl_matrix_free(PRCLOFWM); PRCLOFWM = 0;
+    }
+    if(other.PRCLOFWM){
+      PRCLOFWM = gsl_matrix_alloc(other.PRCLOFWM->size1,
+                                  other.PRCLOFWM->size2);
+      gsl_matrix_memcpy(PRCLOFWM, other.PRCLOFWM);
+    }
   }
   return *this;
 }
@@ -3250,6 +3412,36 @@ PulseDetected::PulseDetected():
 
 }
 
+PulseDetected& PulseDetected::operator=(const PulseDetected& other)
+{
+  //printf("operator PulseDetected\n");
+  if(this != &other){
+    
+    pulse_duration = other.pulse_duration;
+    grade1 = other.grade1;
+    grade2 = other.grade2;
+    grade2_1 = other.grade2_1;
+    pixid = other.pixid;
+    if(pulse_adc) {
+      gsl_vector_free(pulse_adc); pulse_adc = 0;
+    }
+    if(other.pulse_adc){
+      pulse_adc = gsl_vector_alloc(other.pulse_adc->size);
+      gsl_vector_memcpy(pulse_adc, other.pulse_adc);
+    }
+    Tstart = other.Tstart;
+    Tend = other.Tend;
+    riseTime = other.riseTime;
+    fallTime = other.fallTime;
+    pulse_height = other.pulse_height;
+    maxDER = other.maxDER;
+    samp1DER = other.samp1DER;
+    energy = other.energy;
+    quality = other.quality;
+  }
+  return *this;
+}
+
 PulseDetected::~PulseDetected()
 {
   //printf("pulse_adc %p\n", pulse_adc);
@@ -3268,12 +3460,17 @@ MatrixStruct::MatrixStruct():
 
 MatrixStruct& MatrixStruct::operator=(const MatrixStruct& other)
 {
+  //printf("operator MatrixStruct\n");
   if(this != &other){
     matrixRows = other.matrixRows;
     matrixColumns = other.matrixColumns;
-    if (matrixBody) gsl_matrix_free(matrixBody);
-    matrixBody = gsl_matrix_alloc(matrixRows, matrixColumns);
-    gsl_matrix_memcpy(matrixBody, other.matrixBody);
+    if (matrixBody) {
+      gsl_matrix_free(matrixBody); matrixBody = 0;
+    }
+    if(other.matrixBody){
+      matrixBody = gsl_matrix_alloc(matrixRows, matrixColumns);
+      gsl_matrix_memcpy(matrixBody, other.matrixBody);
+    }
   }
   return *this;
 }
@@ -3296,13 +3493,18 @@ PulseTemplate::PulseTemplate():
   
 PulseTemplate& PulseTemplate::operator=(const PulseTemplate& other)
 {
+  //printf("operator PulseTemplate\n");
   if(this != &other){
     template_duration = other.template_duration;
     energy = other.energy;
     pulse_height = other.pulse_height;
-    if (ptemplate) gsl_vector_free(ptemplate);
-    ptemplate = gsl_vector_alloc(other.ptemplate->size);
-    gsl_vector_memcpy(ptemplate, other.ptemplate);
+    if (ptemplate) {
+      gsl_vector_free(ptemplate); ptemplate = 0;
+    }
+    if (other.ptemplate){
+      ptemplate = gsl_vector_alloc(other.ptemplate->size);
+      gsl_vector_memcpy(ptemplate, other.ptemplate);
+    }
   }
   return *this;
 }
@@ -3326,14 +3528,18 @@ MatchedFilter::MatchedFilter():
  
 MatchedFilter& MatchedFilter::operator=(const MatchedFilter& other)
 {
-  return *this;
+  //printf("operator MatchedFilter\n");
   if(this != &other){
     mfilter_duration = other.mfilter_duration;
     energy = other.energy;
     pulse_height = other.pulse_height;
-    if (mfilter) gsl_vector_free(mfilter);
-    mfilter = gsl_vector_alloc(other.mfilter->size);
-    gsl_vector_memcpy(mfilter, other.mfilter);
+    if (mfilter) {
+      gsl_vector_free(mfilter); mfilter = 0;
+    }
+    if(other.mfilter){
+      mfilter = gsl_vector_alloc(other.mfilter->size);
+      gsl_vector_memcpy(mfilter, other.mfilter);
+    }
   }
   return *this;
 }
@@ -3357,13 +3563,17 @@ OptimalFilterSIRENA::OptimalFilterSIRENA():
 OptimalFilterSIRENA& 
 OptimalFilterSIRENA::operator=(const OptimalFilterSIRENA& other)
 {
-  return *this;
+  //printf("operator OptimalFilterSIRENA\n");
   if(this != &other){
     ofilter_duration = other.ofilter_duration;
     energy = other.energy;
-    if (ofilter) gsl_vector_free(ofilter);
-    ofilter = gsl_vector_alloc(other.ofilter->size);
-    gsl_vector_memcpy(ofilter, other.ofilter);
+    if (ofilter) {
+      gsl_vector_free(ofilter); ofilter = 0;
+    }
+    if(other.ofilter){
+      ofilter = gsl_vector_alloc(other.ofilter->size);
+      gsl_vector_memcpy(ofilter, other.ofilter);
+    }
   }
   return *this;
 }
@@ -3389,21 +3599,33 @@ NoiseSpec::NoiseSpec():
 
 NoiseSpec& NoiseSpec::operator=(const NoiseSpec& other)
 {
-  return *this;
+  //printf("operator NOiseSpec\n");
   if(this != &other){
     noiseStd = other.noiseStd;
     baseline = other.baseline;
     noise_duration = other.noise_duration;
-    if (noisespec) gsl_vector_free(noisespec);
-    noisespec = gsl_vector_alloc(other.noisespec->size);
-    gsl_vector_memcpy(noisespec, other.noisespec);
-    if (noisefreqs) gsl_vector_free(noisefreqs);
-    noisefreqs = gsl_vector_alloc(other.noisefreqs->size);
-    gsl_vector_memcpy(noisefreqs, other.noisefreqs);
-    if (weightMatrixes) gsl_matrix_free(weightMatrixes);
-    weightMatrixes = gsl_matrix_alloc(other.weightMatrixes->size1,
-                                      other.weightMatrixes->size2);
-    gsl_matrix_memcpy(weightMatrixes, other.weightMatrixes);
+    if (noisespec) {
+      gsl_vector_free(noisespec); noisespec = 0;
+    }
+    if(other.noisespec){
+      noisespec = gsl_vector_alloc(other.noisespec->size);
+      gsl_vector_memcpy(noisespec, other.noisespec);
+    }
+    if (noisefreqs) {
+      gsl_vector_free(noisefreqs); noisefreqs = 0;
+    }
+    if(other.noisefreqs){
+      noisefreqs = gsl_vector_alloc(other.noisefreqs->size);
+      gsl_vector_memcpy(noisefreqs, other.noisefreqs);
+    }
+    if (weightMatrixes) {
+      gsl_matrix_free(weightMatrixes); weightMatrixes = 0;
+    }
+    if(other.weightMatrixes){
+      weightMatrixes = gsl_matrix_alloc(other.weightMatrixes->size1,
+                                        other.weightMatrixes->size2);
+      gsl_matrix_memcpy(weightMatrixes, other.weightMatrixes);
+    }
   }
   return *this;
 }
@@ -3430,16 +3652,24 @@ Grading::Grading():
   
 Grading& Grading::operator=(const Grading& other)
 {
-  return *this;
+  //printf("operator Grading\n");
   if(this != &other){
     ngrades = other.ngrades;
-    if (value) gsl_vector_free(value);
-    value = gsl_vector_alloc(other.value->size);
-    gsl_vector_memcpy(value, other.value);
-    if (gradeData) gsl_matrix_free(gradeData);
-    gradeData = gsl_matrix_alloc(other.gradeData->size1,
-                                 other.gradeData->size2);
-    gsl_matrix_memcpy(gradeData, other.gradeData);
+    if (value) {
+      gsl_vector_free(value); value = 0;
+    }
+    if(other.value){
+      value = gsl_vector_alloc(other.value->size);
+      gsl_vector_memcpy(value, other.value);
+    }
+    if (gradeData) {
+      gsl_matrix_free(gradeData); gradeData = 0;
+    }
+    if(other.gradeData){
+      gradeData = gsl_matrix_alloc(other.gradeData->size1,
+                                   other.gradeData->size2);
+      gsl_matrix_memcpy(gradeData, other.gradeData);
+    }
   }
   return *this;
 }
@@ -3459,6 +3689,25 @@ PulsesCollection::PulsesCollection():
   size(0)
 {
 
+}
+
+PulsesCollection& PulsesCollection::operator=(const PulsesCollection& other)
+{
+  //printf("operator PUlsesCollection\n");
+  if(this != &other){
+    ndetpulses = other.ndetpulses;
+    size = other.size;
+    if (pulses_detected) {
+      delete [] pulses_detected; pulses_detected = 0;
+    }
+    if(other.pulses_detected){
+      pulses_detected = new PulseDetected[size];
+      for (unsigned int i = 0; i < ndetpulses; ++i){
+        pulses_detected[i] = other.pulses_detected[i];
+      }
+    }
+  }
+  return *this;
 }
 
 // FIXME
