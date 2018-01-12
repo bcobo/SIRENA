@@ -11,7 +11,7 @@
 #include <thread>
 #include <mutex>
 
-namespace log
+namespace slog
 {
 
   static const level default_level = level::TRACE;

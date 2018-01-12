@@ -20,7 +20,7 @@ void detection_worker()
   while(1){
     detection_input data;
     if(detection_queue.wait_and_pop(data))
-      log_trace("Data extracted from queue: %i", data.pulse_lenght);
+      log_trace("Data extracted from queue: %i", data.pulse_length);
     std::unique_lock<std::mutex> lk(end_workers_mut);
     if(end_workers){
       log_trace("Finishing worker");
@@ -31,13 +31,14 @@ void detection_worker()
   }
 }
 
-void scheduler::push_detection()
-{  
+void scheduler::push_detection(const detection_input &input)
+{ 
+  log_trace("pushing input");
   detection_input d1, d2, d3, d4;
-  d1.pulse_lenght = 1;
-  d2.pulse_lenght = 20;
-  d3.pulse_lenght = 5;
-  d4.pulse_lenght = 12;
+  d1.pulse_length = 1;
+  d2.pulse_length = 20;
+  d3.pulse_length = 5;
+  d4.pulse_length = 12;
   detection_queue.push(d1);
   std::this_thread::sleep_for(std::chrono::milliseconds(900));
   detection_queue.push(d2);
@@ -45,6 +46,9 @@ void scheduler::push_detection()
   detection_queue.push(d3);
   std::this_thread::sleep_for(std::chrono::milliseconds(900));
   detection_queue.push(d4);
+  log_trace("pushing param");
+  detection_queue.push(input);
+  log_trace("end");
 }
 
 void scheduler::run_energy()

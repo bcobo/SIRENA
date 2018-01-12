@@ -176,7 +176,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
   
   // Load LibraryCollection structure if library file exists
   scheduler* s = scheduler::get();
-  s->push_detection();
+  //s->push_detection();
   int exists=0;
   if (fits_file_exists(library_file, &exists, status))
     {
@@ -411,8 +411,10 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
     }
 
   // Detect pulses in record
-  //ReconstructInitSIRENA* rec = new ReconstructInitSIRENA();
-  //*rec = *(reconstruct_init);
+  ReconstructInitSIRENA* rec = new ReconstructInitSIRENA();
+  *rec = *(reconstruct_init);
+  scheduler* s = scheduler::get();
+  s->push_detection(*rec);
   //delete rec;
   //printf("Rec pointers %p - %p\n", &rec, reconstruct_init);
   runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);

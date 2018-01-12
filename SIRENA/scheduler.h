@@ -6,9 +6,15 @@
 #include <future>
 #include <vector>
 
+#include "integraSIRENA.h"
+
+#define detection_input ReconstructInitSIRENA
+#define detection_output ReconstructInitSIRENA
+
+#if 0
 struct detection_input
 {
-  int pulse_lenght;//recontruct_init->pulse_lenght
+  int pulse_length;//recontruct_init->pulse_length
   int eventsz;//record->trigger_size
   int tstart_pulse1;//reconstruct_init->tstartPulse1
   int tstart_pulse2;//reconstruct_init->tstartPulse2
@@ -29,12 +35,13 @@ struct energy_input
 struct energy_output
 {
 };
-
+#endif
 class scheduler
 {
  public:
 
-  void push_detection(/*TODO: add parameters*/);
+  void push_detection(/*TODO: add parameters*/
+                      const detection_input &input);
   void run_energy(/*TODO: add parameters*/);
 
   virtual ~scheduler();

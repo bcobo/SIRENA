@@ -9,7 +9,7 @@
 #undef log_error
 #undef log_fatal
 
-//#define LOG
+#define LOG
 
 #ifndef LOG
 
@@ -22,14 +22,14 @@
 
 #else
 
-#define log_trace log::trace
-#define log_debug log::debug
-#define log_info log::info
-#define log_warning log::warning
-#define log_error log::error
-#define log_fatal log::fatal
+#define log_trace slog::trace
+#define log_debug slog::debug
+#define log_info slog::info
+#define log_warning slog::warning
+#define log_error slog::error
+#define log_fatal slog::fatal
 
-namespace log
+namespace slog
 {
   enum level
   {
