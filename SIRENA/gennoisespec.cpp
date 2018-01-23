@@ -388,8 +388,8 @@ int main (int argc, char **argv)
 				}
 			}
 			
-			gsl_matrix_free(noiseIntervals_weightPoints);
-			gsl_matrix_free(weightMatrix);
+			gsl_matrix_free(noiseIntervals_weightPoints); noiseIntervals_weightPoints = 0;
+			gsl_matrix_free(weightMatrix); weightMatrix = 0;
 		}
 	}
 	else
@@ -409,8 +409,8 @@ int main (int argc, char **argv)
 			}
 		}
 		
-		gsl_matrix_free(noiseIntervals_weightPoints);
-		gsl_matrix_free(weightMatrix);
+		gsl_matrix_free(noiseIntervals_weightPoints); noiseIntervals_weightPoints = 0;
+		gsl_matrix_free(weightMatrix); weightMatrix = 0;
 		
 		int NumMeanSamplesNew;
 		gsl_matrix *matrixi;
@@ -435,7 +435,7 @@ int main (int argc, char **argv)
 						gsl_matrix_set(noiseIntervalsAux,j+ii*NumMeanSamples,k,gsl_matrix_get(matrixi,j,k));
 					}
 				}
-				gsl_matrix_free(matrixi);
+				gsl_matrix_free(matrixi); matrixi = 0;
 				
 				if (NumMeanSamples+NumMeanSamples*ii >= nintervals)	
 				{
@@ -445,7 +445,7 @@ int main (int argc, char **argv)
 					break;
 				}
 			}
-			gsl_matrix_free(noiseIntervalsAux);
+			gsl_matrix_free(noiseIntervalsAux); noiseIntervalsAux = 0;
 			
 			sprintf(str_stat,"%d",noiseIntervals_weightPoints->size1);
 			sprintf(str_stat1,"%d",(int) gsl_vector_get(weightpoints,i));
@@ -462,8 +462,8 @@ int main (int argc, char **argv)
 				}
 			}
 			
-			gsl_matrix_free(noiseIntervals_weightPoints);
-			gsl_matrix_free(weightMatrix);
+			gsl_matrix_free(noiseIntervals_weightPoints); noiseIntervals_weightPoints = 0;
+			gsl_matrix_free(weightMatrix); weightMatrix = 0;
 		}
 	}
 	
@@ -489,17 +489,17 @@ int main (int argc, char **argv)
 
 	// Free allocated GSL vectors
 	//gsl_matrix_free(EventSamplesFFT);
-	gsl_vector_free(EventSamplesFFTMean);
-	gsl_vector_free(mean);
-	gsl_vector_free(sigmacsdgsl);
-	gsl_vector_free(startIntervalgsl);
+	gsl_vector_free(EventSamplesFFTMean); EventSamplesFFTMean = 0;
+	gsl_vector_free(mean); mean = 0;
+	gsl_vector_free(sigmacsdgsl); sigmacsdgsl = 0;
+	gsl_vector_free(startIntervalgsl); startIntervalgsl = 0;
 	
-	gsl_vector_free(baseline);
-	gsl_vector_free(sigma);
+	gsl_vector_free(baseline); baseline = 0;
+	gsl_vector_free(sigma); sigma = 0;
 	
-	gsl_matrix_free(noiseIntervals);
-	gsl_vector_free(weightpoints);
-	gsl_matrix_free(weightMatrixes);
+	gsl_matrix_free(noiseIntervals); noiseIntervals = 0;
+	gsl_vector_free(weightpoints); weightpoints = 0;
+	gsl_matrix_free(weightMatrixes); weightMatrixes = 0;
 
 	// Close output FITS file
 	if (fits_close_file(gnoiseObject,&status))
@@ -1064,7 +1064,7 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 		gsl_vector_set(baseline,indexBaseline,baselineIntervalFreeOfPulses);
 		gsl_vector_set(sigma,indexBaseline,sigmaIntervalFreeOfPulses);
 		indexBaseline++;
-		gsl_vector_free(intervalsWithoutNoiseTogether);
+		gsl_vector_free(intervalsWithoutNoiseTogether); intervalsWithoutNoiseTogether = 0;
 
 		for (int i=0; i<nIntervals;i++)
 		{
@@ -1105,23 +1105,24 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 	}
 
 	// Free allocated GSL vectors
-	gsl_vector_free(timegsl);
-	gsl_vector_free(ioutgsl);
-	gsl_vector_free(ioutgsl_aux);
-	gsl_vector_free(timegsl_block);
-	gsl_matrix_free(ioutgsl_block);
-	gsl_vector_free(vector_aux);cutFreq = 2 * (1/(2*pi*scaleFactor));
+	gsl_vector_free(timegsl); timegsl = 0;
+	gsl_vector_free(ioutgsl); ioutgsl = 0;
+	gsl_vector_free(ioutgsl_aux); ioutgsl_aux = 0;
+	gsl_vector_free(timegsl_block); timegsl_block = 0;
+	gsl_matrix_free(ioutgsl_block); ioutgsl_block = 0;
+	gsl_vector_free(vector_aux); vector_aux = 0;
+        cutFreq = 2 * (1/(2*pi*scaleFactor));
 	boxLength = (int) ((1/cutFreq) * samprate);
-	gsl_vector_complex_free(vector_aux1);
-	gsl_vector_free(derSGN);
-	gsl_vector_free(tstartgsl);
-	gsl_vector_free(tstartDERgsl);
-	gsl_vector_free(tmaxDERgsl);
-	gsl_vector_free(maxDERgsl);
-	gsl_vector_free(tendDERgsl);
+	gsl_vector_complex_free(vector_aux1); vector_aux1 = 0;
+	gsl_vector_free(derSGN); derSGN = 0;
+	gsl_vector_free(tstartgsl); tstartgsl = 0;
+	gsl_vector_free(tstartDERgsl); tstartDERgsl = 0;
+	gsl_vector_free(tmaxDERgsl); tmaxDERgsl = 0;
+	gsl_vector_free(maxDERgsl); maxDERgsl = 0;
+	gsl_vector_free(tendDERgsl); tendDERgsl = 0;
 	
-	gsl_vector_free(EventSamples);
-        gsl_vector_free(baselinegsl);
+	gsl_vector_free(EventSamples); EventSamples = 0;
+        gsl_vector_free(baselinegsl); baselinegsl = 0;
 
 	return (EPOK);
 }
@@ -1541,7 +1542,7 @@ int writeTPSreprExten ()
 		message = "Cannot run routine writeFitsSimple for freqgsl";
 		EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 	}
-	gsl_vector_free(freqgsl);
+	gsl_vector_free(freqgsl); freqgsl = 0;
 
 	obj.inObject = gnoiseObject;
 	obj.nameTable = new char [255];
@@ -1559,7 +1560,7 @@ int writeTPSreprExten ()
 		message = "Cannot run routine writeFitsSimple for csdgsl";
 		EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 	}
-	gsl_vector_free(csdgsl);
+	gsl_vector_free(csdgsl); csdgsl = 0;
 
 	obj.inObject = gnoiseObject;	
 	obj.nameTable = new char [255];
@@ -1577,7 +1578,7 @@ int writeTPSreprExten ()
 		message = "Cannot run routine writeFitsSimple for sigmacsdgsl";
 		EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 	}
-	gsl_vector_free(sigmacsdgslnew);
+	gsl_vector_free(sigmacsdgslnew); sigmacsdgslnew = 0;
 		
 	strcpy(keyname,"BASELINE");
 	double sumBaseline;
@@ -1615,7 +1616,7 @@ int writeTPSreprExten ()
 		message = "Cannot run routine writeFitsSimple for freqALLgsl";
 		EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 	}
-	gsl_vector_free(freqALLgsl);
+	gsl_vector_free(freqALLgsl); freqALLgsl = 0;
 	
 	strcpy(obj.nameCol,"CSD");
 	strcpy(obj.unit,"A/sqrt(Hz)");
@@ -1624,7 +1625,7 @@ int writeTPSreprExten ()
 		message = "Cannot run routine writeFitsSimple for csdALLgsl";
 		EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 	}
-	gsl_vector_free(csdALLgsl);
+	gsl_vector_free(csdALLgsl); csdALLgsl = 0;
 	
 	obj.inObject = gnoiseObject;		
 	obj.nameTable = new char [255];
@@ -1652,9 +1653,9 @@ int writeTPSreprExten ()
 			message = "Cannot run routine writeFitsSimple for weightMatrixes_matrix";
 			EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 		}
-		gsl_matrix_free(weightMatrixes_matrix); 
+		gsl_matrix_free(weightMatrixes_matrix); weightMatrixes_matrix = 0;
 	}
-	gsl_vector_free(weightMatrixesrow);
+	gsl_vector_free(weightMatrixesrow); weightMatrixesrow = 0;
 
 	return (EPOK);
 }
@@ -1845,9 +1846,9 @@ int findPulsesNoise
 	}
 
 	// Free allocated GSL vectors
-	gsl_vector_free(maxDERgsl);
-	gsl_vector_free(index_maxDERgsl);
-	gsl_vector_free(Lbgsl);
+	gsl_vector_free(maxDERgsl); maxDERgsl = 0;
+	gsl_vector_free(index_maxDERgsl); index_maxDERgsl = 0;
+	gsl_vector_free(Lbgsl); Lbgsl = 0;
 
 	return(EPOK);
 }
@@ -2109,9 +2110,9 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
 	cout<<"Final de la inversion "<<covariance->size1<<"x"<<covariance->size1<<endl;
         t = clock() - t;
         cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;
-	gsl_matrix_free(covarianceaux);
-        gsl_matrix_free(covariance);
-	gsl_permutation_free(perm);
+	gsl_matrix_free(covarianceaux); covarianceaux = 0;
+        gsl_matrix_free(covariance); covariance = 0;
+	gsl_permutation_free(perm); perm = 0;
 	
 	return (EPOK);
 }

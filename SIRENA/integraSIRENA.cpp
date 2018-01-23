@@ -53,6 +53,7 @@ MAP OF SECTIONS IN THIS FILE:
 
 *******************************************************************************/ 
 
+#include "log.h"
 #include "scheduler.h"
 
 //#include "integraSIRENA.h"
@@ -411,12 +412,17 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
     }
 
   // Detect pulses in record
-  ReconstructInitSIRENA* rec = new ReconstructInitSIRENA();
-  *rec = *(reconstruct_init);
+  //ReconstructInitSIRENA* rec = new ReconstructInitSIRENA();
+  ReconstructInitSIRENA rec;
+  rec = *(reconstruct_init);
+  //*rec = *(reconstruct_init);
   scheduler* s = scheduler::get();
-  s->push_detection(*rec);
+  s->push_detection(rec);
+  log_info("Rec pointers copy %p", &rec);
+  log_info("Rec pointers original %p", reconstruct_init);
+  log_info("copy %i",rec.pulse_length);
+  log_info("original %i\n",reconstruct_init->pulse_length);
   //delete rec;
-  //printf("Rec pointers %p - %p\n", &rec, reconstruct_init);
   runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
   
   if(pulsesInRecord->ndetpulses == 0) // No pulses found in record
@@ -591,7 +597,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
           
           // cout<<"numLagsUsed_mean: "<<numLagsUsed_mean<<endl;
           //cout<<"numLagsUsed_sigma: "<<numLagsUsed_sigma<<endl;
-          gsl_vector_free(numLagsUsed_vector);
+          gsl_vector_free(numLagsUsed_vector); numLagsUsed_vector = 0;
         }
     }
   else
@@ -1511,33 +1517,81 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
     }
 
   // Free allocated GSL vectors and matrices
-  gsl_matrix_free(matrixAux_PULSE);
-  gsl_matrix_free(matrixAux_PULSEMaxLengthFixedFilter);
-  gsl_matrix_free(matrixAux_PULSEB0);
-  if (matrixAux_MF != NULL) gsl_matrix_free(matrixAux_MF);
-  if (matrixAux_MFB0 != NULL) gsl_matrix_free(matrixAux_MFB0);
-  if (matrixAux_V != NULL) gsl_matrix_free(matrixAux_V);
-  if (vectorAux_V != NULL) gsl_vector_free(vectorAux_V);
-  if (matrixAux_W != NULL) gsl_matrix_free(matrixAux_W);
-  if (vectorAux_W != NULL) gsl_vector_free(vectorAux_W);
-  if (matrixAux_WAB != NULL) gsl_matrix_free(matrixAux_WAB);
-  if (vectorAux_WAB != NULL) gsl_vector_free(vectorAux_WAB);
-  if (matrixAux_T != NULL) gsl_matrix_free(matrixAux_T);
-  if (vectorAux_T != NULL) gsl_vector_free(vectorAux_T);
-  if (vectorAux_t != NULL) gsl_vector_free(vectorAux_t);
-  if (matrixAux_X != NULL) gsl_matrix_free(matrixAux_X);
-  if (vectorAux_X != NULL) gsl_vector_free(vectorAux_X);
-  if (matrixAux_Y != NULL) gsl_matrix_free(matrixAux_Y);
-  if (vectorAux_Y != NULL) gsl_vector_free(vectorAux_Y);
-  if (matrixAux_Z != NULL) gsl_matrix_free(matrixAux_Z);
-  if (vectorAux_Z != NULL) gsl_vector_free(vectorAux_Z);
-  if (vectorAux_r != NULL) gsl_vector_free(vectorAux_r);
-  if (matrixAux_PAB != NULL) gsl_matrix_free(matrixAux_PAB);
-  if (vectorAux_PAB != NULL) gsl_vector_free(vectorAux_PAB);
-  if (matrixAux_PABMaxLengthFixedFilter != NULL) gsl_matrix_free(matrixAux_PABMaxLengthFixedFilter);
-  if (vectorAux_PABMaxLengthFixedFilter != NULL) gsl_vector_free(vectorAux_PABMaxLengthFixedFilter);
-  if (matrixAux_DAB != NULL) gsl_matrix_free(matrixAux_DAB);
-  if (vectorAux_DAB != NULL) gsl_vector_free(vectorAux_DAB);
+  gsl_matrix_free(matrixAux_PULSE); matrixAux_PULSE = 0;
+  gsl_matrix_free(matrixAux_PULSEMaxLengthFixedFilter); matrixAux_PULSEMaxLengthFixedFilter = 0;
+  gsl_matrix_free(matrixAux_PULSEB0); matrixAux_PULSEB0 = 0;
+  if (matrixAux_MF != NULL) {
+    gsl_matrix_free(matrixAux_MF); matrixAux_MF = 0;
+  }
+  if (matrixAux_MFB0 != NULL) {
+    gsl_matrix_free(matrixAux_MFB0); matrixAux_MFB0 = 0;
+  }
+  if (matrixAux_V != NULL) {
+    gsl_matrix_free(matrixAux_V); matrixAux_V = 0;
+  }
+  if (vectorAux_V != NULL) {
+    gsl_vector_free(vectorAux_V); vectorAux_V = 0;
+  }
+  if (matrixAux_W != NULL) {
+    gsl_matrix_free(matrixAux_W); matrixAux_W = 0;
+  }
+  if (vectorAux_W != NULL) { 
+    gsl_vector_free(vectorAux_W); vectorAux_W = 0;
+  }
+  if (matrixAux_WAB != NULL) {
+    gsl_matrix_free(matrixAux_WAB); matrixAux_WAB = 0;
+  }
+  if (vectorAux_WAB != NULL) {
+    gsl_vector_free(vectorAux_WAB); vectorAux_WAB = 0;
+  }
+  if (matrixAux_T != NULL) {
+    gsl_matrix_free(matrixAux_T); matrixAux_T = 0;
+  }
+  if (vectorAux_T != NULL) {
+    gsl_vector_free(vectorAux_T); vectorAux_T = 0;
+  }
+  if (vectorAux_t != NULL) {
+    gsl_vector_free(vectorAux_t); vectorAux_t = 0;
+  }
+  if (matrixAux_X != NULL) {
+    gsl_matrix_free(matrixAux_X); matrixAux_X = 0;
+  }
+  if (vectorAux_X != NULL) {
+    gsl_vector_free(vectorAux_X); vectorAux_X = 0;
+  }
+  if (matrixAux_Y != NULL) {
+    gsl_matrix_free(matrixAux_Y); matrixAux_Y = 0;
+  }
+  if (vectorAux_Y != NULL) {
+    gsl_vector_free(vectorAux_Y); vectorAux_Y = 0;
+  }
+  if (matrixAux_Z != NULL) {
+    gsl_matrix_free(matrixAux_Z); matrixAux_Z = 0;
+  }
+  if (vectorAux_Z != NULL) {
+    gsl_vector_free(vectorAux_Z); vectorAux_Z = 0;
+  }
+  if (vectorAux_r != NULL) {
+    gsl_vector_free(vectorAux_r); vectorAux_r = 0;
+  }
+  if (matrixAux_PAB != NULL) {
+    gsl_matrix_free(matrixAux_PAB); matrixAux_PAB = 0;
+  }
+  if (vectorAux_PAB != NULL) {
+    gsl_vector_free(vectorAux_PAB); vectorAux_PAB = 0;
+  }
+  if (matrixAux_PABMaxLengthFixedFilter != NULL) {
+    gsl_matrix_free(matrixAux_PABMaxLengthFixedFilter); matrixAux_PABMaxLengthFixedFilter = 0;
+  }
+  if (vectorAux_PABMaxLengthFixedFilter != NULL) {
+    gsl_vector_free(vectorAux_PABMaxLengthFixedFilter); vectorAux_PABMaxLengthFixedFilter = 0;
+  }
+  if (matrixAux_DAB != NULL) {
+    gsl_matrix_free(matrixAux_DAB); matrixAux_DAB = 0;
+  }
+  if (vectorAux_DAB != NULL) {
+    gsl_vector_free(vectorAux_DAB); vectorAux_DAB = 0;
+  }
   
   if (mode == 0) 
     {
@@ -1675,8 +1729,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
             }
           else	index = index + pow(2,floor(log2(pulse_length))-i)*2;
           
-          gsl_matrix_free(matrixAux_OFFx);
-          gsl_matrix_free(matrixAuxab_OFFx);
+          gsl_matrix_free(matrixAux_OFFx); matrixAux_OFFx = 0;
+          gsl_matrix_free(matrixAuxab_OFFx); matrixAuxab_OFFx = 0;
         }
       
       // FIXFILTT HDU
@@ -1755,8 +1809,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
             }
           else 	index = index + pow(2,floor(log2(pulse_length))-i);
           
-          gsl_matrix_free(matrixAux_OFTx);
-          gsl_matrix_free(matrixAuxab_OFTx);
+          gsl_matrix_free(matrixAux_OFTx); matrixAux_OFTx = 0;
+          gsl_matrix_free(matrixAuxab_OFTx); matrixAuxab_OFTx = 0;
         }
       for (int it=0;it<ntemplates;it++)
         {
@@ -1839,7 +1893,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
               
               index = index + pow(2,floor(log2(pulse_length))-i)*2;
               
-              gsl_matrix_free(matrixAux_PRCLWNx);
+              gsl_matrix_free(matrixAux_PRCLWNx); matrixAux_PRCLWNx = 0;
             }
           
           gsl_vector *vectorAux_PRCLWNx = gsl_vector_alloc(lengthALL_PRCLWN);
@@ -1852,7 +1906,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
                   gsl_matrix_set_row(library_collection->PRECALWN,it,vectorAux_PRCLWNx);
                 }
             }
-          gsl_vector_free(vectorAux_PRCLWNx);
+          gsl_vector_free(vectorAux_PRCLWNx); vectorAux_PRCLWNx = 0;
         }
       
       /*gsl_vector *vectorAux_PRCLWNx = gsl_vector_alloc(lengthALL_PRCLWN);
@@ -1889,11 +1943,11 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
         gsl_matrix_set_row(library_collection->PRECALWN,it,vectorAux_PRCLWNx);
         }
         }*/
-      gsl_matrix_free(matrixALL_OFFx);
-      gsl_matrix_free(matrixALL_OFTx);
-      gsl_matrix_free(matrixALLab_OFFx);
-      gsl_matrix_free(matrixALLab_OFTx);
-      gsl_matrix_free(matrixALL_PRCLWNx);
+      gsl_matrix_free(matrixALL_OFFx); matrixALL_OFFx = 0;
+      gsl_matrix_free(matrixALL_OFTx); matrixALL_OFTx = 0;
+      gsl_matrix_free(matrixALLab_OFFx); matrixALLab_OFFx = 0;
+      gsl_matrix_free(matrixALLab_OFTx); matrixALLab_OFTx = 0;
+      gsl_matrix_free(matrixALL_PRCLWNx); matrixALL_PRCLWNx = 0;
       //gsl_vector_free(vectorAux_PRCLWNx);
       
       // PRCLOFWM HDU
@@ -1968,7 +2022,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
                 }
               else 	index = index + pow(2,floor(log2(pulse_length))-i)*2;
               
-              gsl_matrix_free(matrixAux_PRCLOFWMx);
+              gsl_matrix_free(matrixAux_PRCLOFWMx); matrixAux_PRCLOFWMx = 0;
             }
           
           gsl_vector *vectorAux_PRCLOFWMx = gsl_vector_alloc(lengthALL_PRCLOFWM);
@@ -1979,9 +2033,9 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
               gsl_matrix_set_row(library_collection->PRCLOFWM,it,vectorAux_PRCLOFWMx);
             }
           //gsl_matrix_free(matrixALL_PRCLOFWMx);
-          gsl_vector_free(vectorAux_PRCLOFWMx);
+          gsl_vector_free(vectorAux_PRCLOFWMx); vectorAux_PRCLOFWMx = 0;
         }
-      gsl_matrix_free(matrixALL_PRCLOFWMx);
+      gsl_matrix_free(matrixALL_PRCLOFWMx); matrixALL_PRCLOFWMx = 0;
     }
   
   if ((mode == 1) && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0)
@@ -2089,7 +2143,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
                     }
                   else    index = index + pow(2,floor(log2(template_duration))-i)*2;
                   
-                  gsl_matrix_free(matrixAux_OFFx);
+                  gsl_matrix_free(matrixAux_OFFx); matrixAux_OFFx = 0;
                 }
               
               for (int it=0;it<ntemplates;it++)
@@ -2101,7 +2155,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
                   gsl_matrix_get_row(library_collection->optimal_filters[it].ofilter,matrixALL_OFFx,it);
                 }
               
-              gsl_matrix_free(matrixALL_OFFx);
+              gsl_matrix_free(matrixALL_OFFx); matrixALL_OFFx = 0;
             }
           else if (strcmp(*ofinterp,"DAB") == 0)
             {
@@ -2149,7 +2203,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
                     }
                   else    index = index + pow(2,floor(log2(template_duration))-i)*2;
                   
-                  gsl_matrix_free(matrixAuxab_OFFx);
+                  gsl_matrix_free(matrixAuxab_OFFx); matrixAuxab_OFFx = 0;
                 }
               
               for (int it=0;it<ntemplates;it++)
@@ -2161,7 +2215,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
                   gsl_matrix_get_row(library_collection->optimal_filters[it].ofilter,matrixALLab_OFFx,it);
                 }
               
-              gsl_matrix_free(matrixALLab_OFFx);
+              gsl_matrix_free(matrixALLab_OFFx); matrixALLab_OFFx = 0;
             }
         }
       else if (strcmp(filter_domain,"T") == 0)
@@ -2255,7 +2309,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
                     }
                   else    index = index + pow(2,floor(log2(template_duration))-i);
                   
-                  gsl_matrix_free(matrixAux_OFTx);
+                  gsl_matrix_free(matrixAux_OFTx); matrixAux_OFTx = 0;
                 }
               
               for (int it=0;it<ntemplates;it++)
@@ -2267,7 +2321,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
                   gsl_matrix_get_row(library_collection->optimal_filters[it].ofilter,matrixALL_OFTx,it);
                 }
               
-              gsl_matrix_free(matrixALL_OFTx);
+              gsl_matrix_free(matrixALL_OFTx); matrixALL_OFTx = 0;
             }
           else if (strcmp(*ofinterp,"DAB") == 0)
             {
@@ -2315,7 +2369,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
                     }
                   else    index = index + pow(2,floor(log2(template_duration))-i);
                   
-                  gsl_matrix_free(matrixAuxab_OFTx);
+                  gsl_matrix_free(matrixAuxab_OFTx); matrixAuxab_OFTx = 0;
                 }	
               
               for (int it=0;it<ntemplates;it++)
@@ -2327,7 +2381,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
                   gsl_matrix_get_row(library_collection->optimal_filters[it].ofilter,matrixALLab_OFTx,it);
                 }
               
-              gsl_matrix_free(matrixALLab_OFTx);
+              gsl_matrix_free(matrixALLab_OFTx); matrixALLab_OFTx = 0;
             }	
         }  
     }
@@ -2424,12 +2478,12 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
             }
           else    index = index + pow(2,floor(log2(template_duration))-i)*2;
           
-          gsl_matrix_free(matrixAux_PRCLOFWMx);
+          gsl_matrix_free(matrixAux_PRCLOFWMx); matrixAux_PRCLOFWMx = 0;
         }
       
       library_collection->PRCLOFWM = gsl_matrix_alloc(ntemplates, lengthALL_PRCLOFWM);
       gsl_matrix_memcpy(library_collection->PRCLOFWM,matrixALL_PRCLOFWMx);
-      gsl_matrix_free(matrixALL_PRCLOFWMx);
+      gsl_matrix_free(matrixALL_PRCLOFWMx); matrixALL_PRCLOFWMx = 0;
     }
   
   if ((mode == 1) && (strcmp(energy_method,"WEIGHTN") == 0) && (ntemplates > 1))
@@ -2493,12 +2547,12 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
           
           index = index + pow(2,floor(log2(template_duration))-i)*2;
           
-          gsl_matrix_free(matrixAux_PRCLWNx);
+          gsl_matrix_free(matrixAux_PRCLWNx); matrixAux_PRCLWNx = 0;
         }
       
       library_collection->PRECALWN = gsl_matrix_alloc(ntemplates, lengthALL_PRCLWN);
       gsl_matrix_memcpy(library_collection->PRECALWN,matrixALL_PRCLWNx);
-      gsl_matrix_free(matrixALL_PRCLWNx);
+      gsl_matrix_free(matrixALL_PRCLWNx); matrixALL_PRCLWNx = 0;
     }
   
   delete [] obj.nameTable; obj.nameTable = 0;
@@ -2702,7 +2756,7 @@ NoiseSpec* getNoiseSpec(const char* const filename, int mode, int hduPRCLOFWM, c
                   gsl_vector *vectoraux = gsl_vector_alloc(weightMatrixi->size2);
                   gsl_matrix_get_row(vectoraux,weightMatrixi,0);
                   gsl_matrix_set_row(noise_spectrum->weightMatrixes,0,vectoraux);
-                  gsl_vector_free(vectoraux);
+                  gsl_vector_free(vectoraux); vectoraux = 0;
                 }
               else
                 {
@@ -2712,7 +2766,7 @@ NoiseSpec* getNoiseSpec(const char* const filename, int mode, int hduPRCLOFWM, c
                     }
                 }
               
-              gsl_matrix_free(weightMatrixi);
+              gsl_matrix_free(weightMatrixi); weightMatrixi = 0;
             }
         }
       
@@ -2783,10 +2837,97 @@ ReconstructInitSIRENA::ReconstructInitSIRENA():
 
 }
 
+ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other):
+  library_collection(0),
+  noise_spectrum(0),
+  grading(0),
+  //record_file(""),
+  record_file_fptr(0),
+  //library_file(""),
+  //noise_file(""),
+  //event_file(""),
+  threshold(other.threshold),
+  pulse_length(other.pulse_length),
+  scaleFactor(other.scaleFactor),
+  samplesUp(other.samplesUp),
+  samplesDown(other.samplesDown),
+  nSgms(other.nSgms),
+  detectSP(other.detectSP),
+  mode(other.mode),
+  //detectionMode(""),
+  monoenergy(other.monoenergy),
+  hduPRECALWN(other.hduPRECALWN),
+  hduPRCLOFWM(other.hduPRCLOFWM),
+  LrsT(other.LrsT),
+  LbT(other.LbT),
+  largeFilter(other.largeFilter),
+  //FilterDomain(""),
+  //FilterMethod(""),
+  //EnergyMethod(""),
+  filtEev(other.filtEev),
+  //OFNoise(""),
+  LagsOrNot(other.LagsOrNot),
+  OFIter(other.OFIter),
+  OFLib(other.OFLib),
+  //OFInterp(""),
+  //OFStrategy(""),
+  OFLength(other.OFLength),
+  intermediate(intermediate),
+  clobber(other.clobber),
+  SaturationValue(other.SaturationValue),
+  tstartPulse1(other.tstartPulse1),
+  tstartPulse2(other.tstartPulse2),
+  tstartPulse3(other.tstartPulse3),
+  energyPCA1(other.energyPCA1),
+  energyPCA2(other.energyPCA2),
+//XMLFile(""),
+  maxPulsesPerRecord(other.maxPulsesPerRecord)
+{
+  if(other.library_collection){
+    library_collection = new LibraryCollection();
+    *library_collection = (*other.library_collection);
+  }
+
+  strcpy(library_file,other.library_file);
+  strcpy(record_file,other.record_file);
+    
+  //record_file_fptr
+    
+  strcpy(noise_file,other.noise_file);
+  strcpy(event_file,other.event_file);
+  
+  strcpy(detectionMode, other.detectionMode);
+    
+  if(other.noise_spectrum){
+    noise_spectrum = new NoiseSpec();
+    *noise_spectrum = (*other.noise_spectrum);
+  }
+
+  strcpy(FilterDomain, other.FilterDomain);
+  strcpy(FilterMethod, other.FilterMethod);
+  strcpy(EnergyMethod, other.EnergyMethod);
+    
+    
+  strcpy(OFNoise, other.OFNoise);  
+    
+  strcpy(OFInterp, other.OFInterp);
+  strcpy(OFStrategy, other.OFStrategy);
+    
+  strcpy(detectFile, other.detectFile);
+  strcpy(filterFile, other.filterFile);
+    
+  strcpy(XMLFile, other.XMLFile);
+    
+  if(other.grading){
+    grading = new Grading();
+    *grading = (*other.grading);
+  }
+}
+
 ReconstructInitSIRENA&
 ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
 {
-  //printf("operator ReconstructInitSIRENA\n");
+  log_info("operator ReconstructInitSIRENA\n");
   if (this != &other){
     if(library_collection) {
       delete library_collection; library_collection = 0;
@@ -2845,7 +2986,7 @@ ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
     strcpy(OFStrategy, other.OFStrategy);
 
     OFLength = other.OFLength;
-    intermediate = intermediate;
+    intermediate = other.intermediate;
     
     strcpy(detectFile, other.detectFile);
     strcpy(filterFile, other.filterFile);
@@ -2932,6 +3073,213 @@ LibraryCollection::LibraryCollection():
   
 }
 
+LibraryCollection::LibraryCollection(const LibraryCollection& other):
+  ntemplates(other.ntemplates),
+  nfixedfilters(other.nfixedfilters),
+  energies(0),
+  pulse_heights(0),
+  pulse_templatesMaxLengthFixedFilter(0),
+  pulse_templates(0),
+  pulse_templates_filder(0),
+  maxDERs(0),
+  samp1DERs(0),
+  pulse_templates_B0(0),
+  matched_filters(0),
+  matched_filters_B0(0),
+  optimal_filters(0),
+  optimal_filtersFREQ(0),
+  optimal_filtersTIME(0),
+  V(0),
+  W(0),
+  WAB(0),
+  T(0),
+  t(0),
+  X(0),
+  Y(0),
+  Z(0),
+  r(0),
+  PAB(0),
+  PABMXLFF(0),
+  DAB(0),
+  optimal_filtersab(0),
+  optimal_filtersabTIME(0),
+  optimal_filtersabFREQ(0),
+  PRECALWN(0),
+  PRCLOFWM(0)
+{
+  if(other.energies){
+    energies = gsl_vector_alloc(other.energies->size);
+    gsl_vector_memcpy(energies, other.energies);
+  }
+  if(other.pulse_heights){
+    pulse_heights = gsl_vector_alloc(other.pulse_heights->size);
+    gsl_vector_memcpy(pulse_heights, other.pulse_heights);
+  }
+  if(other.pulse_templatesMaxLengthFixedFilter){
+    pulse_templatesMaxLengthFixedFilter = new PulseTemplate[ntemplates];
+    for (unsigned int i = 0; i < ntemplates; ++i){
+      pulse_templatesMaxLengthFixedFilter[i] = 
+        other.pulse_templatesMaxLengthFixedFilter[i];
+    }
+  }
+  if(pulse_templates){
+    pulse_templates = new PulseTemplate[ntemplates];
+    for (unsigned int i = 0; i < ntemplates; ++i){
+      pulse_templates[i] = other.pulse_templates[i];
+    }
+  }
+  if (other.pulse_templates_filder){
+    pulse_templates_filder = new PulseTemplate[ntemplates];
+    for (unsigned int i = 0; i < ntemplates; ++i){
+      pulse_templates_filder[i] = other.pulse_templates_filder[i];
+    }
+  } 
+  if (other.maxDERs){
+    maxDERs = gsl_vector_alloc(other.maxDERs->size);
+    gsl_vector_memcpy(maxDERs, other.maxDERs);
+  }
+  if(other.samp1DERs){
+    samp1DERs = gsl_vector_alloc(other.samp1DERs->size);
+    gsl_vector_memcpy(samp1DERs, other.samp1DERs);
+  }
+  if(other.pulse_templates_B0){
+    pulse_templates_B0 = new PulseTemplate[ntemplates];
+    for (unsigned int i = 0; i < ntemplates; ++i){
+      pulse_templates_B0[i] = other.pulse_templates_B0[i];
+    }
+  }
+  if(other.matched_filters){
+    matched_filters = new MatchedFilter[ntemplates];
+    for (unsigned int i = 0; i < ntemplates; ++i){
+      matched_filters[i] = other.matched_filters[i];
+    }
+  }
+  if(other.matched_filters_B0){
+    matched_filters_B0 = new MatchedFilter[ntemplates];
+    for (unsigned int i = 0; i < ntemplates; ++i){
+      matched_filters_B0[i] = other.matched_filters_B0[i];
+    }
+  }
+  if(other.optimal_filters){
+    optimal_filters = new OptimalFilterSIRENA[ntemplates];
+    for (unsigned int i = 0; i < ntemplates; ++i){
+      optimal_filters[i] = other.optimal_filters[i];
+    }
+  }
+  if(other.optimal_filtersFREQ){
+    optimal_filtersFREQ = new OptimalFilterSIRENA[ntemplates];
+    for (unsigned int i = 0; i < ntemplates; ++i){
+      optimal_filtersFREQ[i] = other.optimal_filtersFREQ[i];
+    }
+  }
+  if (other.optimal_filtersTIME){
+    optimal_filtersTIME = new OptimalFilterSIRENA[ntemplates];
+    for (unsigned int i = 0; i < ntemplates; ++i){
+      optimal_filtersTIME[i] = other.optimal_filtersTIME[i];
+    }
+  }
+    
+  if(other.V){
+    V = gsl_matrix_alloc(other.V->size1,
+                         other.V->size2);
+    gsl_matrix_memcpy(V, other.V);
+  }
+  if (other.W){
+    W = gsl_matrix_alloc(other.W->size1,
+                         other.W->size2);
+    gsl_matrix_memcpy(W, other.W);    
+  }
+    
+  if(other.WAB){
+    WAB = gsl_matrix_alloc(other.WAB->size1,
+                           other.WAB->size2);
+    gsl_matrix_memcpy(WAB, other.WAB);
+  }
+    
+  if(other.T){
+    T = gsl_matrix_alloc(other.T->size1,
+                         other.T->size2);
+    gsl_matrix_memcpy(T, other.T);
+  }
+    
+  if(other.t){
+    t = gsl_vector_alloc(other.t->size);
+    gsl_vector_memcpy(t, other.t);
+  }
+    
+  if(other.X){
+    X = gsl_matrix_alloc(other.X->size1,
+                         other.X->size2);
+    gsl_matrix_memcpy(X, other.X);
+  }
+    
+  if(other.Y){
+    Y = gsl_matrix_alloc(other.Y->size1,
+                         other.Y->size2);
+    gsl_matrix_memcpy(Y, other.Y);
+  }
+    
+  if(other.Z){
+    Z = gsl_matrix_alloc(other.Z->size1,
+                         other.Z->size2);
+    gsl_matrix_memcpy(Z, other.Z);
+  }
+    
+  if(other.r){
+    r = gsl_vector_alloc(other.r->size);
+    gsl_vector_memcpy(r, other.r);
+  }
+    
+  if(other.PAB){
+    PAB = gsl_matrix_alloc(other.PAB->size1,
+                           other.PAB->size2);
+    gsl_matrix_memcpy(PAB, other.PAB);
+  }
+    
+  if(other.PABMXLFF){
+    PABMXLFF = gsl_matrix_alloc(other.PABMXLFF->size1,
+                                other.PABMXLFF->size2);
+    gsl_matrix_memcpy(PABMXLFF, other.PABMXLFF);
+  }
+    
+  if(other.DAB){
+    DAB = gsl_matrix_alloc(other.DAB->size1,
+                           other.DAB->size2);
+    gsl_matrix_memcpy(DAB, other.DAB);
+  }
+    
+  if(other.optimal_filtersab){
+    optimal_filtersab = new OptimalFilterSIRENA[ntemplates];
+    for (unsigned int i = 0; i < ntemplates; ++i){
+      optimal_filtersab[i] = other.optimal_filtersab[i];
+    }
+  }
+  if(other.optimal_filtersabTIME){
+    optimal_filtersabTIME = new OptimalFilterSIRENA[ntemplates];
+    for (unsigned int i = 0; i < ntemplates; ++i){
+      optimal_filtersabTIME[i] = other.optimal_filtersabTIME[i];
+    }
+  }
+  if(other.optimal_filtersabFREQ){
+    optimal_filtersabFREQ = new OptimalFilterSIRENA[ntemplates];
+    for (unsigned int i = 0; i < ntemplates; ++i){
+      optimal_filtersabFREQ[i] = other.optimal_filtersabFREQ[i];
+    }
+  }
+    
+  if(other.PRECALWN){
+    PRECALWN = gsl_matrix_alloc(other.PRECALWN->size1,
+                                other.PRECALWN->size2);
+    gsl_matrix_memcpy(PRECALWN, other.PRECALWN);
+  }
+  
+  if(other.PRCLOFWM){
+    PRCLOFWM = gsl_matrix_alloc(other.PRCLOFWM->size1,
+                                other.PRCLOFWM->size2);
+    gsl_matrix_memcpy(PRCLOFWM, other.PRCLOFWM);
+  }
+}
+
 LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
 {
   //printf("operator LibraryCollection\n");
@@ -2941,10 +3289,16 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
     nfixedfilters = other.nfixedfilters;
     
     if(energies) {
+      //log_info("deleting energies");
       gsl_vector_free(energies); energies = 0;
     }
     if(other.energies){
+      //gsl_vector_fprintf(stdout, other.energies, "%g");
+      //log_info("have energies to copy");
+      //log_info("%i", other.energies->size);
       energies = gsl_vector_alloc(other.energies->size);
+      //log_info("pointers %p - %p", energies, other.energies);
+      //log_info("%i", energies->size);
       gsl_vector_memcpy(energies, other.energies);
     }
     if(pulse_heights) { 
@@ -3009,7 +3363,7 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
     
     //PulseTemplate* pulse_templates_B0;
     if(ntemplates > 0 && pulse_templates_B0){
-      delete [] pulse_templates_B0; pulse_templates = 0;
+      delete [] pulse_templates_B0; pulse_templates_B0 = 0;
     }
     if(other.pulse_templates_B0){
       pulse_templates_B0 = new PulseTemplate[ntemplates];
@@ -3414,6 +3768,29 @@ PulseDetected::PulseDetected():
 
 }
 
+PulseDetected::PulseDetected(const PulseDetected& other):
+  pulse_duration(other.pulse_duration),
+  grade1(other.grade1),
+  grade2(other.grade2),
+  grade2_1(other.grade2_1),
+  pixid(other.pixid),
+  pulse_adc(0),
+  Tstart(other.Tstart),
+  Tend(other.Tend),
+  riseTime(other.riseTime),
+  fallTime(other.fallTime),
+  pulse_height(other.pulse_height),
+  maxDER(other.maxDER),
+  samp1DER(other.samp1DER),
+  energy(other.energy),
+  quality(other.quality)
+{
+  if(other.pulse_adc){
+    pulse_adc = gsl_vector_alloc(other.pulse_adc->size);
+    gsl_vector_memcpy(pulse_adc, other.pulse_adc);
+  }
+}
+
 PulseDetected& PulseDetected::operator=(const PulseDetected& other)
 {
   //printf("operator PulseDetected\n");
@@ -3460,6 +3837,20 @@ MatrixStruct::MatrixStruct():
       
 }
 
+MatrixStruct::MatrixStruct(const MatrixStruct& other)
+  :matrixRows(other.matrixRows),
+   matrixColumns(other.matrixColumns),
+   matrixBody(0)
+{
+  //matrixRows = other.matrixRows;
+  //matrixColumns = other.matrixColumns;
+  //matrixBody = 0;
+  if(other.matrixBody){
+    matrixBody = gsl_matrix_alloc(matrixRows, matrixColumns);
+    gsl_matrix_memcpy(matrixBody, other.matrixBody);
+  }
+}
+
 MatrixStruct& MatrixStruct::operator=(const MatrixStruct& other)
 {
   //printf("operator MatrixStruct\n");
@@ -3475,7 +3866,7 @@ MatrixStruct& MatrixStruct::operator=(const MatrixStruct& other)
     }
   }
   return *this;
-}
+} 
 
 MatrixStruct::~MatrixStruct()
 {
@@ -3493,6 +3884,18 @@ PulseTemplate::PulseTemplate():
   
 }
   
+PulseTemplate::PulseTemplate(const PulseTemplate& other):
+  template_duration(other.template_duration),
+  energy(other.energy),
+  pulse_height(other.pulse_height),
+  ptemplate(0)
+{
+  if (other.ptemplate){
+    ptemplate = gsl_vector_alloc(other.ptemplate->size);
+    gsl_vector_memcpy(ptemplate, other.ptemplate);
+  }
+}
+
 PulseTemplate& PulseTemplate::operator=(const PulseTemplate& other)
 {
   //printf("operator PulseTemplate\n");
@@ -3528,6 +3931,18 @@ MatchedFilter::MatchedFilter():
 
 }
  
+MatchedFilter::MatchedFilter(const MatchedFilter& other):
+  mfilter_duration(other.mfilter_duration),
+  energy(other.energy),
+  pulse_height(other.pulse_height),
+  mfilter(0)
+{
+  if(other.mfilter){
+    mfilter = gsl_vector_alloc(other.mfilter->size);
+    gsl_vector_memcpy(mfilter, other.mfilter);
+  }
+}
+
 MatchedFilter& MatchedFilter::operator=(const MatchedFilter& other)
 {
   //printf("operator MatchedFilter\n");
@@ -3560,6 +3975,17 @@ OptimalFilterSIRENA::OptimalFilterSIRENA():
   energy(0.0f)
 {
 
+}
+
+OptimalFilterSIRENA::OptimalFilterSIRENA(const OptimalFilterSIRENA& other):
+  ofilter_duration(other.ofilter_duration),
+  energy(other.energy),
+  ofilter(0)
+{
+  if(other.ofilter){
+    ofilter = gsl_vector_alloc(other.ofilter->size);
+    gsl_vector_memcpy(ofilter, other.ofilter);
+  }
 }
 
 OptimalFilterSIRENA& 
@@ -3598,6 +4024,29 @@ NoiseSpec::NoiseSpec():
 {
 
 }  
+
+NoiseSpec::NoiseSpec(const NoiseSpec& other):
+  noiseStd(other.noiseStd), 
+  baseline(other.baseline), 
+  noise_duration(other.noise_duration), 
+  noisespec(0),
+  noisefreqs(0), 
+  weightMatrixes(0)
+{
+  if(other.noisespec){
+    noisespec = gsl_vector_alloc(other.noisespec->size);
+    gsl_vector_memcpy(noisespec, other.noisespec);
+  }
+  if(other.noisefreqs){
+    noisefreqs = gsl_vector_alloc(other.noisefreqs->size);
+    gsl_vector_memcpy(noisefreqs, other.noisefreqs);
+  }
+  if(other.weightMatrixes){
+    weightMatrixes = gsl_matrix_alloc(other.weightMatrixes->size1,
+                                      other.weightMatrixes->size2);
+    gsl_matrix_memcpy(weightMatrixes, other.weightMatrixes);
+  }
+}
 
 NoiseSpec& NoiseSpec::operator=(const NoiseSpec& other)
 {
@@ -3652,6 +4101,22 @@ Grading::Grading():
 
 }
   
+Grading::Grading(const Grading& other):
+  ngrades(other.ngrades), 
+  value(0), 
+  gradeData(0)
+{
+  if(other.value){
+    value = gsl_vector_alloc(other.value->size);
+    gsl_vector_memcpy(value, other.value);
+  }
+  if(other.gradeData){
+    gradeData = gsl_matrix_alloc(other.gradeData->size1,
+                                 other.gradeData->size2);
+    gsl_matrix_memcpy(gradeData, other.gradeData);
+  }
+}
+
 Grading& Grading::operator=(const Grading& other)
 {
   //printf("operator Grading\n");
@@ -3690,7 +4155,20 @@ PulsesCollection::PulsesCollection():
   pulses_detected(0), 
   size(0)
 {
+  
+}
 
+PulsesCollection::PulsesCollection(const PulsesCollection& other):
+  ndetpulses(other.ndetpulses), 
+  pulses_detected(0), 
+  size(other.size)
+{
+  if(other.pulses_detected){
+    pulses_detected = new PulseDetected[size];
+    for (unsigned int i = 0; i < ndetpulses; ++i){
+      pulses_detected[i] = other.pulses_detected[i];
+    }
+  }
 }
 
 PulsesCollection& PulsesCollection::operator=(const PulsesCollection& other)

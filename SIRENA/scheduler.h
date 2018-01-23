@@ -8,11 +8,7 @@
 
 #include "integraSIRENA.h"
 
-#define detection_input ReconstructInitSIRENA
-#define detection_output ReconstructInitSIRENA
-
-#if 0
-struct detection_input
+struct detection
 {
   int pulse_length;//recontruct_init->pulse_length
   int eventsz;//record->trigger_size
@@ -21,21 +17,21 @@ struct detection_input
   int tstart_pulse3;//reconstruct_init->tstartPulse3
   int intermediate;//reconstruct_init->intermediate
   
-  
+  detection();
+  detection& operator=(const detection& other);
+  ~detection();
 };
 
-struct detection_output
+struct energy
 {
+  energy();
+  energy& operator=(const energy& other);
+  ~energy();
 };
 
-struct energy_input
-{
-};
+#define detection_input ReconstructInitSIRENA
+#define detection_output ReconstructInitSIRENA
 
-struct energy_output
-{
-};
-#endif
 class scheduler
 {
  public:

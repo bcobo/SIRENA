@@ -172,8 +172,8 @@ int lpf_boxcar (gsl_vector **invector, int szVct, double scaleFactor, int sample
 	}
 
 	// Free allocated GSL vectors
-	gsl_vector_free(invectorAux);
-	gsl_vector_free(invectorAux1);
+	gsl_vector_free(invectorAux); invectorAux = 0;
+	gsl_vector_free(invectorAux1); invectorAux1 = 0;
 	
 	if (boxLength == 1)	return(3);
 
@@ -442,7 +442,7 @@ int medianKappaClipping (gsl_vector *invector, double kappa, double stopCriteria
         //cout<<"theshold-thesholdNew="<<(*threshold-thresholdNew)/sg2New<<"sgsNew"<<endl;*/
 	////////////////////////////////////////////////////////////////
 
-	gsl_vector_free(invectorNew);
+	gsl_vector_free(invectorNew); invectorNew= 0;
 
 	return EPOK;
 }
@@ -549,7 +549,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                         message = "Cannot run gsl_vector_Sumsubvector routine when tstart>=lb";
                                         EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                 }
-                                gsl_vector_free(input);
+                                gsl_vector_free(input); input = 0;
                         }
                         else if ((gsl_vector_get(tstart,0)<gsl_vector_get(*lb,0)) && (gsl_vector_get(tstart,0)>1))
                         // 0<tstart<lb => Sum the available number of samples (although the available number of samples was lower than lb)
@@ -586,7 +586,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                         EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                 }
                                 gsl_vector_set(*lb,0, gsl_vector_get(tstart,0));
-                                gsl_vector_free(input);
+                                gsl_vector_free(input); input = 0;
                         }
                         else	// If there is not a pulse-free interval before the pulse, it is looked for it after the current pulse
                         {
@@ -636,7 +636,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                 message = "Cannot run gsl_vector_Sumsubvector routine when no pulse free interval before the pulse";
                                                                 EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                         }
-                                                        gsl_vector_free(input);
+                                                        gsl_vector_free(input); input = 0;
 
                                                         break;
                                                 }
@@ -675,7 +675,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                 message = "Cannot run gsl_vector_Sumsubvector routine when no pulse free interval before the pulse";
                                                                 EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                         }
-                                                        gsl_vector_free(input);
+                                                        gsl_vector_free(input); input = 0;
 
                                                         break;
                                                 }
@@ -725,7 +725,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                                         message = "Cannot run gsl_vector_Sumsubvector routine when no first pulse in row & tstart-tendprev >= lb";
                                                                                         EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                                                 }
-                                                                                gsl_vector_free(input);
+                                                                                gsl_vector_free(input); input = 0;
 
                                                                                 break;
                                                                         }
@@ -770,7 +770,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                                         EP_PRINT_ERROR(message,EPFAIL);
                                                                                 }
                                                                                 gsl_vector_set(*lb,0,gsl_vector_get(tstart,j+1)-tendprev-1);
-                                                                                gsl_vector_free(input);
+                                                                                gsl_vector_free(input); input = 0;
 
                                                                                 break;
                                                                         }
@@ -812,7 +812,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                                         message = "Cannot run gsl_vector_Sumsubvector routine when no pulse-free interval before pulse & last pulse in row";
                                                                                         EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                                                 }
-                                                                                gsl_vector_free(input);
+                                                                                gsl_vector_free(input); input = 0;
 
                                                                                 break;
                                                                         }
@@ -857,7 +857,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                                         message = "Cannot run gsl_vector_Sumsubvector routine when no pulse-free interval before pulse & last pulse in row";
                                                                                         EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                                                 }
-                                                                                gsl_vector_free(input);
+                                                                                gsl_vector_free(input); input = 0;
 
                                                                                 break;
                                                                         }
@@ -911,7 +911,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                         message = "Cannot run gsl_vector_Sumsubvector routine length_(2)>=lb";
                                         EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                 }
-                                gsl_vector_free(input);
+                                gsl_vector_free(input); input = 0;
                         }
                         else if ((gsl_vector_get(tstart,i)-tendprev<gsl_vector_get(*lb,i)) && (gsl_vector_get(tstart,i)-tendprev>1))
                         // 0<tstart_(i)-tend_(i-1)<lb => Sum the available number of samples (although the available number of samples was lower than lb)
@@ -956,7 +956,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                         EP_PRINT_ERROR(message,EPFAIL);
                                 }
                                 gsl_vector_set(*lb,i,gsl_vector_get(tstart,i)-tendprev-1);
-                                gsl_vector_free(input);
+                                gsl_vector_free(input); input = 0;
                         }
                         else	// If there is not a pulse-free interval before the pulse, it is looked for it after the current pulse
                         {
@@ -1004,7 +1004,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                 message = "Cannot run gsl_vector_Sumsubvector routine when no first pulse in row & tstart-tendprev >= lb";
                                                                 EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                         }
-                                                        gsl_vector_free(input);
+                                                        gsl_vector_free(input); input = 0;
 
                                                         break;
                                                 }
@@ -1049,7 +1049,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                 EP_PRINT_ERROR(message,EPFAIL);
                                                         }
                                                         gsl_vector_set(*lb,i,gsl_vector_get(tstart,j+1)-tendprev-1);
-                                                        gsl_vector_free(input);
+                                                        gsl_vector_free(input); input = 0;
 
                                                         break;
                                                 }
@@ -1091,7 +1091,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                 message = "Cannot run gsl_vector_Sumsubvector routine when no pulse-free interval before pulse & last pulse in row";
                                                                 EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                         }
-                                                        gsl_vector_free(input);
+                                                        gsl_vector_free(input); input = 0;
 
                                                         break;
                                                 }
@@ -1136,7 +1136,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                 message = "Cannot run gsl_vector_Sumsubvector routine when no pulse-free interval before pulse & last pulse in row";
                                                                 EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                         }
-                                                        gsl_vector_free(input);
+                                                        gsl_vector_free(input); input = 0;
 
                                                         break;
                                                 }
@@ -1246,7 +1246,7 @@ int getPulseHeight(gsl_vector *vectorin, double tstart, double tstartnext, int l
 		}
 		*pulseheight = ph;
 
-		gsl_vector_free(input);
+		gsl_vector_free(input); input = 0;
 	}
 
 	return(EPOK);
@@ -1383,7 +1383,7 @@ int find_model_energies(double energy, ReconstructInitSIRENA *reconstruct_init,g
 					EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 				}
 				gsl_vector_memcpy(modelFound_aux,modelAux);
-				gsl_vector_free(modelAux);
+				gsl_vector_free(modelAux); modelAux = 0;
 
 				break;
 			}
@@ -1394,7 +1394,7 @@ int find_model_energies(double energy, ReconstructInitSIRENA *reconstruct_init,g
 	temp = gsl_vector_subvector(modelFound_aux,0,(*modelFound)->size);
 	gsl_vector_memcpy(*modelFound,&temp.vector);
 
-	gsl_vector_free(modelFound_aux);
+	gsl_vector_free(modelFound_aux); modelFound_aux = 0;
 
     return(EPOK);
 }
@@ -1491,8 +1491,8 @@ int find_model_maxDERs(double maxDER, ReconstructInitSIRENA *reconstruct_init, g
 					EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 				}
 				
-				gsl_vector_free(modelA);
-                                gsl_vector_free(modelB);
+				gsl_vector_free(modelA); modelA = 0;
+                                gsl_vector_free(modelB); modelB = 0;
 
 				break;
 			}
@@ -1587,8 +1587,8 @@ int find_model_samp1DERs(double samp1DER, ReconstructInitSIRENA *reconstruct_ini
 					EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 				}
 				
-				gsl_vector_free(modelA);
-                                gsl_vector_free(modelB);
+				gsl_vector_free(modelA); modelA = 0;
+                                gsl_vector_free(modelB); modelB = 0;
 
 				break;
 			}
@@ -1655,8 +1655,8 @@ int interpolate_model(gsl_vector **modelFound, double p_model, gsl_vector *model
         gsl_vector_memcpy(*modelFound,modelIn1Aux);
 	gsl_vector_add(*modelFound,modelIn2Aux);
 	
-	gsl_vector_free(modelIn1Aux);
-	gsl_vector_free(modelIn2Aux);
+	gsl_vector_free(modelIn1Aux); modelIn1Aux = 0;
+	gsl_vector_free(modelIn2Aux); modelIn2Aux = 0;
 
     return(EPOK);
 }
@@ -1780,8 +1780,8 @@ int findPulsesCAL
 			gsl_vector_set(*pulseheight,i,energyaux);
 		}
 
-		gsl_vector_free(Lbgsl);
-		gsl_vector_free(Bgsl);
+		gsl_vector_free(Lbgsl); Lbgsl = 0;
+		gsl_vector_free(Bgsl); Bgsl = 0;
 	}
 	
 	return(EPOK);
@@ -1850,7 +1850,7 @@ int findTstartCAL
 	
 	// Allocate GSL vectors
 	// It is not necessary to check the allocation because 'maxPulsesPerRecord'='EventListSize'(input parameter) must already be > 0
-	if (*tstartgsl)		gsl_vector_free(*tstartgsl);	
+	if (*tstartgsl)		gsl_vector_free(*tstartgsl);	 
 	*tstartgsl = gsl_vector_alloc(maxPulsesPerRecord);	
 	if (*flagTruncated)	gsl_vector_free(*flagTruncated);	
 	*flagTruncated = gsl_vector_alloc(maxPulsesPerRecord);
@@ -1988,8 +1988,8 @@ int findTstartCAL
 			gsl_vector_set(*maxDERgsl,i,gsl_vector_max(&temp.vector));
 		}
 
-		gsl_vector_free(tstartPulsei);
-		gsl_vector_free(model);
+		gsl_vector_free(tstartPulsei); tstartPulsei = 0;
+		gsl_vector_free(model); model = 0;
 	}
 
 	return (EPOK);
@@ -3060,8 +3060,8 @@ FindSecondaries
 			}
 		} while (foundPulse == true);
                 
-                gsl_vector_free(lags_vector);
-                gsl_vector_free(convolutionLags);
+                gsl_vector_free(lags_vector); lags_vector = 0;
+                gsl_vector_free(convolutionLags); convolutionLags = 0;
 	}
 	else // Use the tstartPulsei provided as input parameters
 	{
@@ -3302,23 +3302,23 @@ FindSecondaries
                         }
                 }
 
-		gsl_vector_free(tstartPulsei);
+		gsl_vector_free(tstartPulsei); tstartPulsei = 0;
                 
-                gsl_vector_free(lags_vector);
-                gsl_vector_free(convolutionLags);
+                gsl_vector_free(lags_vector); lags_vector = 0;
+                gsl_vector_free(convolutionLags); convolutionLags = 0;
 	}
 
 	// Free allocated GSL vectors
-	gsl_vector_free(model);
-	gsl_vector_free(index_maxDERgsl);
+	gsl_vector_free(model); model = 0;
+	gsl_vector_free(index_maxDERgsl); index_maxDERgsl = 0;
 	
 	//gsl_vector_free(lags_vector);
 	//gsl_vector_free(convolutionLags);
-        gsl_vector_free(sublags_vector);
-        gsl_vector_free(subconvolutionLags_vector);
+        gsl_vector_free(sublags_vector); sublags_vector = 0;
+        gsl_vector_free(subconvolutionLags_vector); subconvolutionLags_vector = 0;
         
-        gsl_vector_free(ThreePoints_x);
-        gsl_vector_free(ThreePoints_y);
+        gsl_vector_free(ThreePoints_x); ThreePoints_x = 0;
+        gsl_vector_free(ThreePoints_y); ThreePoints_y = 0;
 
 	return(EPOK);
 }
@@ -3387,8 +3387,8 @@ int find_model_samp1DERsNoReSCLD(double samp1DER, ReconstructInitSIRENA *reconst
 					EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 				}
 				
-				gsl_vector_free(modelA);
-                                gsl_vector_free(modelB);
+				gsl_vector_free(modelA); modelA = 0;
+                                gsl_vector_free(modelB); modelB = 0;
 
 				break;
 			}
@@ -3461,7 +3461,7 @@ int smoothDerivative (gsl_vector **invector, int N)
                         }
                 }
                 
-                gsl_vector_free(window);
+                gsl_vector_free(window); window = 0;
                 //cout<<"smoothDerivative1:"<<endl;
                 //for (int i=0;i<szVct;i++)   cout<<i<<" "<<gsl_vector_get(conv,i)<<endl;
                 
@@ -3487,7 +3487,7 @@ int smoothDerivative (gsl_vector **invector, int N)
                 temp = gsl_vector_subvector(conv,N,szVct-N);
 		gsl_vector_memcpy(*invector,&temp.vector);*/
                 
-                gsl_vector_free(conv);
+                gsl_vector_free(conv); conv = 0;
         }
 
 	return (EPOK);
@@ -3709,8 +3709,8 @@ int FindSecondariesA1
 			gsl_vector_set(*maxDERgsl,i,gsl_vector_max(&temp.vector));
 		}
 
-		gsl_vector_free(tstartPulsei);
-		gsl_vector_free(model);
+		gsl_vector_free(tstartPulsei); tstartPulsei = 0;
+		gsl_vector_free(model); model = 0;
 	}
 
 	return (EPOK);

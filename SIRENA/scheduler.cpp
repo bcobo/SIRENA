@@ -14,6 +14,37 @@ scheduler* scheduler::instance = 0;
 
 bool end_workers = false;
 
+void run_detect()
+{
+#if 0
+  if(tstart pulses > trigger size) error;
+  
+  create intermediate fits if required;
+  calls createDetectFile();
+  
+  filderLibrary();
+  
+  store the input record in invector;
+  calls loadRecord();
+
+  convert I into R if energyMethod = I2R;
+  calls convertI2R();
+
+  procRecord();
+
+  if intermediate fits write keywords;
+
+  if lastrecord and pca;
+  calls weightMatrix();
+  calls eigenVV();
+
+  Polyfitlinear();
+  
+  
+
+#endif
+}
+
 void detection_worker()
 {
   log_trace("Starting worker");
@@ -34,7 +65,7 @@ void detection_worker()
 void scheduler::push_detection(const detection_input &input)
 { 
   log_trace("pushing input");
-  detection_input d1, d2, d3, d4;
+  /*detection_input d1, d2, d3, d4;
   d1.pulse_length = 1;
   d2.pulse_length = 20;
   d3.pulse_length = 5;
@@ -45,7 +76,7 @@ void scheduler::push_detection(const detection_input &input)
   std::this_thread::sleep_for(std::chrono::milliseconds(900));
   detection_queue.push(d3);
   std::this_thread::sleep_for(std::chrono::milliseconds(900));
-  detection_queue.push(d4);
+  detection_queue.push(d4);*/
   log_trace("pushing param");
   detection_queue.push(input);
   log_trace("end");
@@ -83,3 +114,32 @@ scheduler::~scheduler()
   }
 }
 
+detection::detection()
+{
+  
+}
+
+detection& detection::operator=(const detection& other)
+{
+  
+}
+
+detection::~detection()
+{
+  
+}
+
+energy::energy()
+{
+  
+}
+
+energy& energy::operator=(const energy& other)
+{
+  
+}
+
+energy::~energy()
+{
+  
+}

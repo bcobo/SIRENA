@@ -56,6 +56,7 @@ typedef struct MatrixStruct
   gsl_matrix *matrixBody;
 #ifdef __cplusplus
   MatrixStruct();
+  MatrixStruct(const MatrixStruct& other);
   MatrixStruct& operator=(const MatrixStruct& other);
   ~MatrixStruct();
 #endif
@@ -77,6 +78,7 @@ typedef struct PulseTemplate
   double pulse_height;
 #ifdef __cplusplus
   PulseTemplate();
+  PulseTemplate(const PulseTemplate& other);
   PulseTemplate& operator=(const PulseTemplate& other);
   // FIXME
   ~PulseTemplate();
@@ -99,6 +101,7 @@ typedef struct MatchedFilter
   double pulse_height;
 #ifdef __cplusplus
   MatchedFilter();
+  MatchedFilter(const MatchedFilter& other);
   MatchedFilter& operator=(const MatchedFilter& other);
   // FIXME
   ~MatchedFilter();
@@ -118,6 +121,7 @@ typedef struct OptimalFilterSIRENA
   double energy;
 #ifdef __cplusplus
   OptimalFilterSIRENA();
+  OptimalFilterSIRENA(const OptimalFilterSIRENA& other);
   OptimalFilterSIRENA& operator=(const OptimalFilterSIRENA& other);
   // FIXME
   ~OptimalFilterSIRENA();
@@ -224,6 +228,7 @@ typedef struct LibraryCollection
   gsl_matrix *PRCLOFWM;
 #ifdef __cplusplus
   LibraryCollection();
+  LibraryCollection(const LibraryCollection& other);
   LibraryCollection& operator=(const LibraryCollection& other);
   ~LibraryCollection();
 #endif
@@ -251,6 +256,7 @@ typedef struct NoiseSpec
   gsl_matrix *weightMatrixes;
 #ifdef __cplusplus
   NoiseSpec();
+  NoiseSpec(const NoiseSpec& other);
   NoiseSpec& operator=(const NoiseSpec& other);
   ~NoiseSpec();
 #endif
@@ -266,7 +272,8 @@ typedef struct Grading
   gsl_vector *value;
   gsl_matrix *gradeData;
 #ifdef __cplusplus
-  Grading();  
+  Grading();
+  Grading(const Grading& other);
   Grading& operator=(const Grading& other);
   ~Grading();
 #endif
@@ -326,6 +333,7 @@ typedef struct PulseDetected
   int numLagsUsed;
 #ifdef __cplusplus
   PulseDetected();
+  PulseDetected(const PulseDetected& other);
   PulseDetected& operator=(const PulseDetected& other);
   // FIXME
   ~PulseDetected();
@@ -345,6 +353,7 @@ typedef struct PulsesCollection
   PulseDetected* pulses_detected;
 #ifdef __cplusplus
   PulsesCollection();
+  PulsesCollection(const PulsesCollection& other);
   PulsesCollection& operator=(const PulsesCollection& other);
   // FIXME
   ~PulsesCollection();
@@ -493,8 +502,10 @@ typedef struct ReconstructInitSIRENA
   Grading *grading;
 #ifdef __cplusplus
   ReconstructInitSIRENA();
+  ReconstructInitSIRENA(const ReconstructInitSIRENA& other);
   ~ReconstructInitSIRENA();
   ReconstructInitSIRENA& operator=(const ReconstructInitSIRENA& other);
+  //ReconstructInitSIRENA& operator=(ReconstructInitSIRENA& other);
 #endif
 
 } ReconstructInitSIRENA;
