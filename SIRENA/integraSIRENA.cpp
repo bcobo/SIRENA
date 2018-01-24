@@ -177,6 +177,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
   
   // Load LibraryCollection structure if library file exists
   scheduler* s = scheduler::get();
+  log_info("fits reentrant %i", fits_is_reentrant());
   //s->push_detection();
   int exists=0;
   if (fits_file_exists(library_file, &exists, status))
@@ -418,12 +419,17 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
   //*rec = *(reconstruct_init);
   scheduler* s = scheduler::get();
   s->push_detection(rec);
-  log_info("Rec pointers copy %p", &rec);
-  log_info("Rec pointers original %p", reconstruct_init);
-  log_info("copy %i",rec.pulse_length);
-  log_info("original %i\n",reconstruct_init->pulse_length);
+  //log_info("Rec pointers copy %p", &rec);
+  //log_info("Rec pointers original %p", reconstruct_init);
+  //log_info("copy %i",rec.pulse_length);
+  //log_info("original %i\n",reconstruct_init->pulse_length);
   //delete rec;
-  runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
+  if (reconstruct_init->mode == 1)
+    th_runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
+  else
+    runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
+  //log_info("ndetpulses %i", pulsesInRecord->ndetpulses);
+  //log_info("pulsesAll %i", (*pulsesAll)->ndetpulses);
   
   if(pulsesInRecord->ndetpulses == 0) // No pulses found in record
     {
@@ -2892,6 +2898,11 @@ ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other)
   strcpy(record_file,other.record_file);
     
   //record_file_fptr
+  // Here we copy the ptr of the fits file, this is NOT thread safe,
+  // even allowing reentrant here we should open the file again,
+  // and even by doing that the writing through multiple threads
+  // won't be safe
+  record_file_fptr = other.record_file_fptr;
     
   strcpy(noise_file,other.noise_file);
   strcpy(event_file,other.event_file);
@@ -2942,6 +2953,11 @@ ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
     strcpy(record_file,other.record_file);
     
     //record_file_fptr
+    // Here we copy the ptr of the fits file, this is NOT thread safe,
+    // even allowing reentrant here we should open the file again,
+    // and even by doing that the writing through multiple threads
+    // won't be safe
+    record_file_fptr = other.record_file_fptr;
     
     strcpy(noise_file,other.noise_file);
     strcpy(event_file,other.event_file);

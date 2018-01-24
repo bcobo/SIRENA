@@ -39,8 +39,6 @@ void run_detect()
   calls eigenVV();
 
   Polyfitlinear();
-  
-  
 
 #endif
 }
@@ -119,6 +117,11 @@ detection::detection()
   
 }
 
+detection::detection(const detection& other)
+{
+  
+}
+
 detection& detection::operator=(const detection& other)
 {
   
@@ -130,6 +133,11 @@ detection::~detection()
 }
 
 energy::energy()
+{
+  
+}
+
+energy::energy(const energy& other)
 {
   
 }

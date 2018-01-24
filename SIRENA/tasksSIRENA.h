@@ -42,12 +42,12 @@
 
 void runDetect(TesRecord* record, int nRecord, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord);
 
-void run_detection(TesRecord* record, 
-                   int nRecord, 
-                   int lastRecord, 
-                   PulsesCollection *pulsesAll, 
-                   ReconstructInitSIRENA** reconstruct_init, 
-                   PulsesCollection** pulsesInRecord);
+void th_runDetect(TesRecord* record, 
+                  int nRecord, 
+                  int lastRecord, 
+                  PulsesCollection *pulsesAll, 
+                  ReconstructInitSIRENA** reconstruct_init, 
+                  PulsesCollection** pulsesInRecord);
 
 int createLibrary(ReconstructInitSIRENA* reconstruct_init, bool *appendToLibrary, fitsfile **inLibObject, int inputPulseLength);
 int createDetectFile(ReconstructInitSIRENA* reconstruct_init, int nRecord, double samprate, fitsfile **dtcObject, int inputPulseLength);

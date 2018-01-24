@@ -8,6 +8,52 @@
 
 #include "integraSIRENA.h"
 
+#if 0
+typedef struct{
+	/** Number of ADC values in the record */
+	unsigned long trigger_size;
+
+	/** Start time of the record */
+	double time;
+
+	/** Time difference between two samples */
+	double delta_t;
+
+	/** Buffer to read a record of ADC values */
+	uint16_t* adc_array;
+
+	/** Double version of the record */
+	double* adc_double;
+
+	/** PIXID of the record */
+	long pixid;
+
+	/** Array of the PH_ID in the record */
+	PhIDList* phid_list;
+
+}TesRecord;
+
+typedef struct{
+	/** Array containing the phIDs */
+	long* phid_array;
+
+	/** Array containing the corresponding impact times (only relevant in case of wait list) */
+	double* times;
+
+	/** Boolean to state if this should be a wait list */
+	unsigned char wait_list;
+
+	/** Number of elements in the wait list */
+	int n_elements;
+
+	/** Current index in the list */
+	int index;
+
+	/** Size of the list */
+	int size;
+}PhIDList;
+#endif
+
 struct detection
 {
   int pulse_length;//recontruct_init->pulse_length
@@ -18,6 +64,7 @@ struct detection
   int intermediate;//reconstruct_init->intermediate
   
   detection();
+  detection(const detection& other);
   detection& operator=(const detection& other);
   ~detection();
 };
@@ -25,6 +72,7 @@ struct detection
 struct energy
 {
   energy();
+  energy(const energy& other);
   energy& operator=(const energy& other);
   ~energy();
 };

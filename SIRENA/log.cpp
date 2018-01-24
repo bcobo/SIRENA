@@ -14,7 +14,7 @@
 namespace slog
 {
 
-  static const level default_level = level::INFO;
+  static const level default_level = level::TRACE;
   static std::string header("%llu (thread id: %s [%7.7s]: ");
 
   static std::mutex level_mutex;

@@ -748,14 +748,621 @@ void runDetect(TesRecord* record, int nRecord, int lastRecord,
 /*xxxx end of SECTION A xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
 /* Run detection for the production mode only in multithread mode*/
-void run_detection(TesRecord* record, 
-                   int nRecord, 
-                   int lastRecord, 
-                   PulsesCollection *pulsesAll, 
-                   ReconstructInitSIRENA** reconstruct_init, 
-                   PulsesCollection** pulsesInRecord)
+void th_runDetect(TesRecord* record, 
+                  int nRecord, 
+                  int lastRecord, 
+                  PulsesCollection *pulsesAll, 
+                  ReconstructInitSIRENA** reconstruct_init, 
+                  PulsesCollection** pulsesInRecord)
 {
+  log_trace("th_runDetect");
+  log_info("rundetect pointer %p\n", *reconstruct_init);
   
+  int inputPulseLength = (*reconstruct_init)->pulse_length;
+  
+  string message="";
+  char valERROR[256];
+  int status=EPOK;  
+  
+  // Declare variables
+  fitsfile *inLibObject = NULL;// Object which contains 
+                               //information of the library FITS file
+  bool appendToLibrary = false;// Calibration library FITS file new 
+                               //(appendToLibrary=false) or not 
+                               //(appendToLibrary=true)
+  
+  fitsfile *dtcObject = NULL;  // Object which contains information of 
+                               //the intermediate FITS file 
+                               //('dtc' comes from 'detectFile')
+  char dtcName[256];
+  strncpy(dtcName,(*reconstruct_init)->detectFile,255);
+  dtcName[255]='\0';
+  
+  int eventsz = record->trigger_size;
+  double tstartRecord;
+  // It is not necessary to check the allocation because 
+  //'record->trigger_size'='eventsz' has been checked previously
+  gsl_vector *invector = gsl_vector_alloc(eventsz);    // Record
+  
+  if (((*reconstruct_init)->tstartPulse1 != 0) 
+      && (((*reconstruct_init)->tstartPulse1 > record->trigger_size) 
+          || ((*reconstruct_init)->tstartPulse2 > record->trigger_size) 
+          || ((*reconstruct_init)->tstartPulse3 > record->trigger_size)))
+    {
+      message = "tstartPulsx can not be greater than the record size";
+      EP_EXIT_ERROR(message,EPFAIL);
+    }
+
+  // Create intermediate output FITS file 
+  //if 'required (reconstruct_init->intermediate'=1)
+  if ((*reconstruct_init)->intermediate == 1)
+    {
+      // TODO: check thread safe
+      if (createDetectFile(*reconstruct_init, nRecord, 1/record->delta_t, 
+                           &dtcObject, inputPulseLength))
+        {
+          message = "Cannot create file " +  
+            string((*reconstruct_init)->detectFile);
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+    }
+  
+  // Filter and differentiate the 'models' of the library 
+  //(only for the first record)
+  if ((*reconstruct_init)->mode == 1)
+    {
+      // TODO: check thread safe
+      if (filderLibrary(reconstruct_init, 1/record->delta_t))
+        {
+          message = "Cannot run routine filderLibrary to filter "
+            + string("& differentiate library if the 1st record");
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+    }
+  
+  // Store the input record in 'invector'
+  if (loadRecord(record, &tstartRecord, &invector))
+    {
+      message = "Cannot run routine loadRecord";
+      EP_EXIT_ERROR(message,EPFAIL);
+    }
+  eventsz = invector->size;// Just in case the last record has been filled 
+                           //in with 0's => Re-allocate invector
+  
+  // Convert I into R if 'EnergyMethod' = I2R or I2RALL or I2RNOL or I2RFITTED
+  // It is not necessary to check the allocation because 'invector' 
+  // size must be > 0
+  gsl_vector *invectorWithoutConvert2R = gsl_vector_alloc(invector->size);
+  gsl_vector_memcpy(invectorWithoutConvert2R,invector);
+  if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) 
+      || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) 
+      || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
+      || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
+    {
+      if (convertI2R(reconstruct_init, &record, &invector))
+        {
+          message = "Cannot run routine convertI2R";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+    }
+  
+  // Process each record
+  if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, 
+                 invector, invectorWithoutConvert2R, *pulsesInRecord, nRecord))
+    {
+      message = "Cannot run routine procRecord for record processing";
+      EP_EXIT_ERROR(message,EPFAIL);
+    }
+  
+  gsl_vector_free(invectorWithoutConvert2R); invectorWithoutConvert2R = 0;
+  if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) 
+      || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) 
+      || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
+      || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
+    {
+      strcpy((*reconstruct_init)->EnergyMethod,"OPTFILT"); 
+      // From this point forward, I2R, I2RALL, I2RNOL and I2RFITTED 
+      //are completely equivalent to OPTFILT
+    }
+  
+  if (((*reconstruct_init)->intermediate == 1) && (lastRecord == 1))
+    {
+      // Write output keywords (their values have been previously checked)
+      char keyname[10];
+      
+      char extname[10];
+      strncpy(extname,"PULSES",9);
+      extname[9]='\0';
+      if (fits_movnam_hdu(dtcObject, ANY_HDU,extname, 0, &status))
+        {
+          message = "Cannot move to HDU " + string(extname) + " in " 
+            + string(dtcName);
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      
+      long totalpulses;
+      if (fits_get_num_rows(dtcObject,&totalpulses, &status))
+        {
+          message = "Cannot get number of rows in " + string(dtcName);
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      
+      int ttpls1 = (int) totalpulses;
+      strcpy(keyname,"EVENTCNT");
+      if (ttpls1 < 0)
+        {
+          message = "Legal values for EVENTCNT (PULSES) are integer numbers "
+            + string("greater than or equal to 0");
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      
+      if(fits_write_key(dtcObject,TINT,keyname,&ttpls1,NULL,&status))
+        {
+          message = "Cannot write keyword " + string(keyname) +" in " 
+            + string(dtcName);
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+    }
+  
+  // PCA is used  when pulses are farther than 'PulseLength'!!!!!!!!!!
+  if ((lastRecord == 1) 
+      && (strcmp((*reconstruct_init)->EnergyMethod,"PCA") == 0) 
+      && ((pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses))>0)// PCA
+    {
+      (*reconstruct_init)->pulse_length = inputPulseLength;
+      
+      // In order to not have restrictions when providing 
+      //(*reconstruct_init)->energyPCAx
+      double energyPCA1, energyPCA2;
+      if ((*reconstruct_init)->energyPCA2 < (*reconstruct_init)->energyPCA1)
+        {
+          energyPCA1 = (*reconstruct_init)->energyPCA2;
+          energyPCA2 = (*reconstruct_init)->energyPCA1;
+        }
+      else
+        {
+          energyPCA1 = (*reconstruct_init)->energyPCA1;
+          energyPCA2 = (*reconstruct_init)->energyPCA2;
+        }
+      
+      // Covariance data
+      // It is not necessary to check the allocation because 'PulseLength' 
+      //(input parameter) has been checked previously 
+      gsl_vector *pulsetemplate = 
+        gsl_vector_alloc((*reconstruct_init)->pulse_length);
+      
+      gsl_vector_set_zero(pulsetemplate);
+      
+      gsl_matrix *covarianceData = 
+        gsl_matrix_alloc((*reconstruct_init)->pulse_length,
+                         (*reconstruct_init)->pulse_length);
+      
+      gsl_matrix *weightData = 
+        gsl_matrix_alloc((*reconstruct_init)->pulse_length,
+                         (*reconstruct_init)->pulse_length);
+
+      gsl_vector *nonpileup;
+      if ((nonpileup = 
+           gsl_vector_alloc((pulsesAll->ndetpulses)
+                            +((*pulsesInRecord)->ndetpulses))) 
+          == 0)
+        {  
+          sprintf(valERROR,"%d",__LINE__-2);
+          string str(valERROR);
+          message = "Allocating with <= 0 size in line " + str 
+            + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      gsl_vector_set_all(nonpileup,1);
+      if (weightMatrix(*reconstruct_init, false, pulsesAll, *pulsesInRecord, 
+                       (pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses), 
+                       nonpileup , pulsetemplate, &covarianceData, &weightData))
+        {
+          message = "Cannot run weightMatrix routine";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      gsl_vector_free(pulsetemplate); pulsetemplate = 0;
+      gsl_matrix_free(weightData); weightData = 0;
+      
+      // Eigenvalues and eigenvectors
+      gsl_vector *eigenvalues;
+      gsl_matrix *eigenvectors;// Eigenvectors in columns
+      if (eigenVV(covarianceData,&eigenvectors,&eigenvalues))
+        {
+          message = "Cannot run eigenVV routine";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      gsl_matrix_free(covarianceData); covarianceData = 0;
+      gsl_vector_free(eigenvalues); eigenvalues = 0;
+      
+      // RSxN (S=2)
+      gsl_matrix *RowFeatureVectors;// Eigenvectors in rows
+      if ((RowFeatureVectors = gsl_matrix_alloc(eigenvectors->size2,
+                                                eigenvectors->size1)) 
+          == 0)
+        {  
+          sprintf(valERROR,"%d",__LINE__-2);
+          string str(valERROR);
+          message = "Allocating with <= 0 size in line " + str + " (" 
+            + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+
+      gsl_matrix_transpose_memcpy(RowFeatureVectors,eigenvectors);
+      gsl_matrix_free(eigenvectors); eigenvectors = 0;
+      
+      // It is not necessary to check the allocation because 'PulseLength'
+      //(input parameter) and 
+      //'(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulsesc' 
+      //have been checked previously 
+      // S0^1-M0 S0^2-M0...............S0^(nonpileupPulses)-M0
+      // S1^1-M1 S1^2-M1...............S1^(nonpileupPulses)-M1
+      // ...................................................
+      // S1023^1-M1023 S1023^2-M1023...S1023^(nonpileupPulses)-M1023
+      gsl_matrix *RowDataAdjust = 
+        gsl_matrix_alloc((*reconstruct_init)->pulse_length,
+                         (pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses)); 
+      
+      for (int m=0;m<(*reconstruct_init)->pulse_length;m++)
+        {
+          for (int p=0;p<pulsesAll->ndetpulses;p++)
+            {
+              if (gsl_vector_get(nonpileup,p) == 1)
+                {
+                  if (m == pulsesAll->pulses_detected[p].pulse_adc->size)
+                    {
+                      sprintf(valERROR,"%d",__LINE__+5);
+                      string str(valERROR);
+                      message = "PCA should be used with pulses farther than "
+                        + string("'PulseLength' => Getting i-th element of vector ")
+                        + "out of range in line " + str + " (" + __FILE__ + ")";
+                      EP_EXIT_ERROR(message,EPFAIL);
+                    }
+                  gsl_matrix_set(RowDataAdjust,m,p,
+                                 gsl_vector_get(pulsesAll->pulses_detected[p].pulse_adc,m));
+                }
+            }
+          for (int p=0;p<(*pulsesInRecord)->ndetpulses;p++)
+            {
+              if (gsl_vector_get(nonpileup,pulsesAll->ndetpulses+p) == 1)
+                {
+                  if (m == (*pulsesInRecord)->pulses_detected[p].pulse_adc->size)
+                    {
+                      sprintf(valERROR,"%d",__LINE__+5);
+                      string str(valERROR);
+                      message = "PCA should be used with pulses farther than "
+                        + string("'PulseLength' => Getting i-th element of vector ")
+                        + "out of range in line " + str + " (" + __FILE__ + ")";
+                      EP_EXIT_ERROR(message,EPFAIL);
+                    }
+                  gsl_matrix_set(RowDataAdjust,m,pulsesAll->ndetpulses+p,
+                                 gsl_vector_get((*pulsesInRecord)->pulses_detected[p].pulse_adc,m));
+                }
+            }
+        }
+      gsl_vector_free(nonpileup); nonpileup = 0;
+      
+      // It is not necessary to check the allocation because the allocation 
+      //of 'RowFeatureVectors' and 
+      //'(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses' 
+      //have been checked previously
+      gsl_matrix *RSrxN = 
+        gsl_matrix_alloc(RowFeatureVectors->size1,
+                         (pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));
+      if (RowFeatureVectors->size2 != RowDataAdjust->size1)
+        {
+          sprintf(valERROR,"%d",__LINE__+5);
+          string str(valERROR);
+          message = "Wrong dimensions to compute matrix-matrix product in line "
+            + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      gsl_blas_dgemm (CblasNoTrans, CblasNoTrans,1.0, 
+                      RowFeatureVectors, RowDataAdjust,0.0, RSrxN);
+      gsl_matrix_free(RowFeatureVectors); RowFeatureVectors = 0;
+      gsl_matrix_free(RowDataAdjust); RowDataAdjust = 0;
+      
+      // Store RSxN in a FITS file
+      FILE * temporalFile;
+      char temporalFileName[255];
+      char val[256];
+      sprintf(temporalFileName,"rsxn.txt");
+      temporalFile = fopen (temporalFileName,"w");
+      for (int i = 0; i < RSrxN->size2; i++) // All the pulses in a column
+        {
+          sprintf(val,"%e %e",gsl_matrix_get(RSrxN,0,i),gsl_matrix_get(RSrxN,1,i));
+          strcat(val,"\n");
+          fputs(val,temporalFile);
+        }
+      fclose(temporalFile);
+      
+      // AE straight line: Pto0(x,y) and Pto10(x,y)
+      double a,b;      //y=ax+b
+      // It is not necessary to check the allocation because '(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses' has been checked previously
+      gsl_vector *xfit = gsl_vector_alloc((pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));
+      gsl_vector *yfit = gsl_vector_alloc((pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));
+      gsl_matrix_get_row(xfit,RSrxN,0);
+      gsl_matrix_get_row(yfit,RSrxN,1);
+      if (polyFitLinear (xfit, yfit, &a, &b))
+        {
+          message = "Cannot run routine polyFitLinear";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      gsl_vector *Pto0 = gsl_vector_alloc(2);
+      gsl_vector *Pto10 = gsl_vector_alloc(2);
+      // It is not necessary to check the allocation because the allocation of 'RSrxN' has been checked previously
+      gsl_vector *xRSrxN = gsl_vector_alloc(RSrxN->size2);
+      gsl_matrix_get_row(xRSrxN,RSrxN,0);
+      gsl_vector_set(Pto0,0,gsl_vector_get(xRSrxN,gsl_vector_min_index(xRSrxN)));
+      gsl_vector_set(Pto0,1,a*gsl_vector_get(Pto0,0)+b);
+      gsl_vector_set(Pto10,0,gsl_vector_get(xRSrxN,gsl_vector_max_index(xRSrxN))-gsl_vector_get(Pto0,0));
+      gsl_vector_set(Pto10,1,a*gsl_vector_get(xRSrxN,gsl_vector_max_index(xRSrxN))+b-gsl_vector_get(Pto0,1));
+      
+      // Calculus of the rotation angle
+      gsl_vector *u = gsl_vector_alloc(2);
+      gsl_vector_set(u,0,1);
+      gsl_vector_set(u,1,0);
+      gsl_vector *v = gsl_vector_alloc(2);
+      gsl_vector_memcpy(v,Pto10);
+      gsl_vector_free(Pto10); Pto10 = 0;
+      double dotResult;
+      gsl_blas_ddot (u, v, &dotResult);
+      double alfa;
+      alfa = acos(dotResult/(gsl_blas_dnrm2(u)*gsl_blas_dnrm2(v)));
+      
+      // Rotation
+      gsl_matrix *RotationMatrix = gsl_matrix_alloc(2,2);
+      gsl_matrix_set(RotationMatrix,0,0,cos(alfa));
+      gsl_matrix_set(RotationMatrix,0,1,sin(alfa));
+      gsl_matrix_set(RotationMatrix,1,0,-sin(alfa));
+      gsl_matrix_set(RotationMatrix,1,1,cos(alfa));
+      // It is not necessary to check the allocation because the allocation of 'RSrxN' has been checked previously
+      gsl_matrix *pointsTranslated = gsl_matrix_alloc(2,RSrxN->size2);
+      for (int i = 0; i < RSrxN->size2; i++)
+        {
+          gsl_matrix_set(pointsTranslated,0,i,gsl_matrix_get(RSrxN,0,i)-gsl_vector_get(Pto0,0));
+          gsl_matrix_set(pointsTranslated,1,i,gsl_matrix_get(RSrxN,1,i)-gsl_vector_get(Pto0,1));
+        }
+      gsl_vector_free(Pto0); Pto0 = 0;
+      // It is not necessary to check the allocation because the allocation of 'RSrxN' has been checked previously
+      gsl_matrix *pointsTranslatedRotated = gsl_matrix_alloc(2,RSrxN->size2);
+      gsl_blas_dgemm (CblasNoTrans, CblasNoTrans,1.0, RotationMatrix, pointsTranslated,0.0, pointsTranslatedRotated);
+      /*for (int i = 0; i < RSrxN->size2; i++)
+        {
+        gsl_matrix_set(pointsTranslatedRotated,0,i,gsl_matrix_get(pointsTranslatedRotated,0,i)+gsl_vector_get(Pto0,0));
+        }
+        sprintf(temporalFileName,"rsxnTransformed.txt");
+        temporalFile = fopen (temporalFileName,"w");
+        for (int i = 0; i < RSrxN->size2; i++) // All the pulses in a column
+        {
+        sprintf(val,"%e %e",gsl_matrix_get(pointsTranslatedRotated,0,i),gsl_matrix_get(pointsTranslatedRotated,1,i));
+        strcat(val,"\n");
+        fputs(val,temporalFile);
+        }
+        fclose(temporalFile);*/
+      gsl_matrix_free(pointsTranslated); pointsTranslated = 0;
+      gsl_matrix_free(RSrxN); RSrxN = 0;
+      // It is not necessary to check the allocation because the allocation of 'pointsTranslatedRotated' has been checked previously
+      gsl_vector *pointsTranslatedRotated1aux = gsl_vector_alloc(pointsTranslatedRotated->size2);
+      gsl_vector *pointsTranslatedRotated2aux = gsl_vector_alloc(pointsTranslatedRotated->size2);
+      int num1 = 0;
+      int num2 = 0;
+      gsl_vector *xpointsTranslatedRotated = gsl_vector_alloc(pointsTranslatedRotated->size2);
+      gsl_matrix_get_row(xpointsTranslatedRotated,pointsTranslatedRotated,0);
+      double midpoint = gsl_vector_min(xpointsTranslatedRotated)+(gsl_vector_max(xpointsTranslatedRotated)-gsl_vector_min(xpointsTranslatedRotated))/2;
+      for (int i = 0; i < xpointsTranslatedRotated->size; i++)
+        {
+          if (gsl_vector_get(xpointsTranslatedRotated,i) <= midpoint)
+            {
+              if (num1 >= pointsTranslatedRotated1aux->size)
+                {
+                  sprintf(valERROR,"%d",__LINE__+5);
+                  string str(valERROR);
+                  message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
+                  EP_EXIT_ERROR(message,EPFAIL);
+                }
+              gsl_vector_set(pointsTranslatedRotated1aux,num1,gsl_vector_get(xpointsTranslatedRotated,i));
+              num1++;
+            }
+          else
+            {
+              if (num2 >= pointsTranslatedRotated2aux->size)
+                {
+                  sprintf(valERROR,"%d",__LINE__+5);
+                  string str(valERROR);
+                  message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
+                  EP_EXIT_ERROR(message,EPFAIL);
+                }
+              gsl_vector_set(pointsTranslatedRotated2aux,num2,gsl_vector_get(xpointsTranslatedRotated,i));
+              num2++;
+            }
+        }
+      gsl_vector_free(xpointsTranslatedRotated); xpointsTranslatedRotated = 0;
+      gsl_vector *pointsTranslatedRotated1;
+      gsl_vector *pointsTranslatedRotated2;
+      if ((pointsTranslatedRotated1 = gsl_vector_alloc(num1)) == 0)
+        {
+          sprintf(valERROR,"%d",__LINE__-2);
+          string str(valERROR);
+          message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      if ((pointsTranslatedRotated2 = gsl_vector_alloc(num2)) == 0)
+        {
+          sprintf(valERROR,"%d",__LINE__-2);
+          string str(valERROR);
+          message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      
+      gsl_vector_view temp;
+      if ((num1 < 1) || (num1 > pointsTranslatedRotated1aux->size))
+        {
+          sprintf(valERROR,"%d",__LINE__+5);
+          string str(valERROR);
+          message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      temp = gsl_vector_subvector(pointsTranslatedRotated1aux,0,num1);
+      if (gsl_vector_memcpy(pointsTranslatedRotated1,&temp.vector) != 0)
+        {
+          sprintf(valERROR,"%d",__LINE__-2);
+          string str(valERROR);
+          message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      if ((num2 < 1) || (num1 > pointsTranslatedRotated2aux->size))
+        {
+          sprintf(valERROR,"%d",__LINE__+5);
+          string str(valERROR);
+          message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      temp = gsl_vector_subvector(pointsTranslatedRotated2aux,0,num2);
+      if (gsl_vector_memcpy(pointsTranslatedRotated2,&temp.vector) != 0)
+        {
+          sprintf(valERROR,"%d",__LINE__-2);
+          string str(valERROR);
+          message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      gsl_vector_free(pointsTranslatedRotated1aux); pointsTranslatedRotated1aux = 0;
+      gsl_vector_free(pointsTranslatedRotated2aux); pointsTranslatedRotated2aux = 0;
+      
+      // Histograms of the two clusters (two energies)
+      int nbins = 80;
+      assert(nbins > 0);
+      // It is not necessary to check the allocation because 'nbins' has been checked previously
+      gsl_vector *xhisto1 = gsl_vector_alloc(nbins);
+      gsl_vector *yhisto1 = gsl_vector_alloc(nbins);
+      gsl_vector *xhisto2 = gsl_vector_alloc(nbins);
+      gsl_vector *yhisto2 = gsl_vector_alloc(nbins);
+      bool histo1neg = false;
+      bool histo2neg = false;
+      double histo1constant;
+      double histo2constant;
+      if (gsl_vector_isnonneg(pointsTranslatedRotated1) != 1)
+        {
+          histo1neg = true;
+          histo1constant = fabs(gsl_vector_min(pointsTranslatedRotated1));
+          gsl_vector_add_constant(pointsTranslatedRotated1,histo1constant);
+        }
+      if (createHisto(pointsTranslatedRotated1, nbins, &xhisto1, &yhisto1))
+        {
+          message = "Cannot run createHisto routine";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      if (histo1neg == true) 
+        {
+          gsl_vector_add_constant(xhisto1,-histo1constant);
+          gsl_vector_add_constant(pointsTranslatedRotated1,-histo1constant);
+        }
+      sprintf(temporalFileName,"histo1.txt");
+      temporalFile = fopen (temporalFileName,"w");
+      for (int i = 0; i < xhisto1->size; i++) 
+        {
+          sprintf(val,"%e %e",gsl_vector_get(xhisto1,i),gsl_vector_get(yhisto1,i));
+          strcat(val,"\n");
+          fputs(val,temporalFile);
+        }
+      fclose(temporalFile);
+      if (gsl_vector_isnonneg(pointsTranslatedRotated2) != 1)
+        {
+          histo2neg = true;
+          histo2constant = fabs(gsl_vector_min(pointsTranslatedRotated2));
+          gsl_vector_add_constant(pointsTranslatedRotated2,histo2constant);
+        }
+      if (createHisto(pointsTranslatedRotated2, nbins, &xhisto2, &yhisto2))
+        {
+          message = "Cannot run createHisto routine";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      if (histo2neg == true) 
+        {
+          gsl_vector_add_constant(xhisto2,-histo2constant);
+          gsl_vector_add_constant(pointsTranslatedRotated2,-histo2constant);
+        }
+      sprintf(temporalFileName,"histo2.txt");
+      temporalFile = fopen (temporalFileName,"w");
+      for (int i = 0; i < xhisto2->size; i++) 
+        {
+          sprintf(val,"%e %e",gsl_vector_get(xhisto2,i),gsl_vector_get(yhisto2,i));
+          strcat(val,"\n");
+          fputs(val,temporalFile);
+        }
+      fclose(temporalFile);
+      double data1[num1];
+      double data2[num2];
+      if (num1 > pointsTranslatedRotated1->size)
+        {
+          sprintf(valERROR,"%d",__LINE__+7);
+          string str(valERROR);
+          message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      for (int i = 0; i < num1; i++)
+        {
+          data1[i] = gsl_vector_get(pointsTranslatedRotated1,i);
+        }
+      if (num2 > pointsTranslatedRotated2->size)
+        {
+          sprintf(valERROR,"%d",__LINE__+7);
+          string str(valERROR);
+          message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      for (int i = 0; i < num2; i++)
+        {
+          data2[i] = gsl_vector_get(pointsTranslatedRotated2,i);
+        }
+      double sigma1 = gsl_stats_sd(data1, 1, num1);
+      double sigma2 = gsl_stats_sd(data2, 1, num2);
+      double maxcenter1 = gsl_stats_mean(data1, 1, num1);
+      double maxcenter2 = gsl_stats_mean(data2, 1, num2);
+      
+      // Conversion factor from arbitrary unit to eV
+      double convertAU2eV = (energyPCA2 - energyPCA1)/(maxcenter2-maxcenter1);	
+      
+      gsl_vector_free(pointsTranslatedRotated1); pointsTranslatedRotated1 = 0;
+      gsl_vector_free(pointsTranslatedRotated2); pointsTranslatedRotated2 = 0;
+      gsl_vector_free(xhisto1); xhisto1 = 0;
+      gsl_vector_free(yhisto1); yhisto1 = 0;
+      gsl_vector_free(xhisto2); xhisto2 = 0;
+      gsl_vector_free(yhisto2); yhisto2 = 0;
+      
+      // Energy calculation
+      for (int i = 0; i < pulsesAll->ndetpulses; i++)
+        {
+          pulsesAll->pulses_detected[i].energy = 
+            gsl_matrix_get(pointsTranslatedRotated,0,i)*convertAU2eV/1e3 
+            + energyPCA1/1e3;//keV
+        }
+      for (int i = 0; i < (*pulsesInRecord)->ndetpulses; i++)
+        {
+          (*pulsesInRecord)->pulses_detected[i].energy = 
+            gsl_matrix_get(pointsTranslatedRotated,0,
+                           pulsesAll->ndetpulses+i)*convertAU2eV/1e3 
+            + energyPCA1/1e3;//keV
+        }
+      
+      gsl_matrix_free(pointsTranslatedRotated); pointsTranslatedRotated = 0;
+    }
+  
+  // Close intermediate output FITS file if it is necessary
+  if ((*reconstruct_init)->intermediate == 1)
+    {
+      if (fits_close_file(dtcObject,&status))
+        {
+          message = "Cannot close file " + string(dtcName);
+          EP_EXIT_ERROR(message,EPFAIL);
+        }
+      dtcObject = 0;
+    }
+  
+  // Free allocated GSL vectors
+  gsl_vector_free(invector); invector = 0;
+  
+  return;
 }
 
 /***** SECTION A1 ************************************************************
