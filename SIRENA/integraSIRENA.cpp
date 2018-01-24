@@ -418,12 +418,14 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
   rec = *(reconstruct_init);
   //*rec = *(reconstruct_init);
   scheduler* s = scheduler::get();
-  s->push_detection(rec);
+  s->push_detection(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
   //log_info("Rec pointers copy %p", &rec);
   //log_info("Rec pointers original %p", reconstruct_init);
   //log_info("copy %i",rec.pulse_length);
   //log_info("original %i\n",reconstruct_init->pulse_length);
   //delete rec;
+  log_debug("record %p", record);
+  log_debug("Record %f", record->time);
   if (reconstruct_init->mode == 1)
     th_runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
   else

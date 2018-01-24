@@ -4,6 +4,7 @@
 #include "log.h"
 
 #include "threadsafe_queue.h"
+#include "tasksSIRENA.h"
 
 std::mutex end_workers_mut;
 
@@ -48,8 +49,11 @@ void detection_worker()
   log_trace("Starting worker");
   while(1){
     detection_input data;
-    if(detection_queue.wait_and_pop(data))
-      log_trace("Data extracted from queue: %i", data.pulse_length);
+    if(detection_queue.wait_and_pop(data)){
+      log_trace("Data extracted from queue: %i", data.rec_init.pulse_length);
+      //th_runDetect(data.rec,data.n_record,data.last_record,
+      //             data.all_pulses,&data.rec_init,&data.record_pulses);
+    }
     std::unique_lock<std::mutex> lk(end_workers_mut);
     if(end_workers){
       log_trace("Finishing worker");
@@ -58,6 +62,23 @@ void detection_worker()
     }
     lk.unlock();
   }
+}
+
+void scheduler::push_detection(TesRecord* record, 
+                               int nRecord, 
+                               int lastRecord, 
+                               PulsesCollection *pulsesAll, 
+                               ReconstructInitSIRENA** reconstruct_init, 
+                               PulsesCollection** pulsesInRecord)
+{
+  detection_input input;
+  input.rec = record;
+  input.n_record = nRecord;
+  input.last_record = lastRecord;
+  input.all_pulses = pulsesAll;
+  input.record_pulses = *pulsesInRecord;
+  input.rec_init = **reconstruct_init;
+  this->push_detection(input);
 }
 
 void scheduler::push_detection(const detection_input &input)
@@ -78,6 +99,11 @@ void scheduler::push_detection(const detection_input &input)
   log_trace("pushing param");
   detection_queue.push(input);
   log_trace("end");
+}
+
+void scheduler::end_detection()
+{
+  
 }
 
 void scheduler::run_energy()
@@ -112,19 +138,35 @@ scheduler::~scheduler()
   }
 }
 
-detection::detection()
+detection::detection():
+  n_record(0),
+  last_record(0),
+  all_pulses(0),
+  record_pulses(0)
 {
   
 }
 
-detection::detection(const detection& other)
+detection::detection(const detection& other):
+  n_record(other.n_record),
+  last_record(other.last_record),
+  all_pulses(0),
+  record_pulses(0),
+  rec(other.rec),
+  rec_init(other.rec_init)
 {
-  
+
 }
 
 detection& detection::operator=(const detection& other)
 {
-  
+  if(this != &other){
+    n_record = other.n_record;
+    last_record = other.last_record;
+    rec = other.rec;
+    rec_init = other.rec_init;
+  }
+  return *this;
 }
 
 detection::~detection()
