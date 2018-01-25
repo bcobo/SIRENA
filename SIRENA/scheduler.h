@@ -8,7 +8,7 @@
 
 #include "integraSIRENA.h"
 
-typedef struct{
+struct phidlist{
   /** Array containing the phIDs */
   long* phid_array;
   
@@ -26,9 +26,15 @@ typedef struct{
   
   /** Size of the list */
   int size;
-}phidlist;//PhIDList;
 
-typedef struct{
+  phidlist();
+  phidlist(const phidlist& other);
+  phidlist(PhIDList* other);
+  phidlist& operator=(const phidlist& other);
+  ~phidlist();
+};//PhIDList;
+
+struct tesrecord{
   /** Number of ADC values in the record */
   unsigned long trigger_size;
   
@@ -49,8 +55,12 @@ typedef struct{
   
   /** Array of the PH_ID in the record */
   phidlist* phid_list;
-  
-}tesrecord;//TesRecord;
+  tesrecord();
+  tesrecord(TesRecord* other);
+  tesrecord(const tesrecord& other);
+  tesrecord& operator=(const tesrecord& other);
+  ~tesrecord();
+};//TesRecord;
 
 struct detection
 {
