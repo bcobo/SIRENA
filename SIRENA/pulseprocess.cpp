@@ -2796,9 +2796,15 @@ int FindSecondaries
         
         int previouslyFalsePulse = -1;
         
-        double criteriaDER_value = 86.7; // In degrees,  samprate = 156250 Hz
-        //double criteriaDER_value = 84; // In degrees,  samprate = 156250 Hz
-        //double criteriaDER_value = 87.5; // In degrees, samprate/2 = 78125 Hz      
+        double criteriaDER_value;
+        if (samprate == 156250)
+            criteriaDER_value = 86.7; // In degrees,  samprate = 156250 Hz
+            //criteriaDER_value = 84; // In degrees,  samprate = 156250 Hz
+        else if (samprate == 156250/2)
+            criteriaDER_value = 87.5; // In degrees, samprate/2 = 78125 Hz      
+    
+        //cout<<"samprate ="<<samprate<<endl;
+        //cout<<"criteriaDER_value ="<<criteriaDER_value<<endl;
         
         double sum_samp1DER;
         int limitMin, limitMax;

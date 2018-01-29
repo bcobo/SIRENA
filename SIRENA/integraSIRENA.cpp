@@ -173,6 +173,13 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 			EP_EXIT_ERROR((char*)"Error in getLibraryCollection",EPFAIL); 
 		}
 	
+                double double_oflength = (double) oflength;
+                double log2_double_oflength = log2(double_oflength);            
+                if ((mode == 1) && (oflib == 1) && (strcmp(oflength_strategy,"FIXED") == 0) && ((log2_double_oflength - (int) log2_double_oflength) != 0))
+                {
+                        EP_EXIT_ERROR("If OFLib=yes, OFLength must be a power of 2",EPFAIL);
+                }
+                
 		if ((mode == 1) && (pulse_length > reconstruct_init->library_collection->pulse_templates[0].template_duration))
 		{
 			if ((oflib == 1) 
@@ -367,6 +374,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 		EP_EXIT_ERROR("Warning: pulse length is larger than record size. Pulse length set to maximum value (record size)",EPFAIL);
 	}
 	
+	//cout<<"delta_t: "<<record->delta_t<<endl;
 	// Detect pulses in record
 	runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
         
