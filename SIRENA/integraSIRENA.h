@@ -312,9 +312,9 @@ typedef struct PulseDetected
 	/** Energy (KeV) of the Pulse */
 	double energy;
 
-	/** Average of the first 4 samples of the derivative of the Pulse */
-        double avg_4samplesDerivative;
-
+        /** Average of the first 4 samples of the derivative of the Pulse */
+	double avg_4samplesDerivative;
+        
 	/** Quality of the Pulse */
 	double quality;
         
@@ -537,7 +537,7 @@ extern "C"
 void reconstructRecordSIRENA(TesRecord* record,TesEventList* event_list, ReconstructInitSIRENA* reconstruct_init, int lastRecord, int nRecord, PulsesCollection **pulsesAll, OptimalFilterSIRENA **optimalFilter, int* const status);
 
 
-LibraryCollection* getLibraryCollection(const char* const filename, int mode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char *filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int oflength, int* const status);
+LibraryCollection* getLibraryCollection(const char* const filename, int mode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char *filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int* const status);
 
 NoiseSpec* getNoiseSpec(const char* const filename,int mode,int hduPRCLOFWM,char *energy_method,char *ofnoise,char *filter_method,int* const status);
 
