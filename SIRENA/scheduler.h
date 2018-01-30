@@ -32,6 +32,8 @@ struct phidlist{
   phidlist(PhIDList* other);
   phidlist& operator=(const phidlist& other);
   ~phidlist();
+
+  PhIDList* get_PhIDList() const;
 };//PhIDList;
 
 struct tesrecord{
@@ -60,6 +62,8 @@ struct tesrecord{
   tesrecord(const tesrecord& other);
   tesrecord& operator=(const tesrecord& other);
   ~tesrecord();
+
+  TesRecord* get_TesRecord() const;
 };//TesRecord;
 
 struct detection
@@ -73,7 +77,7 @@ struct detection
   int intermediate;//reconstruct_init->intermediate
 #endif
   
-  TesRecord* rec;
+  tesrecord* rec;
   ReconstructInitSIRENA rec_init;
   int n_record;
   int last_record;
@@ -88,6 +92,13 @@ struct detection
 
 struct energy
 {
+  tesrecord* rec;
+  ReconstructInitSIRENA rec_init;
+  int n_record;
+  PulsesCollection* all_pulses;
+  PulsesCollection* record_pulses;
+  OptimalFilterSIRENA* optimal_filter;
+
   energy();
   energy(const energy& other);
   energy& operator=(const energy& other);
@@ -95,7 +106,7 @@ struct energy
 };
 
 #define detection_input detection
-#define detection_output ReconstructInitSIRENA
+#define detection_output energy
 
 class scheduler
 {
@@ -132,6 +143,7 @@ class scheduler
 
   std::thread* detection_workers;
   std::thread* energy_workers;
+  std::thread reconstruct_worker;
 };
 
 #endif

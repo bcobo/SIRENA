@@ -15,48 +15,60 @@ scheduler* scheduler::instance = 0;
 
 bool end_workers = false;
 
-void run_detect()
-{
-#if 0
-  if(tstart pulses > trigger size) error;
-  
-  create intermediate fits if required;
-  calls createDetectFile();
-  
-  filderLibrary();
-  
-  store the input record in invector;
-  calls loadRecord();
-
-  convert I into R if energyMethod = I2R;
-  calls convertI2R();
-
-  procRecord();
-
-  if intermediate fits write keywords;
-
-  if lastrecord and pca;
-  calls weightMatrix();
-  calls eigenVV();
-
-  Polyfitlinear();
-
-#endif
-}
-
+/* ****************************************************************************/
+/* Workers ********************************************************************/
+/* ****************************************************************************/
 void detection_worker()
 {
-  log_trace("Starting worker");
+  log_trace("Starting detection worker");
   while(1){
     detection_input data;
     if(detection_queue.wait_and_pop(data)){
       log_trace("Data extracted from queue: %i", data.rec_init.pulse_length);
-      //th_runDetect(data.rec,data.n_record,data.last_record,
-      //             data.all_pulses,&data.rec_init,&data.record_pulses);
+      log_trace("Data record from queue: %f", data.rec->time);
+      //ReconstructInitSIRENA* aux = &data.rec_init;
+      //th_runDetect(data.rec->get_TesRecord(),data.n_record,data.last_record,
+      //             data.all_pulses,&aux,&data.record_pulses);
+      detection_output res;
+      res.rec = data.rec;
+      res.rec_init = data.rec_init;
+      res.all_pulses = data.all_pulses;
+      res.record_pulses = data.record_pulses;
+      res.optimal_filter = 0;
+      log_trace("Res %i", data.rec_init.pulse_length);
+      energy_queue.push(res);
     }
     std::unique_lock<std::mutex> lk(end_workers_mut);
     if(end_workers){
-      log_trace("Finishing worker");
+      log_trace("Finishing detection worker");
+      lk.unlock();
+      break;
+    }
+    lk.unlock();
+  }
+}
+
+void reconstruction_worker()
+{
+  log_trace("reconstruction worker");
+  while(1){
+    detection_output data;
+    if(energy_queue.wait_and_pop(data)){
+      log_trace("Data extracted from energy queue: %i", 
+                data.rec_init.pulse_length);
+#if 0
+      if(strcmp(data.rec_init.EnergyMethod, "PCA") != 0){
+        ReconstructInitSIRENA* aux = &data.rec_init;
+        runEnergy(data.rec, &aux, &data.record_pulses, &data.optimal_filter);
+      }
+      if(data.n_record == 1){
+        
+      }
+#endif
+    }
+    std::unique_lock<std::mutex> lk(end_workers_mut);
+    if(end_workers && energy_queue.empty()){
+      log_trace("Finishing reconstruction worker");
       lk.unlock();
       break;
     }
@@ -72,13 +84,14 @@ void scheduler::push_detection(TesRecord* record,
                                PulsesCollection** pulsesInRecord)
 {
   detection_input input;
-  input.rec = record;
+  input.rec = new tesrecord(record);
   input.n_record = nRecord;
   input.last_record = lastRecord;
-  input.all_pulses = pulsesAll;
-  input.record_pulses = *pulsesInRecord;
+  input.all_pulses = pulsesAll;//TODO
+  input.record_pulses = *pulsesInRecord;//TODO
   input.rec_init = **reconstruct_init;
-  this->push_detection(input);
+  detection_queue.push(input);
+  //this->push_detection(input);
 }
 
 void scheduler::push_detection(const detection_input &input)
@@ -117,12 +130,13 @@ scheduler::scheduler():
   max_energy_workers(0)
 {
   this->num_cores = std::thread::hardware_concurrency();
-  this->max_detection_workers = this->num_cores - 1;
+  this->max_detection_workers = this->num_cores - 2;
   this->detection_workers = new std::thread[this->max_detection_workers];
   log_trace("Num of cores %u", this->num_cores);
   for (unsigned int i = 0; i < this->max_detection_workers; ++i){
     this->detection_workers[i] = std::thread (detection_worker);
   }
+  this->reconstruct_worker = std::thread(reconstruction_worker);
 }
 
 scheduler::~scheduler()
@@ -136,6 +150,7 @@ scheduler::~scheduler()
   for(unsigned int i = 0; i < this->max_detection_workers; ++i){
     this->detection_workers[i].join();
   }
+  this->reconstruct_worker.join();
 }
 
 /* Data structures implementation *********************************************/
@@ -193,7 +208,6 @@ phidlist::phidlist(PhIDList* other):
       times[i] = other->times[i];
     }
   }
-  
 }
 
 phidlist& phidlist::operator=(const phidlist& other)
@@ -227,7 +241,34 @@ phidlist& phidlist::operator=(const phidlist& other)
 
 phidlist::~phidlist()
 {
-  //TODO:
+  if (phid_array){
+    delete [] phid_array; phid_array = 0;
+  }
+  if (times){
+    delete [] times; times = 0;
+  }
+}
+
+PhIDList* phidlist::get_PhIDList() const
+{
+  PhIDList* ret = new PhIDList;
+  ret->wait_list = wait_list;
+  ret->n_elements = n_elements;
+  ret->index = index;
+  ret->size = size;
+  if (phid_array && size > 0){
+    ret->phid_array = new long[size];
+    for (unsigned int i = 0; i < size; ++i){
+      ret->phid_array[i] = phid_array[i];
+    }
+  }
+  if (times && size > 0){
+    ret->times = new double[size];
+    for (unsigned int i = 0; i < size; ++i){
+      ret->times[i] = times[i];
+    }
+  }
+  return ret;
 }
 
 tesrecord::tesrecord():
@@ -335,7 +376,41 @@ tesrecord& tesrecord::operator=(const tesrecord& other)
 
 tesrecord::~tesrecord()
 {
-  //TODO:
+  if (adc_array){
+    delete [] adc_array; adc_array = 0;
+  }
+  if (adc_double){
+    delete [] adc_double; adc_double = 0;
+  }
+  if (phid_list){
+    delete phid_list; phid_list = 0;
+  }
+}
+
+TesRecord* tesrecord::get_TesRecord() const
+{
+  TesRecord* ret = new TesRecord;
+  ret->trigger_size = trigger_size;
+  ret->time = time;
+  ret->delta_t = delta_t;
+  ret->pixid = pixid;
+
+  if(adc_array && trigger_size > 0){
+    ret->adc_array = new uint16_t[trigger_size];
+    for (unsigned int i = 0; i < trigger_size; ++i){
+      ret->adc_array[i] = adc_array[i];
+    }
+  }
+  if(adc_double && trigger_size > 0){
+    ret->adc_double = new double[trigger_size];
+    for (unsigned int i = 0; i < trigger_size; ++i){
+        ret->adc_double[i] = adc_double[i];
+    }
+  }
+  if(phid_list && phid_list->size > 0){
+    ret->phid_list = phid_list->get_PhIDList();
+  }
+  return ret;
 }
 
 detection::detection():
@@ -356,6 +431,7 @@ detection::detection(const detection& other):
   rec_init(other.rec_init)
 {
   //TODO:
+  
 }
 
 detection& detection::operator=(const detection& other)
@@ -375,19 +451,28 @@ detection::~detection()
   //TODO:
 }
 
-energy::energy()
+energy::energy():
+  record_pulses(0),
+  optimal_filter(0)
 {
   //TODO:
 }
 
-energy::energy(const energy& other)
+energy::energy(const energy& other):
+  rec_init(other.rec_init),
+  record_pulses(0),
+  optimal_filter(0)
 {
   //TODO:
 }
 
 energy& energy::operator=(const energy& other)
 {
-  //TODO:
+  if(this != &other){
+    rec_init = other.rec_init;
+    //TODO:
+  }
+  return *this;
 }
 
 energy::~energy()
