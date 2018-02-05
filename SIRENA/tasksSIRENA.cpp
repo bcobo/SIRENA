@@ -776,6 +776,8 @@ void th_runDetect(TesRecord* record,
                                //('dtc' comes from 'detectFile')
   char dtcName[256];
   strncpy(dtcName,(*reconstruct_init)->detectFile,255);
+  // Changing the fits file name adding the nrecord
+  sprintf(dtcName, "%s_%i", dtcName, nRecord); 
   dtcName[255]='\0';
   
   int eventsz = record->trigger_size;
@@ -798,6 +800,7 @@ void th_runDetect(TesRecord* record,
   if ((*reconstruct_init)->intermediate == 1)
     {
       // TODO: check thread safe
+      // Change name when in thread mode
       if (createDetectFile(*reconstruct_init, nRecord, 1/record->delta_t, 
                            &dtcObject, inputPulseLength))
         {
@@ -812,6 +815,8 @@ void th_runDetect(TesRecord* record,
   if ((*reconstruct_init)->mode == 1)
     {
       // TODO: check thread safe
+      // Not treadsafe for the library
+      // lock here
       if (filderLibrary(reconstruct_init, 1/record->delta_t))
         {
           message = "Cannot run routine filderLibrary to filter "
@@ -839,6 +844,8 @@ void th_runDetect(TesRecord* record,
       || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
       || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
     {
+      // TODO: check thread safe
+      // Not thread safe for the record_file_ptr
       if (convertI2R(reconstruct_init, &record, &invector))
         {
           message = "Cannot run routine convertI2R";
@@ -847,6 +854,7 @@ void th_runDetect(TesRecord* record,
     }
   
   // Process each record
+  // TODO: check thread safe
   if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, 
                  invector, invectorWithoutConvert2R, *pulsesInRecord, nRecord))
     {
@@ -954,6 +962,7 @@ void th_runDetect(TesRecord* record,
           EP_EXIT_ERROR(message,EPFAIL);
         }
       gsl_vector_set_all(nonpileup,1);
+      // TODO: check thread safe
       if (weightMatrix(*reconstruct_init, false, pulsesAll, *pulsesInRecord, 
                        (pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses), 
                        nonpileup , pulsetemplate, &covarianceData, &weightData))

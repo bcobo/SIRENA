@@ -163,6 +163,10 @@ int tesreconstruction_main() {
 	  event_list->index=0;
       }
     }
+
+    if(is_threading()) {
+      th_start_energy();
+    }
     
     if ((!strcmp(par.Rcmethod,"SIRENA")) && (pulsesAll->ndetpulses == 0))  printf("%s","WARNING: no pulses have been detected\n");
     

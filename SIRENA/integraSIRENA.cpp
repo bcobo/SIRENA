@@ -176,7 +176,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
     cout<<gsl_vector_memcpy(copia,prueba)<<endl;*/
   
   // Load LibraryCollection structure if library file exists
-  scheduler* s = scheduler::get();
+  //scheduler* s = scheduler::get();
   log_info("fits reentrant %i", fits_is_reentrant());
   //s->push_detection();
   int exists=0;
@@ -414,18 +414,24 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 
   // Detect pulses in record
   //ReconstructInitSIRENA* rec = new ReconstructInitSIRENA();
-  ReconstructInitSIRENA rec;
-  rec = *(reconstruct_init);
+  //ReconstructInitSIRENA rec;
+  //rec = *(reconstruct_init);
   //*rec = *(reconstruct_init);
-  scheduler* s = scheduler::get();
-  s->push_detection(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
+  //scheduler* s = scheduler::get();
+  //s->push_detection(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
   //log_info("Rec pointers copy %p", &rec);
   //log_info("Rec pointers original %p", reconstruct_init);
   //log_info("copy %i",rec.pulse_length);
   //log_info("original %i\n",reconstruct_init->pulse_length);
   //delete rec;
-  log_debug("record %p", record);
-  log_debug("Record %f", record->time);
+  if (scheduler::get()->is_threading() && reconstruct_init->mode == 1){
+    ReconstructInitSIRENA* rec = reconstruct_init->get_threading_object();
+    log_debug("record %p", record);
+    log_debug("Record %f - %i", record->time, nRecord);
+    scheduler::get()->push_detection(record, nRecord, lastRecord, 
+                                     *pulsesAll, &rec, &pulsesInRecord,
+                                     optimalFilter, event_list);
+  }
   if (reconstruct_init->mode == 1)
     th_runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
   else
@@ -439,7 +445,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
       //freePulsesCollection(pulsesAllAux);
       //freePulsesCollection(pulsesInRecord);
       //delete pulsesInRecord;
-
+      
       return;
     }
   
@@ -647,6 +653,12 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
         }
     }
   
+  log_debug("Current pulses detected of the array %i - Current record %f", 
+            (*pulsesAll)->ndetpulses, record->time);
+  for (unsigned int ite = 0; ite < (*pulsesAll)->ndetpulses; ++ite){
+    printf("%i ", (*pulsesAll)->pulses_detected[ite].energy);
+  }
+  printf("\n");
   //delete(pulsesAllAux->pulses_detected);
   //freePulsesCollection(pulsesAllAux);
   //delete(pulsesInRecord->pulses_detected);
@@ -732,7 +744,7 @@ extern "C" ReconstructInitSIRENA* newReconstructInitSIRENA(int* const status)
 extern "C" void freeReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init)
 {
   delete(reconstruct_init); reconstruct_init = 0;
-  delete scheduler::get();
+  //delete scheduler::get();
 }
 /*xxxx end of SECTION 4 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
@@ -1035,7 +1047,11 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 
   // Allocate library structure (cont.)
   // It is not necessary to check the allocation because 'ntemplates' has been checked previously
-  if (hduPRECALWN == 1)
+  //if (hduPRECALWN == 1)
+  if ((((strcmp(energy_method, "WEIGHT") == 0)
+        || (strcmp(energy_method, "WEIGHTN") == 0))
+       && (mode == 1))
+      || (mode == 0) && (hduPRECALWN == 1))
     {
       library_collection->V = gsl_matrix_alloc(ntemplates,template_duration*template_duration);
       library_collection->W = gsl_matrix_alloc(ntemplates,template_duration*template_duration);
@@ -2795,6 +2811,21 @@ NoiseSpec* getNoiseSpec(const char* const filename, int mode, int hduPRCLOFWM, c
 }
 /*xxxx end of SECTION 10 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
+void th_start_energy()
+{
+  scheduler::get()->finish_reconstruction();
+  th_wait_end();
+}
+
+void th_wait_end()
+{
+  delete scheduler::get();
+}
+
+int is_threading(){
+  return scheduler::get()->is_threading();
+}
+
 /* structs constructors and destructors */
 ReconstructInitSIRENA::ReconstructInitSIRENA():
   library_collection(0),
@@ -3051,6 +3082,90 @@ ReconstructInitSIRENA::~ReconstructInitSIRENA()
   if(grading) {
     delete grading; grading = 0;
   }
+}
+
+/* This method copies the data from the object to a new object except
+   for the library and the record file */
+ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object()
+{
+  ReconstructInitSIRENA* ret = new ReconstructInitSIRENA;
+  if(this->library_collection){
+    ret->library_collection = this->library_collection;
+  }
+
+  ret->threshold = this->threshold;
+  strcpy(ret->library_file, this->library_file);
+  strcpy(ret->record_file, this->record_file);
+    
+  //record_file_fptr
+  // Here we copy the ptr of the fits file, this is NOT thread safe,
+  // even allowing reentrant here we should open the file again,
+  // and even by doing that the writing through multiple threads
+  // won't be safe
+  ret->record_file_fptr = this->record_file_fptr;
+  
+  strcpy(ret->noise_file, this->noise_file);
+  strcpy(ret->event_file, this->event_file);
+  
+  ret->pulse_length = this->pulse_length;
+  ret->scaleFactor = this->scaleFactor;
+  ret->samplesUp = this->samplesUp;
+  ret->samplesDown = this->samplesDown;
+  ret->nSgms = this->nSgms;
+  ret->detectSP = this->detectSP;
+  ret->monoenergy = this->monoenergy;
+  ret->hduPRECALWN = this->hduPRECALWN;
+  ret->hduPRCLOFWM = this->hduPRCLOFWM;
+  ret->largeFilter = this->largeFilter;
+  ret->LrsT = this->LrsT;
+  ret->LbT = this->LbT;
+  ret->mode = this->mode;
+  strcpy(ret->detectionMode, this->detectionMode);
+    
+  //NoiseSpec
+  if(this->noise_spectrum){
+    ret->noise_spectrum = new NoiseSpec();
+    *ret->noise_spectrum = (*this->noise_spectrum);
+  }
+
+  strcpy(ret->FilterDomain, this->FilterDomain);
+  strcpy(ret->FilterMethod, this->FilterMethod);
+  strcpy(ret->EnergyMethod, this->EnergyMethod);
+    
+  ret->filtEev = this->filtEev;
+    
+  strcpy(ret->OFNoise, this->OFNoise);
+    
+  ret->LagsOrNot = this->LagsOrNot;
+  ret->OFIter = this->OFIter;
+  ret->OFLib = this->OFLib;
+    
+  strcpy(ret->OFInterp, this->OFInterp);
+  strcpy(ret->OFStrategy, this->OFStrategy);
+    
+  OFLength = this->OFLength;
+  intermediate = this->intermediate;
+  
+  strcpy(ret->detectFile, this->detectFile);
+  strcpy(ret->filterFile, this->filterFile);
+  
+  ret->clobber = this->clobber;
+  ret->maxPulsesPerRecord = this->maxPulsesPerRecord;
+  ret->SaturationValue = this->SaturationValue;
+  ret->tstartPulse1 = this->tstartPulse1;
+  ret->tstartPulse2 = this->tstartPulse2;
+  ret->tstartPulse3 = this->tstartPulse3;
+  ret->energyPCA1 = this->energyPCA1;
+  ret->energyPCA2 = this->energyPCA2;
+  
+  strcpy(ret->XMLFile, this->XMLFile);
+  
+  //Grading
+  if(this->grading){
+    ret->grading = new Grading();
+    *ret->grading = (*this->grading);
+  }
+  return ret;
 }
 
 // LibraryCollection

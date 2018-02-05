@@ -505,10 +505,26 @@ typedef struct ReconstructInitSIRENA
   ReconstructInitSIRENA(const ReconstructInitSIRENA& other);
   ~ReconstructInitSIRENA();
   ReconstructInitSIRENA& operator=(const ReconstructInitSIRENA& other);
+  ReconstructInitSIRENA* get_threading_object();
   //ReconstructInitSIRENA& operator=(ReconstructInitSIRENA& other);
 #endif
 
 } ReconstructInitSIRENA;
+
+#ifdef __cplusplus
+extern "C"
+#endif
+void th_start_energy();
+
+#ifdef __cplusplus
+extern "C"
+#endif
+void th_wait_end();
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int is_threading();
 
 #ifdef __cplusplus
 extern "C"

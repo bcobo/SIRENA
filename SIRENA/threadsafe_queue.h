@@ -81,6 +81,12 @@ class threadsafe_queue
     std::lock_guard<std::mutex> lk(mut);
     return data_queue.empty();
   }
+  
+  typename std::queue<T>::size_type safe_size() const
+  {
+    std::lock_guard<std::mutex> lk(mut);
+    return data_queue.size();
+  }
 
  private:
   mutable std::mutex mut;

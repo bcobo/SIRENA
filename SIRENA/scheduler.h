@@ -78,11 +78,13 @@ struct detection
 #endif
   
   tesrecord* rec;
-  ReconstructInitSIRENA rec_init;
+  ReconstructInitSIRENA* rec_init;
   int n_record;
   int last_record;
   PulsesCollection* all_pulses;
   PulsesCollection* record_pulses;
+  OptimalFilterSIRENA* optimal_filter;
+  TesEventList* event_list;
 
   detection();
   detection(const detection& other);
@@ -93,11 +95,11 @@ struct detection
 struct energy
 {
   tesrecord* rec;
-  ReconstructInitSIRENA rec_init;
+  ReconstructInitSIRENA* rec_init;
   int n_record;
   PulsesCollection* all_pulses;
-  PulsesCollection* record_pulses;
-  OptimalFilterSIRENA* optimal_filter;
+  PulsesCollection** record_pulses;
+  OptimalFilterSIRENA** optimal_filter;
 
   energy();
   energy(const energy& other);
@@ -118,10 +120,14 @@ class scheduler
                       int lastRecord, 
                       PulsesCollection *pulsesAll, 
                       ReconstructInitSIRENA** reconstruct_init, 
-                      PulsesCollection** pulsesInRecord);
+                      PulsesCollection** pulsesInRecord,
+                      OptimalFilterSIRENA** optimal,
+                      TesEventList* event_list);
   void run_energy(/*TODO: add parameters*/);
-  
-  void end_detection();
+  void finish_reconstruction();
+  std::vector<detection_input*> sort_pulses();
+
+  inline bool is_threading() const { return threading; }
 
   virtual ~scheduler();
   inline static scheduler* get()
@@ -137,7 +143,10 @@ class scheduler
   unsigned int num_cores;
   unsigned int max_detection_workers;
   unsigned int max_energy_workers;
+  unsigned int num_records;
   
+  bool threading;
+
   std::promise<bool>* detection_worker_status;
   std::promise<bool>* energy_worker_status;
 
