@@ -505,7 +505,7 @@ typedef struct ReconstructInitSIRENA
   ReconstructInitSIRENA(const ReconstructInitSIRENA& other);
   ~ReconstructInitSIRENA();
   ReconstructInitSIRENA& operator=(const ReconstructInitSIRENA& other);
-  ReconstructInitSIRENA* get_threading_object();
+  ReconstructInitSIRENA* get_threading_object(int n_record);
   //ReconstructInitSIRENA& operator=(ReconstructInitSIRENA& other);
 #endif
 
@@ -514,7 +514,8 @@ typedef struct ReconstructInitSIRENA
 #ifdef __cplusplus
 extern "C"
 #endif
-void th_start_energy();
+void th_start_energy(PulsesCollection** pulsesAll, 
+                     OptimalFilterSIRENA** optimalFilter);
 
 #ifdef __cplusplus
 extern "C"

@@ -165,7 +165,7 @@ int tesreconstruction_main() {
     }
 
     if(is_threading()) {
-      th_start_energy();
+      th_start_energy(&pulsesAll, &optimalFilter);
     }
     
     if ((!strcmp(par.Rcmethod,"SIRENA")) && (pulsesAll->ndetpulses == 0))  printf("%s","WARNING: no pulses have been detected\n");

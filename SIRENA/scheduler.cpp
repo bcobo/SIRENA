@@ -49,7 +49,7 @@ void detection_worker()
     lk.unlock();
   }
 }
-
+#if 0
 void reconstruction_worker()
 {
   log_trace("reconstruction worker");
@@ -77,7 +77,7 @@ void reconstruction_worker()
     lk.unlock();
   }
 }
-
+#endif
 void scheduler::push_detection(TesRecord* record, 
                                int nRecord, 
                                int lastRecord, 
@@ -112,7 +112,8 @@ void scheduler::push_detection(const detection_input &input)
 #endif
 }
 
-void scheduler::finish_reconstruction()
+void scheduler::finish_reconstruction(PulsesCollection** pulsesAll, 
+                                      OptimalFilterSIRENA** optimalFilter)
 {
   // Waits until all the records are detected
   // this works because this function should only be called
@@ -127,15 +128,33 @@ void scheduler::finish_reconstruction()
     lk.unlock();
   }
   
-  // Sortint the arrays by time
+  // Sortint the arrays by record number
+  if ((*pulsesAll)->pulses_detected){
+    delete [] (*pulsesAll)->pulses_detected;
+  }
+  (*pulsesAll)->size = this->num_records;
+  (*pulsesAll)->ndetpulses = this->num_records;
+  (*pulsesAll)->pulses_detected = new PulseDetected[this->num_records];
+  detection_input** data_array = new detection_input*[this->num_records];
+  while(!energy_queue.empty()){
+    detection_input* data;
+    if(energy_queue.wait_and_pop(data)){
+      data_array[data->n_record] = data;
+    }
+  }
   
+  for (unsigned int i = 0; i < this->num_records; ++i){
+    log_trace("Pulses sorted %i", data_array[i]->n_record);
+  }
+
   // Energy
+#if 0
   while(!energy_queue.empty()){
     detection_input* data;
     if(energy_queue.wait_and_pop(data)){
       log_trace("Data extracted from energy queue: %i", 
                 data->rec_init->pulse_length);
-#if 0
+      //#if 0
       if(strcmp(data.rec_init.EnergyMethod, "PCA") != 0){
         ReconstructInitSIRENA* aux = &data.rec_init;
         runEnergy(data.rec, &aux, &data.record_pulses, &data.optimal_filter);
@@ -143,18 +162,14 @@ void scheduler::finish_reconstruction()
       if(data.n_record == 1){
         
       }
-#endif
+      //#endif
     }
   }
-}
-
-std::vector<detection_input*> scheduler::sort_pulses()
-{
-  
+#endif
 }
 
 scheduler::scheduler():
-  threading(true),
+  threading(false),
   num_cores(0),
   max_detection_workers(0),
   max_energy_workers(0),

@@ -425,17 +425,17 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
   //log_info("original %i\n",reconstruct_init->pulse_length);
   //delete rec;
   if (scheduler::get()->is_threading() && reconstruct_init->mode == 1){
-    ReconstructInitSIRENA* rec = reconstruct_init->get_threading_object();
+    ReconstructInitSIRENA* rec = reconstruct_init->get_threading_object(nRecord);
     log_debug("record %p", record);
     log_debug("Record %f - %i", record->time, nRecord);
     scheduler::get()->push_detection(record, nRecord, lastRecord, 
                                      *pulsesAll, &rec, &pulsesInRecord,
                                      optimalFilter, event_list);
   }
-  if (reconstruct_init->mode == 1)
-    th_runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
-  else
-    runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
+  //if (reconstruct_init->mode == 1)
+  //  th_runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
+  //else
+  runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
   //log_info("ndetpulses %i", pulsesInRecord->ndetpulses);
   //log_info("pulsesAll %i", (*pulsesAll)->ndetpulses);
   
@@ -620,7 +620,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
         {
           // Free & Fill TesEventList structure
           event_list->index = (*pulsesAll)->ndetpulses;
-          event_list->event_indexes = new int[event_list->index];
+          event_list->event_indexes = new double[event_list->index];
           event_list->energies = new double[event_list->index];
           event_list->grades1  = new int[event_list->index];
           event_list->grades2  = new int[event_list->index];
@@ -2811,10 +2811,12 @@ NoiseSpec* getNoiseSpec(const char* const filename, int mode, int hduPRCLOFWM, c
 }
 /*xxxx end of SECTION 10 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
-void th_start_energy()
+void th_start_energy(PulsesCollection** pulsesAll, 
+                     OptimalFilterSIRENA** optimalFilter)
 {
-  scheduler::get()->finish_reconstruction();
-  th_wait_end();
+  scheduler::get()->finish_reconstruction(pulsesAll, optimalFilter);
+  delete scheduler::get();
+  //th_wait_end();
 }
 
 void th_wait_end()
@@ -3086,7 +3088,7 @@ ReconstructInitSIRENA::~ReconstructInitSIRENA()
 
 /* This method copies the data from the object to a new object except
    for the library and the record file */
-ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object()
+ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object(int n_record)
 {
   ReconstructInitSIRENA* ret = new ReconstructInitSIRENA;
   if(this->library_collection){
@@ -3105,7 +3107,9 @@ ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object()
   ret->record_file_fptr = this->record_file_fptr;
   
   strcpy(ret->noise_file, this->noise_file);
+  //sprintf(ret->noise_file, "%s_%i", ret->noise_file, n_record); 
   strcpy(ret->event_file, this->event_file);
+  //sprintf(ret->event_file, "%s_%i", ret->event_file, n_record);
   
   ret->pulse_length = this->pulse_length;
   ret->scaleFactor = this->scaleFactor;
@@ -3147,7 +3151,9 @@ ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object()
   intermediate = this->intermediate;
   
   strcpy(ret->detectFile, this->detectFile);
+  sprintf(ret->detectFile, "%s_%i", ret->detectFile, n_record);
   strcpy(ret->filterFile, this->filterFile);
+  //sprintf(ret->filterFile, "%s_%i", ret->filterFile, n_record);
   
   ret->clobber = this->clobber;
   ret->maxPulsesPerRecord = this->maxPulsesPerRecord;

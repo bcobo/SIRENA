@@ -81,6 +81,7 @@ MAP OF SECTIONS IN THIS FILE:
 
 #include "tasksSIRENA.h"
 #include "log.h"
+#include "scheduler.h"
 
 /***** SECTION A ************************************************************
 * runDetect: This function is responsible for the detection in SIRENA, record by record.
@@ -748,6 +749,10 @@ void runDetect(TesRecord* record, int nRecord, int lastRecord,
 /*xxxx end of SECTION A xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
 /* Run detection for the production mode only in multithread mode*/
+
+std::mutex library_mut;
+std::mutex fits_file_mut;
+
 void th_runDetect(TesRecord* record, 
                   int nRecord, 
                   int lastRecord, 
@@ -757,6 +762,8 @@ void th_runDetect(TesRecord* record,
 {
   log_trace("th_runDetect");
   log_info("rundetect pointer %p\n", *reconstruct_init);
+  
+  scheduler* sc = scheduler::get();
   
   int inputPulseLength = (*reconstruct_init)->pulse_length;
   
@@ -777,7 +784,6 @@ void th_runDetect(TesRecord* record,
   char dtcName[256];
   strncpy(dtcName,(*reconstruct_init)->detectFile,255);
   // Changing the fits file name adding the nrecord
-  sprintf(dtcName, "%s_%i", dtcName, nRecord); 
   dtcName[255]='\0';
   
   int eventsz = record->trigger_size;
@@ -846,11 +852,26 @@ void th_runDetect(TesRecord* record,
     {
       // TODO: check thread safe
       // Not thread safe for the record_file_ptr
-      if (convertI2R(reconstruct_init, &record, &invector))
+      // If the cfitsio is not compiled with -D_REENTRANT, we need to lock
+      // here in order to read the file.
+      // Also if the reentrant mode is on, the threads should not share the 
+      // same pointer. TODO
+      if (!sc->is_reentrant()){
+        std::unique_lock<std::mutex> lk(fits_file_mut);
+        if (convertI2R(reconstruct_init, &record, &invector))
+          {
+            lk.unlock();
+            message = "Cannot run routine convertI2R";
+            EP_EXIT_ERROR(message,EPFAIL);
+          }
+        lk.unlock();
+      }else{
+        if (convertI2R(reconstruct_init, &record, &invector))
         {
           message = "Cannot run routine convertI2R";
           EP_EXIT_ERROR(message,EPFAIL);
         }
+      }
     }
   
   // Process each record
@@ -2116,6 +2137,8 @@ int filderLibrary(ReconstructInitSIRENA** reconstruct_init, double samprate)
 	string message = "";
 	char valERROR[256];
 
+        scheduler* sc = scheduler::get();
+
 	if ((*reconstruct_init)->library_collection->pulse_templates_filder[0].template_duration == -1)		// First record
 	{
 		double scaleFactor = (*reconstruct_init)->scaleFactor;
@@ -2166,16 +2189,33 @@ int filderLibrary(ReconstructInitSIRENA** reconstruct_init, double samprate)
 				EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 			}
 
-			// Store the low-pass filtered derivatives in 'pulse_templates_filder'
-			gsl_vector_memcpy((*reconstruct_init)->library_collection->pulse_templates_filder[i].ptemplate,model);
+                        if(!sc->is_threading()){
 
-			(*reconstruct_init)->library_collection->pulse_templates_filder[i].template_duration = (*reconstruct_init)->library_collection->pulse_templates[i].template_duration;
+                          // Store the low-pass filtered derivatives in 'pulse_templates_filder'
+                          gsl_vector_memcpy((*reconstruct_init)->library_collection->pulse_templates_filder[i].ptemplate,model);
 
-			// Calculate the maximum of the low-pass filtered and differentiated models
-			gsl_vector_set((*reconstruct_init)->library_collection->maxDERs,i,gsl_vector_max(model));
+                          (*reconstruct_init)->library_collection->pulse_templates_filder[i].template_duration = (*reconstruct_init)->library_collection->pulse_templates[i].template_duration;
 
-		        // Locate the 1st sample of the (low-pass filtered and) differentiated models ('samp1DERs')
-			gsl_vector_set((*reconstruct_init)->library_collection->samp1DERs,i,gsl_vector_get(model,0));
+                          // Calculate the maximum of the low-pass filtered and differentiated models
+                          gsl_vector_set((*reconstruct_init)->library_collection->maxDERs,i,gsl_vector_max(model));
+
+                          // Locate the 1st sample of the (low-pass filtered and) differentiated models ('samp1DERs')
+                          gsl_vector_set((*reconstruct_init)->library_collection->samp1DERs,i,gsl_vector_get(model,0));
+                        }else{
+                          // Since all threads share the same library
+                          // we need to lock here to be able to write
+                          std::lock_guard<std::mutex> lk(library_mut);
+                                                 // Store the low-pass filtered derivatives in 'pulse_templates_filder'
+                          gsl_vector_memcpy((*reconstruct_init)->library_collection->pulse_templates_filder[i].ptemplate,model);
+
+                          (*reconstruct_init)->library_collection->pulse_templates_filder[i].template_duration = (*reconstruct_init)->library_collection->pulse_templates[i].template_duration;
+
+                          // Calculate the maximum of the low-pass filtered and differentiated models
+                          gsl_vector_set((*reconstruct_init)->library_collection->maxDERs,i,gsl_vector_max(model));
+
+                          // Locate the 1st sample of the (low-pass filtered and) differentiated models ('samp1DERs')
+                          gsl_vector_set((*reconstruct_init)->library_collection->samp1DERs,i,gsl_vector_get(model,0));
+                        }
 			//cout<<i<<" "<<gsl_vector_get((*reconstruct_init)->library_collection->maxDERs,i)<<" "<<gsl_vector_get((*reconstruct_init)->library_collection->samp1DERs,i)<<" "<<gsl_vector_get((*reconstruct_init)->library_collection->energies,i)<<endl;
 			//cout<<gsl_vector_get(model,0)<<" "<<gsl_vector_get(model,1)<<" "<<gsl_vector_get(model,2)<<endl;
                         //cout<<gsl_vector_get(model,0)<<" "<<gsl_vector_get(model,1)<<" "<<gsl_vector_get(model,2)<<" "<<gsl_vector_get(model,3)<<" "<<gsl_vector_get(model,4)<<" "<<gsl_vector_get(model,5)<<" "<<gsl_vector_get(model,6)<<" "<<gsl_vector_get(model,7)<<" "<<gsl_vector_get(model,8)<<" "<<gsl_vector_get(model,9)<<" "<<gsl_vector_get(model,10)<<" "<<endl;

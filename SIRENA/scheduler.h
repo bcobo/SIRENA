@@ -124,10 +124,11 @@ class scheduler
                       OptimalFilterSIRENA** optimal,
                       TesEventList* event_list);
   void run_energy(/*TODO: add parameters*/);
-  void finish_reconstruction();
-  std::vector<detection_input*> sort_pulses();
+  void finish_reconstruction(PulsesCollection** pulsesAll, 
+                             OptimalFilterSIRENA** optimalFilter);
 
   inline bool is_threading() const { return threading; }
+  inline bool is_reentrant() const { return fits_is_reentrant(); }
 
   virtual ~scheduler();
   inline static scheduler* get()
