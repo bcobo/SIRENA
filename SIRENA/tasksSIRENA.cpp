@@ -1491,6 +1491,7 @@ int filderLibrary(ReconstructInitSIRENA** reconstruct_init, double samprate)
 		for (int i=0; i<(*reconstruct_init)->library_collection->ntemplates; i++)
 		{
 			gsl_vector_memcpy(model, (*reconstruct_init)->library_collection->pulse_templates[i].ptemplate);
+                        //cout<<gsl_vector_get(model,1)-gsl_vector_get(model,0)<<" "<<gsl_vector_get(model,2)-gsl_vector_get(model,1)<<" "<<gsl_vector_get(model,3)-gsl_vector_get(model,2)<<endl;
 
 			// PULSE TEMPLATE: Low-pass filtering
 			status = lpf_boxcar(&model,model->size,scaleFactor,samprate);
@@ -8991,7 +8992,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
         /*cout<<"filterFFT->size: "<<filterFFT->size<<endl;
         cout<<"filter: "<<gsl_vector_get(filter,0)<<endl;
         cout<<"numlags: "<<numlags<<endl;*/
-        ////cout<<"pulseGrade: "<<pulseGrade<<endl;
+        //cout<<"pulseGrade: "<<pulseGrade<<endl;
         //cout<<"Calculating Energy.... "<<endl;
 	
 	// LowRes
@@ -9068,7 +9069,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 					{
                                                 int indexmax = gsl_vector_max_index(calculatedEnergy_vector);
 
-						if (indexmax == 0)
+						if (indexmax == 1)
 						{
 							if (parabola3Pts (lags_vector, calculatedEnergy_vector, &a, &b, &c))
 							{
@@ -9080,7 +9081,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 							*calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
 						}
 						else
-							*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,indexmax);
+							*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,1);
 						/*int indexmax = gsl_vector_max_index(calculatedEnergy_vector);
 						gsl_vector *sublags_vector = gsl_vector_alloc(3);
 						gsl_vector *subcalculatedEnergy_vector = gsl_vector_alloc(3);
@@ -9129,9 +9130,9 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 			}
 			else if (domain == 1)	// Frequency domain filtering (multiply vectorFFT and filterFFT)
 			{
-				/*cout<<GSL_REAL(gsl_vector_complex_get(filterFFT,0))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,0))<<endl;
-				cout<<GSL_REAL(gsl_vector_complex_get(filterFFT,1))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,1))<<endl;
-				cout<<GSL_REAL(gsl_vector_complex_get(filterFFT,filterFFT->size-1))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,filterFFT->size-1))<<endl;*/
+				//cout<<GSL_REAL(gsl_vector_complex_get(filterFFT,0))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,0))<<endl;
+				//cout<<GSL_REAL(gsl_vector_complex_get(filterFFT,1))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,1))<<endl;
+				//cout<<GSL_REAL(gsl_vector_complex_get(filterFFT,filterFFT->size-1))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,filterFFT->size-1))<<endl;
 				if ((numlags == 0) && (vector->size != filterFFT->size)) *calculatedEnergy = 0.0;
 				else
 				{
@@ -9174,7 +9175,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 					{
                                                 int indexmax = gsl_vector_max_index(calculatedEnergy_vector);
 
-						if (indexmax == 0)
+						if (indexmax == 1)
 						{
 							if (parabola3Pts (lags_vector, calculatedEnergy_vector, &a, &b, &c))
 							{
@@ -9186,7 +9187,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 							*calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
 						}
 						else
-							*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,indexmax);
+							*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,1);
                 
 						/*int indexmax = gsl_vector_max_index(calculatedEnergy_vector);
 						gsl_vector *sublags_vector = gsl_vector_alloc(3);
