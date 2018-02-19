@@ -28,6 +28,8 @@ int tesreconstruction_main() {
 
   // Error status.
   int status=EXIT_SUCCESS;
+  
+  double sampling_rate;
 
   // Register HEATOOL:
   set_toolname("tesreconstruction");
@@ -89,6 +91,7 @@ int tesreconstruction_main() {
 		SIXT_ERROR("The provided XMLFile does not have the grading info");
 		return(EXIT_FAILURE);
   	  }
+  	  sampling_rate = det->SampleFreq;
 	  
 	  reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
 	  reconstruct_init_sirena->grading->value = gsl_vector_alloc(det->pix->ngrades);
@@ -107,6 +110,11 @@ int tesreconstruction_main() {
     TesRecord* record = newTesRecord(&status);
     allocateTesRecord(record,record_file->trigger_size,record_file->delta_t,0,&status);
     CHECK_STATUS_BREAK(status);
+    if (sampling_rate != 1/record_file->delta_t)
+    {
+        SIXT_ERROR("Sampling rate from the XML file and the FITS file do not match");
+        return(EXIT_FAILURE);
+    }
 
     //Build up TesEventList to recover the results of the reconstruction
     TesEventList* event_list = newTesEventList(&status);
@@ -129,16 +137,16 @@ int tesreconstruction_main() {
       {
 	    nrecord = nrecord + 1;
 	    if(nrecord == record_file->nrows) lastRecord=1;
-	    /*if(nrecord < 349) 
+	    /*if(nrecord < 921) 
             {
 	      continue;
 	    }
-            else if(nrecord > 349)
+            else if(nrecord > 921)
             {
 	      status=1;
 	      CHECK_STATUS_BREAK(status);
 	    }*/
-	    /*if(nrecord > 1)
+	    /*if(nrecord > 9)
 	    {
 	    	status=1;
 	        CHECK_STATUS_BREAK(status);
