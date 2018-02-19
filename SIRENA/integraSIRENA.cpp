@@ -3836,7 +3836,6 @@ LibraryCollection::~LibraryCollection()
 
 // PulseDetected
 PulseDetected::PulseDetected():
-<<<<<<< HEAD
   pulse_duration(0),
   grade1(0),
   grade2(0),
