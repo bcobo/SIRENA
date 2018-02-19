@@ -326,6 +326,9 @@ typedef struct PulseDetected
   /** Energy (KeV) of the Pulse */
   double energy;
   
+  /** Average of the first 4 samples of the derivative of the Pulse */
+  double avg_4samplesDerivative;
+  
   /** Quality of the Pulse */
   double quality;
   
@@ -431,7 +434,7 @@ typedef struct ReconstructInitSIRENA
   int mode;
   
   /** Detection Mode: AD (Adjusted Derivative) or A1 (Alternative1) **/
-  char detectionMode[2];
+  char detectionMode[3];
   
   /** Noise spectrum **/
   NoiseSpec* noise_spectrum;

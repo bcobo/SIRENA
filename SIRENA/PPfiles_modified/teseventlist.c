@@ -96,6 +96,7 @@ void allocateWholeTesEventList(TesEventList* event_list,unsigned char allocate_p
 		//Free previous lists if they were already used
 		if (NULL != event_list->energies) {
 			free(event_list->energies);
+			free(event_list->avgs_4samplesDerivative);
 			free(event_list->grades2);
 			if(NULL!= event_list->ph_ids){
 				free(event_list->ph_ids);
@@ -456,6 +457,12 @@ void addRMFImpact(TesEventFile* file,PixImpact * impact,int grade1,int grade2,in
 	double energy = (double)impact->energy;
 	fits_write_col(file->fptr, TDOUBLE, file->energyCol,
 			file->row, 1, 1, &energy, status);
+=======
+        //Save avg_4samplesDerivative column  //BEA
+	/*double avg_4samplesDerivative = (double)impact->avg_4samplesDerivative;
+	fits_write_col(file->fptr, TDOUBLE, file->avg_4samplesDerivativeCol,
+			file->row, 1, 1, &avg_4samplesDerivative, status);
+>>>>>>> bf8ce4341c3d8e276e191e58f674d692a0809835
 	CHECK_STATUS_VOID(*status);*/
 
 	//Save grade1 column
@@ -545,6 +552,10 @@ void updateSignal(TesEventFile* file,long row,double energy,long grade1,long gra
 
 	/*//Save avg_4samplesDerivative column   //BEA
 	fits_write_col(file->fptr, TDOUBLE, file->avg4samplesDerivativeCol,
+=======
+	//Save avg_4samplesDerivative column   //BEA
+	/*fits_write_col(file->fptr, TDOUBLE, file->avg4samplesDerivativeCol,
+>>>>>>> bf8ce4341c3d8e276e191e58f674d692a0809835
 			row, 1, 1, &avg_4samplesDerivative, status);
 	CHECK_STATUS_VOID(*status);*/
 
