@@ -9081,7 +9081,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 							*calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
 						}
 						else
-							*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,1);
+							*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,indexmax);
 						/*int indexmax = gsl_vector_max_index(calculatedEnergy_vector);
 						gsl_vector *sublags_vector = gsl_vector_alloc(3);
 						gsl_vector *subcalculatedEnergy_vector = gsl_vector_alloc(3);
@@ -9187,7 +9187,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 							*calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
 						}
 						else
-							*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,1);
+							*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,indexmax);
                 
 						/*int indexmax = gsl_vector_max_index(calculatedEnergy_vector);
 						gsl_vector *sublags_vector = gsl_vector_alloc(3);
