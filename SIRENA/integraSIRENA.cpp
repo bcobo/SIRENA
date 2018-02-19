@@ -388,7 +388,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 		EP_EXIT_ERROR("Warning: pulse length is larger than record size. Pulse length set to maximum value (record size)",EPFAIL);
 	}
 	
-	// Detect pulses in record
+		// Detect pulses in record
   //ReconstructInitSIRENA* rec = new ReconstructInitSIRENA();
   //ReconstructInitSIRENA rec;
   //rec = *(reconstruct_init);
@@ -408,14 +408,10 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                                      *pulsesAll, &rec, &pulsesInRecord,
                                      optimalFilter, event_list);
   }
-  //if (reconstruct_init->mode == 1)
-  //  th_runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
-  //else
-	runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
-  //log_info("ndetpulses %i", pulsesInRecord->ndetpulses);
-  //log_info("pulsesAll %i", (*pulsesAll)->ndetpulses);
+	
 	//cout<<"delta_t: "<<record->delta_t<<endl;
 	// Detect pulses in record
+	runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
         //cout<<"Pasa runDetect"<<endl;
         
 	if(pulsesInRecord->ndetpulses == 0) // No pulses found in record
@@ -480,129 +476,43 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			pulsesAllAux->pulses_detected[i] = (*pulsesAll)->pulses_detected[i];
 		}*/
 		(*pulsesAll)->ndetpulses = (*pulsesAll)->ndetpulses + pulsesInRecord->ndetpulses;
-               
-      if ((*pulsesAll)->pulses_detected != NULL && (*pulsesAll)->size < (*pulsesAll)->ndetpulses)
-        {
-          pulsesAllAux->pulses_detected = new PulseDetected[(*pulsesAll)->ndetpulses];
-          
-          //for (int i=0;i<(*pulsesAll)->ndetpulses;i++){
-          for (int i=0;i<pulsesAllAux->ndetpulses;i++){
-            pulsesAllAux->pulses_detected[i] = (*pulsesAll)->pulses_detected[i];
-          }
-          
-          delete [] (*pulsesAll)->pulses_detected; 
-          (*pulsesAll)->size = resize_array((*pulsesAll)->size, (*pulsesAll)->ndetpulses);
-          (*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->size];
-          for (int i=0;i<pulsesAllAux->ndetpulses;i++){
-            (*pulsesAll)->pulses_detected[i] = pulsesAllAux->pulses_detected[i];
-          }
-          delete [] pulsesAllAux->pulses_detected;
-          pulsesAllAux = 0;
-        }
-      /*if ((*pulsesAll)->pulses_detected != NULL) delete [] (*pulsesAll)->pulses_detected; 
-        (*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->ndetpulses];
-        // Save pulses detected in previous records
-        for (int i=0;i<pulsesAllAux->ndetpulses;i++)
-        {
-        (*pulsesAll)->pulses_detected[i] = pulsesAllAux->pulses_detected[i];
-        }*/
-      
-#ifndef POOLS
-      if((*pulsesAll)->pulses_detected == 0){	
-        (*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->ndetpulses];
-        (*pulsesAll)->size = (*pulsesAll)->ndetpulses;
-      }
-#endif
                 
-      // Save pulses detected in current record
-      for (int i=0;i<pulsesInRecord->ndetpulses;i++)
-        {
-          (*pulsesAll)->pulses_detected[i+pulsesAllAux->ndetpulses] = pulsesInRecord->pulses_detected[i];
-        }
-    }
-  
-  //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
-  //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
-  //cout<<pulsesInRecord->ndetpulses<<endl;
-  
-  // Free & Fill TesEventList structure
-  event_list->index = pulsesInRecord->ndetpulses;
-  event_list->energies = new double[event_list->index];
-  event_list->grades1  = new int[event_list->index];
-  event_list->grades2  = new int[event_list->index];
-  event_list->pulse_heights  = new double[event_list->index];
-  event_list->ph_ids   = new long[event_list->index];
-  
-  if (strcmp(reconstruct_init->EnergyMethod,"PCA") != 0)
-    {
-      for (int ip=0; ip<pulsesInRecord->ndetpulses; ip++)
-        {
-          //// '+1' in order to undo the '-1' in initializeReconstructionSIRENA
-          //event_list->event_indexes[ip] = 
-          //      (int)((pulsesInRecord->pulses_detected[ip].Tstart - record->time)/record->delta_t + 0.5) + 1;	// '+0.5' to nearest integer (neither 'floor' nor 'ceil')
-          // Not '+1' in order to undo the '-1' in initializeReconstructionSIRENA because it is necessary to work with intervals not samples
-          event_list->event_indexes[ip] = 
-            (int)((pulsesInRecord->pulses_detected[ip].Tstart - record->time)/record->delta_t + 0.5);	// '+0.5' to nearest integer (neither 'floor' nor 'ceil') 
-          //if (ip==0) cout<<event_list->event_indexes[ip]<<endl;
-          // if (ip==1) cout<<event_list->event_indexes[ip]<<endl;
-
-          if (reconstruct_init->mode == 1)
-            {
-              event_list->energies[ip] = pulsesInRecord->pulses_detected[ip].energy;
-            }
-          else if (reconstruct_init->mode == 0)
-            {
-              event_list->energies[ip] = 999.;
-            }
-          
-          event_list->grades1[ip]  = pulsesInRecord->pulses_detected[ip].grade1;
-          event_list->grades2[ip]  = pulsesInRecord->pulses_detected[ip].grade2;
-          event_list->pulse_heights[ip]  = pulsesInRecord->pulses_detected[ip].pulse_height;
-          event_list->ph_ids[ip]   = 0;
-        }
-      if (lastRecord == 1)
-        {       
-          double numLagsUsed_mean;
-          double numLagsUsed_sigma;
-          gsl_vector *numLagsUsed_vector = gsl_vector_alloc((*pulsesAll)->ndetpulses);
-          
-          for (int ip=0; ip<(*pulsesAll)->ndetpulses; ip++)
-            {
-              gsl_vector_set(numLagsUsed_vector,ip,(*pulsesAll)->pulses_detected[ip].numLagsUsed);
-            }
-          if (findMeanSigma (numLagsUsed_vector, &numLagsUsed_mean, &numLagsUsed_sigma))
-            {
-              EP_EXIT_ERROR("Cannot run findMeanSigma routine for calculating numLagsUsed statistics",EPFAIL);
-            }
-          
-          // cout<<"numLagsUsed_mean: "<<numLagsUsed_mean<<endl;
-          //cout<<"numLagsUsed_sigma: "<<numLagsUsed_sigma<<endl;
-          gsl_vector_free(numLagsUsed_vector); numLagsUsed_vector = 0;
-        }
-    }
-  else
-    {
-      if (lastRecord == 1)
-        {
-          // Free & Fill TesEventList structure
-          event_list->index = (*pulsesAll)->ndetpulses;
-          event_list->event_indexes = new double[event_list->index];
-          event_list->energies = new double[event_list->index];
-          event_list->grades1  = new int[event_list->index];
-          event_list->grades2  = new int[event_list->index];
-          event_list->pulse_heights  = new double[event_list->index];
-          event_list->ph_ids   = new long[event_list->index];
-          
-          for (int ip=0; ip<(*pulsesAll)->ndetpulses; ip++)
-            {
-              //// '+1' in order to undo the '-1' in initializeReconstructionSIRENA
-              //event_list->event_indexes[ip] = 
-              //      (int)(((*pulsesAll)->pulses_detected[ip].Tstart - record->time)/record->delta_t + 0.5) + 1;	// '+0.5' to nearest integer (neither 'floor' nor 'ceil')
-              // Not '+1' in order to undo the '-1' in initializeReconstructionSIRENA because it is necessary to work with intervals not samples
-              event_list->event_indexes[ip] = 
-                (int)(((*pulsesAll)->pulses_detected[ip].Tstart - record->time)/record->delta_t + 0.5);	// '+0.5' to nearest integer (neither 'floor' nor 'ceil')
-              
-              if (reconstruct_init->mode == 1)
+               
+                if ((*pulsesAll)->pulses_detected != NULL && (*pulsesAll)->size < (*pulsesAll)->ndetpulses)
+                {		
+			pulsesAllAux->pulses_detected = new PulseDetected[(*pulsesAll)->ndetpulses];
+			
+                        //for (int i=0;i<(*pulsesAll)->ndetpulses;i++){
+                        for (int i=0;i<pulsesAllAux->ndetpulses;i++){
+				pulsesAllAux->pulses_detected[i] = (*pulsesAll)->pulses_detected[i];
+			}
+                        			
+			delete [] (*pulsesAll)->pulses_detected; 
+			(*pulsesAll)->size = resize_array((*pulsesAll)->size, (*pulsesAll)->ndetpulses);								
+			(*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->size];			
+									
+			for (int i=0;i<pulsesAllAux->ndetpulses;i++){
+				(*pulsesAll)->pulses_detected[i] = pulsesAllAux->pulses_detected[i];
+			}
+			delete [] pulsesAllAux->pulses_detected;
+                }
+		/*if ((*pulsesAll)->pulses_detected != NULL) delete [] (*pulsesAll)->pulses_detected; 
+		(*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->ndetpulses];
+		// Save pulses detected in previous records
+		for (int i=0;i<pulsesAllAux->ndetpulses;i++)
+		{
+			(*pulsesAll)->pulses_detected[i] = pulsesAllAux->pulses_detected[i];
+		}*/
+                
+        #ifndef POOLS		
+		if((*pulsesAll)->pulses_detected == 0){	
+			(*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->ndetpulses];
+			(*pulsesAll)->size = (*pulsesAll)->ndetpulses;
+		}
+        #endif	
+                
+		// Save pulses detected in current record
+		for (int i=0;i<pulsesInRecord->ndetpulses;i++)
                 {
 			(*pulsesAll)->pulses_detected[i+pulsesAllAux->ndetpulses] = pulsesInRecord->pulses_detected[i];
 		}
@@ -751,15 +661,9 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	//delete(pulsesInRecord->pulses_detected);
 	//freePulsesCollection(pulsesInRecord);
 	//delete [] pulsesAllAux->pulses_detected;
-	log_debug("Current pulses detected of the array %i - Current record %f", 
-            (*pulsesAll)->ndetpulses, record->time);
-  for (unsigned int ite = 0; ite < (*pulsesAll)->ndetpulses; ++ite){
-    printf("%i ", (*pulsesAll)->pulses_detected[ite].energy);
-  }
-  printf("\n");
-	delete pulsesAllAux; pulsesAllAux = 0;
-  delete [] pulsesInRecord->pulses_detected; pulsesInRecord->pulses_detected=0;
-  delete pulsesInRecord; pulsesInRecord = 0;
+	delete pulsesAllAux;
+	delete [] pulsesInRecord->pulses_detected;
+	delete pulsesInRecord;
         
         //cout<<"Acaba ReconstructInitSIRENA"<<endl;
 
