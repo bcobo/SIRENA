@@ -171,7 +171,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	{	
 		if (mode == 1)		largeFilter = pulse_length;
                 //if ((mode == 0) && (largeFilter == -999)) largeFilter = pulse_length;
-		reconstruct_init->library_collection = getLibraryCollection(library_file, mode, hduPRECALWN, hduPRCLOFWM, largeFilter, filter_domain, pulse_length, energy_method, ofnoise, filter_method, oflib, &ofinterp, filtEev, status);
+		reconstruct_init->library_collection = getLibraryCollection(library_file, mode, hduPRECALWN, hduPRCLOFWM, largeFilter, filter_domain, pulse_length, energy_method, ofnoise, filter_method, oflib, &ofinterp, filtEev, lagsornot, status);
 		if (*status)
 		{
 			EP_EXIT_ERROR((char*)"Error in getLibraryCollection",EPFAIL); 
@@ -982,7 +982,7 @@ extern "C" void freeOptimalFilterSIRENA(OptimalFilterSIRENA* OFilterColl)
 * 	      It has been fixed in 'tesreconstruction' as 'DAB' (but it would be possible to work with 'MF')
 * - status: Input/output status
 ******************************************************************************/
-LibraryCollection* getLibraryCollection(const char* const filename, int mode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char* filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int* const status)
+LibraryCollection* getLibraryCollection(const char* const filename, int mode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char* filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int* const status)
 {  	
         // Create LibraryCollection structure
 	LibraryCollection* library_collection = new LibraryCollection;
@@ -1052,7 +1052,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 		{	
 			if (strcmp(*ofinterp,"DAB") == 0)	strcpy(*ofinterp,"MF");
 							
-			EP_PRINT_ERROR("The library only has one row, so no interpolation is going to be done (no matter 'OFInterp')",-999); // Only a warning
+			//EP_PRINT_ERROR("The library only has one row, so no interpolation is going to be done (no matter 'OFInterp')",-999); // Only a warning
 		}
 		else
                 {
@@ -1060,7 +1060,14 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
                         {
                                 if (strcmp(*ofinterp,"DAB") == 0)	strcpy(*ofinterp,"MF");
 							
-                                EP_PRINT_ERROR("The library has several rows, but no interpolation is going to be done (no matter 'OFInterp') and only the row related to filtEev is going to be used in reconstruction",-999); // Only a warning
+                                //EP_PRINT_ERROR("The library has several rows, but no interpolation is going to be done (no matter 'OFInterp') and only the row related to filtEev is going to be used in reconstruction",-999); // Only a warning
+                                EP_PRINT_ERROR("The library has several rows, but only the row related to filtEev is going to be used in reconstruction",-999); // Only a warning
+                        }
+                        else if ((filtEev == 0) && (lagsornot == 1))
+                        {
+                                
+                                EP_PRINT_ERROR("filtEev=0 (filters interpolation) and LagsOrNot=1 is not developed yet => Please, change your choice to LagsOrNot=0",EPFAIL); 
+                                *status = EPFAIL; return(library_collection);
                         }
                 }
 	}
