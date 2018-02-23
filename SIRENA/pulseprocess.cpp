@@ -3618,7 +3618,7 @@ int FindSecondaries
 	}
 
 	// Free allocated GSL vectors
-	gsl_vector_free(model); model = 0;
+	//gsl_vector_free(model); model = 0;
 	gsl_vector_free(index_maxDERgsl); index_maxDERgsl = 0;
 	
 	gsl_vector_free(modelToSubtract);modelToSubtract = 0;

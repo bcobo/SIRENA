@@ -77,7 +77,7 @@ struct detection
   int intermediate;//reconstruct_init->intermediate
 #endif
   
-  tesrecord* rec;
+  TesRecord* rec;
   ReconstructInitSIRENA* rec_init;
   int n_record;
   int last_record;

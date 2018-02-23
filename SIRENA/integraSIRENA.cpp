@@ -417,7 +417,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	if(pulsesInRecord->ndetpulses == 0) // No pulses found in record
 	{
 		//freePulsesCollection(pulsesAllAux);
-		delete pulsesAllAux;
+          delete pulsesAllAux; pulsesAllAux = 0;
 		//freePulsesCollection(pulsesInRecord);
 	    	//delete pulsesInRecord;
 
@@ -436,7 +436,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	{
                 (*pulsesAll)->ndetpulses = pulsesInRecord->ndetpulses;
                 if((*pulsesAll)->pulses_detected != 0 && (*pulsesAll)->size < pulsesInRecord->ndetpulses){
-			delete [] (*pulsesAll)->pulses_detected;
+                  delete [] (*pulsesAll)->pulses_detected; (*pulsesAll)->pulses_detected = 0;
 			(*pulsesAll)->size = resize_array((*pulsesAll)->size, (*pulsesAll)->ndetpulses);
 			(*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->size];
 		}
@@ -487,14 +487,14 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 				pulsesAllAux->pulses_detected[i] = (*pulsesAll)->pulses_detected[i];
 			}
                         			
-			delete [] (*pulsesAll)->pulses_detected; 
+			delete [] (*pulsesAll)->pulses_detected; (*pulsesAll)->pulses_detected = 0; 
 			(*pulsesAll)->size = resize_array((*pulsesAll)->size, (*pulsesAll)->ndetpulses);								
 			(*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->size];			
 									
 			for (int i=0;i<pulsesAllAux->ndetpulses;i++){
 				(*pulsesAll)->pulses_detected[i] = pulsesAllAux->pulses_detected[i];
 			}
-			delete [] pulsesAllAux->pulses_detected;
+			delete [] pulsesAllAux->pulses_detected; pulsesAllAux->pulses_detected = 0;
                 }
 		/*if ((*pulsesAll)->pulses_detected != NULL) delete [] (*pulsesAll)->pulses_detected; 
 		(*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->ndetpulses];
@@ -661,9 +661,9 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	//delete(pulsesInRecord->pulses_detected);
 	//freePulsesCollection(pulsesInRecord);
 	//delete [] pulsesAllAux->pulses_detected;
-	delete pulsesAllAux;
-	delete [] pulsesInRecord->pulses_detected;
-	delete pulsesInRecord;
+	delete pulsesAllAux; pulsesAllAux = 0;
+	delete [] pulsesInRecord->pulses_detected; pulsesInRecord->pulses_detected = 0;
+	delete pulsesInRecord; pulsesInRecord = 0;
         
         //cout<<"Acaba ReconstructInitSIRENA"<<endl;
 

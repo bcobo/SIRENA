@@ -8,15 +8,19 @@
 
 std::mutex end_workers_mut;
 std::mutex records_detected_mut;
+std::mutex records_energy_mut;
 
 threadsafe_queue<detection_input*> detection_queue;
+threadsafe_queue<detection_input*> detected_queue;
 threadsafe_queue<detection_input*> energy_queue;
+threadsafe_queue<detection_input*> end_queue;
 
 scheduler* scheduler::instance = 0;
 
 bool end_workers = false;
 
 unsigned int records_detected = 0;
+unsigned int records_energy = 0;
 
 /* ****************************************************************************/
 /* Workers ********************************************************************/
@@ -30,12 +34,12 @@ void detection_worker()
       log_trace("Data extracted from queue: %i", data->rec_init->pulse_length);
       log_trace("Data record from queue: %f", data->rec->time);
       //ReconstructInitSIRENA* aux = &data.rec_init;
-      th_runDetect(data->rec->get_TesRecord(),
+      th_runDetect(data->rec,
                    data->n_record,data->last_record,
                    data->all_pulses,
                    &(data->rec_init),
                    &(data->record_pulses));
-      energy_queue.push(data);
+      detected_queue.push(data);
       std::unique_lock<std::mutex> lk(records_detected_mut);
       ++records_detected;
       lk.unlock();
@@ -49,6 +53,47 @@ void detection_worker()
     lk.unlock();
   }
 }
+
+void energy_worker()
+{
+  log_trace("Starting energy worker");
+  while(1){
+    detection_input* data;
+    if(energy_queue.wait_and_pop(data)){
+      
+      log_trace("run energy");
+      log_trace("energy data:");
+      log_trace("%f", data->rec_init->pulse_length);
+      log_trace("%f", data->rec->time);
+      log_trace("%i", data->record_pulses->ndetpulses);
+      log_trace("%p",&data->optimal_filter);
+      log_trace("%p",&data->record_pulses);
+      log_trace("%p",&data->rec_init);
+      log_trace("trigger %i",data->rec->trigger_size);
+      log_trace("phdlist %i", data->rec->phid_list->size);
+      //log_trace("%p", data->rec->get_TesRecord());
+      /*
+      th_runEnergy(data->rec->get_TesRecord(), 
+                   &(data->rec_init),
+                   &(data->record_pulses),
+                   &(data->optimal_filter));
+      */
+      log_trace("end run energy");
+      end_queue.push(data);
+      std::unique_lock<std::mutex> lk(records_energy_mut);
+      ++records_energy;
+      lk.unlock();
+    }
+    std::unique_lock<std::mutex> lk(end_workers_mut);
+    if(end_workers){
+      log_trace("Finishing energy worker");
+      lk.unlock();
+      break;
+    }
+    lk.unlock();
+  }
+}
+
 #if 0
 void reconstruction_worker()
 {
@@ -88,7 +133,8 @@ void scheduler::push_detection(TesRecord* record,
                                TesEventList* event_list)
 {
   detection_input* input = new detection_input;
-  input->rec = new tesrecord(record);
+  tesrecord* rec = new tesrecord(record);
+  input->rec = rec->get_TesRecord();
   input->n_record = nRecord;
   input->last_record = lastRecord;
   input->all_pulses = pulsesAll;//TODO
@@ -132,44 +178,69 @@ void scheduler::finish_reconstruction(PulsesCollection** pulsesAll,
   if ((*pulsesAll)->pulses_detected){
     delete [] (*pulsesAll)->pulses_detected;
   }
+
   (*pulsesAll)->size = this->num_records;
   (*pulsesAll)->ndetpulses = this->num_records;
   (*pulsesAll)->pulses_detected = new PulseDetected[this->num_records];
   detection_input** data_array = new detection_input*[this->num_records];
-  while(!energy_queue.empty()){
+  while(!detected_queue.empty()){
     detection_input* data;
-    if(energy_queue.wait_and_pop(data)){
+    if(detected_queue.wait_and_pop(data)){
       data_array[data->n_record] = data;
+      log_trace("trigger %i",data->rec->trigger_size);
+      log_trace("phdlist %i", data->rec->phid_list->size);
     }
   }
   
+  //for (unsigned int i = 0; i < this->num_records; ++i){
+  //  log_trace("Pulses sorted %i", data_array[i]->n_record);
+  //}
+  
+  std::unique_lock<std::mutex> lk(end_workers_mut);
+  end_workers = true;
+  lk.unlock();
+  for(unsigned int i = 0; i < this->max_detection_workers; ++i){
+    this->detection_workers[i].join();
+  }
+  
+  // Energy
+  std::unique_lock<std::mutex> lk_end(end_workers_mut);
+  end_workers = false;
+  lk_end.unlock();
+  this->energy_workers = new std::thread[this->max_detection_workers];
+  for (unsigned int i = 0; i < 1; ++i){//this->max_detection_workers; ++i){
+    this->energy_workers[i] = std::thread (energy_worker);
+  }
+  
   for (unsigned int i = 0; i < this->num_records; ++i){
-    log_trace("Pulses sorted %i", data_array[i]->n_record);
+    energy_queue.push(data_array[i+1]);
   }
 
-  // Energy
-#if 0
-  while(!energy_queue.empty()){
-    detection_input* data;
-    if(energy_queue.wait_and_pop(data)){
-      log_trace("Data extracted from energy queue: %i", 
-                data->rec_init->pulse_length);
-      //#if 0
-      if(strcmp(data.rec_init.EnergyMethod, "PCA") != 0){
-        ReconstructInitSIRENA* aux = &data.rec_init;
-        runEnergy(data.rec, &aux, &data.record_pulses, &data.optimal_filter);
-      }
-      if(data.n_record == 1){
-        
-      }
-      //#endif
+  // Waits until all the records are detected
+  // this works because this function should only be called
+  // after all the records are queue
+  log_trace("Waiting until all the energy workers finish");
+  while(1){
+    std::unique_lock<std::mutex> lk_energy(records_energy_mut);
+    if (records_energy == this->num_records){
+      lk_energy.unlock();
+      break;
     }
+    lk_energy.unlock();
   }
-#endif
+  
+  std::unique_lock<std::mutex> lk_end2(end_workers_mut);
+  end_workers = true;
+  lk_end2.unlock();
+  for(unsigned int i = 0; i < 1; ++i){//this->max_detection_workers; ++i){
+    this->energy_workers[i].join();
+  }
+
+  // TODO: 
 }
 
 scheduler::scheduler():
-  threading(false),
+  threading(true),
   num_cores(0),
   max_detection_workers(0),
   max_energy_workers(0),
@@ -192,6 +263,7 @@ scheduler::~scheduler()
   if(threading){
     log_trace("scheduler destructor");
     instance = 0;
+#if 0
     std::unique_lock<std::mutex> lk(end_workers_mut);
     end_workers = true;
     lk.unlock();
@@ -199,6 +271,7 @@ scheduler::~scheduler()
     for(unsigned int i = 0; i < this->max_detection_workers; ++i){
       this->detection_workers[i].join();
     }
+#endif
     //this->reconstruct_worker.join();
   }
 }
@@ -453,6 +526,7 @@ TesRecord* tesrecord::get_TesRecord() const
       ret->adc_array[i] = adc_array[i];
     }
   }
+
   if(adc_double && trigger_size > 0){
     ret->adc_double = new double[trigger_size];
     for (unsigned int i = 0; i < trigger_size; ++i){
