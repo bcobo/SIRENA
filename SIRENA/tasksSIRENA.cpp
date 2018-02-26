@@ -21,7 +21,7 @@
    Ministry of Economy (MINECO) under projects AYA2012-39767-C02-01, 
    ESP2013-48637-C2-1-P and ESP2014-53672-C3-1-P.
 
-/***********************************************************************
+***********************************************************************
 *                      TASKSSIRENA
 *
 *  File:       tasksSIRENA.cpp
@@ -32,9 +32,9 @@
 *              ceballos@ifca.unican.es
 *              IFCA
 *                                                                     
-***********************************************************************/
+***********************************************************************
 
-/******************************************************************************
+******************************************************************************
 DESCRIPTION:
 
 The purpose of this package is the detection and the reconstruction.
@@ -1133,10 +1133,13 @@ int createDetectFile(ReconstructInitSIRENA* reconstruct_init, int nRecord, doubl
 		if (strncmp(strndup(dtcName+strlen(dtcName)-5, 5),".fits",5) != 0)
 		{
 			// dtcName does not finish as '.fits' => Append '.fits' to dtcName
-			char dtcNameaux[256];
+			/*char dtcNameaux[256];
 			snprintf(dtcNameaux,256,dtcName);
 			strcat(dtcNameaux,".fits");
 			strncpy(dtcName,dtcNameaux,255);
+			dtcName[255]='\0';*/
+			
+			strncpy(dtcName,strcat(dtcName,".fits"),255);
 			dtcName[255]='\0';
 		}
 	}
@@ -2011,7 +2014,6 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 		//foundPulses->pulses_detected[i].quality = gsl_vector_get(qualitygsl,i);
                 //foundPulses->pulses_detected[i].numLagsUsed = gsl_vector_get(lagsgsl,i);
 	}
-	//cout<<"procRecordA"<<endl;
 
 	// Write pulses info in intermediate output FITS file
 	if ((*reconstruct_init)->intermediate == 1)
@@ -2022,12 +2024,10 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 			EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 		}
 	}
-	//cout<<"procRecordB"<<endl;
 
 	// Free allocated GSL vectors
 	gsl_vector_free(recordNOTFILTERED);
 	gsl_vector_free(recordDERIVATIVE);
-        //cout<<"procRecordC"<<endl;
 
 	gsl_vector_free(tstartgsl);
 	gsl_vector_free(tendgsl);
@@ -2036,7 +2036,6 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	gsl_vector_free(maxDERgsl);
 	gsl_vector_free(samp1DERgsl);
         gsl_vector_free(lagsgsl);
-        //cout<<"procRecordD"<<endl;
 
 	gsl_vector_free(tauRisegsl);
 	gsl_vector_free(tauFallgsl);
@@ -2301,7 +2300,7 @@ int writeTestInfo(ReconstructInitSIRENA* reconstruct_init, gsl_vector *recordDER
 	gsl_vector_free(vectorToWrite);
 
 	delete [] obj.nameTable;
-	delete [] obj.nameCol;//cout<<"tend1: "<<gsl_vector_get(tendgsl,i)<<endl;
+	delete [] obj.nameCol;
 	delete [] obj.unit;
 
 	return (EPOK);
@@ -3352,7 +3351,8 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 
                 char keyvalstr[1000];
 
-                char str_procnumber[125];               snprintf(str_procnumber,125,"%d",eventcntLib);
+                //char str_procnumber[125];               snprintf(str_procnumber,125,"%d",eventcntLib);
+                char str_procnumber[125];               snprintf(str_procnumber,125,"%ld",eventcntLib);
                 string strprocname (string("PROC") + string(str_procnumber));
                 strcpy(keyname,strprocname.c_str());
                 string strprocval (string("PROC") + string(str_procnumber) + string(" Starting parameter list"));
@@ -3608,14 +3608,12 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 		message = "Library created with the PRCLOFWM HDU but no the PRECALWN HDU (and without the COVARM...rE columns in the LIBRARY HDU)";
 		EP_PRINT_ERROR(message,-999);	// Only a warning
 	}
-	cout<<"Despues mensaje"<<endl;
 
 	if (fits_close_file(*inLibObject,&status))
 	{
 		message = "Cannot close file " + string(inLibName);
 		EP_PRINT_ERROR(message,status);return(EPFAIL);
 	}
-	cout<<"Fichero cerrado"<<endl;
 	
 	return (EPOK);
 }
@@ -3978,7 +3976,8 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 			message = "Cannot move to HDU  " + string(extname) + " in library";
 			EP_PRINT_ERROR(message,status);return(EPFAIL);
 		}
-		snprintf(str_length,125,"%d",optimalfilter_FFT_RI->size/2);
+		//snprintf(str_length,125,"%d",optimalfilter_FFT_RI->size/2);
+		snprintf(str_length,125,"%ld",optimalfilter_FFT_RI->size/2);
 		strcpy(objFREQ.nameCol,(string("F")+string(str_length)).c_str());
 		strcpy(objFREQ.unit," ");
 		optimalfiltersF_matrix = gsl_matrix_alloc(1,optimalfilter_FFT_RI->size);
@@ -9016,9 +9015,9 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 	//cout<<gsl_vector_get(vector,0)<<" "<<gsl_vector_get(vector,1)<<" "<<gsl_vector_get(vector,vector->size-1)<<endl;
 	//for (int i=0;i<vector->size;i++)	cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
 	//cout<<"vector->size: "<<vector->size<<endl;
-        /*cout<<"filterFFT->size: "<<filterFFT->size<<endl;
-        cout<<"filter: "<<gsl_vector_get(filter,0)<<endl;
-        cout<<"numlags: "<<numlags<<endl;*/
+        //cout<<"filterFFT->size: "<<filterFFT->size<<endl;
+        //cout<<"filter: "<<gsl_vector_get(filter,0)<<endl;
+        //cout<<"numlags: "<<numlags<<endl;
         //cout<<"pulseGrade: "<<pulseGrade<<endl;
         //cout<<"Calculating Energy.... "<<endl;
 	
@@ -9040,7 +9039,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 		{
 			if (strcmp(reconstruct_init->OFInterp,"DAB") == 0)	// DAB
 			{
-                                cout<<"Pab->size: "<<Pab->size<<endl;
+                                //cout<<"Pab->size: "<<Pab->size<<endl;
 				gsl_vector_scale(Pab,-1.0);
 				gsl_vector_add(vector,Pab);
 			}

@@ -228,8 +228,12 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	// Load NoiseSpec structure
 	reconstruct_init->noise_spectrum = NULL;
 	if ((mode == 0) || 
-		(((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) 
-		|| (strcmp(energy_method,"I2RFITTED") == 0)) && (mode == 1)) 
+                (((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) 
+		|| (strcmp(energy_method,"I2RFITTED") == 0)) && (mode == 1) && (oflib == 1) && (strcmp(filter_method,"B0") == 0))
+                
+                || (((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) 
+		|| (strcmp(energy_method,"I2RFITTED") == 0)) && (mode == 1) && (oflib == 0))
+                
 		|| ((mode == 1) && (strcmp(energy_method,"WEIGHT") == 0))
 		|| ((mode == 1) && (strcmp(energy_method,"WEIGHTN") == 0))) 
 	{
@@ -248,7 +252,8 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 			EP_EXIT_ERROR((char*)"Error in getNoiseSpec",EPFAIL);
 		}
 		
-		if ((mode == 1) && (strcmp(energy_method,"OPTFILT") == 0) && (strcmp(energy_method,"WEIGHTM") == 0) 
+		//if ((mode == 1) && (strcmp(energy_method,"OPTFILT") == 0) && (strcmp(energy_method,"WEIGHTM") == 0)
+		if ((mode == 1) && (strcmp(energy_method,"OPTFILT") == 0) && (strcmp(ofnoise,"WEIGHTM") == 0) 
 			&& (largeFilter > pow(2,reconstruct_init->noise_spectrum->weightMatrixes->size1)))
 		{
 			string message = "";
@@ -378,10 +383,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 		EP_EXIT_ERROR("Warning: pulse length is larger than record size. Pulse length set to maximum value (record size)",EPFAIL);
 	}
 	
-	//cout<<"delta_t: "<<record->delta_t<<endl;
 	// Detect pulses in record
 	runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
-        //cout<<"Pasa runDetect"<<endl;
         
 	if(pulsesInRecord->ndetpulses == 0) // No pulses found in record
 	{
@@ -399,7 +402,6 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                 //PulsesCollection* aux = &pulsesInRecord;
 		runEnergy(record, &reconstruct_init, &pulsesInRecord, optimalFilter);
 	}
-        //cout<<"Pasa runEnergy"<<endl;
 	
 	if (nRecord == 1)
 	{
