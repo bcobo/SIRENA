@@ -185,6 +185,7 @@ void scheduler::finish_reconstruction(PulsesCollection** pulsesAll,
   detection_input** data_array = new detection_input*[this->num_records];
   while(!detected_queue.empty()){
     detection_input* data;
+    // TODO: check if we are losing a record
     if(detected_queue.wait_and_pop(data)){
       data_array[data->n_record] = data;
       log_trace("trigger %i",data->rec->trigger_size);
