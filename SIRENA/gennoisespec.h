@@ -100,6 +100,9 @@
 	double LbT;			// Baseline averaging length (in the RS filter case): T -> Time => Seconds
 	double Lrs;			// LrsT in samples
 	double Lb;			// LbT in samples
+	
+	char weightMSStr[4];		// WeightMS=yes then write output weight noise matrixes
+	int weightMS=0;
 
 	char nameLog[255];		// Output log file name
 	int verbosity;			// Verbosity level of the output log file
