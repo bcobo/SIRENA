@@ -124,11 +124,14 @@ class scheduler
                       OptimalFilterSIRENA** optimal,
                       TesEventList* event_list);
   void run_energy(/*TODO: add parameters*/);
-  void finish_reconstruction(PulsesCollection** pulsesAll, 
+  void finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
+                             PulsesCollection** pulsesAll, 
                              OptimalFilterSIRENA** optimalFilter);
 
   inline bool is_threading() const { return threading; }
   inline bool is_reentrant() const { return fits_is_reentrant(); }
+
+  inline void set_is_running_energy(bool val){ this->is_running_energy = val; }
 
   virtual ~scheduler();
   inline static scheduler* get()
@@ -145,6 +148,8 @@ class scheduler
   unsigned int max_detection_workers;
   unsigned int max_energy_workers;
   unsigned int num_records;
+
+  bool is_running_energy;
   
   bool threading;
 

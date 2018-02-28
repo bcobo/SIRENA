@@ -8069,8 +8069,6 @@ void th_runEnergy(TesRecord* record,
   // Store the record in 'invector'
   // It is not necessary to check the allocation because 'record->trigger_size' has been checked previously
   recordAux = gsl_vector_alloc(record->trigger_size);
-  // TODO: check thread safe
-  log_trace("th_energy loadRecord");
   if (loadRecord(record, &tstartRecord, &recordAux))
     {
       message = "Cannot run routine loadRecord";
@@ -8118,8 +8116,6 @@ void th_runEnergy(TesRecord* record,
       //cout<<"0_pulseGrade: "<<pulseGrade<<endl;
       
       pulseGrade = 0;
-      // TODO: check thread safe
-      log_trace("th_energy pulseGrading");
       if (pulseGrading(*reconstruct_init,(*pulsesInRecord)->pulses_detected[i].grade1,(*pulsesInRecord)->pulses_detected[i].grade2_1,OFlength_strategy,&pulseGrade,&resize_mf))
         {
           message = "Cannot run routine pulseGrading";
@@ -8162,7 +8158,7 @@ void th_runEnergy(TesRecord* record,
       if (gsl_vector_memcpy(pulse, &temp.vector) != 0)
         {
           sprintf(valERROR,"%d",__LINE__-2);
-          string str(valERROR);	
+          string str(valERROR);
           message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
           EP_EXIT_ERROR(message,EPFAIL);
         }
@@ -8219,7 +8215,7 @@ void th_runEnergy(TesRecord* record,
             {
               // Filter (find the matched filter and load it in 'filter')
               if ((*reconstruct_init)->OFLib == 0)
-                {	
+                {      
                   // It is not necessary to check the allocation because '(*reconstruct_init)->pulse_length'='PulseLength'(input parameter) has been checked previously
                   filtergsl= gsl_vector_alloc(resize_mf);
                   Pab = gsl_vector_alloc(resize_mf);

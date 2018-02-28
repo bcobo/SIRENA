@@ -403,10 +403,12 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
   if (scheduler::get()->is_threading() && reconstruct_init->mode == 1){
     ReconstructInitSIRENA* rec = reconstruct_init->get_threading_object(nRecord);
     log_debug("record %p", record);
+    log_debug("pulsesAll %i", (*pulsesAll)->ndetpulses);
     log_debug("Record %f - %i", record->time, nRecord);
     scheduler::get()->push_detection(record, nRecord, lastRecord, 
                                      *pulsesAll, &rec, &pulsesInRecord,
                                      optimalFilter, event_list);
+    return;
   }
 	
 	//cout<<"delta_t: "<<record->delta_t<<endl;
@@ -2769,9 +2771,26 @@ NoiseSpec* getNoiseSpec(const char* const filename, int mode, int hduPRCLOFWM, c
 void th_start_energy(PulsesCollection** pulsesAll, 
                      OptimalFilterSIRENA** optimalFilter)
 {
-  scheduler::get()->finish_reconstruction(pulsesAll, optimalFilter);
-  delete scheduler::get();
+  //log_debug("endworker pulsesAll %i\n", (*pulsesAll)->ndetpulses);
+  //scheduler::get()->finish_reconstruction(pulsesAll, optimalFilter);
+  //delete scheduler::get();
   //th_wait_end();
+}
+
+void th_end(ReconstructInitSIRENA* reconstruct_init,
+            PulsesCollection** pulsesAll, 
+            OptimalFilterSIRENA** optimalFilter)
+{
+  if (!scheduler::get()->is_threading()) { 
+    delete scheduler::get();
+    return;
+  }
+  if(strcmp(reconstruct_init->EnergyMethod,"PCA") != 0){
+    scheduler::get()->set_is_running_energy(true);
+  }
+  scheduler::get()->finish_reconstruction(reconstruct_init, 
+                                          pulsesAll, optimalFilter);
+  delete scheduler::get();
 }
 
 void th_wait_end()

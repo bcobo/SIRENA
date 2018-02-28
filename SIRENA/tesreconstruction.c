@@ -164,17 +164,20 @@ int tesreconstruction_main() {
 
       if ((strcmp(par.EnergyMethod,"PCA") != 0) || ((strcmp(par.EnergyMethod,"PCA") == 0) && lastRecord == 1))
       {
+        if(!is_threading()){
 	  saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
 	  CHECK_STATUS_BREAK(status);
 	  
 	  //Reinitialize event list
 	  event_list->index=0;
+        }
       }
     }
-
-    if(is_threading()) {
-      th_start_energy(&pulsesAll, &optimalFilter);
-    }
+    
+    //if(is_threading()) {
+    //printf("end loop %i\n", pulsesAll->ndetpulses);
+    th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
+    //}
     
     if ((!strcmp(par.Rcmethod,"SIRENA")) && (pulsesAll->ndetpulses == 0))  printf("%s","WARNING: no pulses have been detected\n");
     

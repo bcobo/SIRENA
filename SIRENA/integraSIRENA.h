@@ -523,6 +523,13 @@ void th_start_energy(PulsesCollection** pulsesAll,
 #ifdef __cplusplus
 extern "C"
 #endif
+void th_end(ReconstructInitSIRENA* reconstruct_init,
+            PulsesCollection** pulsesAll, 
+            OptimalFilterSIRENA** optimalFilter);
+
+#ifdef __cplusplus
+extern "C"
+#endif
 void th_wait_end();
 
 #ifdef __cplusplus
