@@ -291,9 +291,85 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
               data_array[i]->record_pulses->ndetpulses);
   }
   */
+
+  for(unsigned int i = 1; i <= this->num_records; ++i){
+    TesEventList* event_list = data_array[i]->event_list;
+    if (event_list->energies != 0) delete [] event_list->energies;
+    if (event_list->avgs_4samplesDerivative != 0) delete [] event_list->avgs_4samplesDerivative;
+    if (event_list->grades1 != 0) delete [] event_list->grades1;
+    if (event_list->grades2 != 0) delete [] event_list->grades2;
+    if (event_list->pulse_heights != 0) delete [] event_list->pulse_heights;
+    if (event_list->ph_ids != 0) delete [] event_list->ph_ids;
+
+    if (strcmp(data_array[i]->rec_init->EnergyMethod,"PCA") != 0){
+      event_list->index = data_array[i]->record_pulses->ndetpulses;
+      event_list->energies = new double[event_list->index];
+      event_list->avgs_4samplesDerivative = new double[event_list->index];
+      event_list->grades1  = new int[event_list->index];
+      event_list->grades2  = new int[event_list->index];
+      event_list->pulse_heights  = new double[event_list->index];
+      event_list->ph_ids   = new long[event_list->index];
+
+      for (int ip=0; ip<data_array[i]->record_pulses->ndetpulses; ip++) {
+        event_list->event_indexes[ip] = 
+          (data_array[i]->record_pulses->pulses_detected[ip].Tstart 
+           - data_array[i]->rec->time)/data_array[i]->rec->delta_t;
+        
+        event_list->energies[ip] = data_array[i]->record_pulses->pulses_detected[ip].energy;
+        
+        event_list->avgs_4samplesDerivative[ip] = 
+          data_array[i]->record_pulses->pulses_detected[ip].avg_4samplesDerivative;
+        event_list->grades1[ip]  = data_array[i]->record_pulses->pulses_detected[ip].grade1;
+        event_list->grades2[ip]  = data_array[i]->record_pulses->pulses_detected[ip].grade2;
+        event_list->pulse_heights[ip]  = data_array[i]->record_pulses->pulses_detected[ip].pulse_height;
+        event_list->ph_ids[ip]   = 0;
+      }
+      if (data_array[i]->last_record == 1) {       
+        double numLagsUsed_mean;
+        double numLagsUsed_sigma;
+        gsl_vector *numLagsUsed_vector = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+        
+        for (int ip=0; ip<(*pulsesAll)->ndetpulses; ip++) {
+          gsl_vector_set(numLagsUsed_vector,ip,(*pulsesAll)->pulses_detected[ip].numLagsUsed);
+        }
+        if (findMeanSigma (numLagsUsed_vector, &numLagsUsed_mean, &numLagsUsed_sigma)) {
+          EP_EXIT_ERROR("Cannot run findMeanSigma routine for calculating numLagsUsed statistics",EPFAIL);
+        }
+        gsl_vector_free(numLagsUsed_vector);
+      }
+    }else{
+      if (data_array[i]->last_record == 1) {
+        // Free & Fill TesEventList structure
+        event_list->index = (*pulsesAll)->ndetpulses;
+        event_list->event_indexes = new double[event_list->index];
+        event_list->energies = new double[event_list->index];
+        event_list->avgs_4samplesDerivative = new double[event_list->index];
+        event_list->grades1  = new int[event_list->index];
+        event_list->grades2  = new int[event_list->index];
+        event_list->pulse_heights  = new double[event_list->index];
+        event_list->ph_ids   = new long[event_list->index];
+        
+        for (int ip=0; ip<(*pulsesAll)->ndetpulses; ip++) {
+          event_list->event_indexes[ip] = ((*pulsesAll)->pulses_detected[ip].Tstart 
+                                           - data_array[i]->rec->time)/data_array[i]->rec->delta_t;
+          
+          event_list->energies[ip] = (*pulsesAll)->pulses_detected[ip].energy;
+          
+          event_list->avgs_4samplesDerivative[ip]  = (*pulsesAll)->pulses_detected[ip].avg_4samplesDerivative;
+          event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
+          event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
+          event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
+          event_list->ph_ids[ip]   = 0;    
+        }
+      }
+    }
+#if 0
+    saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
+    CHECK_STATUS_BREAK(status);
+#endif
+  }// for event_list
 #if 0
   // TODO: construct pulsesAll
-  for (unsigned int i = 1; i < 
 
   // TODO: here we're just saving the event_list info
   for(unsigned int i = 0; i < this->num_records; ++i){
