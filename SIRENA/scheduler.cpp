@@ -195,7 +195,8 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
   (*pulsesAll)->size = 10;//this->num_records;
   (*pulsesAll)->ndetpulses = 0;
   (*pulsesAll)->pulses_detected = new PulseDetected[10];//[this->num_records];
-  detection_input** data_array = new detection_input*[this->num_records+1];
+  //detection_input** 
+  this->data_array = new detection_input*[this->num_records+1];
   while(!detected_queue.empty()){
     detection_input* data;
     if(detected_queue.wait_and_pop(data)){
@@ -365,6 +366,7 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
         }
       }
     }
+#if 0
     int status=EXIT_SUCCESS;
     saveEventListToFile(this->outfile,
                         event_list,
@@ -376,6 +378,7 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
     if (EXIT_SUCCESS!=status){
       EP_EXIT_ERROR("Something went wrong while saving the event_list",EPFAIL);
     }
+#endif
   }// for event_list
 #if 0
   // TODO: construct pulsesAll
@@ -526,6 +529,12 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
 #endif
 }
 
+void scheduler::get_test_event(TesEventList** test_event, TesRecord** record){
+  *test_event = this->data_array[this->current_record]->event_list;
+  *record = this->data_array[this->current_record]->rec;
+  this->current_record++;
+}
+
 scheduler::scheduler():
   threading(true),
   num_cores(0),
@@ -534,7 +543,9 @@ scheduler::scheduler():
   num_records(0),
   is_running_energy(false),
   outfile(0),
-  record_file_delta_t(0.0f)
+  record_file_delta_t(0.0f),
+  current_record(1),
+  data_array(0)
 {
   if(threading){
     this->num_cores = std::thread::hardware_concurrency();

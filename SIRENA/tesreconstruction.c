@@ -123,7 +123,7 @@ int tesreconstruction_main() {
 
     // Iterate of records and do the reconstruction
     int lastRecord = 0, nrecord = 0; //last record required for SIRENA library creation
-    void th_set_files(outfile,record_file->delta_t);
+    th_set_files(outfile,record_file->delta_t);
     while(getNextRecord(record_file,record,&status))
     {
       if(!strcmp(par.Rcmethod,"PP"))
@@ -175,10 +175,15 @@ int tesreconstruction_main() {
       }
     }
     
-    //if(is_threading()) {
-    //printf("end loop %i\n", pulsesAll->ndetpulses);
-    th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
-    //}
+    if(is_threading()) {
+      th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
+      int i = 1;
+      while(th_get_event_list(event_list, record)){
+        saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
+        CHECK_STATUS_BREAK(status);
+        ++i;
+      }
+    }
     
     if ((!strcmp(par.Rcmethod,"SIRENA")) && (pulsesAll->ndetpulses == 0))  printf("%s","WARNING: no pulses have been detected\n");
     

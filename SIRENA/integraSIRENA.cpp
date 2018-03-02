@@ -2790,12 +2790,24 @@ void th_end(ReconstructInitSIRENA* reconstruct_init,
   }
   scheduler::get()->finish_reconstruction(reconstruct_init, 
                                           pulsesAll, optimalFilter);
-  delete scheduler::get();
+  //delete scheduler::get();
 }
 
 void th_set_files(TesEventFile *outfile, double delta_t)
 {
   scheduler::get()->set_files(outfile, delta_t);
+}
+
+int th_get_event_list(TesEventList** test_event, TesRecord** record)
+{
+  if(!scheduler::get()->has_records()) {
+    delete scheduler::get();
+    return 0;
+  }
+  
+  scheduler::get()->get_test_event(test_event, record);
+
+  return 1;
 }
 
 void th_wait_end()

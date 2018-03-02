@@ -140,6 +140,10 @@ class scheduler
 
   inline void set_is_running_energy(bool val){ this->is_running_energy = val; }
 
+  inline bool has_records(){return(this->num_records >= this->current_record);}
+
+  void get_test_event(TesEventList** test_event, TesRecord** record);
+
   virtual ~scheduler();
   inline static scheduler* get()
   { 
@@ -155,6 +159,9 @@ class scheduler
   unsigned int max_detection_workers;
   unsigned int max_energy_workers;
   unsigned int num_records;
+  unsigned int current_record;
+
+  detection_input** data_array;
 
   TesEventFile *outfile;
   //TesTriggerFile* record_file;

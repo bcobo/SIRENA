@@ -533,6 +533,11 @@ void th_end(ReconstructInitSIRENA* reconstruct_init,
 #ifdef __cplusplus
 extern "C"
 #endif
+int th_get_event_list(TesEventList** test_event, TesRecord** record);
+
+#ifdef __cplusplus
+extern "C"
+#endif
 void th_set_files(TesEventFile *outfile, double delta_t);
 
 #ifdef __cplusplus
