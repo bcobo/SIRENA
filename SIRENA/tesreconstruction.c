@@ -123,6 +123,7 @@ int tesreconstruction_main() {
 
     // Iterate of records and do the reconstruction
     int lastRecord = 0, nrecord = 0; //last record required for SIRENA library creation
+    void th_set_files(outfile,record_file->delta_t);
     while(getNextRecord(record_file,record,&status))
     {
       if(!strcmp(par.Rcmethod,"PP"))

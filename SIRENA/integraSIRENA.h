@@ -39,10 +39,13 @@
 #include <stdio.h>
 
 #include "tesrecord.h"
+//#include "testriggerfile.h"
 #include "teseventlist.h"
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
+
+//typedef struct TesTriggerFile TesTriggerFile;
 
 typedef struct MatrixStruct
 {
@@ -526,6 +529,11 @@ extern "C"
 void th_end(ReconstructInitSIRENA* reconstruct_init,
             PulsesCollection** pulsesAll, 
             OptimalFilterSIRENA** optimalFilter);
+
+#ifdef __cplusplus
+extern "C"
+#endif
+void th_set_files(TesEventFile *outfile, double delta_t);
 
 #ifdef __cplusplus
 extern "C"

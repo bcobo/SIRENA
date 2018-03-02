@@ -2793,6 +2793,11 @@ void th_end(ReconstructInitSIRENA* reconstruct_init,
   delete scheduler::get();
 }
 
+void th_set_files(TesEventFile *outfile, double delta_t)
+{
+  scheduler::get()->set_files(outfile, delta_t);
+}
+
 void th_wait_end()
 {
   delete scheduler::get();

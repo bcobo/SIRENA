@@ -8,6 +8,8 @@
 
 #include "integraSIRENA.h"
 
+//struct TesTriggerFile;
+
 struct phidlist{
   /** Array containing the phIDs */
   long* phid_array;
@@ -128,6 +130,11 @@ class scheduler
                              PulsesCollection** pulsesAll, 
                              OptimalFilterSIRENA** optimalFilter);
 
+  inline void set_files(TesEventFile *outfile, double delta_t){
+    this->outfile = outfile;
+    this->record_file_delta_t = delta_t;
+  }
+
   inline bool is_threading() const { return threading; }
   inline bool is_reentrant() const { return fits_is_reentrant(); }
 
@@ -148,6 +155,10 @@ class scheduler
   unsigned int max_detection_workers;
   unsigned int max_energy_workers;
   unsigned int num_records;
+
+  TesEventFile *outfile;
+  //TesTriggerFile* record_file;
+  double record_file_delta_t;
 
   bool is_running_energy;
   

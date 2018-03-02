@@ -5,6 +5,8 @@
 
 #include "threadsafe_queue.h"
 #include "tasksSIRENA.h"
+//#include "teseventlist.h"
+//#include "testriggerfile.h"
 
 std::mutex end_workers_mut;
 std::mutex records_detected_mut;
@@ -363,10 +365,17 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
         }
       }
     }
-#if 0
-    saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-    CHECK_STATUS_BREAK(status);
-#endif
+    int status=EXIT_SUCCESS;
+    saveEventListToFile(this->outfile,
+                        event_list,
+                        data_array[i]->rec->time,
+                        this->record_file_delta_t,
+                        data_array[i]->rec->pixid,
+                        &status);
+    //CHECK_STATUS_BREAK(status);
+    if (EXIT_SUCCESS!=status){
+      EP_EXIT_ERROR("Something went wrong while saving the event_list",EPFAIL);
+    }
   }// for event_list
 #if 0
   // TODO: construct pulsesAll
@@ -523,7 +532,9 @@ scheduler::scheduler():
   max_detection_workers(0),
   max_energy_workers(0),
   num_records(0),
-  is_running_energy(false)
+  is_running_energy(false),
+  outfile(0),
+  record_file_delta_t(0.0f)
 {
   if(threading){
     this->num_cores = std::thread::hardware_concurrency();
