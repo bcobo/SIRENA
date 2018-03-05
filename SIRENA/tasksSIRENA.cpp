@@ -1938,7 +1938,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	//cout<<"numPulses: "<<numPulses<<endl;
 	for (int i=0;i<numPulses;i++)
 	{
-		foundPulses->pulses_detected[i].pulse_duration = gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i);
+		foundPulses->pulses_detected[i].pulse_duration = ceil(gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i));
                 //cout<<"foundPulses->pulses_detected[i].pulse_duration: "<<foundPulses->pulses_detected[i].pulse_duration<<endl;
                 
                 foundPulses->pulses_detected[i].avg_4samplesDerivative = gsl_vector_get(samp1DERgsl,i);
@@ -1994,7 +1994,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 		foundPulses->pulses_detected[i].quality = gsl_vector_get(qualitygsl,i);
                 foundPulses->pulses_detected[i].numLagsUsed = gsl_vector_get(lagsgsl,i);
 		//cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<endl;
-		//cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<" quality="<<gsl_vector_get(qualitygsl,i)<<endl;
+		//cout<<"grade2_1 "<<foundPulses->pulses_detected[i].grade2_1<<" grade2="<<foundPulses->pulses_detected[i].grade2<<endl;
                 //cout<<gsl_vector_get(samp1DERgsl,i)<<endl;
                 //cout<<gsl_vector_get(recordNOTFILTERED,gsl_vector_get(tstartgsl,i)+1)<<endl;
                 
@@ -6717,9 +6717,17 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 
 	double tstartSamplesRecord;		// Tstart of the pulse in samples from the beginning of the record
 	double tstartRecord;			// Tstart of the record in seconds
-	//double tstartRecordSamples = floor(record->time/record->delta_t+0.5);	// Close integer
+	double tstartRecordSamples = floor(record->time/record->delta_t+0.5);	// Close integer
 										// Tstart of the record in samples
-        double tstartRecordSamples = floor(record->time/record->delta_t);
+        //double tstartRecordSamples = floor(record->time/record->delta_t);
+        double tstartJITTER;
+        gsl_matrix *optimalfilterMAT;
+        gsl_matrix_complex *optimalfilter_FFT_complexMAT;
+        //gsl_matrix *optimalfilter_FFT_complexMATR;
+        //gsl_matrix *optimalfilter_FFT_complexMATI;
+        int lengthInterp = 300;
+        
+        double shift;
 
 	int indexEalpha = 0;
 	int indexEbeta = 0;
@@ -6769,6 +6777,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 	{
 		//resize_mf = (*pulsesInRecord)->pulses_detected[i].pulse_duration; // Resize the matched filter by using the tstarts
 		//resize_mf = pow(2,floor(log2(resize_mf)));
+                //cout<<"pulse_duration: "<<(*pulsesInRecord)->pulses_detected[i].pulse_duration<<endl;
 
 		// Establish the pulse grade (HighRes=0, MidRes=1, LowRes=-1) and the optimal filter length
 		if ((*pulsesInRecord)->pulses_detected[i].quality == 1)		(*pulsesInRecord)->pulses_detected[i].grade1 = -1;
@@ -6776,6 +6785,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 	
                 //cout<<"0_grade1: "<<(*pulsesInRecord)->pulses_detected[i].grade1<<endl;
                 //cout<<"0_pulseGrade: "<<pulseGrade<<endl;
+                //cout<<"0_grade2_1: "<<(*pulsesInRecord)->pulses_detected[i].grade2_1<<endl;
                 
                 pulseGrade = 0;
 		if (pulseGrading(*reconstruct_init,(*pulsesInRecord)->pulses_detected[i].grade1,(*pulsesInRecord)->pulses_detected[i].grade2_1,OFlength_strategy,&pulseGrade,&resize_mf))
@@ -6786,9 +6796,9 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 		(*pulsesInRecord)->pulses_detected[i].grade1 = resize_mf;
 
 		/*cout<<"grade1: "<<(*pulsesInRecord)->pulses_detected[i].grade1<<endl;
+                cout<<"pulseGrade: "<<pulseGrade<<endl;
 		cout<<"grade2_1: "<<(*pulsesInRecord)->pulses_detected[i].grade2_1<<endl;
-		cout<<"pulseGrade: "<<pulseGrade<<endl;*/
-		//cout<<"resize_mf: "<<resize_mf<<endl;
+		cout<<"resize_mf: "<<resize_mf<<endl;*/
 
 		// Pulse: Load the proper piece of the record in 'pulse'
 		//cout<<"resize_mf: "<<resize_mf<<endl;
@@ -6799,8 +6809,9 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                 //tstartSamplesRecord = (*pulsesInRecord)->pulses_detected[i].Tstart/record->delta_t-tstartRecordSamples;
                 //tstartSamplesRecord = floor((*pulsesInRecord)->pulses_detected[i].Tstart/record->delta_t)-tstartRecordSamples;
                 //tstartSamplesRecord = (*pulsesInRecord)->pulses_detected[i].Tstart/record->delta_t-tstartRecordSamples;
-                tstartSamplesRecord = floor((*pulsesInRecord)->pulses_detected[i].Tstart/record->delta_t+0.5)-tstartRecordSamples-1;
-                //cout<<"tstartSamplesRecord: "<<tstartSamplesRecord<<endl;
+                //tstartSamplesRecord = floor((*pulsesInRecord)->pulses_detected[i].Tstart/record->delta_t+0.5)-tstartRecordSamples-1;
+                tstartSamplesRecord = floor((*pulsesInRecord)->pulses_detected[i].Tstart/record->delta_t+0.5)-tstartRecordSamples;
+                //cout<<"tstart: "<<tstartSamplesRecord<<endl;
 		if ((pulse = gsl_vector_alloc(resize_mf)) == 0)
 		{
 			sprintf(valERROR,"%d",__LINE__-2);
@@ -6824,6 +6835,11 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 			message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
 			EP_EXIT_ERROR(message,EPFAIL);
 		}
+		//cout<<"tstartRecordSamples: "<<tstartRecordSamples<<endl;
+		tstartJITTER = ((*pulsesInRecord)->pulses_detected[i].Tstart-record->time)/record->delta_t;
+		shift = tstartJITTER - tstartSamplesRecord;
+                //cout<<"tstartJITTER: "<<tstartJITTER<<endl;
+                //cout<<"shift: "<<shift<<endl;
 		
 		if ((*reconstruct_init)->LagsOrNot == 0)	
 		{
@@ -7144,10 +7160,71 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 					}
 				}
 			}
+			
+			
+			/*optimalfilterMAT = gsl_matrix_alloc(3,lengthInterp);
+                        optimalfilter_FFT_complexMAT = gsl_matrix_complex_alloc(3,lengthInterp);
+                        gsl_vector *optimalfilterInterp = NULL;
+                        gsl_vector_complex *optimalfilter_FFT_complexInterp = NULL;
+			for (int kk=-1;kk<2;kk++)
+                        {
+                            shift = shift - kk;
+                            //for (int kk=0;kk<25;kk++) cout<<kk<<" "<<gsl_vector_get(optimalfilter,kk)<<endl;
+                            //for (int kk=0;kk<25;kk++) cout<<kk<<" "<<GSL_REAL(gsl_vector_complex_get(optimalfilter_FFT_complex,kk))<<" "<<GSL_IMAG(gsl_vector_complex_get(optimalfilter_FFT_complex,kk))<<endl;
+                            if (interpolateFilter(shift,lengthInterp,optimalfilter,optimalfilter_FFT_complex,&optimalfilterInterp,&optimalfilter_FFT_complexInterp,TorF))
+                            {
+                                message = "Cannot run routine interpolateFilter for locating properly the filter (due to the jitter)";
+                                EP_EXIT_ERROR(message,EPFAIL);
+                            }
+                            //for (int kk=0;kk<25;kk++) cout<<kk<<" "<<gsl_vector_get(optimalfilterInterp,kk)<<endl;
+                            //for (int kk=0;kk<25;kk++) cout<<kk<<" "<<GSL_REAL(gsl_vector_complex_get(optimalfilter_FFT_complex,kk))<<""<<GSL_IMAG(gsl_vector_complex_get(optimalfilter_FFT_complex,kk))<<endl;
+                            
+                            if (TorF == 0)
+                            {
+                                gsl_matrix_set_row(optimalfilterMAT,kk+1,optimalfilterInterp);
+                            }
+                            else if (TorF == 1)
+                            {
+                                gsl_matrix_complex_set_row(optimalfilter_FFT_complexMAT,kk+1,optimalfilter_FFT_complexInterp);
+                            }
+                        }
+                        if (optimalfilterInterp != NULL)    gsl_vector_free(optimalfilterInterp);
+                        if (optimalfilter_FFT_complexInterp != NULL)    gsl_vector_complex_free(optimalfilter_FFT_complexInterp);
+                        
+                        double tstartDesv = 0;
+                        if (getTstartJitter(lengthInterp, pulseToCalculateEnergy, optimalfilterMAT, optimalfilter_FFT_complexMAT, 1/record->delta_t, TorF, &tstartDesv))
+                        {
+                            message = "Cannot run routine getTstartJitter";
+                            EP_EXIT_ERROR(message,EPFAIL);
+                        }
+                        gsl_matrix_free(optimalfilterMAT);
+                        gsl_matrix_complex_free(optimalfilter_FFT_complexMAT);
+                        if (tstartDesv != 0)    
+                        {
+                            tstartJITTER = tstartSamplesRecord + tstartDesv;
+                            shift = tstartDesv;
+                        }
+                        cout<<"tstartJITTERNEW: "<<tstartJITTER<<endl;
+                        
+                        if (interpolateFilter(shift,(*reconstruct_init)->pulse_length,optimalfilter,optimalfilter_FFT_complex,&optimalfilterInterp,&optimalfilter_FFT_complexInterp,TorF))
+                        {
+                            message = "Cannot run routine interpolateFilter for locating properly the filter (due to the jitter)";
+                            EP_EXIT_ERROR(message,EPFAIL);
+                        }
+                        //for (int kk=0;kk<25;kk++) cout<<kk<<" "<<gsl_vector_get(optimalfilterInterp,kk)<<endl;
+                        
+                        // Si uso calculateEnergyNEW tengo que pasarle el pulso con pulseLength, no pulselength+2. O hacerlo dentro de la función
+                        if (calculateEnergyNEW(pulseToCalculateEnergy,pulseGrade,optimalfilterInterp,optimalfilter_FFT_complexInterp,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy))
+			{
+				message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
+				EP_EXIT_ERROR(message,EPFAIL);
+			}
+			if (optimalfilterInterp != NULL)    gsl_vector_free(optimalfilterInterp);
+                        if (optimalfilter_FFT_complexInterp != NULL)    gsl_vector_complex_free(optimalfilter_FFT_complexInterp);*/
 
 			// Calculate the energy of each pulse
 			//cout<<"pulseToCalculateEnergy->size: "<<pulseToCalculateEnergy->size<<endl;
-			if (calculateEnergy(pulseToCalculateEnergy,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,numlags,&tstartNewDev))
+			if (calculateEnergy(pulseToCalculateEnergy,shift,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,numlags,&tstartNewDev))
 			{
 				message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
 				EP_EXIT_ERROR(message,EPFAIL);
@@ -7161,6 +7238,10 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 				if (tstartNewDev != 0) (*pulsesInRecord)->pulses_detected[i].grade1 = (*pulsesInRecord)->pulses_detected[i].grade1 - floor(fabs(tstartNewDev)+0.5);
 				//if (tstartNewDev != 0) (*pulsesInRecord)->pulses_detected[i].grade1 = (*pulsesInRecord)->pulses_detected[i].grade1 - floor(fabs(tstartNewDev));
 			}
+                        /*(*pulsesInRecord)->pulses_detected[i].Tstart = (tstartJITTER+tstartRecordSamples)*record->delta_t; // In seconds
+                        //cout<<"(*pulsesInRecord)->pulses_detected[i].Tstart: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
+			(*pulsesInRecord)->pulses_detected[i].grade1 = (*pulsesInRecord)->pulses_detected[i].grade1 - floor(fabs(tstartDesv)+0.5);
+                        cout<<"(*pulsesInRecord)->pulses_detected[i].grade1: "<<(*pulsesInRecord)->pulses_detected[i].grade1<<endl;*/
 			
 			gsl_matrix_set(resultsE,0,numiteration,energy);
 			gsl_matrix_set(resultsE,1,numiteration,min(fabs(energy-Ealpha),fabs(energy-Ebeta)));
@@ -7221,6 +7302,39 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 			message = "Cannot run find_model_energies routine for pulse i=" + boost::lexical_cast<std::string>(i);
 			EP_EXIT_ERROR(message,EPFAIL);
 		}
+		
+		gsl_vector *modelToSubtract = gsl_vector_alloc(model->size);
+		for (int j=0;j<model->size;j++)
+                {
+                    if (shift < 0)
+                    {
+                        if (j != model->size-1)
+                            gsl_vector_set(modelToSubtract,j,(gsl_vector_get(model,j+1)-gsl_vector_get(model,j))*(-shift)+gsl_vector_get(model,j));
+                        
+                        else 
+                            gsl_vector_set(model,j,gsl_vector_get(model,j)); //?????????????????????
+                    }
+                    else if (shift > 0)
+                    {
+                        if (j == 0)
+                        {
+                            gsl_vector_set(modelToSubtract,j,(gsl_vector_get(model,j)-0)*(1-shift)+0);
+                        }
+                        //else if (j != pulse_length_ToSubtract-1)
+                        else 
+                        {
+                            //gsl_vector_set(modelToSubtract,j,(gsl_vector_get(modelToSubtract_Aux,j+1)-      gsl_vector_get(modelToSubtract_Aux,j))*(-xmax)+gsl_vector_get(modelToSubtract_Aux,j));
+                            gsl_vector_set(modelToSubtract,j,(gsl_vector_get(model,j)-gsl_vector_get(model,j-1))*(1-shift)+gsl_vector_get(model,j-1));
+                        }
+                        //else
+                        //        gsl_vector_set(modelToSubtract,j,gsl_vector_get(modelToSubtract_Aux,j)); //?????????????????????
+                    }
+                    else
+                    {
+                        gsl_vector_memcpy(modelToSubtract,model);
+                    }
+                }
+                gsl_vector_memcpy(model,modelToSubtract);
 
 		for (int j=tstartSamplesRecord;j<min(tstartSamplesRecord+(model->size),(double) record->trigger_size);j++)
 		{
@@ -8842,7 +8956,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 			if (OFlength_strategy == 0)		*OFlength = grade1;
 			else if (OFlength_strategy == 1) 	*OFlength = pow(2,floor(log2(grade1)));
 			else if (OFlength_strategy == 2) 	*OFlength = H1;
-			else if (OFlength_strategy == 3) 	*OFlength = reconstruct_init->OFLength;
+			else if (OFlength_strategy == 3) 	*OFlength = min(reconstruct_init->OFLength,grade1);
 		}
 		else if (grade1 >= M1)	// Medium res
 		{
@@ -8851,7 +8965,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 			else if (OFlength_strategy == 1) 	*OFlength = pow(2,floor(log2(grade1)));
 			//else if (OFlength_strategy == 2)	*OFlength = H1/4;	// 256 = 1024/4
                         else if (OFlength_strategy == 2)	*OFlength = M1;	
-			else if (OFlength_strategy == 3) 	*OFlength = reconstruct_init->OFLength;
+			else if (OFlength_strategy == 3) 	*OFlength = min(reconstruct_init->OFLength,grade1);
 		}
 		else if (grade1 >= LIMITED)	// Limited res
                 {
@@ -8860,7 +8974,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 			else if (OFlength_strategy == 1) 	*OFlength = pow(2,floor(log2(grade1)));
 			//else if (OFlength_strategy == 2)	*OFlength = H1/4;	// 256 = 1024/4
                         else if (OFlength_strategy == 2)	*OFlength = LIMITED;
-			else if (OFlength_strategy == 3) 	*OFlength = reconstruct_init->OFLength;
+			else if (OFlength_strategy == 3) 	*OFlength = min(reconstruct_init->OFLength,grade1);
                 }
 		else if (grade1 > L2)	// Low res
 		{
@@ -8869,7 +8983,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 			else if (OFlength_strategy == 1) 	*OFlength = pow(2,floor(log2(grade1)));
 			else if (OFlength_strategy == 2) 	*OFlength = L2;
 			//else if (OFlength_strategy == 2) 	*OFlength = grade1;
-			else if (OFlength_strategy == 3) 	*OFlength = reconstruct_init->OFLength;
+			else if (OFlength_strategy == 3) 	*OFlength = min(reconstruct_init->OFLength,grade1);
 		}
 		else if (grade1 <= L2)	//Pileup
 		{
@@ -8877,7 +8991,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
                         if (OFlength_strategy == 0)		*OFlength = grade1;
 			else if (OFlength_strategy == 1) 	*OFlength = pow(2,floor(log2(grade1)));
 			else if (OFlength_strategy == 2) 	*OFlength = grade1; //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
-			else if (OFlength_strategy == 3) 	*OFlength = reconstruct_init->OFLength;
+			else if (OFlength_strategy == 3) 	*OFlength = min(reconstruct_init->OFLength,grade1);
 		}  
         //}
 
@@ -9002,7 +9116,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 * - numlags: Number of lags
 * - tstartNewDev: Deviation of the tstart if lags
 ****************************************************************************/
-int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, 
+int calculateEnergy (gsl_vector *vector, double shift, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, 
 	ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy, 
 	int numlags, double *tstartNewDev)
 {
@@ -9011,6 +9125,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 
 	double LagsOrNot = reconstruct_init->LagsOrNot;
         *tstartNewDev = 0;
+        
+        double calculatedEnergy2 = 0.0;
         
 	//cout<<gsl_vector_get(vector,0)<<" "<<gsl_vector_get(vector,1)<<" "<<gsl_vector_get(vector,vector->size-1)<<endl;
 	//for (int i=0;i<vector->size;i++)	cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
@@ -9110,6 +9226,24 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 						else
 							*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,indexmax);
 					}
+					
+					gsl_vector *filterInterp = gsl_vector_alloc(filter->size);
+                                        gsl_vector_complex *filterFFTInterp = NULL;
+					if (interpolateFilter(shift,filter->size,filter,filterFFT,&filterInterp,&filterFFTInterp,domain))
+                                        {
+                                            message = "Cannot run routine interpolateFilter for locating properly the filter (due to the jitter)";
+                                            EP_EXIT_ERROR(message,EPFAIL);
+                                        }
+                                        for (int i=0;i<filter->size;i++)
+                                        {
+                                            calculatedEnergy2 = calculatedEnergy2 + gsl_vector_get(vector,i)*gsl_vector_get(filterInterp,i);
+                                        }
+                                        calculatedEnergy2 = calculatedEnergy2*2*SelectedTimeDuration;
+                                        
+                                        if (filterInterp != NULL)   gsl_vector_free(filterInterp);
+                                        if (filterFFTInterp != NULL)   gsl_vector_complex_free(filterFFTInterp);
+                                        
+                                        //cout<<*calculatedEnergy<<" "<<calculatedEnergy2<<endl;
 				}
 			}
 			else if (domain == 1)	// Frequency domain filtering (multiply vectorFFT and filterFFT)
@@ -9129,9 +9263,10 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 
 					*calculatedEnergy = 0.0;
 
+                                        gsl_vector_view temp;
 					for (int j=0;j<numlags;j++)
 					{
-						gsl_vector_view temp;
+						//gsl_vector_view temp;
 						gsl_vector  *vectorSHORT = gsl_vector_alloc(filterFFT->size);
 						temp = gsl_vector_subvector(vector,j,filterFFT->size);
 						gsl_vector_memcpy(vectorSHORT,&temp.vector);
@@ -9176,49 +9311,42 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 							//*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,1);
                                                         *calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,indexmax);
                                                 //cout<<"*calculatedEnergy: "<<*calculatedEnergy<<endl;
-                
-						/*int indexmax = gsl_vector_max_index(calculatedEnergy_vector);
-						gsl_vector *sublags_vector = gsl_vector_alloc(3);
-						gsl_vector *subcalculatedEnergy_vector = gsl_vector_alloc(3);
-						gsl_vector_view temp;
-						if (indexmax == 0)
-						{
-							temp = gsl_vector_subvector(lags_vector,indexmax,3);
-							gsl_vector_memcpy(sublags_vector,&temp.vector);
-							temp = gsl_vector_subvector(calculatedEnergy_vector,indexmax,3);
-							gsl_vector_memcpy(subcalculatedEnergy_vector,&temp.vector);
-						}
-						else if (indexmax == numlags-1)
-						{
-							temp = gsl_vector_subvector(lags_vector,numlags-3,3);
-							gsl_vector_memcpy(sublags_vector,&temp.vector);
-							temp = gsl_vector_subvector(calculatedEnergy_vector,numlags-3,3);
-							gsl_vector_memcpy(subcalculatedEnergy_vector,&temp.vector);
-						}
-						else 
-						{
-							temp = gsl_vector_subvector(lags_vector,indexmax-1,3);
-							gsl_vector_memcpy(sublags_vector,&temp.vector);
-							temp = gsl_vector_subvector(calculatedEnergy_vector,indexmax-1,3);
-							gsl_vector_memcpy(subcalculatedEnergy_vector,&temp.vector);
-						}
-						
-						//cout<<gsl_vector_get(sublags_vector,0)<<" "<<gsl_vector_get(sublags_vector,1)<<" "<<gsl_vector_get(sublags_vector,2)<<endl;
-						//cout<<gsl_vector_get(subcalculatedEnergy_vector,0)<<" "<<gsl_vector_get(subcalculatedEnergy_vector,1)<<" "<<gsl_vector_get(subcalculatedEnergy_vector,2)<<endl;
-						if (parabola3Pts (sublags_vector, subcalculatedEnergy_vector, &a, &b, &c))
-						{
-							message = "Cannot run routine parabola3Pts";
-							EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-						}
-						gsl_vector_free(sublags_vector);
-						gsl_vector_free(subcalculatedEnergy_vector);
-						xmax = -b/(2*a);
-						*tstartNewDev = xmax;
-						////cout<<"tstartNewDev: "<<*tstartNewDev<<endl;
-						*calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;*/
 					}
 					
 					gsl_vector_complex_free(calculatedEnergy_vectorcomplex);
+                                        //gsl_vector_complex_free(vectorFFT);
+                                        
+                                        /*gsl_vector *vectorSHORT2 = gsl_vector_alloc(filterFFT->size);
+                                        temp = gsl_vector_subvector(vector,1,filterFFT->size);
+                                        gsl_vector_memcpy(vectorSHORT2,&temp.vector);
+                                        if (FFT(vectorSHORT2,vectorFFT,SelectedTimeDuration))
+                                        {
+                                            message = "Cannot run routine FFT";
+                                            EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                                        }
+                                        gsl_vector_free(vectorSHORT2);
+                                        
+                                        gsl_vector *filterInterp = NULL;
+                                        gsl_vector_complex *filterFFTInterp = gsl_vector_complex_alloc(filterFFT->size);
+					if (interpolateFilter(shift,filterFFT->size,filter,filterFFT,&filterInterp,&filterFFTInterp,domain))
+                                        {
+                                            message = "Cannot run routine interpolateFilter for locating properly the filter (due to the jitter)";
+                                            EP_EXIT_ERROR(message,EPFAIL);
+                                        }
+                                        double calculatedEnergy2R,calculatedEnergy2I; 
+                                        for (int i=0; i<filterFFT->size; i++)
+                                        {
+                                            calculatedEnergy2R = calculatedEnergy2R + GSL_REAL(gsl_complex_mul(gsl_vector_complex_get(vectorFFT,i),gsl_vector_complex_get(filterFFT,i)));
+                                            calculatedEnergy2I = calculatedEnergy2I + GSL_IMAG(gsl_complex_mul(gsl_vector_complex_get(vectorFFT,i),gsl_vector_complex_get(filterFFT,i)));
+                                        }
+                                        calculatedEnergy2 = gsl_complex_abs(gsl_complex_rect(calculatedEnergy2R,calculatedEnergy2I));
+                                        
+                                        if (filterInterp != NULL)   gsl_vector_free(filterInterp);
+                                        if (filterFFTInterp != NULL)   gsl_vector_complex_free(filterFFTInterp);
+                                        
+                                        *calculatedEnergy = calculatedEnergy2;
+                                        cout<<*calculatedEnergy<<" "<<calculatedEnergy2<<endl;*/
+                                        
 					gsl_vector_complex_free(vectorFFT);
 				}
 			}
@@ -9759,3 +9887,663 @@ int writeFilterHDU(ReconstructInitSIRENA **reconstruct_init, int pulse_index, do
 }
 /*xxxx end of SECTION B12 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
+
+/***** SECTION B13 ************************************************************
+* interpolateFilter: xxx.
+*
+* - 
+* - 
+*
+* Parameters:
+* - xxx: xxx
+* - domain: 0 (Time) or 1 (Frequency)
+******************************************************************************/
+int interpolateFilter(double shift, int lengthInterp, gsl_vector *filter, gsl_vector_complex *filterFFT,gsl_vector **filterInterp, gsl_vector_complex **filterFFTInterp, int domain)
+{	
+        // Declare variables
+	int status = EPOK;
+        
+        gsl_vector_view temp;
+        
+        if (domain == 0)
+        {
+                *filterInterp = gsl_vector_alloc(lengthInterp);
+                //temp = gsl_vector_subvector(filter,0,lengthInterp);
+                //gsl_vector_memcpy(filterInterp,&temp.vector);
+
+                for (int j=0;j<lengthInterp;j++)
+                {
+                    if (shift > 0)
+                    {
+                        if (j== 0)      gsl_vector_set(*filterInterp,j,(gsl_vector_get(filter,j+1)-gsl_vector_get(filter,j))*(-1-shift)+gsl_vector_get(filter,j+1));
+                        else            gsl_vector_set(*filterInterp,j,(gsl_vector_get(filter,j)-gsl_vector_get(filter,j-1))*(-shift)+gsl_vector_get(filter,j));
+                    }
+                    else if (shift < 0)
+                    {
+                        if (j != lengthInterp-1)     gsl_vector_set(*filterInterp,j,(gsl_vector_get(filter,j+1)-gsl_vector_get(filter,j))*(-1-shift)+gsl_vector_get(filter,j+1));
+                        else                         gsl_vector_set(*filterInterp,j,gsl_vector_get(filter,j-1));
+                    }
+                    //else    gsl_vector_memcpy(filterInterp,*filter);
+                }
+        }
+        else if (domain == 1)
+        {
+                gsl_vector *filterR = gsl_vector_alloc(lengthInterp);
+                gsl_vector *filterI = gsl_vector_alloc(lengthInterp);
+                for (int j=0;j<lengthInterp;j++)
+                {
+                    gsl_vector_set(filterR,j,GSL_REAL(gsl_vector_complex_get(filterFFT,j)));
+                    gsl_vector_set(filterI,j,GSL_IMAG(gsl_vector_complex_get(filterFFT,j)));
+                }
+                
+                gsl_vector *filterInterpR = gsl_vector_alloc(lengthInterp);
+                gsl_vector *filterInterpI = gsl_vector_alloc(lengthInterp);
+                for (int j=0;j<lengthInterp;j++)
+                {
+                    if (shift > 0)
+                    {
+                        if (j== 0)      
+                        {   
+                            gsl_vector_set(filterInterpR,j,(gsl_vector_get(filterR,j+1)-gsl_vector_get(filterR,j))*(-1-shift)+gsl_vector_get(filterR,j+1));
+                            gsl_vector_set(filterInterpI,j,(gsl_vector_get(filterI,j+1)-gsl_vector_get(filterI,j))*(-1-shift)+gsl_vector_get(filterI,j+1));
+                        }
+                        else            
+                        {    
+                            gsl_vector_set(filterInterpR,j,(gsl_vector_get(filterR,j)-gsl_vector_get(filterR,j-1))*(-shift)+gsl_vector_get(filterR,j));
+                            gsl_vector_set(filterInterpI,j,(gsl_vector_get(filterI,j)-gsl_vector_get(filterI,j-1))*(-shift)+gsl_vector_get(filterI,j));
+                        }
+                    }
+                    else if (shift < 0)
+                    {
+                        if (j != lengthInterp-1)     
+                        {
+                            gsl_vector_set(filterInterpR,j,(gsl_vector_get(filterR,j+1)-gsl_vector_get(filterR,j))*(-1-shift)+gsl_vector_get(filterR,j+1));
+                            gsl_vector_set(filterInterpI,j,(gsl_vector_get(filterI,j+1)-gsl_vector_get(filterI,j))*(-1-shift)+gsl_vector_get(filterI,j+1));
+                        }
+                        else
+                        {
+                            gsl_vector_set(filterInterpR,j,gsl_vector_get(filterR,j-1));
+                            gsl_vector_set(filterInterpI,j,gsl_vector_get(filterI,j-1));
+                        }
+                    }
+                }
+                
+                *filterFFTInterp = gsl_vector_complex_alloc(lengthInterp);
+                for (int j=0;j<lengthInterp;j++)
+                {
+                    gsl_vector_complex_set(*filterFFTInterp,j,gsl_complex_rect(gsl_vector_get(filterInterpR,j),gsl_vector_get(filterInterpI,j)));
+                    
+                }
+                
+                gsl_vector_free(filterR);
+                gsl_vector_free(filterI);
+                gsl_vector_free(filterInterpR);
+                gsl_vector_free(filterInterpI);
+        }
+	
+	return(EPOK);
+}
+/*xxxx end of SECTION B13 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+
+/***** SECTION B14 ************************************************************
+* getTstartJitter: xxx.
+*
+* - 
+* - 
+*
+* Parameters:
+* - xxx: xxx
+* - domain: 0 (Time) or 1 (Frequency)
+******************************************************************************/
+int getTstartJitter(int lengthInterp, gsl_vector *pulse, gsl_matrix *filter, gsl_matrix_complex *filterFFT, double samprate, int domain, double *tstartDesv)
+{	
+        // Declare variables
+	int status = EPOK;
+        string message = "";
+        
+        int numlags = 3;
+        gsl_vector *lags_vector = gsl_vector_alloc(numlags);
+        for (int i=0;i<numlags;i++)
+	{
+		gsl_vector_set(lags_vector,i,-numlags/2+i);
+	}
+	gsl_vector *resultLags = gsl_vector_alloc(numlags);
+        gsl_vector_set_zero(resultLags);
+        
+        int indexmax;
+        
+        double a,b,c;
+                
+        if (domain == 0)	// Time domain filtering
+        {
+            //cout<<"PasoA"<<endl;
+            for (int j=0;j<numlags;j++)
+            {
+                for (int i=0;i<lengthInterp;i++)
+                {
+                    gsl_vector_set(resultLags,j,gsl_vector_get(resultLags,j)+gsl_vector_get(pulse,i+j)*gsl_matrix_get(filter,j,i));
+                    //cout<<i<<" "<<gsl_vector_get(pulse,i+j)<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(resultLags,j)<<endl;
+                }
+                cout<<"lag="<<gsl_vector_get(lags_vector,j)<<", resultLags="<<gsl_vector_get(resultLags,j)<<endl;
+            }
+            
+            
+            indexmax = gsl_vector_max_index(resultLags);
+            cout<<"indexmax: "<<indexmax<<endl;
+            
+            if (indexmax == 1)
+            {
+                if (parabola3Pts (lags_vector, resultLags, &a, &b, &c))
+                {
+                    message = "Cannot run routine parabola3Pts";
+                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                }
+                *tstartDesv = -b/(2*a);
+            }
+            cout<<"tstartDesv: "<<*tstartDesv<<endl;
+        }
+        else if (domain == 1)	// Frequency domain filtering (multiply vectorFFT and filterFFT)
+        {
+            //cout<<GSL_REAL(gsl_vector_complex_get(filterFFT,0))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,0))<<endl;
+            //cout<<GSL_REAL(gsl_vector_complex_get(filterFFT,1))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,1))<<endl;
+            //cout<<GSL_REAL(gsl_vector_complex_get(filterFFT,filterFFT->size-1))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,filterFFT->size-1))<<endl;
+            
+            gsl_vector_complex *resultLagscomplex = gsl_vector_complex_alloc(numlags);
+            gsl_vector_complex_set_zero(resultLagscomplex);
+            
+            gsl_vector_complex *pulseFFT = gsl_vector_complex_alloc(filterFFT->size2);
+            
+            for (int j=0;j<numlags;j++)
+            {
+                gsl_vector_view temp;
+                gsl_vector  *pulseSHORT = gsl_vector_alloc(filterFFT->size2);
+                temp = gsl_vector_subvector(pulse,j,filterFFT->size2);
+                gsl_vector_memcpy(pulseSHORT,&temp.vector);
+                double SelectedTimeDuration = filterFFT->size2/samprate;
+                if (FFT(pulseSHORT,pulseFFT,SelectedTimeDuration))
+                {
+                    message = "Cannot run routine FFT";
+                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                }
+                gsl_vector_free(pulseSHORT);
+                
+                for (int i=0; i<lengthInterp; i++)
+                {
+                    gsl_vector_complex_set(resultLagscomplex,j,gsl_complex_add(gsl_vector_complex_get(resultLagscomplex,j),gsl_complex_mul(gsl_vector_complex_get(pulseFFT,i),gsl_matrix_complex_get(filterFFT,j,i))));
+                    //cout<<i<<" "<<gsl_complex_abs(gsl_vector_complex_get(pulseFFT,i))<<" "<<gsl_complex_abs(gsl_vector_complex_get(filterFFT,i))<<" "<<GSL_REAL(gsl_vector_complex_get(resultLags,j))<<","<<GSL_IMAG(gsl_vector_complex_get(resultLags,j))<<endl;
+                }
+                gsl_vector_set(resultLags,j,gsl_complex_abs(gsl_vector_complex_get(resultLagscomplex,j)));
+                cout<<j<<" lag="<<gsl_vector_get(lags_vector,j)<<", resultLags="<<gsl_vector_get(resultLags,j)<<endl;
+            }
+            
+            indexmax = gsl_vector_max_index(resultLags);
+            cout<<"indexmax: "<<indexmax<<endl;
+                
+            if (indexmax == 1)
+            {
+                if (parabola3Pts (lags_vector, resultLags, &a, &b, &c))
+                {
+                    message = "Cannot run routine parabola3Pts";
+                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                }
+                *tstartDesv = -b/(2*a);
+                cout<<"tstartDesv: "<<*tstartDesv<<endl;
+            }
+            
+            gsl_vector_complex_free(resultLagscomplex);
+            gsl_vector_complex_free(pulseFFT);
+        }
+        
+        gsl_vector_free(lags_vector);
+        gsl_vector_free(resultLags);
+	
+	return(EPOK);
+}
+/*xxxx end of SECTION B14 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+int calculateEnergyNEW (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, 
+	ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy)
+{
+        string message = "";
+	char valERROR[256];
+
+	double LagsOrNot = reconstruct_init->LagsOrNot;
+        
+	//cout<<gsl_vector_get(vector,0)<<" "<<gsl_vector_get(vector,1)<<" "<<gsl_vector_get(vector,vector->size-1)<<endl;
+	//for (int i=0;i<vector->size;i++)	cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
+	//cout<<"vector->size: "<<vector->size<<endl;
+        //cout<<"filterFFT->size: "<<filterFFT->size<<endl;
+        //cout<<"filter: "<<gsl_vector_get(filter,0)<<endl;
+        //cout<<"numlags: "<<numlags<<endl;
+        //cout<<"pulseGrade: "<<pulseGrade<<endl;
+        //cout<<"Calculating Energy.... "<<endl;
+        
+	// LowRes
+        /*if (vector->size <= 3)
+        {
+                *calculatedEnergy = -1.0;
+        }
+        else
+        {*/
+		if ((runEMethod == 0) && (strcmp(reconstruct_init->OFNoise,"NSD") == 0))
+		// OPTFILT	I2R or I2RALL or I2RNOL or I2RFITTED => OPTFILT
+		{
+                        gsl_vector_view temp;
+                        if (domain == 0)        
+                        {
+                            temp = gsl_vector_subvector(vector,1,filter->size);
+                            gsl_vector_free(vector);
+                            vector = gsl_vector_alloc(filter->size);
+                        }
+                        else if (domain == 1)   
+                        {
+                            temp = gsl_vector_subvector(vector,1,filterFFT->size);
+                            gsl_vector_free(vector);
+                            vector = gsl_vector_alloc(filterFFT->size);
+                        }
+                        gsl_vector_memcpy(vector,&temp.vector);
+                        
+			if (strcmp(reconstruct_init->OFInterp,"DAB") == 0)	// DAB
+			{
+                                //cout<<"Pab->size: "<<Pab->size<<endl;
+				gsl_vector_scale(Pab,-1.0);
+				gsl_vector_add(vector,Pab);
+			}
+			
+			double SelectedTimeDuration;
+			if (domain == 0)	SelectedTimeDuration = filter->size/samprate;
+			else 			SelectedTimeDuration = filterFFT->size/samprate;
+			*calculatedEnergy = 0.0;
+                        
+			if (domain == 0)	// Time domain filtering
+			{
+                            if (vector->size != filter->size) *calculatedEnergy = 0.0;
+                            else
+			    {
+                                    for (int i=0;i<filter->size;i++)
+                                    {
+                                        *calculatedEnergy = *calculatedEnergy + gsl_vector_get(vector,i)*gsl_vector_get(filter,i);
+                                    }
+                                    *calculatedEnergy =*calculatedEnergy*2*SelectedTimeDuration;
+                            }
+			}
+			else if (domain == 1)	// Frequency domain filtering (multiply vectorFFT and filterFFT)
+			{
+				//cout<<GSL_REAL(gsl_vector_complex_get(filterFFT,0))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,0))<<endl;
+				//cout<<GSL_REAL(gsl_vector_complex_get(filterFFT,1))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,1))<<endl;
+				//cout<<GSL_REAL(gsl_vector_complex_get(filterFFT,filterFFT->size-1))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,filterFFT->size-1))<<endl;
+				if (vector->size != filterFFT->size) *calculatedEnergy = 0.0;
+				else
+				{
+					//It is not necessary to check the allocation because 'vector' size must already be > 0
+					gsl_vector_complex *vectorFFT = gsl_vector_complex_alloc(filterFFT->size);
+
+					*calculatedEnergy = 0.0;
+
+                                        if (FFT(vector,vectorFFT,SelectedTimeDuration))
+                                        {
+                                            message = "Cannot run routine FFT";
+                                            EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                                        }
+                                        
+                                        for (int i=0; i<filterFFT->size; i++)
+                                        {
+                                            *calculatedEnergy = *calculatedEnergy + gsl_complex_abs(gsl_complex_mul(gsl_vector_complex_get(vectorFFT,i),gsl_vector_complex_get(filterFFT,i)));    
+                                        }
+										
+										
+					gsl_vector_complex_free(vectorFFT);
+				}
+			}
+			cout<<"calculatedDenergy: "<<*calculatedEnergy<<endl;
+		}
+		else if ((runEMethod == 0) && (strcmp(reconstruct_init->OFNoise,"WEIGHTM") == 0))
+		{
+			//cout<<gsl_matrix_get(PRCLOFWM,0,0)<<" "<<gsl_matrix_get(PRCLOFWM,0,1)<<" "<<gsl_matrix_get(PRCLOFWM,0,PRCLOFWM->size2-1)<<endl;
+			//cout<<gsl_matrix_get(PRCLOFWM,1,0)<<" "<<gsl_matrix_get(PRCLOFWM,1,1)<<" "<<gsl_matrix_get(PRCLOFWM,1,PRCLOFWM->size2-1)<<endl;
+			gsl_vector *EB = gsl_vector_alloc(2);
+		
+			gsl_blas_dgemv(CblasNoTrans,1.0,PRCLOFWM,vector,0.0,EB);                           // [(R'WR)^(-1)]R'W\B7pulse
+			
+			*calculatedEnergy = gsl_vector_get(EB,0);
+			//cout<<"calculatedEnergy: "<<*calculatedEnergy<<endl;
+			//cout<<"baseline: "<<gsl_vector_get(EB,1)<<endl;
+		
+			//gsl_vector_free(P_Pab);
+			gsl_vector_free(EB);
+		}
+		else if (runEMethod == 1) //WEIGHT
+		{
+			int pulselength = reconstruct_init->pulse_length;
+			// It is not necessary to check the allocation because 'vector' size must already be > 0 and 'reconstruct_init->pulse_length'=PulseLength(input parameter) has been checked previously
+			gsl_vector *D = gsl_vector_alloc(vector->size);
+			gsl_vector *Salpha = gsl_vector_alloc(vector->size);
+			gsl_matrix *X = gsl_matrix_alloc(vector->size,vector->size);
+			gsl_vector *Y = gsl_vector_alloc(vector->size);
+			gsl_vector *Z = gsl_vector_alloc(vector->size);
+			double r;
+			gsl_vector_view tempv;
+			//gsl_matrix_view tempm;
+			double scalar_aux1;
+			double scalar_aux2;
+			double scalar_aux3;
+			gsl_vector *vector_aux = gsl_vector_alloc(vector->size);
+			
+			if ((indexEalpha == indexEbeta) && (indexEalpha == 0))		indexEbeta = 1;
+			else if ((indexEalpha == indexEbeta) && (indexEalpha != 0))	indexEbeta = reconstruct_init->library_collection->ntemplates-1;
+			
+			tempv = gsl_vector_subvector(reconstruct_init->library_collection->pulse_templates_B0[indexEalpha].ptemplate,0,vector->size);
+			gsl_vector_memcpy(Salpha,&tempv.vector);	// Salpha
+			gsl_vector_memcpy(D,vector);
+			gsl_vector_sub(D,Salpha);			// D = U - Salpha
+			
+			if (vector->size == reconstruct_init->library_collection->pulse_templates[0].template_duration)
+			{
+				gsl_matrix_get_row(Y,reconstruct_init->library_collection->Y,indexEalpha);	// Y
+				
+				gsl_vector *vector_auxlong = gsl_vector_alloc(reconstruct_init->pulse_length*reconstruct_init->pulse_length);
+				gsl_matrix_get_row(vector_auxlong,reconstruct_init->library_collection->X,indexEalpha);
+				vector2matrix(vector_auxlong,&X);						// X
+				gsl_vector_free(vector_auxlong);
+				
+				gsl_matrix_get_row(Z,reconstruct_init->library_collection->Z,indexEalpha);	// Z
+				
+				r = gsl_vector_get(reconstruct_init->library_collection->r,indexEalpha);	// r
+			}
+			else
+			{
+				gsl_permutation *perm = gsl_permutation_alloc(vector->size);
+				int s = 0;
+				gsl_matrix_view tempm;
+				double t;
+				gsl_vector *Sbeta = gsl_vector_alloc(vector->size);
+				gsl_vector *WalphaT = gsl_vector_alloc(vector->size);
+				
+				tempv = gsl_vector_subvector(reconstruct_init->library_collection->pulse_templates_B0[indexEalpha].ptemplate,0,vector->size);
+				gsl_vector_memcpy(Salpha,&tempv.vector);					// Salpha
+				tempv = gsl_vector_subvector(reconstruct_init->library_collection->pulse_templates_B0[indexEbeta].ptemplate,0,vector->size);
+				gsl_vector_memcpy(Sbeta,&tempv.vector);						// Sbeta
+				gsl_vector *T_short = gsl_vector_alloc(vector->size);
+				gsl_vector_memcpy(T_short,Sbeta);
+				gsl_vector_sub(T_short,Salpha);							// T_short
+				gsl_vector_free(Sbeta);
+				
+				gsl_vector *covarianceAlphavector = gsl_vector_alloc(reconstruct_init->library_collection->V->size2);
+				gsl_vector *covarianceBetavector = gsl_vector_alloc(reconstruct_init->library_collection->V->size2);
+				gsl_matrix *covarianceAlphamatrix = gsl_matrix_alloc(sqrt(reconstruct_init->library_collection->V->size2),sqrt(reconstruct_init->library_collection->V->size2));
+				gsl_matrix *covarianceBetamatrix = gsl_matrix_alloc(sqrt(reconstruct_init->library_collection->V->size2),sqrt(reconstruct_init->library_collection->V->size2));
+				gsl_matrix *covarianceAlphamatrixSHORT = gsl_matrix_alloc(vector->size,vector->size);
+				gsl_matrix *covarianceBetamatrixSHORT = gsl_matrix_alloc(vector->size,vector->size);
+				gsl_matrix *weightAlphamatrixSHORT = gsl_matrix_alloc(vector->size,vector->size);
+				gsl_matrix *weightBetamatrixSHORT = gsl_matrix_alloc(vector->size,vector->size);
+				
+				gsl_matrix_get_row(covarianceAlphavector,reconstruct_init->library_collection->V,indexEalpha);
+				vector2matrix(covarianceAlphavector,&covarianceAlphamatrix);
+				gsl_vector_free(covarianceAlphavector);
+				tempm = gsl_matrix_submatrix(covarianceAlphamatrix,0,0,vector->size,vector->size);
+				gsl_matrix_memcpy(covarianceAlphamatrixSHORT,&tempm.matrix);
+				gsl_matrix_free(covarianceAlphamatrix);
+				gsl_linalg_LU_decomp(covarianceAlphamatrixSHORT,perm, &s);
+				gsl_linalg_LU_invert(covarianceAlphamatrixSHORT,perm, weightAlphamatrixSHORT);	// Walpha_short
+				gsl_matrix_free(covarianceAlphamatrixSHORT);
+				gsl_permutation_free(perm);
+				
+				gsl_matrix_get_row(covarianceBetavector,reconstruct_init->library_collection->V,indexEbeta);
+				vector2matrix(covarianceBetavector,&covarianceBetamatrix);
+				gsl_vector_free(covarianceBetavector);
+				tempm = gsl_matrix_submatrix(covarianceBetamatrix,0,0,vector->size,vector->size);
+				gsl_matrix_memcpy(covarianceBetamatrixSHORT,&tempm.matrix);
+				gsl_matrix_free(covarianceBetamatrix);
+				perm = gsl_permutation_alloc(vector->size);
+				s = 0;
+				gsl_linalg_LU_decomp(covarianceBetamatrixSHORT,perm, &s);
+				gsl_linalg_LU_invert(covarianceBetamatrixSHORT,perm, weightBetamatrixSHORT);	// Wbeta_short
+				gsl_matrix_free(covarianceBetamatrixSHORT);
+				gsl_permutation_free(perm);
+				
+				gsl_blas_dgemv(CblasNoTrans, 1.0, weightAlphamatrixSHORT, T_short, 0.0, WalphaT);
+				gsl_blas_ddot(T_short,WalphaT,&t);						// t
+				
+				gsl_vector_memcpy(Y,WalphaT);
+				gsl_vector_scale(Y,1/t);							// Y
+				gsl_vector_free(WalphaT);
+				
+				gsl_matrix_memcpy(X,weightBetamatrixSHORT);
+				gsl_matrix_sub(X,weightAlphamatrixSHORT);
+				gsl_matrix_scale(X,1/t);							// X
+	
+				gsl_blas_dgemv(CblasNoTrans, 1.0, X, T_short, 0.0, Z);				// Z
+	
+				gsl_blas_ddot(Z,T_short,&r);
+				r=1/r;										// r
+								
+				gsl_vector_free(T_short);
+				gsl_matrix_free(weightAlphamatrixSHORT);
+				gsl_matrix_free(weightBetamatrixSHORT);
+			}
+			
+			gsl_blas_ddot(D,Y,&scalar_aux1);		// DY
+			scalar_aux1 = 2*scalar_aux1;			// 2DY
+
+			gsl_blas_dgemv(CblasNoTrans, 1.0, X, D, 0.0, vector_aux);	// XD
+			gsl_blas_ddot(D,vector_aux,&scalar_aux2);	// DXD
+
+			scalar_aux1 = scalar_aux1-scalar_aux2;		// 2DY-DXD
+			scalar_aux1 = 3*scalar_aux1/r;			// 3(2DY-DXD)/r
+
+			gsl_blas_ddot(D,Z,&scalar_aux3);		// DZ
+			scalar_aux2 = pow(2*scalar_aux3-1,2.0);		// (2DZ-1)\B2
+
+			scalar_aux1 = sqrt(scalar_aux1+scalar_aux2);	// sqrt[(2DZ-1)\B2 + 3(2DY-DXD)/r]
+
+			scalar_aux3 = 2*scalar_aux3-1;			// (2DZ-1)
+
+			// (Ebeta-Ealpha)*(r/3)*{(2DZ-1) + sqrt[(2DZ-1)\B2 + 3(2DY-DXD)/r]}
+			scalar_aux1 = (scalar_aux3 + scalar_aux1)*(r/3)*(gsl_vector_get(reconstruct_init->library_collection->energies,indexEbeta)-gsl_vector_get(reconstruct_init->library_collection->energies,indexEalpha));
+
+			// Ealpha + (Ebeta-Ealpha)*(r/3)*{(2DZ-1) + sqrt[(2DZ-1)\B2 + 3(2DY-DXD)/r]}
+			*calculatedEnergy = gsl_vector_get(reconstruct_init->library_collection->energies,indexEalpha) + scalar_aux1;
+			//cout<<"calculateEnergy: "<<*calculatedEnergy<<endl;
+
+			gsl_vector_free(D);
+			gsl_vector_free(Salpha);
+			gsl_matrix_free(X);
+			gsl_vector_free(Y);
+			gsl_vector_free(Z);
+			gsl_vector_free(vector_aux);
+		}
+		else if (runEMethod == 2) //WEIGHTN
+		{
+			if (reconstruct_init->OFLib == 0)
+			{
+				// It is not necessary to check the allocation because 'vector' size must already be > 0 and 'reconstruct_init->pulse_length'=PulseLength(input parameter) has been checked previously
+				gsl_vector *Pab = gsl_vector_alloc(reconstruct_init->library_collection->pulse_templates[0].template_duration);
+				gsl_vector *P_Pab = gsl_vector_alloc(vector->size);
+				gsl_vector *Dab = gsl_vector_alloc(reconstruct_init->library_collection->pulse_templates[0].template_duration);
+				gsl_matrix *Wm_short = gsl_matrix_alloc(vector->size,vector->size);
+				//gsl_permutation *perm = 0;
+                                gsl_permutation *perm = gsl_permutation_alloc(vector->size);
+				int s = 0;
+			      
+				gsl_matrix_get_row(Dab,reconstruct_init->library_collection->DAB,indexEalpha);  // Dab
+				// It is not necessary to check the allocation because 'vector' size must already be > 0
+				gsl_vector *Dab_short = gsl_vector_alloc(vector->size);
+				gsl_vector_view temp;
+				temp = gsl_vector_subvector(Dab,0,vector->size);
+				gsl_vector_memcpy(Dab_short,&temp.vector);
+
+				gsl_vector_memcpy(P_Pab,vector);
+				//if (vector->size == 1) cout<<gsl_vector_get(vector,0)<<endl;
+				gsl_matrix_get_row(Pab,reconstruct_init->library_collection->PAB,indexEalpha);  // Pab
+				// It is not necessary to check the allocation because 'vector' size must already be > 0
+				gsl_vector *Pab_short = gsl_vector_alloc(vector->size);
+				temp = gsl_vector_subvector(Pab,0,vector->size);
+				gsl_vector_memcpy(Pab_short,&temp.vector);
+				gsl_vector_sub(P_Pab,Pab_short);                                                // P-Pab
+				gsl_vector_free(Pab_short);
+			      
+				if (vector->size == reconstruct_init->library_collection->pulse_templates[0].template_duration)
+				{
+					gsl_vector *Wabv = gsl_vector_alloc(reconstruct_init->pulse_length*reconstruct_init->pulse_length);
+					gsl_matrix_get_row(Wabv,reconstruct_init->library_collection->WAB,indexEalpha); // WAB vector => (Walpha + Wbeta)/2
+					vector2matrix(Wabv,&Wm_short);    
+					gsl_vector_free(Wabv);
+				}
+				else if (vector->size != reconstruct_init->library_collection->pulse_templates[0].template_duration)
+				{
+					if ((indexEalpha == indexEbeta) && (indexEalpha == 0))		indexEbeta = 1;
+					else if ((indexEalpha == indexEbeta) && (indexEalpha != 0))	indexEbeta = reconstruct_init->library_collection->ntemplates-1;
+			
+					gsl_vector *covarianceAlphavector = gsl_vector_alloc(reconstruct_init->library_collection->V->size2);
+					gsl_vector *covarianceBetavector = gsl_vector_alloc(reconstruct_init->library_collection->V->size2);
+					gsl_matrix *covarianceAlphamatrix = gsl_matrix_alloc(sqrt(reconstruct_init->library_collection->V->size2),sqrt(reconstruct_init->library_collection->V->size2));
+					gsl_matrix *covarianceBetamatrix = gsl_matrix_alloc(sqrt(reconstruct_init->library_collection->V->size2),sqrt(reconstruct_init->library_collection->V->size2));
+					gsl_matrix *covarianceAlphamatrixSHORT = gsl_matrix_alloc(vector->size,vector->size);
+					gsl_matrix *covarianceBetamatrixSHORT = gsl_matrix_alloc(vector->size,vector->size);
+					gsl_matrix *weightAlphamatrixSHORT = gsl_matrix_alloc(vector->size,vector->size);
+					gsl_matrix *weightBetamatrixSHORT = gsl_matrix_alloc(vector->size,vector->size);
+					gsl_matrix_view tempm;
+                                        
+                                        perm  = gsl_permutation_alloc(vector->size);
+					
+					gsl_matrix_get_row(covarianceAlphavector,reconstruct_init->library_collection->V,indexEalpha);
+					vector2matrix(covarianceAlphavector,&covarianceAlphamatrix);
+					gsl_vector_free(covarianceAlphavector);
+					tempm = gsl_matrix_submatrix(covarianceAlphamatrix,0,0,vector->size,vector->size);
+					gsl_matrix_memcpy(covarianceAlphamatrixSHORT,&tempm.matrix);
+					gsl_matrix_free(covarianceAlphamatrix);
+					gsl_linalg_LU_decomp(covarianceAlphamatrixSHORT,perm, &s);
+					gsl_linalg_LU_invert(covarianceAlphamatrixSHORT,perm, weightAlphamatrixSHORT);
+					gsl_matrix_free(covarianceAlphamatrixSHORT);		
+					gsl_permutation_free(perm);	
+					
+					gsl_matrix_get_row(covarianceBetavector,reconstruct_init->library_collection->V,indexEbeta);
+					vector2matrix(covarianceBetavector,&covarianceBetamatrix);
+					gsl_vector_free(covarianceBetavector);
+					tempm = gsl_matrix_submatrix(covarianceBetamatrix,0,0,vector->size,vector->size);
+					gsl_matrix_memcpy(covarianceBetamatrixSHORT,&tempm.matrix);
+					gsl_matrix_free(covarianceBetamatrix);
+					perm = gsl_permutation_alloc(vector->size);
+					s = 0;
+					gsl_linalg_LU_decomp(covarianceBetamatrixSHORT,perm, &s);
+					gsl_linalg_LU_invert(covarianceBetamatrixSHORT,perm, weightBetamatrixSHORT);
+					gsl_matrix_free(covarianceBetamatrixSHORT);
+					gsl_permutation_free(perm);	
+					
+					gsl_matrix_memcpy(Wm_short,weightAlphamatrixSHORT);
+					gsl_matrix_add(Wm_short,weightBetamatrixSHORT);
+					gsl_matrix_scale(Wm_short,1.0/2.0);						// (Walpha + Wbeta)/2
+					gsl_matrix_free(weightAlphamatrixSHORT);
+					gsl_matrix_free(weightBetamatrixSHORT);
+				}
+			      
+				// It is not necessary to check the allocation because 'vector' size must already be > 0
+				gsl_matrix *X = gsl_matrix_alloc(vector->size,2);
+				gsl_matrix_set_all(X,1.0);
+				gsl_matrix_set_col(X,0,Dab_short);                                              //    | x0 1 | | .  1|
+														// X =| x1 1 |=|Dab 1|
+														//    | .    | | .  1|
+														//    | xm 1 | | .  1|
+
+				/*if (vector->size == 1)
+				{
+					cout<<gsl_matrix_get(X,0,0)<<" "<<gsl_matrix_get(X,0,1)<<endl;
+				}*/
+				gsl_matrix *X_transW = gsl_matrix_alloc(2,vector->size);
+				if (X->size1 != Wm_short->size1)        // Because the next operation is X'W
+				{
+					sprintf(valERROR,"%d",__LINE__+5);
+					string str(valERROR);
+					message = "Wrong dimensions to compute matrix-matrix product in line " + str + " (" + __FILE__ + ")";
+					EP_EXIT_ERROR(message,EPFAIL);
+				}
+				gsl_blas_dgemm(CblasTrans,CblasNoTrans,1.0,X,Wm_short,0.0,X_transW);            // X_transW = X'W
+				gsl_matrix *X_transWX = gsl_matrix_alloc(2,2);
+				gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,X_transW,X,0.0,X_transWX);         // X_transWX = X'WX
+				gsl_vector *X_transWY = gsl_vector_alloc(2);
+				gsl_blas_dgemv(CblasNoTrans,1.0,X_transW,P_Pab,0.0,X_transWY);                  // X_transWY = X'WY
+														// Y = P_Pab
+			      
+				perm = gsl_permutation_alloc(2);
+				s=0;
+				gsl_matrix *aux = gsl_matrix_alloc(2,2);
+				gsl_matrix *inv = gsl_matrix_alloc(2,2);
+				gsl_matrix_memcpy(aux,X_transWX);
+				/*if (vector->size == 1)
+				{
+					cout<<gsl_matrix_get(aux,0,0)<<" "<<gsl_matrix_get(aux,0,1)<<endl;
+					cout<<gsl_matrix_get(aux,1,0)<<" "<<gsl_matrix_get(aux,1,1)<<endl;
+				}*/
+				gsl_linalg_LU_decomp(aux, perm, &s);
+				if (gsl_linalg_LU_invert(aux, perm, inv) != 0) 
+				{
+					sprintf(valERROR,"%d",__LINE__-2);
+					string str(valERROR);
+					message = "Singular matrix in line " + str + " (" + __FILE__ + ")";
+					EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+				}
+				gsl_matrix_free(aux);
+				gsl_permutation_free(perm);
+			      
+				gsl_vector *EB = gsl_vector_alloc(2);
+				gsl_blas_dgemv(CblasNoTrans,1.0,inv,X_transWY,0.0,EB);                          // |E|=((X'WX)^(-1))X'WY
+														// |B|
+				*calculatedEnergy = gsl_vector_get(EB,0);
+				// It is calculating also the baseline, gsl_vector_get(EB,1)
+				//cout<<"calculatedEnergy: "<<*calculatedEnergy<<endl;
+				//cout<<"baseline: "<<gsl_vector_get(EB,1)<<endl;
+			      
+				gsl_matrix_free(X);
+				gsl_matrix_free(X_transW);
+				gsl_matrix_free(X_transWX);
+				gsl_vector_free(X_transWY);
+				gsl_matrix_free(inv);
+				gsl_vector_free(Dab);
+				gsl_vector_free(Pab);
+				gsl_vector_free(P_Pab);
+				gsl_vector_free(Dab_short);
+				gsl_matrix_free(Wm_short);
+				gsl_vector_free(EB);
+			}
+			else if (reconstruct_init->OFLib == 1)
+			{
+				// It is not necessary to check the allocation because 'vector' size must already be > 0 and 'reconstruct_init->pulse_length'=PulseLength(input parameter) has been checked previously
+				gsl_vector *P_Pab = gsl_vector_alloc(vector->size);
+				
+				gsl_vector_memcpy(P_Pab,vector);      
+				// It is not necessary to check the allocation because 'vector' size must already be > 0
+				gsl_vector *Pab_short = gsl_vector_alloc(vector->size);
+				gsl_vector_view temp;
+				temp = gsl_vector_subvector(Pab,0,vector->size);
+				gsl_vector_memcpy(Pab_short,&temp.vector);
+				gsl_vector_sub(P_Pab,Pab_short);                                                // P-Pab
+														// Pulse WITH baseline
+														// Templates (PAB) WITHOUT baseline (subtracted in 'initializeReconstructionSIRENA')
+				gsl_vector_free(Pab_short);
+			      
+				gsl_vector *EB = gsl_vector_alloc(2);
+				
+				//cout<<"P_Pab: "<<gsl_vector_get(P_Pab,0)<<" "<<gsl_vector_get(P_Pab,1)<<" "<<gsl_vector_get(P_Pab,P_Pab->size-1)<<endl;
+				//cout<<gsl_matrix_get(PRCLWN,0,0)<<" "<<gsl_matrix_get(PRCLWN,0,1)<<" "<<gsl_matrix_get(PRCLWN,0,PRCLWN->size2-1)<<endl;
+				//cout<<gsl_matrix_get(PRCLWN,1,0)<<" "<<gsl_matrix_get(PRCLWN,1,1)<<" "<<gsl_matrix_get(PRCLWN,1,PRCLWN->size2-1)<<endl;
+			
+				gsl_blas_dgemv(CblasNoTrans,1.0,PRCLWN,P_Pab,0.0,EB);                           // [(R'WR)^(-1)]R'W\B7D'
+														// D' = P_Pab
+				*calculatedEnergy = gsl_vector_get(EB,0);
+				//cout<<"calculatedEnergy: "<<*calculatedEnergy<<endl;
+				//cout<<"baseline: "<<gsl_vector_get(EB,1)<<endl;
+			
+				gsl_vector_free(P_Pab);
+				gsl_vector_free(EB);
+			}
+		}
+	//}
+        //}
+	//cout<<"calculatedEnergy="<<*calculatedEnergy<<endl;
+	//std::cout << std::setprecision(9) << *calculatedEnergy << '\n';
+        
+        //if ((pulseGrade != 3)&&(*calculatedEnergy<6000.0))    cout<<*calculatedEnergy<<endl;
+
+	return EPOK;
+}
