@@ -624,7 +624,7 @@ int initModule(int argc, char **argv)
 	gennoisespecPars[13].type = "int";
 	gennoisespecPars[13].minValInt = 0;
 	gennoisespecPars[13].maxValInt = 3;
-	gennoisespecPars[13].ValInt = gennoisespecPars[12].defValInt;
+	gennoisespecPars[13].ValInt = gennoisespecPars[13].defValInt;
 
 	gennoisespecPars[14].name = "clobber";
 	gennoisespecPars[14].description = "Re-write output files if clobber=yes";
