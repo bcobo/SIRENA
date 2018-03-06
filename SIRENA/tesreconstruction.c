@@ -441,7 +441,7 @@ int getpar(struct Parameters* const par)
 	
 	//assert(&par->monoenergy > 0);
 	//MyAssert(&par->monoenergy > 0, "monoenergy must be greater than 0");
-        MyAssert(par->monoenergy > 0, "monoenergy must be greater than 0");
+        if (par->mode == 0) MyAssert(par->monoenergy > 0, "monoenergy must be greater than 0");
 	
 	//assert((strcmp(par->FilterDomain,"T") == 0) || (strcmp(par->FilterDomain,"F") == 0));
 	MyAssert((strcmp(par->FilterDomain,"T") == 0) || (strcmp(par->FilterDomain,"F") == 0), "FilterDomain must be T or F");
