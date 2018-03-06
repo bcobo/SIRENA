@@ -194,12 +194,6 @@ int main (int argc, char **argv)
 		message = "Cannot read keyword " + string(keyname) + " in input file";
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
 	}
-	/*if (energy < 0)
-	{
-		message = "Legal values for MONOEN (RECORDS) are non negative real numbers";
-		writeLog(fileRef, "Error", verbosity, message);
-		EP_EXIT_ERROR(message,EPFAIL);
-	}*/
 	energy = energy*1e3;
 	plspolar = 1.0;
 
@@ -230,14 +224,8 @@ int main (int argc, char **argv)
 		EP_EXIT_ERROR(message,EPFAIL);
 	}
 
-	// Every single spectrum of each pulse-free interval is stored in a row of the EventSamplesFFT array
-	//EventSamplesFFT = gsl_matrix_alloc(nintervals,intervalMinBins);
-
 	noiseIntervals = gsl_matrix_alloc(nintervals,intervalMinBins);
 
-	// Initialize to zero => Because EventSamplesFFT is allocated with maximum dimensions
-	// but maybe there are not nintervals pulse-free intervals in the data
-	//gsl_matrix_set_zero(EventSamplesFFT);
 	EventSamplesFFTMean = gsl_vector_alloc(intervalMinBins);
 	gsl_vector_set_zero(EventSamplesFFTMean);
 	gsl_vector *mean;
@@ -334,33 +322,7 @@ int main (int argc, char **argv)
 		}
 	}
 	gsl_vector_sqrtIFCA(EventSamplesFFTMean,EventSamplesFFTMean);
-        
-	// Mean
-	/*double value_aux;
-	for (int i=0;i<intervalMinBins;i++)
-	{
-		value_aux = 0.0;
-		for (int j=0;j<NumMeanSamples;j++ )
-		{
-			value_aux = value_aux + gsl_matrix_get(EventSamplesFFT,j,i);
-		}
-		gsl_vector_set(mean,i,value_aux);
-	}
-	gsl_vector_scale(mean,1.0/(double)NumMeanSamples);
-
-	// Standard error of the mean
-	for (int i=0;i<intervalMinBins;i++)
-	{
-		value_aux = 0.0;
-		for (int j=0;j<NumMeanSamples;j++)
-		{
-			value_aux = value_aux+pow(gsl_matrix_get(EventSamplesFFT,j,i)-gsl_vector_get(mean,i),2.0);
-		}
-		gsl_vector_set(sigmacsdgsl,i,value_aux);
-	}
-	gsl_vector_scale(sigmacsdgsl,1.0/((double)NumMeanSamples*((double)NumMeanSamples-1)));
-	gsl_vector_sqrtIFCA(sigmacsdgsl,sigmacsdgsl);*/
-	
+        	
         if (weightMS == 1)
         {
                 weightpoints = gsl_vector_alloc(floor(log2(intervalMinSamples)));
@@ -491,7 +453,6 @@ int main (int argc, char **argv)
 	}
 
 	// Free allocated GSL vectors
-	//gsl_matrix_free(EventSamplesFFT);
 	gsl_vector_free(EventSamplesFFTMean);
 	gsl_vector_free(mean);
 	gsl_vector_free(sigmacsdgsl);
@@ -911,8 +872,6 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 	int pulseFound = 0;	// 0->The function findTstart has not found any pulse
 				// 1->The function findTstart has found at least one pulse
 
-	/*double baselineI;
-	double mean, sg; // To handle the pulse tails at the beginning of the record*/
 	int tail_duration;
 	
 	double baselineIntervalFreeOfPulses;
@@ -923,9 +882,7 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 
 	// To calculate the FFT
 	double SelectedTimeDuration;
-	//gsl_vector *EventSamples;
         gsl_vector *EventSamples = gsl_vector_alloc(intervalMinBins);
-	//gsl_vector *EventSamplesWithBaseline;
         gsl_vector *baselinegsl = gsl_vector_alloc(EventSamples->size);
 	gsl_vector *vector_aux;
 	gsl_vector_complex *vector_aux1;
@@ -993,25 +950,6 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 
 		// To avoid taking into account the pulse tails at the beginning of a record as part of a pulse-free interval
 		tail_duration = 0;
-		/*temp = gsl_vector_subvector(ioutgslNOTFIL,0,eventsz-(int)(pi*samprate*scaleFactor)-1);
-		cutFreq = 2 * (1/(2*pi*scaleFactor));
-		boxLength = (int) ((1/cutFreq) * samprate);
-		
-		if (find_baseline(&temp.vector, kappaMKC, stopCriteriaMKC, boxLength,  &mean, &sg, &baselineI))
-		{
-			message = "Cannot run find_baseline";
-			EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-		}*/
-		/*cout<<"mean: "<<mean<<endl;
-		cout<<"sg: "<<sg<<endl;
-		cout<<"baselineI: "<<baselineI<<endl;*/
-		/*for (int j=0;j<eventsz;j++)
-		{
-			if (gsl_vector_get(ioutgslNOTFIL,j) > baselineI+sg)	{tail_duration = j;
-			  //cout<<j<<" gsl_vector_get(ioutgslNOTFIL,j): "<<gsl_vector_get(ioutgslNOTFIL,j)<<" "<<baselineI+sg<<endl;
-			}
-			else break;
-		}*/
 
 		// Low-pass filtering
 		status = lpf_boxcar(&ioutgsl_aux,ioutgsl_aux->size,scaleFactor,samprate);
@@ -1079,7 +1017,6 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 		{
 			for (int j=0; j<intervalMinBins; j++)
 			{
-				//cout<<i<<" gsl_vector_get(startIntervalgsl,i): "<<gsl_vector_get(startIntervalgsl,i)<<endl;
 				gsl_vector_set(intervalsWithoutNoiseTogether,intervalMinBins*i+j,gsl_vector_get(ioutgsl,j+gsl_vector_get(startIntervalgsl,i)));
 			}
 		}
@@ -1094,7 +1031,6 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 		{
 			if  (NumMeanSamples >= nintervals)	break;
 			  
-			//EventSamples = gsl_vector_alloc(intervalMinBins);
 			temp = gsl_vector_subvector(ioutgsl,gsl_vector_get(startIntervalgsl,i), intervalMinBins);
 			gsl_vector_memcpy(EventSamples,&temp.vector);
 			
@@ -1111,9 +1047,6 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 					EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 				}
 				gsl_vector_complex_absIFCA(vector_aux,vector_aux1);
-			
-				// Every single spectrum is stored in a row of the EventSamplesFFT array
-				//gsl_matrix_set_row(EventSamplesFFT,NumMeanSamples,vector_aux);
 
 				// Add to mean FFT samples
 				gsl_vector_mul(vector_aux,vector_aux);
@@ -1135,8 +1068,6 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 	gsl_vector_free(timegsl_block);
 	gsl_matrix_free(ioutgsl_block);
         gsl_vector_free(vector_aux);
-	//gsl_vector_free(vector_aux);cutFreq = 2 * (1/(2*pi*scaleFactor));
-	//boxLength = (int) ((1/cutFreq) * samprate);
 	gsl_vector_complex_free(vector_aux1);
 	gsl_vector_free(derSGN);
 	gsl_vector_free(tstartgsl);
@@ -2064,8 +1995,8 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
         
         gsl_matrix *covariance = gsl_matrix_alloc((*weight)->size1,(*weight)->size2);
 	
-        clock_t t;
-        t=clock();
+        /*clock_t t;
+        t=clock();*/
 	// Elements of the diagonal of the covariance matrix
 	for (int i=0;i<intervalMatrix->size2;i++)
 	{
@@ -2085,11 +2016,11 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
 		elementValue1 = 0.0;
 		elementValue2 = 0.0;
 	}
-	cout<<"Final de la diagonal de la matriz "<<covariance->size1<<"x"<<covariance->size1<<endl;
+	/*cout<<"Final de la diagonal de la matriz "<<covariance->size1<<"x"<<covariance->size1<<endl;
         t = clock() - t;
-        cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;
+        cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;*/
 
-        t = clock();
+        //t = clock();
 	// Other elements
 	for (int i=0;i<intervalMatrix->size2;i++)
 	{
@@ -2116,19 +2047,19 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
 			elementValue3 = 0.0;
 		}
 	}
-	cout<<"Final de los elementos FUERA de la diagonal de la matriz "<<covariance->size1<<"x"<<covariance->size1<<endl;
+	/*cout<<"Final de los elementos FUERA de la diagonal de la matriz "<<covariance->size1<<"x"<<covariance->size1<<endl;
         t = clock() - t;
-        cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;
+        cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;*/
 	
-        t = clock();
+        //t = clock();
 	// Calculate the weight matrix
 	// It is not necessary to check the allocation because 'covarianze' size must already be > 0
 	gsl_matrix *covarianceaux = gsl_matrix_alloc(covariance->size1,covariance->size2);
 	gsl_matrix_memcpy(covarianceaux,covariance);
-        cout<<"Final de la preparacion de la inversion "<<covariance->size1<<"x"<<covariance->size1<<endl;
+        /*cout<<"Final de la preparacion de la inversion "<<covariance->size1<<"x"<<covariance->size1<<endl;
         t = clock() - t;
         cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;
-        t = clock();
+        t = clock();*/
 	gsl_linalg_LU_decomp(covarianceaux, perm, &s);
 	if (gsl_linalg_LU_invert(covarianceaux, perm, *weight) != 0) 
 	{
@@ -2137,9 +2068,9 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
 		message = "Singular matrix in line " + str + " (" + __FILE__ + ")";
 		EP_PRINT_ERROR(message,EPFAIL);	return(EPFAIL);
 	}
-	cout<<"Final de la inversion "<<covariance->size1<<"x"<<covariance->size1<<endl;
+	/*cout<<"Final de la inversion "<<covariance->size1<<"x"<<covariance->size1<<endl;
         t = clock() - t;
-        cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;
+        cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;*/
 	gsl_matrix_free(covarianceaux);
         gsl_matrix_free(covariance);
 	gsl_permutation_free(perm);
