@@ -84,9 +84,6 @@ int calculateEnergy (gsl_vector *vector, double shift, int pulseGrade, gsl_vecto
 int writeFilterHDU(ReconstructInitSIRENA **reconstruct_init, int pulse_index, double energy, gsl_vector *optimalfilter, gsl_vector *optimalfilter_f, gsl_vector *optimalfilter_FFT, fitsfile **dtcObject);
 
 int interpolateFilter(double shift, int lengthInterp, gsl_vector *filter, gsl_vector_complex *filterFFT,gsl_vector **filterInterp, gsl_vector_complex **filterFFTInterp, int domain);
-int getTstartJitter(int lengthInterp, gsl_vector *pulse, gsl_matrix *filter, gsl_matrix_complex *filterFFT, double samprate, int domain, double *tstartDesv);
-int calculateEnergyNEW (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, 
-	ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy);
 
 #endif /* TASKSSIRENA_H */
 

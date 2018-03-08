@@ -74,7 +74,6 @@ typedef struct PulseTemplate
 	double pulse_height;
 #ifdef __cplusplus
 	PulseTemplate():template_duration(0), ptemplate(0), energy(0.0f), pulse_height(0.0f){}
-	//~PulseTemplate(){gsl_vector_free(ptemplate);}
 #endif
 
 } PulseTemplate;
@@ -94,7 +93,6 @@ typedef struct MatchedFilter
 	double pulse_height;
 #ifdef __cplusplus
 	MatchedFilter():mfilter_duration(0),mfilter(0),energy(0.0f), pulse_height(0.0f){}
-	//~MatchedFilter(){gsl_vector_free(mfilter);}
 #endif
 	
 } MatchedFilter;
@@ -111,7 +109,6 @@ typedef struct OptimalFilterSIRENA
 	double energy;
 #ifdef __cplusplus
 	OptimalFilterSIRENA():ofilter_duration(0),ofilter(0), energy(0.0f){}
-	//~OptimalFilterSIRENA(){gsl_vector_free(ofilter);}
 #endif
 	
 } OptimalFilterSIRENA;
@@ -158,11 +155,9 @@ typedef struct LibraryCollection
 	OptimalFilterSIRENA* optimal_filters;
 	
 	/** Structure containing all the fixed optimal filters from the library (FIXFILTF HDU) */
-	//OptimalFilterSIRENA_FREQ* optimal_filtersFREQ;
 	OptimalFilterSIRENA* optimal_filtersFREQ;
 
 	/** Structure containing all the fixed optimal filters from the library (FIXFILTT HDU) */
-	//OptimalFilterSIRENA_TIME* optimal_filtersTIME;
 	OptimalFilterSIRENA* optimal_filtersTIME;
 	
 	//MatrixStruct* W;
@@ -275,12 +270,8 @@ typedef struct PulseDetected
 	int grade1;
       
 	/** Distance to previous pulse in record (samples)*/
-	/** tstart(i)-tend(i-1)*/
-	int grade2;
-	
-	/** Distance to the begining of the previous pulse in record (samples)*/
 	/** tstart(i)-tstart(i-1)*/
-	int grade2_1;
+	int grade2;
 
 	/** PIX_ID of the detected pulse*/
 	int pixid;
@@ -322,7 +313,6 @@ typedef struct PulseDetected
         int numLagsUsed;
 #ifdef __cplusplus
 	PulseDetected();
-	//~PulseDetected(){gsl_vector_free(pulse_adc);};
 #endif
 
 } PulseDetected;
@@ -339,7 +329,6 @@ typedef struct PulsesCollection
 	PulseDetected* pulses_detected;
 #ifdef __cplusplus
 	PulsesCollection():ndetpulses(0), pulses_detected(0), size(0){}
-	//~PulsesCollection(){delete [] pulses_detected;}
 #endif
 
 } PulsesCollection;
@@ -406,9 +395,6 @@ typedef struct ReconstructInitSIRENA
 	
 	/** Baseline averaging length for the RS raw energy estimation, in seconds (only in CALIBRATION) **/
 	double LbT;
-	
-	/** Baseline (in ADC units) **/
-	//double baseline;
 
 	/** Run mode (0: calibration/lib creation  1:energy reconstruction) **/
 	int mode;
