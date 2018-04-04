@@ -174,7 +174,7 @@ int tesreconstruction_main() {
         }
       }
     }
-    
+
     if(is_threading()) {
       th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
       int i = 1;

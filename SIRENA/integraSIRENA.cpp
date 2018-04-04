@@ -389,22 +389,9 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	}
 	
 		// Detect pulses in record
-  //ReconstructInitSIRENA* rec = new ReconstructInitSIRENA();
-  //ReconstructInitSIRENA rec;
-  //rec = *(reconstruct_init);
-  //*rec = *(reconstruct_init);
-  //scheduler* s = scheduler::get();
-  //s->push_detection(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
-  //log_info("Rec pointers copy %p", &rec);
-  //log_info("Rec pointers original %p", reconstruct_init);
-  //log_info("copy %i",rec.pulse_length);
-  //log_info("original %i\n",reconstruct_init->pulse_length);
-  //delete rec;
   if (scheduler::get()->is_threading() && reconstruct_init->mode == 1){
+    log_trace("Threading mode: ");
     ReconstructInitSIRENA* rec = reconstruct_init->get_threading_object(nRecord);
-    log_debug("record %p", record);
-    log_debug("pulsesAll %i", (*pulsesAll)->ndetpulses);
-    log_debug("Record %f - %i", record->time, nRecord);
     scheduler::get()->push_detection(record, nRecord, lastRecord, 
                                      *pulsesAll, &rec, &pulsesInRecord,
                                      optimalFilter, event_list);
@@ -2771,7 +2758,6 @@ NoiseSpec* getNoiseSpec(const char* const filename, int mode, int hduPRCLOFWM, c
 void th_start_energy(PulsesCollection** pulsesAll, 
                      OptimalFilterSIRENA** optimalFilter)
 {
-  //log_debug("endworker pulsesAll %i\n", (*pulsesAll)->ndetpulses);
   //scheduler::get()->finish_reconstruction(pulsesAll, optimalFilter);
   //delete scheduler::get();
   //th_wait_end();
@@ -2964,7 +2950,6 @@ ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other)
 ReconstructInitSIRENA&
 ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
 {
-  log_info("operator ReconstructInitSIRENA\n");
   if (this != &other){
     if(library_collection) {
       delete library_collection; library_collection = 0;
@@ -3419,16 +3404,11 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
     nfixedfilters = other.nfixedfilters;
     
     if(energies) {
-      //log_info("deleting energies");
       gsl_vector_free(energies); energies = 0;
     }
     if(other.energies){
       //gsl_vector_fprintf(stdout, other.energies, "%g");
-      //log_info("have energies to copy");
-      //log_info("%i", other.energies->size);
       energies = gsl_vector_alloc(other.energies->size);
-      //log_info("pointers %p - %p", energies, other.energies);
-      //log_info("%i", energies->size);
       gsl_vector_memcpy(energies, other.energies);
     }
     if(pulse_heights) { 

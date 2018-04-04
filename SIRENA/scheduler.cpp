@@ -29,12 +29,9 @@ unsigned int records_energy = 0;
 /* ****************************************************************************/
 void detection_worker()
 {
-  log_trace("Starting detection worker");
   while(1){
     detection_input* data;
     if(detection_queue.wait_and_pop(data)){
-      log_trace("Data extracted from queue: %i", data->rec_init->pulse_length);
-      log_trace("Data record from queue: %f", data->rec->time);
       //ReconstructInitSIRENA* aux = &data.rec_init;
       th_runDetect(data->rec,
                    data->n_record,data->last_record,
@@ -48,7 +45,6 @@ void detection_worker()
     }
     std::unique_lock<std::mutex> lk(end_workers_mut);
     if(end_workers){
-      log_trace("Finishing detection worker");
       lk.unlock();
       break;
     }
@@ -58,30 +54,13 @@ void detection_worker()
 
 void energy_worker()
 {
-  log_trace("Starting energy worker");
   while(1){
     detection_input* data;
     if(energy_queue.wait_and_pop(data)){
-#if 0
-      log_trace("run energy");
-      log_trace("energy data:");
-      log_trace("%f", data->rec_init->pulse_length);
-      log_trace("%f", data->rec->time);
-      log_trace("%i", data->record_pulses->ndetpulses);
-      log_trace("%p",&data->optimal_filter);
-      log_trace("%p",&data->record_pulses);
-      log_trace("%p",&data->rec_init);
-      log_trace("trigger %i",data->rec->trigger_size);
-      log_trace("phdlist %i", data->rec->phid_list->size);
-      //log_trace("%p", data->rec->get_TesRecord());
-#endif
-      
       th_runEnergy(data->rec, 
                    &(data->rec_init),
                    &(data->record_pulses),//copy
                    &(data->optimal_filter));
-      
-      log_trace("end run energy");
       end_queue.push(data);
       std::unique_lock<std::mutex> lk(records_energy_mut);
       ++records_energy;
@@ -89,7 +68,6 @@ void energy_worker()
     }
     std::unique_lock<std::mutex> lk(end_workers_mut);
     if(end_workers){
-      log_trace("Finishing energy worker");
       lk.unlock();
       break;
     }
@@ -100,11 +78,9 @@ void energy_worker()
 #if 0
 void reconstruction_worker()
 {
-  log_trace("reconstruction worker");
   while(1){
     detection_input* data;
-    if(energy_queue.wait_and_pop(data)){
-      log_trace("Data extracted from energy queue: %i", 
+    if(energy_queue.wait_and_pop(data)){      
                 data->rec_init->pulse_length);
 #if 0
       if(strcmp(data.rec_init.EnergyMethod, "PCA") != 0){
@@ -118,7 +94,6 @@ void reconstruction_worker()
     }
     std::unique_lock<std::mutex> lk(end_workers_mut);
     if(end_workers && energy_queue.empty()){
-      log_trace("Finishing reconstruction worker");
       lk.unlock();
       break;
     }
@@ -161,11 +136,8 @@ void scheduler::push_detection(TesRecord* record,
 void scheduler::push_detection(const detection_input &input)
 { 
 #if 0
-  log_trace("pushing input");
   //std::this_thread::sleep_for(std::chrono::milliseconds(900));
-  log_trace("pushing param");
   detection_queue.push(input);
-  log_trace("end");
 #endif
 }
 
@@ -176,7 +148,6 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
   // Waits until all the records are detected
   // this works because this function should only be called
   // after all the records are queue
-  log_trace("Waiting until all the workers finish");
   while(1){
     std::unique_lock<std::mutex> lk(records_detected_mut);
     if (records_detected == this->num_records){
@@ -192,9 +163,9 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
     delete [] (*pulsesAll)->pulses_detected;
   }
   
-  (*pulsesAll)->size = 10;//this->num_records;
+  (*pulsesAll)->size = this->num_records;
   (*pulsesAll)->ndetpulses = 0;
-  (*pulsesAll)->pulses_detected = new PulseDetected[10];//[this->num_records];
+  (*pulsesAll)->pulses_detected = new PulseDetected[this->num_records];
   //detection_input** 
   this->data_array = new detection_input*[this->num_records+1];
   while(!detected_queue.empty()){
@@ -231,7 +202,6 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
     }
   
     // Waits until all the energies are calculated
-    log_trace("Waiting until all the energy workers finish");
     while(1){
       std::unique_lock<std::mutex> lk_energy(records_energy_mut);
       if (records_energy == this->num_records){
@@ -281,11 +251,11 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
     }
     (*pulsesAll)->ndetpulses += in_record->ndetpulses;
   }// End reconstruction of the pulses array
-
+#if 0
   for (unsigned int i = 1; i < (*pulsesAll)->ndetpulses; ++i){
-    log_trace("PulsesAll %d ", (*pulsesAll)->pulses_detected[i].quality);
+    //print
   }// end reconstruction of the pulses array
-
+#endif
   /*
   for (unsigned int i = 1; i <= this->num_records; ++i){
     log_trace("Pulses sorted %i all pulses %i record pulses %i", 
@@ -296,6 +266,7 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
   */
 
   for(unsigned int i = 1; i <= this->num_records; ++i){
+    //log_trace("optimal2 %d", data_array[i]->optimal_filter->energy);
     TesEventList* event_list = data_array[i]->event_list;
     if (event_list->energies != 0) delete [] event_list->energies;
     if (event_list->avgs_4samplesDerivative != 0) delete [] event_list->avgs_4samplesDerivative;
@@ -551,7 +522,6 @@ scheduler::scheduler():
     this->num_cores = std::thread::hardware_concurrency();
     this->max_detection_workers = this->num_cores - 2;
     this->detection_workers = new std::thread[this->max_detection_workers];
-    log_trace("Num of cores %u", this->num_cores);
     for (unsigned int i = 0; i < this->max_detection_workers; ++i){
       this->detection_workers[i] = std::thread (detection_worker);
     }
@@ -562,7 +532,6 @@ scheduler::scheduler():
 scheduler::~scheduler()
 {
   if(threading){
-    log_trace("scheduler destructor");
     instance = 0;
 #if 0
     std::unique_lock<std::mutex> lk(end_workers_mut);

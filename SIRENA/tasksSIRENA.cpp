@@ -739,10 +739,7 @@ void th_runDetect(TesRecord* record,
                   PulsesCollection *pulsesAll, 
                   ReconstructInitSIRENA** reconstruct_init, 
                   PulsesCollection** pulsesInRecord)
-{
-  log_trace("th_runDetect");
-  log_info("rundetect pointer %p\n", *reconstruct_init);
-  
+{ 
   scheduler* sc = scheduler::get();
   
   int inputPulseLength = (*reconstruct_init)->pulse_length;
@@ -761,10 +758,6 @@ void th_runDetect(TesRecord* record,
   fitsfile *dtcObject = NULL;  // Object which contains information of 
                                //the intermediate FITS file 
                                //('dtc' comes from 'detectFile')
-  char dtcName[256];
-  strncpy(dtcName,(*reconstruct_init)->detectFile,255);
-  // Changing the fits file name adding the nrecord
-  dtcName[255]='\0';
   
   int eventsz = record->trigger_size;
   double tstartRecord;
@@ -779,21 +772,6 @@ void th_runDetect(TesRecord* record,
     {
       message = "tstartPulsx can not be greater than the record size";
       EP_EXIT_ERROR(message,EPFAIL);
-    }
-
-  // Create intermediate output FITS file 
-  //if 'required (reconstruct_init->intermediate'=1)
-  if ((*reconstruct_init)->intermediate == 1)
-    {
-      // TODO: check thread safe
-      // Change name when in thread mode
-      if (createDetectFile(*reconstruct_init, nRecord, 1/record->delta_t, 
-                           &dtcObject, inputPulseLength))
-        {
-          message = "Cannot create file " +  
-            string((*reconstruct_init)->detectFile);
-          EP_EXIT_ERROR(message,EPFAIL);
-        }
     }
   
   // Filter and differentiate the 'models' of the library 
@@ -872,45 +850,6 @@ void th_runDetect(TesRecord* record,
       strcpy((*reconstruct_init)->EnergyMethod,"OPTFILT"); 
       // From this point forward, I2R, I2RALL, I2RNOL and I2RFITTED 
       //are completely equivalent to OPTFILT
-    }
-  
-  if (((*reconstruct_init)->intermediate == 1) && (lastRecord == 1))
-    {
-      // Write output keywords (their values have been previously checked)
-      char keyname[10];
-      
-      char extname[10];
-      strncpy(extname,"PULSES",9);
-      extname[9]='\0';
-      if (fits_movnam_hdu(dtcObject, ANY_HDU,extname, 0, &status))
-        {
-          message = "Cannot move to HDU " + string(extname) + " in " 
-            + string(dtcName);
-          EP_EXIT_ERROR(message,EPFAIL);
-        }
-      
-      long totalpulses;
-      if (fits_get_num_rows(dtcObject,&totalpulses, &status))
-        {
-          message = "Cannot get number of rows in " + string(dtcName);
-          EP_EXIT_ERROR(message,EPFAIL);
-        }
-      
-      int ttpls1 = (int) totalpulses;
-      strcpy(keyname,"EVENTCNT");
-      if (ttpls1 < 0)
-        {
-          message = "Legal values for EVENTCNT (PULSES) are integer numbers "
-            + string("greater than or equal to 0");
-          EP_EXIT_ERROR(message,EPFAIL);
-        }
-      
-      if(fits_write_key(dtcObject,TINT,keyname,&ttpls1,NULL,&status))
-        {
-          message = "Cannot write keyword " + string(keyname) +" in " 
-            + string(dtcName);
-          EP_EXIT_ERROR(message,EPFAIL);
-        }
     }
   
   // PCA is used  when pulses are farther than 'PulseLength'!!!!!!!!!!
@@ -1356,17 +1295,6 @@ void th_runDetect(TesRecord* record,
         }
       
       gsl_matrix_free(pointsTranslatedRotated); pointsTranslatedRotated = 0;
-    }
-  
-  // Close intermediate output FITS file if it is necessary
-  if ((*reconstruct_init)->intermediate == 1)
-    {
-      if (fits_close_file(dtcObject,&status))
-        {
-          message = "Cannot close file " + string(dtcName);
-          EP_EXIT_ERROR(message,EPFAIL);
-        }
-      dtcObject = 0;
     }
   
   // Free allocated GSL vectors
@@ -7959,19 +7887,9 @@ void th_runEnergy(TesRecord* record,
   string message="";
   int status = EPOK;
   char valERROR[256];
-  log_trace("th_energy");
   /*cout<<gsl_vector_get((*reconstruct_init)->library_collection->optimal_filters[0].ofilter,0)<<endl;
     cout<<gsl_vector_get((*reconstruct_init)->library_collection->optimal_filters[0].ofilter,1)<<endl;
     cout<<gsl_vector_get((*reconstruct_init)->library_collection->optimal_filters[0].ofilter,(*reconstruct_init)->library_collection->optimal_filters[0].ofilter_duration-1)<<endl;*/
-
-  fitsfile *dtcObject = NULL;	    // FITS object containing information of the intermediate output FITS file
-  if ((*reconstruct_init)->intermediate == 1)
-    {
-      char dtcName[256];
-      strncpy(dtcName,(*reconstruct_init)->detectFile,255);
-      dtcName[255]='\0';
-      log_trace("th_energy %s", dtcName);
-    }
   
   int TorF;
   if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		// Time
@@ -8224,7 +8142,6 @@ void th_runEnergy(TesRecord* record,
                       if (strcmp((*reconstruct_init)->OFInterp,"MF") == 0)
                         {
                           // TODO: check thread safe
-                          log_trace("th_energy find_matchedfilter");
                           if (find_matchedfilter(runF0orB0val, (*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl, &Ealpha, &Ebeta))
                             {
                               message = "Cannot run routine find_matchedfilter for filter interpolation";
@@ -8234,7 +8151,6 @@ void th_runEnergy(TesRecord* record,
                       else //(*reconstruct_init)->OFInterp = DAB
                         {
                           // TODO: check thread safe
-                          log_trace("th_energy find_matchedfilterDAB");
                           if (find_matchedfilterDAB((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl, &Pab, &Ealpha, &Ebeta))
                             {
                               message = "Cannot run routine find_matchedfilterDAB for filter interpolation";
@@ -8247,7 +8163,6 @@ void th_runEnergy(TesRecord* record,
                       if (strcmp((*reconstruct_init)->OFInterp,"MF") == 0)
                         {
                           // TODO: check thread safe
-                          log_trace("th_energy find_matchedfilter");
                           if (find_matchedfilter(runF0orB0val, energy, (*reconstruct_init)->library_collection->energies, (*reconstruct_init), &filtergsl, &Ealpha, &Ebeta))
                             {
                               message = "Cannot run routine find_matchedfilter for filter interpolation";
@@ -8257,7 +8172,6 @@ void th_runEnergy(TesRecord* record,
                       else //(*reconstruct_init)->OFInterp = DAB
                         {
                           // TODO: check thread safe
-                          log_trace("th_energy find_matchedfilterDAB");
                           if (find_matchedfilterDAB(energy, (*reconstruct_init)->library_collection->energies, (*reconstruct_init), &filtergsl, &Pab, &Ealpha, &Ebeta))
                             {
                               message = "Cannot run routine find_matchedfilterDAB for filter interpolation";
@@ -8295,8 +8209,7 @@ void th_runEnergy(TesRecord* record,
                     {
                       if (strcmp((*reconstruct_init)->OFInterp,"MF") == 0)
                         {
-                          // TODO: check thread safe
-                          log_trace("th_energy find_optimalfilter");
+                          // TODO: check thread safe                         
                           if (find_optimalfilter((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl, &Ealpha, &Ebeta))
                             {
                               message = "Cannot run routine find_optimalfilter for filter interpolation";
@@ -8305,8 +8218,7 @@ void th_runEnergy(TesRecord* record,
                         }
                       else //(*reconstruct_init)->OFInterp = DAB
                         {
-                          // TODO: check thread safe
-                          log_trace("th_energy find_optimalfilterDAB");
+                          // TODO: check thread safe                          
                           if (find_optimalfilterDAB((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl, &Pab,&Ealpha, &Ebeta))
                             {
                               message = "Cannot run routine find_optimalfilterDAB for filter interpolation";
@@ -8318,8 +8230,7 @@ void th_runEnergy(TesRecord* record,
                     {	
                       if (strcmp((*reconstruct_init)->OFInterp,"MF") == 0)
                         {
-                          // TODO: check thread safe
-                          log_trace("th_energy find_optimalfilter");
+                          // TODO: check thread safe                          
                           if (find_optimalfilter(energy, (*reconstruct_init)->library_collection->energies, (*reconstruct_init), &filtergsl, &Ealpha, &Ebeta))
                             {
                               message = "Cannot run routine find_optimalfilter for filter interpolation";
@@ -8329,7 +8240,6 @@ void th_runEnergy(TesRecord* record,
                       else //(*reconstruct_init)->OFInterp = DAB
                         {
                           // TODO: check thread safe
-                          log_trace("th_energy find_optimalfilterDAB");
                           if (find_optimalfilterDAB(energy, (*reconstruct_init)->library_collection->energies, (*reconstruct_init), &filtergsl, &Pab, &Ealpha, &Ebeta))
                             {
                               message = "Cannot run routine find_optimalfilterDAB for filter interpolation";
@@ -8361,8 +8271,7 @@ void th_runEnergy(TesRecord* record,
               PRCLOFWM = gsl_matrix_alloc(2,resize_mf);
               if (numiteration == 0)
                 {
-                  // TODO: check thread safe
-                  log_trace("th_energy find_prclofwm");
+                  // TODO: check thread safe                  
                   if (find_prclofwm((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &PRCLOFWM, &Ealpha, &Ebeta))
                     {
                       message = "Cannot run routine find_prclofwm";
@@ -8371,8 +8280,7 @@ void th_runEnergy(TesRecord* record,
                 }
               else
                 {
-                  // TODO: check thread safe
-                  log_trace("th_energy find_prclofwm");
+                  // TODO: check thread safe                  
                   if (find_prclofwm(energy, (*reconstruct_init)->library_collection->energies, (*reconstruct_init), &PRCLOFWM, &Ealpha, &Ebeta))
                     {
                       message = "Cannot run routine find_prclofwm";
@@ -8385,8 +8293,7 @@ void th_runEnergy(TesRecord* record,
               if (numiteration == 0)
                 {
                   // Get the indexes of the two energies which straddle the pulse
-                  // TODO: check thread safe
-                  log_trace("th_energy find_Esboundary");
+                  // TODO: check thread safe                  
                   if (find_Esboundary((*pulsesInRecord)->pulses_detected[i].maxDER,(*reconstruct_init)->library_collection->maxDERs,(*reconstruct_init),&indexEalpha,&indexEbeta,&Ealpha, &Ebeta))
                     {
                       message = "Cannot run routine find_Esboundary for filter interpolation";
@@ -8396,8 +8303,7 @@ void th_runEnergy(TesRecord* record,
               else
                 {
                   // Get the indexes of the two energies which straddle the pulse
-                  // TODO: check thread safe
-                  log_trace("th_energy find_Esboundary");
+                  // TODO: check thread safe                  
                   if (find_Esboundary(energy,(*reconstruct_init)->library_collection->energies,(*reconstruct_init),&indexEalpha,&indexEbeta,&Ealpha, &Ebeta))
                     {
                       message = "Cannot run routine find_Esboundary for filter interpolation";
@@ -8435,8 +8341,7 @@ void th_runEnergy(TesRecord* record,
                   Pab = gsl_vector_alloc(resize_mf);
                   if (numiteration == 0)
                     {
-                      // TODO: check thread safe
-                      log_trace("th_energy find_prclwn");
+                      // TODO: check thread safe                      
                       if (find_prclwn((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &PRCLWN, &Pab,&Ealpha, &Ebeta))
                         {
                           message = "Cannot run routine find_prclwn";
@@ -8445,8 +8350,7 @@ void th_runEnergy(TesRecord* record,
                     }
                   else
                     {
-                      // TODO: check thread safe
-                      log_trace("th_energy find_prclwn");
+                      // TODO: check thread safe                      
                       if (find_prclwn(energy, (*reconstruct_init)->library_collection->energies, (*reconstruct_init), &PRCLWN, &Pab,&Ealpha, &Ebeta))
                         {
                           message = "Cannot run routine find_prclwn";
@@ -8464,8 +8368,7 @@ void th_runEnergy(TesRecord* record,
               if ((*reconstruct_init)->OFLib == 0)
                 {
                   // Calculate the optimal filter
-                  // TODO: check thread safe
-                  log_trace("th_energy calculus_optimalFilter");
+                  // TODO: check thread safe                  
                   if (calculus_optimalFilter (TorF, (*reconstruct_init)->intermediate, (*reconstruct_init)->mode, filtergsl, filtergsl->size, 1.0/record->delta_t, runF0orB0val, (*reconstruct_init)->noise_spectrum->noisefreqs, (*reconstruct_init)->noise_spectrum->noisespec, &optimalfilter, &optimalfilter_f, &optimalfilter_FFT, &optimalfilter_FFT_complex))
                     {
                       message = "Cannot run routine calculus_optimalFilter";
@@ -8497,8 +8400,7 @@ void th_runEnergy(TesRecord* record,
           
           // Calculate the energy of each pulse
           ////cout<<"pulseToCalculateEnergy->size: "<<pulseToCalculateEnergy->size<<endl;
-          // TODO: check thread safe
-          log_trace("th_energy calculateEnergy");
+          // TODO: check thread safe          
           if (calculateEnergy(pulseToCalculateEnergy,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,numlags,&tstartNewDev))
             {
               message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
@@ -8569,7 +8471,6 @@ void th_runEnergy(TesRecord* record,
       
       // Subtract the pulse model from the record
       // TODO: check thread safe
-      log_trace("th_energy find_model_energies");
       if (find_model_energies(energy, (*reconstruct_init), &model))
         {
           message = "Cannot run find_model_energies routine for pulse i=" + boost::lexical_cast<std::string>(i);
@@ -8579,18 +8480,6 @@ void th_runEnergy(TesRecord* record,
       for (int j=tstartSamplesRecord;j<min(tstartSamplesRecord+(model->size),(double) record->trigger_size);j++)
         {
           gsl_vector_set(recordAux,j,gsl_vector_get(recordAux,j)-gsl_vector_get(model,j-tstartSamplesRecord));
-        }
-      
-      // Write info of the pulse in the output intemediate file if 'intermediate'=1
-      if ((*reconstruct_init)->intermediate == 1)
-        {
-          // TODO: check thread safe
-          log_trace("th_energy writeFilterHDU");
-          if (writeFilterHDU(reconstruct_init, i,energy, optimalfilter, optimalfilter_f, optimalfilter_FFT, &dtcObject))
-            {
-              message = "Cannot run writeFilterHDU routine for pulse i=" + boost::lexical_cast<std::string>(i);
-              EP_EXIT_ERROR(message,EPFAIL);
-            }
         }
       
       (*pulsesInRecord)->pulses_detected[i].energy = energy/1e3;	// In SIXTE, SIGNAL is in keV
