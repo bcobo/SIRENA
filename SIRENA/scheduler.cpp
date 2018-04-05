@@ -29,10 +29,12 @@ unsigned int records_energy = 0;
 /* ****************************************************************************/
 void detection_worker()
 {
+  log_trace("Starting detection worker...");
   while(1){
     detection_input* data;
     if(detection_queue.wait_and_pop(data)){
       //ReconstructInitSIRENA* aux = &data.rec_init;
+      log_trace("Extracting detection data from queue...");
       th_runDetect(data->rec,
                    data->n_record,data->last_record,
                    data->all_pulses,
@@ -114,6 +116,7 @@ void scheduler::push_detection(TesRecord* record,
                                OptimalFilterSIRENA** optimal,
                                TesEventList* event_list)
 {
+  log_trace("pushing detection data into the queue...");
   detection_input* input = new detection_input;
   tesrecord* rec = new tesrecord(record);
   input->rec = rec->get_TesRecord();
@@ -126,8 +129,14 @@ void scheduler::push_detection(TesRecord* record,
   //input->all_pulses = pulsesAll;//TODO copy?
   input->record_pulses = *pulsesInRecord;
   input->rec_init = *reconstruct_init;
-  input->optimal_filter = *optimal;
-  input->event_list = event_list;
+  input->optimal_filter = new OptimalFilterSIRENA;//*optimal;
+  input->event_list = new TesEventList;
+  input->event_list->energies = 0;
+  input->event_list->avgs_4samplesDerivative = 0;
+  input->event_list->grades1 = 0;
+  input->event_list->grades2 = 0;
+  input->event_list->pulse_heights = 0;
+  input->event_list->ph_ids = 0;
   detection_queue.push(input);
   ++num_records;
   //this->push_detection(input);
@@ -148,6 +157,7 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
   // Waits until all the records are detected
   // this works because this function should only be called
   // after all the records are queue
+  log_trace("Waiting until all the detection workers end");
   while(1){
     std::unique_lock<std::mutex> lk(records_detected_mut);
     if (records_detected == this->num_records){
@@ -157,8 +167,8 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
     lk.unlock();
   }
   
-  // Sortint the arrays by record number
-  
+  // Sorting the arrays by record number
+  log_trace("Sorting the arrays by record number");
   if ((*pulsesAll)->pulses_detected){
     delete [] (*pulsesAll)->pulses_detected;
   }
@@ -284,7 +294,7 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
       event_list->pulse_heights  = new double[event_list->index];
       event_list->ph_ids   = new long[event_list->index];
 
-      for (int ip=0; ip<data_array[i]->record_pulses->ndetpulses; ip++) {
+      for (int ip=1; ip<data_array[i]->record_pulses->ndetpulses; ip++) {
         event_list->event_indexes[ip] = 
           (data_array[i]->record_pulses->pulses_detected[ip].Tstart 
            - data_array[i]->rec->time)/data_array[i]->rec->delta_t;

@@ -160,6 +160,17 @@ int tesreconstruction_main() {
 	    //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
 	    reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
 				    lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
+            /*printf("event list");
+            printf("%i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
+            for (int i = 0; i < event_list->size; ++i){
+              printf("\n%f, %f, %f, %f, %i, %i, %ld",event_list->event_indexes[i],
+                     event_list->pulse_heights[i], 
+                     event_list->avgs_4samplesDerivative[i],
+                     event_list->energies[i],
+                     event_list->grades1[i],
+                     event_list->grades2[i],
+                     event_list->ph_ids[i]);
+                     }*/
       }
       CHECK_STATUS_BREAK(status);
 
@@ -176,15 +187,57 @@ int tesreconstruction_main() {
     }
 
     if(is_threading()) {
+      //printf("asdasd\n");
       th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
       int i = 1;
       while(th_get_event_list(event_list, record)){
+        //printf("event list");
+        //printf("%i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
+        /*for (int i = 1; i < event_list->size; ++i){
+          printf("\n%f, %f, %f, %f, %i, %i, %ld",event_list->event_indexes[i],
+                 event_list->pulse_heights[i], 
+                 event_list->avgs_4samplesDerivative[i],
+                 event_list->energies[i],
+                 event_list->grades1[i],
+                 event_list->grades2[i],
+                 event_list->ph_ids[i]);
+                 }*/
         saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
         CHECK_STATUS_BREAK(status);
         ++i;
       }
     }
+    /*
+    printf("\npulsesAll");
+    for (int i = 0; i < pulsesAll->ndetpulses; ++i){
+      printf("\n%i, %i, %i, %i, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %i\n",
+             pulsesAll->pulses_detected[i].pulse_duration,
+             pulsesAll->pulses_detected[i].grade1,
+             pulsesAll->pulses_detected[i].grade2,
+             pulsesAll->pulses_detected[i].pixid,
+             pulsesAll->pulses_detected[i].Tstart,
+             pulsesAll->pulses_detected[i].Tend,
+             pulsesAll->pulses_detected[i].riseTime,
+             pulsesAll->pulses_detected[i].fallTime,
+             pulsesAll->pulses_detected[i].pulse_height,
+             pulsesAll->pulses_detected[i].maxDER,
+             pulsesAll->pulses_detected[i].samp1DER,
+             pulsesAll->pulses_detected[i].avg_4samplesDerivative,
+             pulsesAll->pulses_detected[i].quality,
+             pulsesAll->pulses_detected[i].numLagsUsed);
+      for (int j = 0; j < pulsesAll->pulses_detected[i].pulse_adc->size; ++j){
+        printf("%d, ",*(pulsesAll->pulses_detected[i].pulse_adc->data));
+      }
+    }
     
+    printf("\noptimalFilter");
+    printf("\n%i, %f\n", optimalFilter->ofilter_duration, optimalFilter->energy);
+    if(optimalFilter->ofilter){
+      for (unsigned int i = 0; optimalFilter->ofilter->size; ++i){
+        printf("%f, ",*(optimalFilter->ofilter->data));
+      }
+    }
+    */
     if ((!strcmp(par.Rcmethod,"SIRENA")) && (pulsesAll->ndetpulses == 0))  printf("%s","WARNING: no pulses have been detected\n");
     
     // Copy trigger keywords to event file

@@ -390,7 +390,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	
 		// Detect pulses in record
   if (scheduler::get()->is_threading() && reconstruct_init->mode == 1){
-    log_trace("Threading mode: ");
+    log_trace("Threading mode...");
     ReconstructInitSIRENA* rec = reconstruct_init->get_threading_object(nRecord);
     scheduler::get()->push_detection(record, nRecord, lastRecord, 
                                      *pulsesAll, &rec, &pulsesInRecord,
@@ -3066,6 +3066,7 @@ ReconstructInitSIRENA::~ReconstructInitSIRENA()
    for the library and the record file */
 ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object(int n_record)
 {
+  log_trace("Getting the reconstruction structure from record %i", n_record);
   ReconstructInitSIRENA* ret = new ReconstructInitSIRENA;
   if(this->library_collection){
     ret->library_collection = this->library_collection;
