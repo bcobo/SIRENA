@@ -134,12 +134,13 @@ void scheduler::push_detection(TesRecord* record,
   input->rec_init = *reconstruct_init;
   input->optimal_filter = new OptimalFilterSIRENA;//*optimal;
   input->event_list = new TesEventList;
-  input->event_list->energies = 0;
-  input->event_list->avgs_4samplesDerivative = 0;
-  input->event_list->grades1 = 0;
-  input->event_list->grades2 = 0;
-  input->event_list->pulse_heights = 0;
-  input->event_list->ph_ids = 0;
+  input->event_list->size = event_list->size;
+  input->event_list->energies = new double[event_list->size];
+  input->event_list->avgs_4samplesDerivative = new double[event_list->size];
+  input->event_list->grades1 = new int[event_list->size];
+  input->event_list->grades2 = new int[event_list->size];
+  input->event_list->pulse_heights = new double[event_list->size];
+  input->event_list->ph_ids = new long[event_list->size];
   detection_queue.push(input);
   ++num_records;
   //this->push_detection(input);
@@ -371,6 +372,15 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
 #endif
     log_debug("Eventlist from record %i", (i + 1) );
     log_debug("%i, %i, %i",event_list->size, event_list->size_energy, event_list->index);
+    //for (int j = 0; j < event_list->index; ++j){
+    //  log_debug("%f, %f, %f, %f, %i %i, %ld", event_list->event_indexes[i],
+    //            event_list->pulse_heights[i],
+    //            event_list->avgs_4samplesDerivative[i],
+    //            event_list->energies[i],
+    //            event_list->grades1[i],
+    //            event_list->grades2[i]);
+      //,event_list->ph_ids[i]);
+    //}
   }// for event_list
 #if 0
   // TODO: construct pulsesAll

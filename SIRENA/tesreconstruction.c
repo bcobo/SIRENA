@@ -207,10 +207,9 @@ int tesreconstruction_main() {
         ++i;
       }
     }
-    /*
     printf("\npulsesAll");
     for (int i = 0; i < pulsesAll->ndetpulses; ++i){
-      printf("\n%i, %i, %i, %i, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %i\n",
+      printf("\ndata - %i, %i, %i, %i, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %i\n",
              pulsesAll->pulses_detected[i].pulse_duration,
              pulsesAll->pulses_detected[i].grade1,
              pulsesAll->pulses_detected[i].grade2,
@@ -229,6 +228,7 @@ int tesreconstruction_main() {
         printf("%d, ",*(pulsesAll->pulses_detected[i].pulse_adc->data));
       }
     }
+    /* 
     
     printf("\noptimalFilter");
     printf("\n%i, %f\n", optimalFilter->ofilter_duration, optimalFilter->energy);
