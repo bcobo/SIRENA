@@ -2767,6 +2767,7 @@ void th_end(ReconstructInitSIRENA* reconstruct_init,
             PulsesCollection** pulsesAll, 
             OptimalFilterSIRENA** optimalFilter)
 {
+  log_trace("Ending the reconstruction...");
   if (!scheduler::get()->is_threading()) { 
     delete scheduler::get();
     return;
@@ -2786,6 +2787,7 @@ void th_set_files(TesEventFile *outfile, double delta_t)
 
 int th_get_event_list(TesEventList** test_event, TesRecord** record)
 {
+  log_trace("Getting event list...");
   if(!scheduler::get()->has_records()) {
     delete scheduler::get();
     return 0;

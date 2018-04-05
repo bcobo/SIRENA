@@ -56,9 +56,12 @@ void detection_worker()
 
 void energy_worker()
 {
+  log_trace("Starting energy worker...");
   while(1){
     detection_input* data;
     if(energy_queue.wait_and_pop(data)){
+      log_trace("Extracting energy data from queue...");
+      log_debug("Energy data in record %i",data->n_record);
       th_runEnergy(data->rec, 
                    &(data->rec_init),
                    &(data->record_pulses),//copy
@@ -177,11 +180,12 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
   (*pulsesAll)->ndetpulses = 0;
   (*pulsesAll)->pulses_detected = new PulseDetected[this->num_records];
   //detection_input** 
-  this->data_array = new detection_input*[this->num_records+1];
+  log_debug("Number of records %i", this->num_records);
+  this->data_array = new detection_input*[this->num_records];//+1];
   while(!detected_queue.empty()){
     detection_input* data;
     if(detected_queue.wait_and_pop(data)){
-      data_array[data->n_record] = data;
+      data_array[data->n_record-1] = data;
       //log_trace("trigger %i",data->rec->trigger_size);
       //log_trace("phdlist %i", data->rec->phid_list->size);
       //log_debug("allPulses %i", data->all_pulses->ndetpulses);
@@ -198,6 +202,7 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
   //
   // Energy
   //
+  log_trace("Starting energy workers...");
   if(this->is_running_energy){
     std::unique_lock<std::mutex> lk_end(end_workers_mut);
     end_workers = false;
@@ -207,11 +212,13 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
       this->energy_workers[i] = std::thread (energy_worker);
     }
     
-    for (unsigned int i = 1; i <= this->num_records; ++i){
+    log_trace("Filling energy queue...");
+    for (unsigned int i = 0; i < this->num_records; ++i){
       energy_queue.push(data_array[i]);
     }
   
     // Waits until all the energies are calculated
+    log_trace("Waiting until the energy workers end...");
     while(1){
       std::unique_lock<std::mutex> lk_energy(records_energy_mut);
       if (records_energy == this->num_records){
@@ -232,7 +239,8 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
   //
   // Reconstruction of the pulses array
   //
-  for (unsigned int i = 1; i <= this->num_records; ++i){
+  log_trace("Reconstruction of the pulses array...");
+  for (unsigned int i = 0; i < this->num_records; ++i){
     /*log_trace("Pulses sorted %i all pulses %i record pulses %i", 
       data_array[i]->n_record,
               data_array[i]->all_pulses->ndetpulses,
@@ -275,7 +283,8 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
   }
   */
 
-  for(unsigned int i = 1; i <= this->num_records; ++i){
+  log_trace("Filling eventlist...");
+  for(unsigned int i = 0; i < this->num_records; ++i){
     //log_trace("optimal2 %d", data_array[i]->optimal_filter->energy);
     TesEventList* event_list = data_array[i]->event_list;
     if (event_list->energies != 0) delete [] event_list->energies;
@@ -360,6 +369,8 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
       EP_EXIT_ERROR("Something went wrong while saving the event_list",EPFAIL);
     }
 #endif
+    log_debug("Eventlist from record %i", (i + 1) );
+    log_debug("%i, %i, %i",event_list->size, event_list->size_energy, event_list->index);
   }// for event_list
 #if 0
   // TODO: construct pulsesAll
@@ -510,7 +521,9 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
 #endif
 }
 
-void scheduler::get_test_event(TesEventList** test_event, TesRecord** record){
+void scheduler::get_test_event(TesEventList** test_event, TesRecord** record)
+{
+  log_trace("Getting eventlist from record %i", (this->current_record + 1));
   *test_event = this->data_array[this->current_record]->event_list;
   *record = this->data_array[this->current_record]->rec;
   this->current_record++;
@@ -525,7 +538,7 @@ scheduler::scheduler():
   is_running_energy(false),
   outfile(0),
   record_file_delta_t(0.0f),
-  current_record(1),
+  current_record(0),
   data_array(0)
 {
   if(threading){

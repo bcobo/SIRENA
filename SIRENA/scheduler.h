@@ -140,7 +140,7 @@ class scheduler
 
   inline void set_is_running_energy(bool val){ this->is_running_energy = val; }
 
-  inline bool has_records(){return(this->num_records >= this->current_record);}
+  inline bool has_records(){return(this->num_records > this->current_record);}
 
   void get_test_event(TesEventList** test_event, TesRecord** record);
 
