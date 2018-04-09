@@ -1015,7 +1015,7 @@ void th_runDetect(TesRecord* record,
       FILE * temporalFile;
       char temporalFileName[255];
       char val[256];
-      sprintf(temporalFileName,"rsxn.txt");
+      sprintf(temporalFileName,"rsxn.txt");//TODO: Change name
       temporalFile = fopen (temporalFileName,"w");
       for (int i = 0; i < RSrxN->size2; i++) // All the pulses in a column
         {
@@ -1206,7 +1206,7 @@ void th_runDetect(TesRecord* record,
           gsl_vector_add_constant(xhisto1,-histo1constant);
           gsl_vector_add_constant(pointsTranslatedRotated1,-histo1constant);
         }
-      sprintf(temporalFileName,"histo1.txt");
+      sprintf(temporalFileName,"histo1.txt");// TODO: change name
       temporalFile = fopen (temporalFileName,"w");
       for (int i = 0; i < xhisto1->size; i++) 
         {
@@ -1231,7 +1231,7 @@ void th_runDetect(TesRecord* record,
           gsl_vector_add_constant(xhisto2,-histo2constant);
           gsl_vector_add_constant(pointsTranslatedRotated2,-histo2constant);
         }
-      sprintf(temporalFileName,"histo2.txt");
+      sprintf(temporalFileName,"histo2.txt");// TODO: change name
       temporalFile = fopen (temporalFileName,"w");
       for (int i = 0; i < xhisto2->size; i++) 
         {
@@ -8020,7 +8020,7 @@ void th_runEnergy(TesRecord* record,
     }
   
   model =gsl_vector_alloc((*reconstruct_init)->pulse_length);
-  
+  int extraSizeDueToLags = 0;
   for (int i=0; i<(*pulsesInRecord)->ndetpulses ;i++)
     {
       //resize_mf = (*pulsesInRecord)->pulses_detected[i].pulse_duration; // Resize the matched filter by using the tstarts
@@ -8114,6 +8114,7 @@ void th_runEnergy(TesRecord* record,
               message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
               EP_EXIT_ERROR(message,EPFAIL);
             }
+          extraSizeDueToLags = numlags - 1;
         }
       
       bool iterate = true;
@@ -8191,12 +8192,12 @@ void th_runEnergy(TesRecord* record,
                           && (resize_mf != (*reconstruct_init)->library_collection->pulse_templates[0].template_duration)))
                     {
                       resize_mf = pow(2,floor(log2(resize_mf)));
-                      gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf);
-                      temp = gsl_vector_subvector(pulse,0,resize_mf);
+                      gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
+                      temp = gsl_vector_subvector(pulseToCalculateEnergy,0,resize_mf+extraSizeDueToLags);
                       gsl_vector_memcpy(pulse_aux,&temp.vector);
-                      gsl_vector_free(pulse); pulse = 0;
-                      pulse = gsl_vector_alloc(resize_mf);
-                      gsl_vector_memcpy(pulse,pulse_aux);
+                      gsl_vector_free(pulseToCalculateEnergy); pulseToCalculateEnergy = 0;
+                      pulse = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
+                      gsl_vector_memcpy(pulseToCalculateEnergy,pulse_aux);
                       gsl_vector_free(pulse_aux); pulse_aux = 0;
                     }
                   //cout<<"resize_mfFIN: "<<resize_mf<<endl;

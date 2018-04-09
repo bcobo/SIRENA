@@ -160,9 +160,9 @@ int tesreconstruction_main() {
 	    //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
 	    reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
 				    lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
-            /*printf("event list");
-            printf("%i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
-            for (int i = 0; i < event_list->size; ++i){
+            printf("\nevent list");
+            printf("\ndata - %i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
+            for (int i = 0; i < event_list->index; ++i){
               printf("\n%f, %f, %f, %f, %i, %i, %ld",event_list->event_indexes[i],
                      event_list->pulse_heights[i], 
                      event_list->avgs_4samplesDerivative[i],
@@ -170,7 +170,7 @@ int tesreconstruction_main() {
                      event_list->grades1[i],
                      event_list->grades2[i],
                      event_list->ph_ids[i]);
-                     }*/
+            }
       }
       CHECK_STATUS_BREAK(status);
 
@@ -207,6 +207,7 @@ int tesreconstruction_main() {
         ++i;
       }
     }
+    /*
     printf("\npulsesAll");
     for (int i = 0; i < pulsesAll->ndetpulses; ++i){
       printf("\ndata - %i, %i, %i, %i, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %i\n",
@@ -228,7 +229,7 @@ int tesreconstruction_main() {
         printf("%d, ",*(pulsesAll->pulses_detected[i].pulse_adc->data));
       }
     }
-    /* 
+     
     
     printf("\noptimalFilter");
     printf("\n%i, %f\n", optimalFilter->ofilter_duration, optimalFilter->energy);
