@@ -1015,7 +1015,7 @@ void th_runDetect(TesRecord* record,
       FILE * temporalFile;
       char temporalFileName[255];
       char val[256];
-      sprintf(temporalFileName,"rsxn.txt");//TODO: Change name
+      sprintf(temporalFileName,"%s_rsxn.txt",(*reconstruct_init)->detectFile);//TODO: Change name
       temporalFile = fopen (temporalFileName,"w");
       for (int i = 0; i < RSrxN->size2; i++) // All the pulses in a column
         {
@@ -1206,7 +1206,7 @@ void th_runDetect(TesRecord* record,
           gsl_vector_add_constant(xhisto1,-histo1constant);
           gsl_vector_add_constant(pointsTranslatedRotated1,-histo1constant);
         }
-      sprintf(temporalFileName,"histo1.txt");// TODO: change name
+      sprintf(temporalFileName,"%s_histo1.txt",(*reconstruct_init)->detectFile);// TODO: change name
       temporalFile = fopen (temporalFileName,"w");
       for (int i = 0; i < xhisto1->size; i++) 
         {
@@ -1231,7 +1231,7 @@ void th_runDetect(TesRecord* record,
           gsl_vector_add_constant(xhisto2,-histo2constant);
           gsl_vector_add_constant(pointsTranslatedRotated2,-histo2constant);
         }
-      sprintf(temporalFileName,"histo2.txt");// TODO: change name
+      sprintf(temporalFileName,"%s_histo2.txt",(*reconstruct_init)->detectFile);// TODO: change name
       temporalFile = fopen (temporalFileName,"w");
       for (int i = 0; i < xhisto2->size; i++) 
         {

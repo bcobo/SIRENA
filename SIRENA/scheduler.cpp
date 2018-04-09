@@ -381,7 +381,7 @@ void scheduler::get_test_event(TesEventList** test_event, TesRecord** record)
 }
 
 scheduler::scheduler():
-  threading(false),
+  threading(true),
   num_cores(0),
   max_detection_workers(0),
   max_energy_workers(0),
