@@ -2791,7 +2791,9 @@ int th_get_event_list(TesEventList** test_event, TesRecord** record)
 {
   log_trace("Getting event list...");
   if(!scheduler::get()->has_records()) {
-    delete scheduler::get();
+    delete scheduler::get();//TODO: check
+    *test_event = 0;
+    *record = 0;
     return 0;
   }
   

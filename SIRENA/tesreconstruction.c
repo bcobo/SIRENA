@@ -189,11 +189,11 @@ int tesreconstruction_main() {
     if(is_threading()) {
       //printf("asdasd\n");
       th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
-      int i = 1;
-      while(th_get_event_list(event_list, record)){
-        //printf("event list");
-        //printf("%i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
-        /*for (int i = 1; i < event_list->size; ++i){
+      //int i = 1;
+      while(th_get_event_list(&event_list, &record)){
+        printf("\nevent list");
+        printf("\ndata - %i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
+        for (int i = 0; i < event_list->index; ++i){
           printf("\n%f, %f, %f, %f, %i, %i, %ld",event_list->event_indexes[i],
                  event_list->pulse_heights[i], 
                  event_list->avgs_4samplesDerivative[i],
@@ -201,10 +201,10 @@ int tesreconstruction_main() {
                  event_list->grades1[i],
                  event_list->grades2[i],
                  event_list->ph_ids[i]);
-                 }*/
+        }
         saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
         CHECK_STATUS_BREAK(status);
-        ++i;
+        //++i;
       }
     }
     /*

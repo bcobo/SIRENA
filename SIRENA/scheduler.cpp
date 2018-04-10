@@ -9,6 +9,7 @@
 //#include "testriggerfile.h"
 
 std::mutex end_workers_mut;
+std::mutex end_eworkers_mut;
 std::mutex records_detected_mut;
 std::mutex records_energy_mut;
 
@@ -20,6 +21,7 @@ threadsafe_queue<detection_input*> end_queue;
 scheduler* scheduler::instance = 0;
 
 bool end_workers = false;
+bool end_eworkers = false;
 
 unsigned int records_detected = 0;
 unsigned int records_energy = 0;
@@ -97,8 +99,8 @@ void energy_worker_v2()
       ++records_energy;
       lk.unlock();
     }
-    std::unique_lock<std::mutex> lk(end_workers_mut);
-    if(end_workers){
+    std::unique_lock<std::mutex> lk(end_eworkers_mut);
+    if(end_eworkers){
       lk.unlock();
       break;
     }
@@ -433,8 +435,8 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
     lk_energy.unlock();
   }
   
-  std::unique_lock<std::mutex> lk_end2(end_workers_mut);
-  end_workers = true;
+  std::unique_lock<std::mutex> lk_end2(end_eworkers_mut);
+  end_eworkers = true;
   lk_end2.unlock();
   for(unsigned int i = 0; i < this->max_energy_workers; ++i){
     this->energy_workers[i].join();
