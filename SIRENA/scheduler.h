@@ -129,6 +129,9 @@ class scheduler
   void finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
                              PulsesCollection** pulsesAll, 
                              OptimalFilterSIRENA** optimalFilter);
+  void finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init,
+                                PulsesCollection** pulsesAll, 
+                                OptimalFilterSIRENA** optimalFilter);
 
   inline void set_files(TesEventFile *outfile, double delta_t){
     this->outfile = outfile;
@@ -154,6 +157,9 @@ class scheduler
   scheduler();
   scheduler(const scheduler& copy){}
   scheduler& operator=(const scheduler&){}
+
+  void init();
+  void init_v2();
 
   unsigned int num_cores;
   unsigned int max_detection_workers;

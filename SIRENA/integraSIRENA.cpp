@@ -389,7 +389,9 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	}
 	
 		// Detect pulses in record
-  if (scheduler::get()->is_threading() && reconstruct_init->mode == 1){
+  if (scheduler::get()->is_threading() 
+      && reconstruct_init->mode == 1
+      && (strcmp(reconstruct_init->EnergyMethod, "PCA") != 0)){
     log_trace("Threading mode...");
     ReconstructInitSIRENA* rec = reconstruct_init->get_threading_object(nRecord);
     scheduler::get()->push_detection(record, nRecord, lastRecord, 
@@ -2775,8 +2777,8 @@ void th_end(ReconstructInitSIRENA* reconstruct_init,
   if(strcmp(reconstruct_init->EnergyMethod,"PCA") != 0){
     scheduler::get()->set_is_running_energy(true);
   }
-  scheduler::get()->finish_reconstruction(reconstruct_init, 
-                                          pulsesAll, optimalFilter);
+  scheduler::get()->finish_reconstruction_v2(reconstruct_init, 
+                                             pulsesAll, optimalFilter);
   //delete scheduler::get();
 }
 
