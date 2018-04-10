@@ -488,6 +488,28 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
     (*pulsesAll)->ndetpulses += in_record->ndetpulses;
   }// End reconstruction of the pulses array
 
+  log_debug("pulsesAll");
+  for (int i = 0; i < (*pulsesAll)->ndetpulses; ++i){
+    log_debug("data - %i, %i, %i, %i, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %i",
+              (*pulsesAll)->pulses_detected[i].pulse_duration,
+              (*pulsesAll)->pulses_detected[i].grade1,
+              (*pulsesAll)->pulses_detected[i].grade2,
+              (*pulsesAll)->pulses_detected[i].pixid,
+              (*pulsesAll)->pulses_detected[i].Tstart,
+              (*pulsesAll)->pulses_detected[i].Tend,
+              (*pulsesAll)->pulses_detected[i].riseTime,
+              (*pulsesAll)->pulses_detected[i].fallTime,
+              (*pulsesAll)->pulses_detected[i].pulse_height,
+              (*pulsesAll)->pulses_detected[i].maxDER,
+              (*pulsesAll)->pulses_detected[i].samp1DER,
+              (*pulsesAll)->pulses_detected[i].avg_4samplesDerivative,
+              (*pulsesAll)->pulses_detected[i].quality,
+              (*pulsesAll)->pulses_detected[i].numLagsUsed);
+    for (int j = 0; j < (*pulsesAll)->pulses_detected[i].pulse_adc->size; ++j){
+      log_debug("%d, ",*((*pulsesAll)->pulses_detected[i].pulse_adc->data));
+    }
+  }
+
   log_trace("Filling eventlist...");
   for(unsigned int i = 0; i < this->num_records; ++i){
     
@@ -645,7 +667,7 @@ scheduler::scheduler():
   current_record(0),
   data_array(0)
 {
-  this->init_v2();
+  this->init();
 }
 
 scheduler::~scheduler()

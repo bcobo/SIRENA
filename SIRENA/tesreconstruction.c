@@ -207,7 +207,7 @@ int tesreconstruction_main() {
         //++i;
       }
     }
-    /*
+    
     printf("\npulsesAll");
     for (int i = 0; i < pulsesAll->ndetpulses; ++i){
       printf("\ndata - %i, %i, %i, %i, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %i\n",
@@ -238,7 +238,7 @@ int tesreconstruction_main() {
         printf("%f, ",*(optimalFilter->ofilter->data));
       }
     }
-    */
+    
     if ((!strcmp(par.Rcmethod,"SIRENA")) && (pulsesAll->ndetpulses == 0))  printf("%s","WARNING: no pulses have been detected\n");
     
     // Copy trigger keywords to event file
