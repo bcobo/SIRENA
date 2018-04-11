@@ -33,6 +33,7 @@ TesEventList* newTesEventList(int* const status){
 	event_list->event_indexes=NULL;
 	event_list->pulse_heights=NULL;
 	event_list->avgs_4samplesDerivative=NULL; //BEA
+	event_list->grading=NULL; //BEA
 	event_list->energies=NULL;
 	event_list->grades1=NULL;
 	event_list->grades2=NULL;
@@ -53,6 +54,7 @@ void freeTesEventList(TesEventList* event_list){
 		free(event_list->pulse_heights);
 		free(event_list->energies);
                 free(event_list->avgs_4samplesDerivative); //BEA
+		free(event_list->grading); //BEA
 		free(event_list->grades1);
 		free(event_list->grades2);
 		free(event_list->ph_ids);
@@ -97,6 +99,7 @@ void allocateWholeTesEventList(TesEventList* event_list,unsigned char allocate_p
 		if (NULL != event_list->energies) {
 			free(event_list->energies);
 			free(event_list->avgs_4samplesDerivative);
+			free(event_list->grading);
 			free(event_list->grades2);
 			if(NULL!= event_list->ph_ids){
 				free(event_list->ph_ids);
@@ -111,6 +114,13 @@ void allocateWholeTesEventList(TesEventList* event_list,unsigned char allocate_p
 
 		event_list->avgs_4samplesDerivative = malloc(event_list->size*sizeof*(event_list->avgs_4samplesDerivative)); //BEA
 		if (NULL == event_list->avgs_4samplesDerivative){
+			*status=EXIT_FAILURE;
+			SIXT_ERROR("memory allocation for energy array in TesEventList failed");
+			CHECK_STATUS_VOID(*status);
+		}
+
+		event_list->grading = malloc(event_list->size*sizeof*(event_list->grading)); //BEA
+		if (NULL == event_list->grading){
 			*status=EXIT_FAILURE;
 			SIXT_ERROR("memory allocation for energy array in TesEventList failed");
 			CHECK_STATUS_VOID(*status);
@@ -398,6 +408,11 @@ void saveEventListToFile(TesEventFile* file,TesEventList * event_list,
 	//Save avgs_4samplesDerivative (AVG4SD) column   //BEA
  	fits_write_col(file->fptr, TDOUBLE, file->avg_4samplesDerivativeCol,
 					file->row, 1, event_list->index, event_list->avgs_4samplesDerivative, status);
+	CHECK_STATUS_VOID(*status);
+
+	//Save grading (GRADING) column   //BEA
+ 	fits_write_col(file->fptr, TINT, file->gradingCol,
+					file->row, 1, event_list->index, event_list->grading, status);
 	CHECK_STATUS_VOID(*status);
 
 	//Save grade1 column

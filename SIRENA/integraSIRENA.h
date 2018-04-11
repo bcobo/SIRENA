@@ -302,6 +302,9 @@ typedef struct PulseDetected
 	
 	/** Energy (KeV) of the Pulse */
 	double energy;
+        
+        /** Pulse grade */
+	int grading;
 
         /** Average of the first 4 samples of the derivative of the Pulse */
 	double avg_4samplesDerivative;
@@ -369,7 +372,7 @@ typedef struct ReconstructInitSIRENA
 	/** Detection samplesUp (samples to confirm threshold overcoming) **/
 	double samplesUp;
         
-        /** A1 Detection samplesDown (samples below the threshold to look for other pulse) **/
+        /** STC Detection samplesDown (samples below the threshold to look for other pulse) **/
 	double samplesDown;
 
 	/** Detection nSgms (sigmas to establish a threshold for detection) **/
@@ -399,8 +402,8 @@ typedef struct ReconstructInitSIRENA
 	/** Run mode (0: calibration/lib creation  1:energy reconstruction) **/
 	int mode;
         
-        /** Detection Mode: AD (Adjusted Derivative) or A1 (Alternative1) **/
-	char detectionMode[3];
+        /** Detection Mode: AD (Adjusted Derivative) or STC (Single Threshold Crossing) **/
+	char detectionMode[4];
 
 	/** Noise spectrum **/
 	NoiseSpec* noise_spectrum;

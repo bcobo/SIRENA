@@ -97,7 +97,6 @@ int tesreconstruction_main() {
 		SIXT_ERROR("The provided XMLFile does not have the grading info");
 		return(EXIT_FAILURE);
   	  }
-  	  sampling_rate = det->SampleFreq;
 	  
 	  reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
 	  reconstruct_init_sirena->grading->value = gsl_vector_alloc(det->pix->ngrades);
@@ -109,6 +108,9 @@ int tesreconstruction_main() {
 	      gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,det->pix->grades[i].gradelim_post);
 	  }
 	  destroyAdvDet(&det);
+          
+          // Read the sampling rate
+  	  sampling_rate = det->SampleFreq;
     }  
     CHECK_STATUS_BREAK(status);
 
@@ -117,13 +119,14 @@ int tesreconstruction_main() {
     allocateTesRecord(record,record_file->trigger_size,record_file->delta_t,0,&status);
     CHECK_STATUS_BREAK(status);
     
+    // Checking the sampling rate of the .xml file and the sampling rate from the input FITS file
     if (sampling_rate != 1/record_file->delta_t)
     {
         SIXT_ERROR("Sampling rate from the XML file and the FITS file do not match");
         return(EXIT_FAILURE);
     }
 
-    //Build up TesEventList to recover the results of the reconstruction
+    // Build up TesEventList to recover the results of the reconstruction
     TesEventList* event_list = newTesEventList(&status);
     allocateTesEventListTrigger(event_list,par.EventListSize,&status);
     CHECK_STATUS_BREAK(status);
@@ -180,6 +183,37 @@ int tesreconstruction_main() {
     // Copy trigger keywords to event file
     copyTriggerKeywords(record_file->fptr,outfile->fptr,&status);
     CHECK_STATUS_BREAK(status);
+    
+    //printf("Paso1\n");
+    // Messages providing info of some columns
+    char keyword[9];
+    char keywordvalue[9];
+    char comment[MAXMSG];
+    int keywordvalueint;
+    
+    fits_movnam_hdu(outfile->fptr, ANY_HDU,"EVENTS", 0, &status);
+    CHECK_STATUS_BREAK(status);
+    
+    fits_read_key(outfile->fptr, TSTRING, "TTYPE1", &keywordvalue, NULL, &status);
+    strcpy(comment, "Starting time");
+    fits_update_key(outfile->fptr, TSTRING, "TTYPE1", keywordvalue, comment, &status);
+    
+    fits_read_key(outfile->fptr, TSTRING, "TTYPE2", &keywordvalue, NULL, &status);
+    strcpy(comment, "Reconstructed-uncalibrated energy");
+    fits_update_key(outfile->fptr, TSTRING, "TTYPE2", keywordvalue, comment, &status);      
+    
+    fits_read_key(outfile->fptr, TSTRING, "TTYPE3", &keywordvalue, NULL, &status);
+    strcpy(comment, "Average first 4 samples (derivative)");
+    fits_update_key(outfile->fptr, TSTRING, "TTYPE3", keywordvalue, comment, &status);      
+    
+    fits_read_key(outfile->fptr, TSTRING, "TTYPE4", &keywordvalue, NULL, &status);
+    strcpy(comment, "Optimal filter length");
+    fits_update_key(outfile->fptr, TSTRING, "TTYPE4", keywordvalue, comment, &status);      
+    
+    fits_read_key(outfile->fptr, TSTRING, "TTYPE5", &keywordvalue, NULL, &status);
+    strcpy(comment, "Starting time-starting time previous event");
+    fits_update_key(outfile->fptr, TSTRING, "TTYPE5", keywordvalue, comment, &status);
+    
     // Save GTI extension to event file
     GTI* gti=getGTIFromFileOrContinuous("none",keywords->tstart, keywords->tstop,keywords->mjdref, &status);
     saveGTIExt(outfile->fptr, "STDGTI", gti, &status);    

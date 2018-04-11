@@ -99,7 +99,7 @@ struct Parameters {
 	//Calibration run (0) or energy reconstruction run (1)?
 	int mode;
         
-        //DetectionMode: Adjusted Derivative(AD) or Alternative1(A1)
+        //DetectionMode: Adjusted Derivative(AD) or Single Threshold Crossing(STC)
 	char detectionMode[3];
 
 	/** Monochromatic energy for library creation **/
