@@ -160,7 +160,7 @@ int tesreconstruction_main() {
 	    //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
 	    reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
 				    lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
-            /*printf("\nevent list");
+            printf("\nevent list");
             printf("\ndata - %i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
             for (int i = 0; i < event_list->index; ++i){
               printf("\n%f, %f, %f, %f, %i, %i, %ld",event_list->event_indexes[i],
@@ -170,7 +170,7 @@ int tesreconstruction_main() {
                      event_list->grades1[i],
                      event_list->grades2[i],
                      event_list->ph_ids[i]);
-                     }*/
+            }
       }
       CHECK_STATUS_BREAK(status);
 

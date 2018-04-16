@@ -3709,9 +3709,9 @@ PulseDetected& PulseDetected::operator=(const PulseDetected& other)
 PulseDetected::~PulseDetected()
 {
   //printf("pulse_adc %p\n", pulse_adc);
-  //if(pulse_adc) {
-  //gsl_vector_free(pulse_adc); pulse_adc = 0;
-  //}
+  if(pulse_adc) {
+    gsl_vector_free(pulse_adc); pulse_adc = 0;
+  }
 }
 
 MatrixStruct::MatrixStruct():
