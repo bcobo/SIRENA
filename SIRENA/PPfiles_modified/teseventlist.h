@@ -49,6 +49,9 @@ typedef struct {
 	/** Average of the first 4 samples of the derivative of the event (pulse) */
 	double * avgs_4samplesDerivative;  //BEA
 
+	/** Pulse grade */
+	int * grading;  //BEA
+
 	/** Energy of the photons */
 	double * energies;
 

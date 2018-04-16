@@ -20,7 +20,7 @@
    Ministry of Economy (MINECO) under projects AYA2012-39767-C02-01, 
    ESP2013-48637-C2-1-P and ESP2014-53672-C3-1-P.
 
-/***********************************************************************
+***********************************************************************
 *                      INTEGRASIRENA
 *
 *  File:       integraSIRENA.h
@@ -134,101 +134,99 @@ typedef struct OptimalFilterSIRENA
 
 typedef struct LibraryCollection
 {
-  /** Number of templates & matched filters in the structure. */
-  int ntemplates;
-  
-  /** Number of fixed length filters in the structure. */
-  int nfixedfilters;
-  
-  /** Energies of the templates */
-  gsl_vector *energies;
-  
-  /** Pulse Heights of the templates */
-  gsl_vector *pulse_heights;
-  
-  /** Structure containing all the pulse templates whose length is largeFilter from the library */
-  PulseTemplate* pulse_templatesMaxLengthFixedFilter;
-  
-  /** Structure containing all the pulse templates from the library */
-  PulseTemplate* pulse_templates;
-  
-  /** Structure containing all the pulse templates filtered & derivated from the library */
-  PulseTemplate* pulse_templates_filder;
-  
-  /** Maximum of pulse_templates_filder */
-  gsl_vector *maxDERs;
-  
-  /** 1st sample of pulse_templates_filder */
-  gsl_vector *samp1DERs;
-  
-  /** Structure containing all the pulse templates from the library */
-  PulseTemplate* pulse_templates_B0;
-  
-  /** Structure containing all the matched filters from the library */
-  MatchedFilter* matched_filters;
-  
-  /** Structure containing all the matched filters from the library */
-  MatchedFilter* matched_filters_B0;
-  
-  /** Structure containing all the optimal filters from the library */
-  OptimalFilterSIRENA* optimal_filters;
-  
-  /** Structure containing all the fixed optimal filters from the library (FIXFILTF HDU) */
-  //OptimalFilterSIRENA_FREQ* optimal_filtersFREQ;
-  OptimalFilterSIRENA* optimal_filtersFREQ;
-  
-  /** Structure containing all the fixed optimal filters from the library (FIXFILTT HDU) */
-  //OptimalFilterSIRENA_TIME* optimal_filtersTIME;
-  OptimalFilterSIRENA* optimal_filtersTIME;
-  
-  //MatrixStruct* W;
-  gsl_matrix *V;
-  gsl_matrix *W;
-  
-  /** WAB matrix */
-  gsl_matrix *WAB;
-  
-  /** T vector */
-  gsl_matrix *T;
-  
-  /** t escalar */
-  gsl_vector *t;
-  
-  /** X matrix */
-  gsl_matrix *X;
-  
-  /** Y vector */
-  gsl_matrix *Y;
-  
-  /** Z vector */
-  gsl_matrix *Z;
-  
-  /** r escalar */
-  gsl_vector *r;
-  
-  /** PAB vector */
-  gsl_matrix *PAB;
-  
-  /** PABMXLFF vector */
-  gsl_matrix *PABMXLFF;
-  
-  /** DAB vector */
-  gsl_matrix *DAB;
-  
-  /** Structure containing all the optimal filters AB from the library */
-  OptimalFilterSIRENA* optimal_filtersab;
-  
-  /** Structure containing all the fixed optimal filters AB in time domain from the library */
-  OptimalFilterSIRENA* optimal_filtersabTIME;
-  
-  /** Structure containing all the fixed optimal filters AB in frequency domain from the library */
-  OptimalFilterSIRENA* optimal_filtersabFREQ;
+	/** Number of templates & matched filters in the structure. */
+	int ntemplates;
+	
+	/** Number of fixed length filters in the structure. */
+	int nfixedfilters;
 
-  /** PRECALWN vector */
-  gsl_matrix *PRECALWN;
-  
-  /** PRECALOFWM vector */
-  gsl_matrix *PRCLOFWM;
+	/** Energies of the templates */
+	gsl_vector *energies;
+
+	/** Pulse Heights of the templates */
+	gsl_vector *pulse_heights;
+
+	/** Structure containing all the pulse templates whose length is largeFilter from the library */
+	PulseTemplate* pulse_templatesMaxLengthFixedFilter;
+	
+	/** Structure containing all the pulse templates from the library */
+	PulseTemplate* pulse_templates;
+
+	/** Structure containing all the pulse templates filtered & derivated from the library */
+	PulseTemplate* pulse_templates_filder;
+
+	/** Maximum of pulse_templates_filder */
+	gsl_vector *maxDERs;
+
+	/** 1st sample of pulse_templates_filder */
+	gsl_vector *samp1DERs;
+	
+	/** Structure containing all the pulse templates from the library */
+	PulseTemplate* pulse_templates_B0;
+	
+	/** Structure containing all the matched filters from the library */
+	MatchedFilter* matched_filters;
+
+	/** Structure containing all the matched filters from the library */
+	MatchedFilter* matched_filters_B0;
+
+	/** Structure containing all the optimal filters from the library */
+	OptimalFilterSIRENA* optimal_filters;
+	
+	/** Structure containing all the fixed optimal filters from the library (FIXFILTF HDU) */
+	OptimalFilterSIRENA* optimal_filtersFREQ;
+
+	/** Structure containing all the fixed optimal filters from the library (FIXFILTT HDU) */
+	OptimalFilterSIRENA* optimal_filtersTIME;
+	
+	//MatrixStruct* W;
+	gsl_matrix *V;
+	gsl_matrix *W;
+	
+	/** WAB matrix */
+	gsl_matrix *WAB;
+
+	/** T vector */
+	gsl_matrix *T;
+
+	/** t escalar */
+	gsl_vector *t;
+
+	/** X matrix */
+	gsl_matrix *X;
+
+	/** Y vector */
+	gsl_matrix *Y;
+
+	/** Z vector */
+	gsl_matrix *Z;
+
+	/** r escalar */
+	gsl_vector *r;
+
+	/** PAB vector */
+	gsl_matrix *PAB;
+
+	/** PABMXLFF vector */
+	gsl_matrix *PABMXLFF;
+	
+	/** DAB vector */
+	gsl_matrix *DAB;
+	
+	/** Structure containing all the optimal filters AB from the library */
+	OptimalFilterSIRENA* optimal_filtersab;
+	
+	/** Structure containing all the fixed optimal filters AB in time domain from the library */
+	OptimalFilterSIRENA* optimal_filtersabTIME;
+	
+	/** Structure containing all the fixed optimal filters AB in frequency domain from the library */
+	OptimalFilterSIRENA* optimal_filtersabFREQ;
+
+	/** PRECALWN vector */
+	gsl_matrix *PRECALWN;
+	
+	/** PRECALOFWM vector */
+	gsl_matrix *PRCLOFWM;
 #ifdef __cplusplus
   LibraryCollection();
   LibraryCollection(const LibraryCollection& other);
@@ -285,58 +283,59 @@ typedef struct Grading
 
 typedef struct PulseDetected
 {
-  /** Pulse duration (maximum length) */
-  int pulse_duration;
-  
-  /** Length of filter used during reconstruction (samples)*/
-  int grade1;
-  
-  /** Distance to previous pulse in record (samples)*/
-  /** tstart(i)-tend(i-1)*/
-  int grade2;
-  
-  /** Distance to the begining of the previous pulse in record (samples)*/
-  /** tstart(i)-tstart(i-1)*/
+	/** Pulse duration (maximum length) */
+	int pulse_duration;
+
+	/** Length of filter used during reconstruction (samples)*/
+	int grade1;
+      
+	/** Distance to previous pulse in record (samples)*/
+	/** tstart(i)-tstart(i-1)*/
+	int grade2;
+
   int grade2_1;
-  
-  /** PIX_ID of the detected pulse*/
-  int pixid;
-  
-  /** Vector containing the pulse adc values */
-  gsl_vector *pulse_adc;
-  
-  /** Start time of the Pulse */
-  double Tstart;
-  
-  /** End time of the Pulse */
-  double Tend;
-  
-  /** Rise time of the Pulse */
-  double riseTime;
-  
-  /** Fall time of the Pulse */
-  double fallTime;
-  
-  /** Pulse height of the Pulse */
-  double pulse_height;
-  
-  /** Maximum of the filtered-derived pulse */
-  double maxDER;
-  
-  /** 1st pulse of the filtered-derived pulse */
-  double samp1DER;
-  
-  /** Energy (KeV) of the Pulse */
-  double energy;
-  
-  /** Average of the first 4 samples of the derivative of the Pulse */
-  double avg_4samplesDerivative;
-  
-  /** Quality of the Pulse */
-  double quality;
-  
-  /**Number of lags used in detection*/
-  int numLagsUsed;
+
+	/** PIX_ID of the detected pulse*/
+	int pixid;
+	
+	/** Vector containing the pulse adc values */
+	gsl_vector *pulse_adc;
+
+	/** Start time of the Pulse */
+	double Tstart;
+
+	/** End time of the Pulse */
+	double Tend;
+      
+	/** Rise time of the Pulse */
+	double riseTime;
+
+	/** Fall time of the Pulse */
+	double fallTime;
+
+	/** Pulse height of the Pulse */
+	double pulse_height;
+
+	/** Maximum of the filtered-derived pulse */
+	double maxDER;
+
+	/** 1st pulse of the filtered-derived pulse */
+	double samp1DER;
+	
+	/** Energy (KeV) of the Pulse */
+	double energy;
+        
+        /** Pulse grade */
+	int grading;
+
+        /** Average of the first 4 samples of the derivative of the Pulse */
+	double avg_4samplesDerivative;
+        
+	/** Quality of the Pulse */
+	double quality;
+        
+        /**Number of lags used in detection*/
+        int numLagsUsed;
 #ifdef __cplusplus
   PulseDetected();
   PulseDetected(const PulseDetected& other);
@@ -437,7 +436,7 @@ typedef struct ReconstructInitSIRENA
   int mode;
   
   /** Detection Mode: AD (Adjusted Derivative) or A1 (Alternative1) **/
-  char detectionMode[3];
+  char detectionMode[4];
   
   /** Noise spectrum **/
   NoiseSpec* noise_spectrum;

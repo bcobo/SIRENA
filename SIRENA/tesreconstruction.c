@@ -29,7 +29,7 @@ int tesreconstruction_main() {
   // Error status.
   int status=EXIT_SUCCESS;
   
-  double sampling_rate;
+  double sampling_rate = -999.0;
 
   // Register HEATOOL:
   set_toolname("tesreconstruction");
@@ -91,7 +91,6 @@ int tesreconstruction_main() {
 		SIXT_ERROR("The provided XMLFile does not have the grading info");
 		return(EXIT_FAILURE);
   	  }
-  	  sampling_rate = det->SampleFreq;
 	  
 	  reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
 	  reconstruct_init_sirena->grading->value = gsl_vector_alloc(det->pix->ngrades);
@@ -103,6 +102,9 @@ int tesreconstruction_main() {
 	      gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,det->pix->grades[i].gradelim_post);
 	  }
 	  destroyAdvDet(&det);
+          
+          // Read the sampling rate
+  	  sampling_rate = det->SampleFreq;
     }  
     CHECK_STATUS_BREAK(status);
 
@@ -110,13 +112,15 @@ int tesreconstruction_main() {
     TesRecord* record = newTesRecord(&status);
     allocateTesRecord(record,record_file->trigger_size,record_file->delta_t,0,&status);
     CHECK_STATUS_BREAK(status);
+    
+    // Checking the sampling rate of the .xml file and the sampling rate from the input FITS file
     if (sampling_rate != 1/record_file->delta_t)
     {
         SIXT_ERROR("Sampling rate from the XML file and the FITS file do not match");
         return(EXIT_FAILURE);
     }
 
-    //Build up TesEventList to recover the results of the reconstruction
+    // Build up TesEventList to recover the results of the reconstruction
     TesEventList* event_list = newTesEventList(&status);
     allocateTesEventListTrigger(event_list,par.EventListSize,&status);
     CHECK_STATUS_BREAK(status);
@@ -128,11 +132,7 @@ int tesreconstruction_main() {
     {
       if(!strcmp(par.Rcmethod,"PP"))
       {
-	    /*nrecord = nrecord + 1;
-	    if(nrecord == record_file->nrows) lastRecord=1;
-	    printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");*/
-	    
-	    reconstructRecord(record,event_list,reconstruct_init,0,&status);
+            reconstructRecord(record,event_list,reconstruct_init,0,&status);
       }
       else
       {
@@ -244,6 +244,37 @@ int tesreconstruction_main() {
     // Copy trigger keywords to event file
     copyTriggerKeywords(record_file->fptr,outfile->fptr,&status);
     CHECK_STATUS_BREAK(status);
+    
+    //printf("Paso1\n");
+    // Messages providing info of some columns
+    char keyword[9];
+    char keywordvalue[9];
+    char comment[MAXMSG];
+    int keywordvalueint;
+    
+    fits_movnam_hdu(outfile->fptr, ANY_HDU,"EVENTS", 0, &status);
+    CHECK_STATUS_BREAK(status);
+    
+    fits_read_key(outfile->fptr, TSTRING, "TTYPE1", &keywordvalue, NULL, &status);
+    strcpy(comment, "Starting time");
+    fits_update_key(outfile->fptr, TSTRING, "TTYPE1", keywordvalue, comment, &status);
+    
+    fits_read_key(outfile->fptr, TSTRING, "TTYPE2", &keywordvalue, NULL, &status);
+    strcpy(comment, "Reconstructed-uncalibrated energy");
+    fits_update_key(outfile->fptr, TSTRING, "TTYPE2", keywordvalue, comment, &status);      
+    
+    fits_read_key(outfile->fptr, TSTRING, "TTYPE3", &keywordvalue, NULL, &status);
+    strcpy(comment, "Average first 4 samples (derivative)");
+    fits_update_key(outfile->fptr, TSTRING, "TTYPE3", keywordvalue, comment, &status);      
+    
+    fits_read_key(outfile->fptr, TSTRING, "TTYPE4", &keywordvalue, NULL, &status);
+    strcpy(comment, "Optimal filter length");
+    fits_update_key(outfile->fptr, TSTRING, "TTYPE4", keywordvalue, comment, &status);      
+    
+    fits_read_key(outfile->fptr, TSTRING, "TTYPE5", &keywordvalue, NULL, &status);
+    strcpy(comment, "Starting time-starting time previous event");
+    fits_update_key(outfile->fptr, TSTRING, "TTYPE5", keywordvalue, comment, &status);
+    
     // Save GTI extension to event file
     GTI* gti=getGTIFromFileOrContinuous("none",keywords->tstart, keywords->tstop,keywords->mjdref, &status);
     saveGTIExt(outfile->fptr, "STDGTI", gti, &status);    
@@ -311,7 +342,7 @@ int getpar(struct Parameters* const par)
 	  SIXT_ERROR("failed reading the PulseLength parameter");
 	  return(status);
   }
-  assert(&par->PulseLength > 0);
+  assert(par->PulseLength > 0);
 
   status=ape_trad_query_int("EventListSize", &par->EventListSize);
   if (EXIT_SUCCESS!=status) {
@@ -378,13 +409,6 @@ int getpar(struct Parameters* const par)
 		SIXT_ERROR("failed reading the DerivateExclusion parameter");
 		return(status);
 	}
-
-	/*status=ape_trad_query_double("SaturationValue", &par->SaturationValue);
-	if (EXIT_SUCCESS!=status) {
-		SIXT_ERROR("failed reading the SaturationValue parameter");
-		return(status);
-	}*/
-	
   }else if(strcmp(par->Rcmethod,"SIRENA")==0){
 	
 	// SIRENA parameters
@@ -457,11 +481,7 @@ int getpar(struct Parameters* const par)
 
 	status=ape_trad_query_bool("OFLib", &par->OFLib);
 	
-	//status=ape_trad_query_string("OFInterp", &sbuffer);
-        //strcpy(par->OFInterp, sbuffer);
-        //free(sbuffer);
 	strcpy(par->OFInterp, "DAB");
-	//strcpy(par->OFInterp, "MF");
 	
 	status=ape_trad_query_string("OFStrategy", &sbuffer);
 	strcpy(par->OFStrategy, sbuffer);
@@ -488,22 +508,14 @@ int getpar(struct Parameters* const par)
 		return(status);
 	}
 	
-	//assert((par->mode ==0) || (par->mode ==1));
-	/*int mode_0_1;
-	mode_0_1 = ((par->mode ==0) || (par->mode ==1));
-	assert(mode_0_1);*/
 	MyAssert((par->mode == 0) || (par->mode == 1), "mode must be 0 or 1");
 	  
-	//assert((par->intermediate == 0) || (par->intermediate == 1));
 	MyAssert((par->intermediate == 0) || (par->intermediate == 1), "intermediate must be 0 or 1");
 	
-	//assert(&par->monoenergy > 0);
-	MyAssert(&par->monoenergy > 0, "monoenergy must be greater than 0");
+        if (par->mode == 0) MyAssert(par->monoenergy > 0, "monoenergy must be greater than 0");
 	
-	//assert((strcmp(par->FilterDomain,"T") == 0) || (strcmp(par->FilterDomain,"F") == 0));
 	MyAssert((strcmp(par->FilterDomain,"T") == 0) || (strcmp(par->FilterDomain,"F") == 0), "FilterDomain must be T or F");
 	
-	//assert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0));
 	MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0),"FilterMethod must be F0 or B0");
 	
 	MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0) ||
@@ -512,7 +524,6 @@ int getpar(struct Parameters* const par)
 	
 	MyAssert((strcmp(par->OFNoise,"NSD") == 0) || (strcmp(par->OFNoise,"WEIGHTM") == 0), "OFNoise must be NSD or WEIGHTM");
 	
-	//assert((par->LagsOrNot ==0) || (par->LagsOrNot ==1));
 	MyAssert((par->LagsOrNot ==0) || (par->LagsOrNot ==1), "LagsOrNot must me 0 or 1");
 
 	if (((strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0)) && (par->LagsOrNot == 1))
@@ -521,7 +532,6 @@ int getpar(struct Parameters* const par)
 		return(EXIT_FAILURE);
 	}
 	
-	//assert((par->OFIter ==0) || (par->OFIter ==1));
 	MyAssert((par->OFIter ==0) || (par->OFIter ==1), "OFIter must be 0 or 1");
 	
 	if ((par->OFLib == 1) && (strcmp(par->FilterMethod,"F0") != 0))
@@ -541,24 +551,13 @@ int getpar(struct Parameters* const par)
 		return(EXIT_FAILURE);
 	}
 	
-	//assert((strcmp(par->OFStrategy,"FREE") == 0) || (strcmp(par->OFStrategy,"BASE2") == 0) || (strcmp(par->OFStrategy,"BYGRADE") == 0) || (strcmp(par->OFStrategy,"FIXED") == 0));
 	MyAssert((strcmp(par->OFStrategy,"FREE") == 0) || (strcmp(par->OFStrategy,"BASE2") == 0) || (strcmp(par->OFStrategy,"BYGRADE") == 0) || (strcmp(par->OFStrategy,"FIXED") == 0), 
 		 "OFStrategy must be FREE, BASE2, BYGRADE or FIXED");
 	
-	//assert(&par->OFLength > 0);
-	MyAssert(&par->OFLength > 0, "OFLength must be greater than 0");
+        MyAssert(par->OFLength > 0, "OFLength must be greater than 0");
 	
-	/*if (((strcmp(par->EnergyMethod,"I2R") == 0) || (strcmp(par->EnergyMethod,"I2RALL") == 0) || (strcmp(par->EnergyMethod,"I2RNOL") == 0)) && (par->tstartPulse1 == 0))
-	{
-		printf("%s %d %s","Error",status,"\n");
-		SIXT_ERROR("parameter error: EnergyMethod=I2R/I2RALL/I2RNOL and tstartPulse1=0 (If I2R/I2RALL/I2RNOL, tstartPulsex must be always provided)");
-		return(EXIT_FAILURE);
-	}*/	
-	
-	//assert(&par->energyPCA1 > 0);
-	MyAssert(&par->energyPCA1 > 0, "energyPCA1 must be greater than 0");
-	//assert(&par->energyPCA2 > 0);
-	MyAssert(&par->energyPCA2 > 0, "energyPCA2 must be greater than 0");
+	MyAssert(par->energyPCA1 > 0, "energyPCA1 must be greater than 0");
+        MyAssert(par->energyPCA2 > 0, "energyPCA2 must be greater than 0");
 	
   } else {
 	SIXT_ERROR("failed reading the Rcmethod parameter");

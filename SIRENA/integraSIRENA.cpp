@@ -97,6 +97,7 @@ int _resize_array(int size, int pulses){ return (size * MUL_FAC  < pulses) ? pul
 * - nSgms: Number of standard deviations in the kappa-clipping process for threshold estimation
 * - detectSP: Detect secondary pulses or not
 * - mode: Calibration run (0) or energy reconstruction run (1)
+* - detectionMode: Adjusted Derivative (AD) or Single Threshold Crossing (STC)
 * - LrsT: Running sum length for the RS raw energy estimation (seconds)
 * - LbT: Baseline averaging length for the RS raw energy estimation (seconds)
 * - noise_file: Noise file
@@ -115,6 +116,7 @@ int _resize_array(int size, int pulses){ return (size * MUL_FAC  < pulses) ? pul
 * - monoenergy: Monochromatic energy of input file in eV (only for library creation)
 * - hduPRECALWN: Add or not the PRECALWN HDU in the library file (1/0) (only for library creation)
 * - hduPRCLOFWM: Add or not the PRCLOFWM HDU in the library file (1/0) (only for library creation)
+* - largeFilter: Length of the longest fixed filter
 * - interm: Write or not intermediate files (1/0)
 * - detectFile: Intermediate detections file (if intermediate=1)
 * - filterFile: Intermediate filters file (if intermediate=1)
@@ -141,25 +143,6 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	//gsl_set_error_handler_off();
 	/*string message = "";
 	char valERROR[256];*/
-		
-	/*gsl_vector *prueba;
-	if ((prueba = gsl_vector_alloc(0)) == 0)
-	{
-		sprintf(valERROR,"%d",__LINE__-2);
-		string str(valERROR);
-	        message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-		EP_EXIT_ERROR(message,EPFAIL);
-	}*/
-	/*gsl_vector *prueba;
-	prueba = gsl_vector_alloc(2);
-	if (gsl_vector_set(prueba,-1,1) != 0)	// No puede hacerse pq gsl_vector_set devuelve void, no un entero
-	{
-	  cout<<"Error"<<endl;
-	}*/
-	/*gsl_vector *prueba = gsl_vector_alloc(2);
-	gsl_vector_set_all(prueba,1);
-	gsl_vector *copia = gsl_vector_alloc(2);
-	cout<<gsl_vector_memcpy(copia,prueba)<<endl;*/
 
 	// Load LibraryCollection structure if library file exists
 	int exists=0;
@@ -173,7 +156,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	if (exists)
 	{	
 		if (mode == 1)		largeFilter = pulse_length;
-                //if ((mode == 0) && (largeFilter == -999)) largeFilter = pulse_length;
+                
 		reconstruct_init->library_collection = getLibraryCollection(library_file, mode, hduPRECALWN, hduPRCLOFWM, largeFilter, filter_domain, pulse_length, energy_method, ofnoise, filter_method, oflib, &ofinterp, filtEev, lagsornot, status);
 		if (*status)
 		{
@@ -192,9 +175,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 			if ((oflib == 1) 
 				&& ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) || (strcmp(energy_method,"I2RFITTED") == 0))
 				&& (pulse_length != reconstruct_init->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration) 
-			        && (reconstruct_init->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration != -999)
-				//&& (reconstruct_init->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration != 999)
-			   )
+			        && (reconstruct_init->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration != -999))
 			{
 				EP_EXIT_ERROR("Templates length in the library file must be at least as the pulse length or equal to largeFilter",EPFAIL);
 			}
@@ -208,20 +189,6 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 				EP_EXIT_ERROR("Templates length in the library file must be at least as the pulse length",EPFAIL);
 			}
 		}
-		
-		/*if ((mode == 0) && (reconstruct_init->library_collection->pulse_templates[0].template_duration != pulse_length))
-		{
-			EP_EXIT_ERROR("It is not possible the PulseLength provided because it does not match with the PulseLength of the existing library",EPFAIL);
-		}*/
-		
-		/*if ((mode == 0) && (reconstruct_init->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration != largeFilter))
-		{
-			EP_EXIT_ERROR("It is not possible the largeFilter provided because it does not match with the largeFilter of the existing library",EPFAIL);
-		}*/
-		
-		//if ((mode == 1) && (strcmp(energy_method,"OPTFILT") == 0) && (strcmp(ofnoise,"WEIGHTM") == 0)) 		largeFilter = reconstruct_init->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration;
-		  
-		
 	}
 	else if (!exists && mode==1)
 	{
@@ -231,8 +198,12 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	// Load NoiseSpec structure
 	reconstruct_init->noise_spectrum = NULL;
 	if ((mode == 0) || 
-		(((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) 
-		|| (strcmp(energy_method,"I2RFITTED") == 0)) && (mode == 1)) 
+                (((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) 
+		|| (strcmp(energy_method,"I2RFITTED") == 0)) && (mode == 1) && (oflib == 1) && (strcmp(filter_method,"B0") == 0))
+                
+                || (((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) 
+		|| (strcmp(energy_method,"I2RFITTED") == 0)) && (mode == 1) && (oflib == 0))
+                
 		|| ((mode == 1) && (strcmp(energy_method,"WEIGHT") == 0))
 		|| ((mode == 1) && (strcmp(energy_method,"WEIGHTN") == 0))) 
 	{
@@ -251,7 +222,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 			EP_EXIT_ERROR((char*)"Error in getNoiseSpec",EPFAIL);
 		}
 		
-		if ((mode == 1) && (strcmp(energy_method,"OPTFILT") == 0) && (strcmp(energy_method,"WEIGHTM") == 0) 
+		if ((mode == 1) && (strcmp(energy_method,"OPTFILT") == 0) && (strcmp(ofnoise,"WEIGHTM") == 0) 
 			&& (largeFilter > pow(2,reconstruct_init->noise_spectrum->weightMatrixes->size1)))
 		{
 			string message = "";
@@ -305,7 +276,6 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	else		reconstruct_init->OFLib = 0;
 	strcpy(reconstruct_init->OFInterp,ofinterp);
 	strcpy(reconstruct_init->OFStrategy,oflength_strategy);
-	//if ((strcmp(energy_method,"WEIGHT") == 0) || (strcmp(energy_method,"WEIGHTN") == 0)) strcpy(reconstruct_init->FilterMethod,"F0");
 	reconstruct_init->OFLength      = oflength;
 	reconstruct_init->intermediate  = interm;
 	reconstruct_init->SaturationValue  = SaturationValue;
@@ -332,7 +302,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	strncpy(reconstruct_init->XMLFile,XMLFile,255);
 	reconstruct_init->XMLFile[255]='\0'; 
 	if (0 != clobber)	reconstruct_init->clobber = 1;
-	else		reconstruct_init->clobber = 0;
+	else		        reconstruct_init->clobber = 0;
 	reconstruct_init->maxPulsesPerRecord = maxPulsesPerRecord;
 }
 
@@ -348,7 +318,7 @@ void initializeCreationMode()
 /***** SECTION 2 ************************************************************
 * reconstructRecordSIRENA: This function is the main wrapper function to detect, grade and calculate energy of pulses in input records.
 *
-* - Inititalize structure PulsesCollection
+* - Inititalize PulsesCollection structure
 * - Check consistency of some input parameters
 * - Detect pulses in input record (runDetect()). Save information of detected pulses
 *      - If PCA, pulses energies are already written in the 'pulsesAll' structures
@@ -369,14 +339,10 @@ void initializeCreationMode()
 ******************************************************************************/
 extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_list, ReconstructInitSIRENA* reconstruct_init,  int lastRecord, int nRecord, PulsesCollection **pulsesAll, OptimalFilterSIRENA **optimalFilter, int* const status)
 {
-	// Inititalize structure PulsesCollection
+	// Inititalize PulsesCollection structure
 	PulsesCollection* pulsesInRecord = new PulsesCollection;
-	//pulsesInRecord->ndetpulses = 0;
-	//pulsesInRecord->pulses_detected = NULL;
 	
 	PulsesCollection* pulsesAllAux = new PulsesCollection;
-	//pulsesAllAux->ndetpulses = 0;
-	//pulsesAllAux->pulses_detected = NULL;
 
 	// Check consistency of some input parameters
 	if (record->trigger_size <= 0)
@@ -385,7 +351,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	}
 	if(reconstruct_init->pulse_length > record->trigger_size)
 	{
-		EP_EXIT_ERROR("Warning: pulse length is larger than record size. Pulse length set to maximum value (record size)",EPFAIL);
+		//EP_EXIT_ERROR("Warning: pulse length is larger than record size. Pulse length set to maximum value (record size)",EPFAIL);
+                EP_EXIT_ERROR("Pulse length is larger than record size",EPFAIL);
 	}
 	
 		// Detect pulses in record
@@ -402,26 +369,19 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	
 	//cout<<"delta_t: "<<record->delta_t<<endl;
 	// Detect pulses in record
-	runDetect(record, nRecord, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
-        //cout<<"Pasa runDetect"<<endl;
+	runDetect(record, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
         
 	if(pulsesInRecord->ndetpulses == 0) // No pulses found in record
 	{
-		//freePulsesCollection(pulsesAllAux);
           delete pulsesAllAux; pulsesAllAux = 0;
-		//freePulsesCollection(pulsesInRecord);
-	    	//delete pulsesInRecord;
-
 		return;
 	}
 		
 	if ((reconstruct_init->mode == 1) && (strcmp(reconstruct_init->EnergyMethod,"PCA") != 0))
 	{
 		// Filter pulses and calculates energy
-                //PulsesCollection* aux = &pulsesInRecord;
 		runEnergy(record, &reconstruct_init, &pulsesInRecord, optimalFilter);
 	}
-        //cout<<"Pasa runEnergy"<<endl;
 	
 	if (nRecord == 1)
 	{
@@ -430,13 +390,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                   delete [] (*pulsesAll)->pulses_detected; (*pulsesAll)->pulses_detected = 0;
 			(*pulsesAll)->size = resize_array((*pulsesAll)->size, (*pulsesAll)->ndetpulses);
 			(*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->size];
-		}
-		/*if ((*pulsesAll)->pulses_detected != NULL) delete [] (*pulsesAll)->pulses_detected;
-		(*pulsesAll)->pulses_detected = new PulseDetected[pulsesInRecord->ndetpulses];
-		for (int i=0;i<(*pulsesAll)->ndetpulses;i++)
-		{
-			(*pulsesAll)->pulses_detected[i] = pulsesInRecord->pulses_detected[i];
-		}*/
+                }
     
         #ifndef POOLS		
 		if((*pulsesAll)->pulses_detected == 0)
@@ -454,26 +408,20 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	{
 		if (event_list->energies != NULL) 	delete [] event_list->energies;
                 if (event_list->avgs_4samplesDerivative != NULL) 	delete [] event_list->avgs_4samplesDerivative;
+                if (event_list->grading != NULL) 	delete [] event_list->grading;
                 if (event_list->grades1 != NULL) 	delete [] event_list->grades1;
 		if (event_list->grades2 != NULL) 	delete [] event_list->grades2;
 		if (event_list->pulse_heights != NULL) 	delete [] event_list->pulse_heights;
 		if (event_list->ph_ids != NULL) 	delete [] event_list->ph_ids;
 	
 		pulsesAllAux->ndetpulses = (*pulsesAll)->ndetpulses;
-		/*pulsesAllAux->pulses_detected = new PulseDetected[(*pulsesAll)->ndetpulses];
-
-		for (int i=0;i<(*pulsesAll)->ndetpulses;i++)
-		{
-			pulsesAllAux->pulses_detected[i] = (*pulsesAll)->pulses_detected[i];
-		}*/
+		
 		(*pulsesAll)->ndetpulses = (*pulsesAll)->ndetpulses + pulsesInRecord->ndetpulses;
-                
                
                 if ((*pulsesAll)->pulses_detected != NULL && (*pulsesAll)->size < (*pulsesAll)->ndetpulses)
                 {		
 			pulsesAllAux->pulses_detected = new PulseDetected[(*pulsesAll)->ndetpulses];
 			
-                        //for (int i=0;i<(*pulsesAll)->ndetpulses;i++){
                         for (int i=0;i<pulsesAllAux->ndetpulses;i++){
 				pulsesAllAux->pulses_detected[i] = (*pulsesAll)->pulses_detected[i];
 			}
@@ -487,13 +435,6 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			}
 			delete [] pulsesAllAux->pulses_detected; pulsesAllAux->pulses_detected = 0;
                 }
-		/*if ((*pulsesAll)->pulses_detected != NULL) delete [] (*pulsesAll)->pulses_detected; 
-		(*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->ndetpulses];
-		// Save pulses detected in previous records
-		for (int i=0;i<pulsesAllAux->ndetpulses;i++)
-		{
-			(*pulsesAll)->pulses_detected[i] = pulsesAllAux->pulses_detected[i];
-		}*/
                 
         #ifndef POOLS		
 		if((*pulsesAll)->pulses_detected == 0){	
@@ -517,6 +458,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	event_list->index = pulsesInRecord->ndetpulses;
 	event_list->energies = new double[event_list->index];
         event_list->avgs_4samplesDerivative = new double[event_list->index];
+        event_list->grading  = new int[event_list->index];
 	event_list->grades1  = new int[event_list->index];
 	event_list->grades2  = new int[event_list->index];
 	event_list->pulse_heights  = new double[event_list->index];
@@ -526,15 +468,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	{
 	   	for (int ip=0; ip<pulsesInRecord->ndetpulses; ip++)
 		{	  			
-			//// '+1' in order to undo the '-1' in initializeReconstructionSIRENA
-			//event_list->event_indexes[ip] = 
-			//      (int)((pulsesInRecord->pulses_detected[ip].Tstart - record->time)/record->delta_t + 0.5) + 1;	// '+0.5' to nearest integer (neither 'floor' nor 'ceil')
-                        // Not '+1' in order to undo the '-1' in initializeReconstructionSIRENA because it is necessary to work with intervals not samples
-                        //event_list->event_indexes[ip] = 
-			//      (int)((pulsesInRecord->pulses_detected[ip].Tstart - record->time)/record->delta_t + 0.5);	// '+0.5' to nearest integer (neither 'floor' nor 'ceil')
-                    
-                        event_list->event_indexes[ip] = 
-			      (pulsesInRecord->pulses_detected[ip].Tstart - record->time)/record->delta_t;	
+                        event_list->event_indexes[ip] = (pulsesInRecord->pulses_detected[ip].Tstart - record->time)/record->delta_t;	
 			
 			if (reconstruct_init->mode == 1)
 			{
@@ -546,12 +480,10 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			}
 
 			event_list->avgs_4samplesDerivative[ip] = pulsesInRecord->pulses_detected[ip].avg_4samplesDerivative;
-                        //cout<<ip<<" event_list->avgs_4samplesDerivative[ip]: "<<event_list->avgs_4samplesDerivative[ip]<<endl;
-                        //cout<<"event_list->avgs_4samplesDerivative[ip]: "<<event_list->avgs_4samplesDerivative[ip]<<endl;
+                        event_list->grading[ip]  = pulsesInRecord->pulses_detected[ip].grading;
 			event_list->grades1[ip]  = pulsesInRecord->pulses_detected[ip].grade1;
 			event_list->grades2[ip]  = pulsesInRecord->pulses_detected[ip].grade2;
 			event_list->pulse_heights[ip]  = pulsesInRecord->pulses_detected[ip].pulse_height;
-                        //cout<<ip<<" event_list->pulse_heights[ip]: "<<event_list->pulse_heights[ip]<<endl;
 			event_list->ph_ids[ip]   = 0;
 		}
 		if (lastRecord == 1)
@@ -569,8 +501,6 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                                 EP_EXIT_ERROR("Cannot run findMeanSigma routine for calculating numLagsUsed statistics",EPFAIL);
                         }
                  
-                       // cout<<"numLagsUsed_mean: "<<numLagsUsed_mean<<endl;
-                        //cout<<"numLagsUsed_sigma: "<<numLagsUsed_sigma<<endl;
                         gsl_vector_free(numLagsUsed_vector);
                 }
 	}
@@ -580,10 +510,10 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 		{
 		        // Free & Fill TesEventList structure
 			event_list->index = (*pulsesAll)->ndetpulses;
-			//event_list->event_indexes = new int[event_list->index];
                         event_list->event_indexes = new double[event_list->index];
 			event_list->energies = new double[event_list->index];
                         event_list->avgs_4samplesDerivative = new double[event_list->index];
+                        event_list->grading  = new int[event_list->index];
                         event_list->grades1  = new int[event_list->index];
 			event_list->grades2  = new int[event_list->index];
 			event_list->pulse_heights  = new double[event_list->index];
@@ -591,12 +521,6 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 		
 			for (int ip=0; ip<(*pulsesAll)->ndetpulses; ip++)
 			{	
-				//// '+1' in order to undo the '-1' in initializeReconstructionSIRENA
-				//event_list->event_indexes[ip] = 
-				//      (int)(((*pulsesAll)->pulses_detected[ip].Tstart - record->time)/record->delta_t + 0.5) + 1;	// '+0.5' to nearest integer (neither 'floor' nor 'ceil')
-                                // Not '+1' in order to undo the '-1' in initializeReconstructionSIRENA because it is necessary to work with intervals not samples
-                                //event_list->event_indexes[ip] = 
-				//      (int)(((*pulsesAll)->pulses_detected[ip].Tstart - record->time)/record->delta_t + 0.5);	// '+0.5' to nearest integer (neither 'floor' nor 'ceil')
                                 event_list->event_indexes[ip] = ((*pulsesAll)->pulses_detected[ip].Tstart - record->time)/record->delta_t;
 
 				if (reconstruct_init->mode == 1)
@@ -609,6 +533,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 				}
 
 				event_list->avgs_4samplesDerivative[ip]  = (*pulsesAll)->pulses_detected[ip].avg_4samplesDerivative;
+                                event_list->grading[ip]  = (*pulsesAll)->pulses_detected[ip].grading;
 				event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
 				event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
 				event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
@@ -616,47 +541,10 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			}
 		}
 	}
-	
-	/*cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
-        cout<<(*pulsesAll)->size<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].pulse_duration<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].grade1<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].grade2<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].grade2_1<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].pixid<<endl;
-        //cout<<((*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].pulse_adc)->size<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].Tstart<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].Tend<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].riseTime<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].fallTime<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].pulse_height<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].maxDER<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].samp1DER<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].energy<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].avg_4samplesDerivative<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].quality<<endl;
-        cout<<(*pulsesAll)->pulses_detected[(*pulsesAll)->ndetpulses-1].numLagsUsed<<endl;
         
-        cout<<"size_energy: "<<event_list->size_energy<<endl;
-        cout<<"index: "<<event_list->index<<endl;
-        cout<<"event_indexes: "<<event_list->event_indexes[pulsesInRecord->ndetpulses-1]<<endl;
-        cout<<"pulse_heights: "<<event_list->pulse_heights[pulsesInRecord->ndetpulses-1]<<endl;
-        cout<<"energies: "<<event_list->energies[pulsesInRecord->ndetpulses-1]<<endl;
-        cout<<"avgs_4samplesDerivative: "<<event_list->avgs_4samplesDerivative[pulsesInRecord->ndetpulses-1]<<endl;
-        cout<<"grades1: "<<event_list->grades1[pulsesInRecord->ndetpulses-1]<<endl;
-        cout<<"grades2: "<<event_list->grades2[pulsesInRecord->ndetpulses-1]<<endl;
-        cout<<"ph_ids: "<<event_list->ph_ids[pulsesInRecord->ndetpulses-1]<<endl;*/
-        
-	//delete(pulsesAllAux->pulses_detected);
-	//freePulsesCollection(pulsesAllAux);
-	//delete(pulsesInRecord->pulses_detected);
-	//freePulsesCollection(pulsesInRecord);
-	//delete [] pulsesAllAux->pulses_detected;
 	delete pulsesAllAux; pulsesAllAux = 0;
 	delete [] pulsesInRecord->pulses_detected; pulsesInRecord->pulses_detected = 0;
 	delete pulsesInRecord; pulsesInRecord = 0;
-        
-        //cout<<"Acaba ReconstructInitSIRENA"<<endl;
 
 	return;
 }
@@ -667,60 +555,15 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 * ReconstructInitSIRENA: Constructor. It returns a pointer to an empty ReconstructInitSIRENA data structure.
 * 
 * - Initialize pointers with NULL for SIRENA
-* - Initialize values for SIRENA
 * 
 * Parameters:
 * - status: Input/output status
 ******************************************************************************/
 extern "C" ReconstructInitSIRENA* newReconstructInitSIRENA(int* const status)
-{
-  ReconstructInitSIRENA* reconstruct_init = new ReconstructInitSIRENA;
+{	
+	ReconstructInitSIRENA* reconstruct_init = new ReconstructInitSIRENA;
 
-#if 0
-  // Initialize pointers with NULL for SIRENA
-  reconstruct_init->library_collection =NULL;
-  reconstruct_init->noise_spectrum     =NULL;
-  reconstruct_init->grading = NULL;
-  
-  // Initialize values for SIRENA
-  strcpy(reconstruct_init->record_file,"");
-  reconstruct_init->record_file_fptr = 0;
-  strcpy(reconstruct_init->library_file,"");
-  strcpy(reconstruct_init->noise_file,"");
-  strcpy(reconstruct_init->event_file,"");
-  reconstruct_init->threshold=0.;
-  reconstruct_init->pulse_length=0;
-  reconstruct_init->scaleFactor=0.;
-  reconstruct_init->samplesUp=0.;
-  reconstruct_init->samplesDown=0.;
-  reconstruct_init->nSgms=0;
-  reconstruct_init->mode=0;
-  strcpy(reconstruct_init->detectionMode,"");
-  reconstruct_init->monoenergy = 0;
-  reconstruct_init->hduPRECALWN = 0;
-  reconstruct_init->hduPRCLOFWM = 0;
-  reconstruct_init->LrsT = 0;
-  reconstruct_init->LbT = 0;
-  strcpy(reconstruct_init->FilterDomain,"");
-  strcpy(reconstruct_init->FilterMethod,"");
-  strcpy(reconstruct_init->EnergyMethod,"");
-  reconstruct_init->LagsOrNot = 0;
-  reconstruct_init->OFIter = 0;
-  reconstruct_init->OFLib=0;
-  strcpy(reconstruct_init->OFInterp,"");
-  strcpy(reconstruct_init->OFStrategy,"");
-  reconstruct_init->OFLength = 0;
-  reconstruct_init->clobber=0;
-  reconstruct_init->SaturationValue=0;
-  reconstruct_init->tstartPulse1=0;
-  reconstruct_init->tstartPulse2=0;
-  reconstruct_init->tstartPulse3=0;
-  reconstruct_init->energyPCA1 = 0;
-  reconstruct_init->energyPCA2 = 0;
-  strcpy(reconstruct_init->XMLFile,"");
-#endif
-
-  return(reconstruct_init);
+	return(reconstruct_init);
 }
 /*xxxx end of SECTION 3 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
@@ -798,14 +641,7 @@ extern "C" void freePulsesCollection(PulsesCollection* PulsesColl)
 extern "C" OptimalFilterSIRENA* newOptimalFilterSIRENA(int* const status)
 {
   OptimalFilterSIRENA* OFilterColl = new OptimalFilterSIRENA;
-
-  // Initialize pointers with NULL for SIRENA
-  //OFilterColl->ofilter =NULL;
-
-  // Initialize values for SIRENA
-  //OFilterColl->ofilter_duration=0;
-
-  return(OFilterColl);
+	return(OFilterColl);
 }
 /*xxxx end of SECTION 7 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
@@ -840,6 +676,9 @@ extern "C" void freeOptimalFilterSIRENA(OptimalFilterSIRENA* OFilterColl)
 * Parameters:
 * - filename: File with library information
 * - mode: Calibration run (0) or energy reconstruction run (1)
+* - hduPRECALWN: Add or not the PRECALWN HDU in the library file (1/0)
+* - hduPRCLOFWM: Add or not the PRCLOFWM HDU in the library file (1/0)
+* - largeFilter: Length of the longest fixed filter  
 * - filter_domain: Time domain ('T') or Frequency domain ('F')
 * - pulse_length: Pulse length
 * - energy_method: Energy calculation Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED or PCA
@@ -848,39 +687,15 @@ extern "C" void freeOptimalFilterSIRENA(OptimalFilterSIRENA* OFilterColl)
 * - oflib: Work or not with a library with optimal filters (1/0)
 * - ofinterp: Optimal Filter by using the Matched Filter or the DAB as matched filter (MF/DAB) 
 * 	      It has been fixed in 'tesreconstruction' as 'DAB' (but it would be possible to work with 'MF')
+* - filtEev: Energy of the filters of the library to be used to calculate energy
+* - lagsornot: Lags (1) or no lags (0)
 * - status: Input/output status
 ******************************************************************************/
 LibraryCollection* getLibraryCollection(const char* const filename, int mode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char* filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int* const status)
 {  	
         // Create LibraryCollection structure
 	LibraryCollection* library_collection = new LibraryCollection;
-#if 0
-	library_collection->ntemplates=0;
-	library_collection->pulse_templates=NULL;
-	library_collection->pulse_templatesMaxLengthFixedFilter=NULL;
-	library_collection->pulse_templates_B0=NULL;
-	library_collection->pulse_templates_filder=NULL;
-	library_collection->matched_filters=NULL;
-	library_collection->matched_filters_B0=NULL;
-	library_collection->optimal_filters=NULL;
-	library_collection->V=NULL;
-	library_collection->W=NULL;
-	library_collection->WAB=NULL;
-	library_collection->T=NULL;
-	library_collection->t=NULL;
-	library_collection->X=NULL;
-	library_collection->Y=NULL;
-	library_collection->Z=NULL;
-	library_collection->r=NULL;
-	library_collection->PAB=NULL;
-	library_collection->PABMXLFF=NULL;
-	library_collection->DAB=NULL;
-	library_collection->optimal_filtersab=NULL;
-	library_collection->optimal_filtersFREQ=NULL;
-	library_collection->optimal_filtersTIME=NULL;
-	library_collection->optimal_filtersabTIME=NULL;
-	library_collection->optimal_filtersabFREQ=NULL;
-#endif
+
 	// Open FITS file in READONLY mode
 	fitsfile* fptr = NULL;
 	if (fits_open_file(&fptr, filename, READONLY, status))
@@ -919,8 +734,6 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 		if (ntemplates == 1)
 		{	
 			if (strcmp(*ofinterp,"DAB") == 0)	strcpy(*ofinterp,"MF");
-							
-			//EP_PRINT_ERROR("The library only has one row, so no interpolation is going to be done (no matter 'OFInterp')",-999); // Only a warning
 		}
 		else
                 {
@@ -928,12 +741,10 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
                         {
                                 if (strcmp(*ofinterp,"DAB") == 0)	strcpy(*ofinterp,"MF");
 							
-                                //EP_PRINT_ERROR("The library has several rows, but no interpolation is going to be done (no matter 'OFInterp') and only the row related to filtEev is going to be used in reconstruction",-999); // Only a warning
                                 EP_PRINT_ERROR("The library has several rows, but only the row related to filtEev is going to be used in reconstruction",-999); // Only a warning
                         }
                         else if ((filtEev == 0) && (lagsornot == 1))
                         {
-                                
                                 EP_PRINT_ERROR("filtEev=0 (filters interpolation) and LagsOrNot=1 is not developed yet => Please, change your choice to LagsOrNot=0",EPFAIL); 
                                 *status = EPFAIL; return(library_collection);
                         }
@@ -1044,7 +855,6 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 
 	// Allocate library structure (cont.)
 	// It is not necessary to check the allocation because 'ntemplates' has been checked previously
-        //if (hduPRECALWN == 1)
         if ((((strcmp(energy_method,"WEIGHT") == 0) || (strcmp(energy_method,"WEIGHTN") == 0)) && (mode == 1)) || ((mode == 0) && (hduPRECALWN == 1)))
         {
                 library_collection->V = gsl_matrix_alloc(ntemplates,template_duration*template_duration);
@@ -1083,7 +893,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 		library_collection->DAB = gsl_matrix_alloc(1,template_duration);
 	}
 
-	// Get mfilter duration
+	// Get matched filter duration
 	int mfilter_duration;
 	if ((mode == 0) || 
 		(((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0)
@@ -1563,6 +1373,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 	if (matrixAux_DAB != NULL) gsl_matrix_free(matrixAux_DAB);
 	if (vectorAux_DAB != NULL) gsl_vector_free(vectorAux_DAB);
 	
+        // Added new code to handle the new HDUs FIXFILTF, FIXFILTT, PRECALWN and PRCLOFWM
 	if (mode == 0) 
 	{
 		// FIXFILTF HDU
@@ -1827,7 +1638,6 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 		if ((ntemplates > 1) && (hduPRECALWN == 1)) 
 		{
 			// PRECALWN HDU
-			//strcpy(HDUname,"PRECALWN");
 			if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
 			{
 				EP_PRINT_ERROR("Error moving to HDU PRECALWN in library file",*status);
@@ -1879,47 +1689,12 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 			gsl_vector_free(vectorAux_PRCLWNx);
 		}
 		
-		/*gsl_vector *vectorAux_PRCLWNx = gsl_vector_alloc(lengthALL_PRCLWN);
-		library_collection->PRECALWN = gsl_matrix_alloc(ntemplates,lengthALL_PRCLWN);
-		for (int it=0;it<ntemplates;it++)
-		{
-			library_collection->optimal_filtersFREQ[it].energy		= gsl_vector_get(library_collection->energies,it);
-			library_collection->optimal_filtersFREQ[it].ofilter_duration	= lengthALL_F;
-			library_collection->optimal_filtersFREQ[it].ofilter    		= gsl_vector_alloc(lengthALL_F);
-			
-			gsl_matrix_get_row(library_collection->optimal_filtersFREQ[it].ofilter,matrixALL_OFFx,it);
-			
-			library_collection->optimal_filtersTIME[it].energy		= gsl_vector_get(library_collection->energies,it);
-			library_collection->optimal_filtersTIME[it].ofilter_duration 	= lengthALL_T;
-			library_collection->optimal_filtersTIME[it].ofilter    		= gsl_vector_alloc(lengthALL_T);
-			
-			gsl_matrix_get_row(library_collection->optimal_filtersTIME[it].ofilter,matrixALL_OFTx,it);
-			
-			if (it < ntemplates-1)
-			{
-				library_collection->optimal_filtersabFREQ[it].energy		= gsl_vector_get(library_collection->energies,it);
-				library_collection->optimal_filtersabFREQ[it].ofilter_duration  = lengthALL_F;
-				library_collection->optimal_filtersabFREQ[it].ofilter    	= gsl_vector_alloc(lengthALL_F);
-				
-				gsl_matrix_get_row(library_collection->optimal_filtersabFREQ[it].ofilter,matrixALLab_OFFx,it);
-				
-				library_collection->optimal_filtersabTIME[it].energy		= gsl_vector_get(library_collection->energies,it);
-				library_collection->optimal_filtersabTIME[it].ofilter_duration	= lengthALL_F;
-				library_collection->optimal_filtersabTIME[it].ofilter    	= gsl_vector_alloc(lengthALL_T);
-				
-				gsl_matrix_get_row(library_collection->optimal_filtersabTIME[it].ofilter,matrixALLab_OFTx,it);
-				
-				gsl_matrix_get_row(vectorAux_PRCLWNx,matrixALL_PRCLWNx,it);
-				gsl_matrix_set_row(library_collection->PRECALWN,it,vectorAux_PRCLWNx);
-			}
-		}*/
 		gsl_matrix_free(matrixALL_OFFx);
 		gsl_matrix_free(matrixALL_OFTx);
 		gsl_matrix_free(matrixALLab_OFFx);
 		gsl_matrix_free(matrixALLab_OFTx);
 		gsl_matrix_free(matrixALL_PRCLWNx);
-		//gsl_vector_free(vectorAux_PRCLWNx);
-				
+
 		// PRCLOFWM HDU
 		strcpy(HDUname,"PRCLOFWM");
                 if (hduPRCLOFWM == 1)
@@ -2008,7 +1783,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 		gsl_matrix_free(matrixALL_PRCLOFWMx);
 	}
 
-	if ((mode == 1) && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0)
+	if ((mode == 1) && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0)                  || (strcmp(energy_method,"I2RNOL") == 0)
 	     || (strcmp(energy_method,"I2RFITTED") == 0)) && (strcmp(ofnoise,"NSD") == 0) && (oflib == 1))
 	{ 
 	  	char str_length[125];
@@ -2048,8 +1823,6 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 				*status=EPFAIL; return(library_collection);
 			}
 			library_collection->nfixedfilters = nOFs;
-			//cout<<"nOFs: "<<nOFs<<endl;
-			//cout<<"template_durationPLSMXLFF: "<<template_durationPLSMXLFF<<endl;
 		
 			int lengthALL_F = 0;
 			for (int i=0;i<nOFs;i++)
@@ -2061,13 +1834,11 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 				}
 				else	lengthALL_F = lengthALL_F + pow(2,floor(log2(template_duration))-i)*2;
 			}
-			//cout<<"lengthALL_F: "<<lengthALL_F<<endl;
 						
 			strcpy(obj.nameTable,"FIXFILTF");
 			
 			if (strcmp(*ofinterp,"MF") == 0)
 			{
-				//cout<<"MF"<<endl;
 				gsl_matrix *matrixALL_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
 				gsl_matrix *matrixAux_OFFx = NULL;
 				
@@ -2102,7 +1873,6 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 						for (int k=0;k<matrixAux_OFFx->size2;k++)
 						{
 							gsl_matrix_set(matrixALL_OFFx,j,k+index,gsl_matrix_get(matrixAux_OFFx,j,k));
-							//cout<<"gsl_matrix_get(matrixAux_OFFx,j,k): "<<j<<" "<<k<<" "<<gsl_matrix_get(matrixAux_OFFx,j,k)<<" "<<j<<" "<<k+index<<" "<<gsl_matrix_get(matrixALL_OFFx,j,k+index)<<endl;
 						}
 					}
 					
@@ -2370,8 +2140,6 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 		{
 			* status = 1;
 			EP_PRINT_ERROR("Error moving to HDU PRCLOFWM in library file, probably PRCLOFWM HDU does not exist",*status);
-			//* status = 1;
-			//EP_PRINT_ERROR("Error moving to HDU PRCLOFWM in library file",*status);
 			return(library_collection);
 		}
 		
@@ -2555,103 +2323,102 @@ LibraryCollection* getLibraryCollection(const char* const filename, int mode, in
 * Parameters:
 * - filename: File name with noise
 * - mode: Calibration run (0) or energy reconstruction run (1)
+* - hduPRCLOFWM: Add or not the PRCLOFWM HDU in the library file (1/0) 
 * - energy_method: Energy calculation Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED or PCA
+* - ofnoise: Noise to use with Optimal Filtering: NSD or WEIGHTM
 * - filter_method: Filtering Method: F0 (deleting the zero frequency bin) or F0 (deleting the baseline)
 * - status: Input/output status
 ******************************************************************************/
 NoiseSpec* getNoiseSpec(const char* const filename, int mode, int hduPRCLOFWM, char *energy_method, char *ofnoise, char *filter_method, int* const status)
 {
-  // Create NoiseSpec structure
-  NoiseSpec* noise_spectrum = new NoiseSpec;
-  //noise_spectrum->noise_duration = 0;
-  //noise_spectrum->noisespec  = NULL;
-  //noise_spectrum->noisefreqs = NULL;
-  
-  // Open FITS file in READONLY mode
-  fitsfile* fptr = NULL;
-  if(fits_open_file(&fptr, filename, READONLY, status))
-    {
-      EP_PRINT_ERROR("Error opening noise file",*status);
-      *status=EPFAIL; return(noise_spectrum);
-    }
-  
-  // Move to the NOISE HDU
-  int extver = 1;
-  char HDUname[12];
-  char keyname[10];
-  strcpy(HDUname,"NOISE");
-  if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
-    {
-      EP_PRINT_ERROR("Error moving to HDU NOISE in noise file",*status);
-      *status=EPFAIL;return(noise_spectrum);
-    }
-  strcpy(keyname,"NOISESTD");
-  if (fits_read_key(fptr,TDOUBLE,keyname, &noise_spectrum->noiseStd,NULL,status))
-    {
-      EP_PRINT_ERROR("Cannot read keyword NOISESTD",*status);
-      *status=EPFAIL;return(noise_spectrum);
-    }
-  
-  if ((mode == 0) ||
-      ((mode == 1) && (strcmp(filter_method,"B0") == 0) && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0)))
-      || ((mode == 1) && ((strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) || (strcmp(energy_method,"I2RFITTED") == 0)))
-      || ((mode == 1) && (strcmp(energy_method,"WEIGHT") == 0)))
-    {
-      strcpy(keyname,"BASELINE");
-      
-      if (fits_read_key(fptr,TDOUBLE,keyname, &noise_spectrum->baseline,NULL,status))
-        {
-          EP_PRINT_ERROR("Cannot read keyword BASELINE",*status);
-          *status=EPFAIL;return(noise_spectrum);
-        }
-    }
-  
-  if (strcmp(energy_method,"WEIGHT") != 0)
-    {
-      // Move to the NOISEALL hdu
-      strcpy(HDUname,"NOISEALL");
-      if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
-        {
-          EP_PRINT_ERROR("Error moving to HDU NOISEALL in noise file",*status);
-          *status=EPFAIL;return(noise_spectrum);
-        }
-      
-      // Get number of rows
-      long noise_duration;
-      if (fits_get_num_rows(fptr,&noise_duration, status))
-        {
-          EP_PRINT_ERROR("Cannot get number of rows in noise file",*status);
-          *status=EPFAIL;return(noise_spectrum);
-        }
-      if (noise_duration == 0)  
-        {     
-          EP_PRINT_ERROR("Number of rows in noise file is 0",EPFAIL); 
-          *status=EPFAIL; return(noise_spectrum);
-        }
-      noise_spectrum->noise_duration = noise_duration/2;
-      
-      // Allocate NoiseSpec structure
-      // It is not necessary to check the allocation because 'noise_duration' has been checked previously
-      noise_spectrum->noisespec  = gsl_vector_alloc(noise_duration);
-      noise_spectrum->noisefreqs = gsl_vector_alloc(noise_duration);
-      
-      // Get noise spectrum (CSD), and noise frequencies (FREQ) column numbers
-      char column_name[12];
-      int CSD_colnum = 0;
-      int FREQ_colnum = 0;
-      int anynul=0;
-      strcpy(column_name,"CSD");
-      if (fits_get_colnum(fptr, CASEINSEN,column_name, &CSD_colnum, status))
-        {
-          EP_PRINT_ERROR("Cannot get column number for CSD in noise file",*status);
-          *status=EPFAIL; return(noise_spectrum);
-        }
-      strcpy(column_name,"FREQ");
-      if (fits_get_colnum(fptr, CASEINSEN,column_name, &FREQ_colnum, status))
-        {
-          EP_PRINT_ERROR("Cannot get column number for FREQ in noise file", *status);
-          *status=EPFAIL; return(noise_spectrum);
-        }
+	// Create NoiseSpec structure
+	NoiseSpec* noise_spectrum = new NoiseSpec;
+	
+	// Open FITS file in READONLY mode
+	fitsfile* fptr = NULL;
+	if(fits_open_file(&fptr, filename, READONLY, status))
+	{
+	  	EP_PRINT_ERROR("Error opening noise file",*status);
+		*status=EPFAIL; return(noise_spectrum);
+	}
+	
+	// Move to the NOISE HDU
+	int extver = 1;
+	char HDUname[12];
+	char keyname[10];
+	strcpy(HDUname,"NOISE");
+	if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
+	{
+	  	EP_PRINT_ERROR("Error moving to HDU NOISE in noise file",*status);
+		*status=EPFAIL;return(noise_spectrum);
+	}
+	strcpy(keyname,"NOISESTD");
+	if (fits_read_key(fptr,TDOUBLE,keyname, &noise_spectrum->noiseStd,NULL,status))
+	{
+		EP_PRINT_ERROR("Cannot read keyword NOISESTD",*status);
+		*status=EPFAIL;return(noise_spectrum);
+	}
+	
+	if ((mode == 0) ||
+                ((mode == 1) && (strcmp(filter_method,"B0") == 0) && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0)))
+                || ((mode == 1) && ((strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) || (strcmp(energy_method,"I2RFITTED") == 0)))
+		|| ((mode == 1) && (strcmp(energy_method,"WEIGHT") == 0)))
+	{
+		strcpy(keyname,"BASELINE");
+		
+		if (fits_read_key(fptr,TDOUBLE,keyname, &noise_spectrum->baseline,NULL,status))
+		{
+			EP_PRINT_ERROR("Cannot read keyword BASELINE",*status);
+			*status=EPFAIL;return(noise_spectrum);
+		}
+	}
+	
+	if (strcmp(energy_method,"WEIGHT") != 0)
+	{
+		// Move to the NOISEALL hdu
+		strcpy(HDUname,"NOISEALL");
+		if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
+		{
+			EP_PRINT_ERROR("Error moving to HDU NOISEALL in noise file",*status);
+			*status=EPFAIL;return(noise_spectrum);
+		}
+		
+		// Get number of rows
+		long noise_duration;
+		if (fits_get_num_rows(fptr,&noise_duration, status))
+		{
+			EP_PRINT_ERROR("Cannot get number of rows in noise file",*status);
+			*status=EPFAIL;return(noise_spectrum);
+		}
+		if (noise_duration == 0)	
+		{	
+			EP_PRINT_ERROR("Number of rows in noise file is 0",EPFAIL); 
+			*status=EPFAIL; return(noise_spectrum);
+		}
+		noise_spectrum->noise_duration = noise_duration/2;
+		
+		// Allocate NoiseSpec structure
+		// It is not necessary to check the allocation because 'noise_duration' has been checked previously
+		noise_spectrum->noisespec  = gsl_vector_alloc(noise_duration);
+		noise_spectrum->noisefreqs = gsl_vector_alloc(noise_duration);
+		
+		// Get noise spectrum (CSD), and noise frequencies (FREQ) column numbers
+		char column_name[12];
+		int CSD_colnum = 0;
+		int FREQ_colnum = 0;
+		int anynul=0;
+		strcpy(column_name,"CSD");
+		if (fits_get_colnum(fptr, CASEINSEN,column_name, &CSD_colnum, status))
+		{
+			EP_PRINT_ERROR("Cannot get column number for CSD in noise file",*status);
+			*status=EPFAIL; return(noise_spectrum);
+		}
+		strcpy(column_name,"FREQ");
+		if (fits_get_colnum(fptr, CASEINSEN,column_name, &FREQ_colnum, status))
+		{
+			EP_PRINT_ERROR("Cannot get column number for FREQ in noise file", *status);
+			*status=EPFAIL; return(noise_spectrum);
+		}	
       
       // Read column CSD and save it into the structure
       IOData obj;
@@ -2671,79 +2438,78 @@ NoiseSpec* getNoiseSpec(const char* const filename, int mode, int hduPRCLOFWM, c
           *status=EPFAIL; return(noise_spectrum);
         }
       
-      // Read column FREQ and save it into the structure
-      strcpy(obj.nameCol,"FREQ");
-      if (readFitsSimple (obj,&noise_spectrum->noisefreqs))
-        {
-          EP_PRINT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",*status);
-          *status=EPFAIL; return(noise_spectrum);
-        }
-      
-      if (((mode == 0) && (hduPRCLOFWM == 1))
-          //if ((mode == 0) 
-          || ((mode == 1) && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || 
-                              (strcmp(energy_method,"I2RNOL") == 0) || (strcmp(energy_method,"I2RFITTED") == 0)) && (strcmp(ofnoise,"WEIGHTM") == 0)))
-        {
-          // Move to the WEIGHTMS hdu
-          strcpy(HDUname,"WEIGHTMS");
-          if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
-            {
-              EP_PRINT_ERROR("Error moving to HDU WEIGHTMS in noise file",*status);
-              *status=EPFAIL;return(noise_spectrum);
-            }
-          
-          // Get number of columns
-          int noiseW_numcols;
-          if (fits_get_num_cols(fptr,&noiseW_numcols, status))
-            {
-              EP_PRINT_ERROR("Cannot get number of columns in noise file (WEIGHTMS)",*status);
-              *status=EPFAIL;return(noise_spectrum);
-            }
-          noise_spectrum->weightMatrixes = gsl_matrix_alloc(noiseW_numcols,pow(2,noiseW_numcols)*pow(2,noiseW_numcols));
-          gsl_matrix_set_all(noise_spectrum->weightMatrixes,-999.0);
-          gsl_vector *weightpoints = gsl_vector_alloc(noiseW_numcols);
-          for (int i=0;i<weightpoints->size;i++)	gsl_vector_set(weightpoints,i,pow(2,noiseW_numcols-i));
-          
-          strcpy(obj.nameTable,"WEIGHTMS");
-          gsl_matrix *weightMatrixi;
-          char str_length[125];
-          for (int i=0;i<weightpoints->size;i++)
-            {
-              snprintf(str_length,125,"%d",(int) gsl_vector_get(weightpoints,i));
-              strcpy(obj.nameCol,(string("W")+string(str_length)).c_str());
-              obj.type = TDOUBLE;
-              obj.iniRow = 1;
-              obj.endRow = 1;
-              weightMatrixi = gsl_matrix_alloc(1,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
-              if (readFitsComplex (obj,&weightMatrixi))
-                {
-                  EP_PRINT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",*status);
-                  *status=EPFAIL; return(noise_spectrum);
-                }
-              
-              if (i == 0) 	
-                {
-                  gsl_vector *vectoraux = gsl_vector_alloc(weightMatrixi->size2);
-                  gsl_matrix_get_row(vectoraux,weightMatrixi,0);
-                  gsl_matrix_set_row(noise_spectrum->weightMatrixes,0,vectoraux);
-                  gsl_vector_free(vectoraux); vectoraux = 0;
-                }
-              else
-                {
-                  for (int j=0;j<gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i);j++)
-                    {
-                      gsl_matrix_set(noise_spectrum->weightMatrixes,i,j,gsl_matrix_get(weightMatrixi,0,j));
-                    }
-                }
-              
-              gsl_matrix_free(weightMatrixi); weightMatrixi = 0;
-            }
-        }
-      
-      delete [] obj.nameTable; obj.nameTable = 0;
-      delete [] obj.nameCol; obj.nameCol = 0;
-      delete [] obj.unit; obj.unit = 0;
-    }
+		// Read column FREQ and save it into the structure
+		strcpy(obj.nameCol,"FREQ");
+		if (readFitsSimple (obj,&noise_spectrum->noisefreqs))
+		{
+			EP_PRINT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",*status);
+			*status=EPFAIL; return(noise_spectrum);
+		}
+		
+		if (((mode == 0) && (hduPRCLOFWM == 1))
+			|| ((mode == 1) && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || 
+			(strcmp(energy_method,"I2RNOL") == 0) || (strcmp(energy_method,"I2RFITTED") == 0)) && (strcmp(ofnoise,"WEIGHTM") == 0)))
+		{
+			// Move to the WEIGHTMS hdu
+			strcpy(HDUname,"WEIGHTMS");
+			if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
+			{
+				EP_PRINT_ERROR("Error moving to HDU WEIGHTMS in noise file",*status);
+				*status=EPFAIL;return(noise_spectrum);
+			}
+			
+			// Get number of columns
+			int noiseW_numcols;
+			if (fits_get_num_cols(fptr,&noiseW_numcols, status))
+			{
+				EP_PRINT_ERROR("Cannot get number of columns in noise file (WEIGHTMS)",*status);
+				*status=EPFAIL;return(noise_spectrum);
+			}
+			noise_spectrum->weightMatrixes = gsl_matrix_alloc(noiseW_numcols,pow(2,noiseW_numcols)*pow(2,noiseW_numcols));
+			gsl_matrix_set_all(noise_spectrum->weightMatrixes,-999.0);
+			gsl_vector *weightpoints = gsl_vector_alloc(noiseW_numcols);
+			for (int i=0;i<weightpoints->size;i++)	gsl_vector_set(weightpoints,i,pow(2,noiseW_numcols-i));
+			  
+			strcpy(obj.nameTable,"WEIGHTMS");
+			gsl_matrix *weightMatrixi;
+			char str_length[125];
+			for (int i=0;i<weightpoints->size;i++)
+			{
+				snprintf(str_length,125,"%d",(int) gsl_vector_get(weightpoints,i));
+				strcpy(obj.nameCol,(string("W")+string(str_length)).c_str());
+				obj.type = TDOUBLE;
+				obj.iniRow = 1;
+				obj.endRow = 1;
+				weightMatrixi = gsl_matrix_alloc(1,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
+				if (readFitsComplex (obj,&weightMatrixi))
+				{
+					EP_PRINT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",*status);
+					*status=EPFAIL; return(noise_spectrum);
+				}
+				
+				if (i == 0) 	
+				{
+					  gsl_vector *vectoraux = gsl_vector_alloc(weightMatrixi->size2);
+					  gsl_matrix_get_row(vectoraux,weightMatrixi,0);
+					  gsl_matrix_set_row(noise_spectrum->weightMatrixes,0,vectoraux);
+					  gsl_vector_free(vectoraux);
+				}
+				else
+				{
+					for (int j=0;j<gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i);j++)
+					{
+						gsl_matrix_set(noise_spectrum->weightMatrixes,i,j,gsl_matrix_get(weightMatrixi,0,j));
+					}
+				}
+				
+				gsl_matrix_free(weightMatrixi);
+			}
+		}
+		
+		delete [] obj.nameTable;
+		delete [] obj.nameCol;
+		delete [] obj.unit;
+	}
   
   if (fits_close_file(fptr, status))
     {

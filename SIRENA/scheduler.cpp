@@ -656,7 +656,7 @@ void scheduler::init_v2()
 }
 
 scheduler::scheduler():
-  threading(true),
+  threading(false),
   num_cores(0),
   max_detection_workers(0),
   max_energy_workers(0),
