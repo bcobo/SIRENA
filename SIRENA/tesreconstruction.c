@@ -202,6 +202,7 @@ int tesreconstruction_main() {
                  event_list->grades2[i],
                  event_list->ph_ids[i]);
         }
+        //continue;
         saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
         CHECK_STATUS_BREAK(status);
         //++i;

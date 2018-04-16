@@ -359,6 +359,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
   if (scheduler::get()->is_threading() 
       && reconstruct_init->mode == 1
       && (strcmp(reconstruct_init->EnergyMethod, "PCA") != 0)){
+    printf("asdfasdf\n");
     log_trace("Threading mode...");
     ReconstructInitSIRENA* rec = reconstruct_init->get_threading_object(nRecord);
     scheduler::get()->push_detection(record, nRecord, lastRecord, 
