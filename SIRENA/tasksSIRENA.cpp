@@ -8792,7 +8792,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 								EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 							}
 							xmax = -b/(2*a);
-							*tstartNewDev = xmax;
+							//*tstartNewDev = xmax;
+                                                        *tstartNewDev = indexmax - floor(numlags/2) + xmax;
 							*calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
                                                         
                                                         gsl_vector_free(lags);
@@ -8872,7 +8873,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 								EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 							}
 							xmax = -b/(2*a);
-							*tstartNewDev = xmax;
+							*tstartNewDev = indexmax - floor(numlags/2) + xmax;
 							*calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
                                                         
                                                         gsl_vector_free(lags);
@@ -8881,6 +8882,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 						else
                                                         *calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,indexmax);
                                                 //cout<<"xmax: "<<xmax<<endl;
+                                                //cout<<"*tstartNewDev: "<<*tstartNewDev<<endl;
                                                 
                                                 gsl_vector_free(calculatedEnergy_vectorABS);
 					}
