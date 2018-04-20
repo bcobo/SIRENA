@@ -6541,7 +6541,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 	double energy;
 	double tstartNewDev = -999.0;    	// Deviation of the starting of the pulses (in samples) respect to the tstart calculated
 	//int numlags = 3; 			// Must be odd
-	int numlags = 5; 			// Must be odd
+	int numlags = 7; 			// Must be odd
 
 	double Ealpha, Ebeta;
 	gsl_vector *optimalfilter = NULL;	// Resized optimal filter expressed in the time domain (optimalfilter(t))
@@ -7040,6 +7040,9 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 			EP_EXIT_ERROR(message,EPFAIL);
 		}
 		
+		tstartJITTER = ((*pulsesInRecord)->pulses_detected[i].Tstart-record->time)/record->delta_t;
+		shift = tstartJITTER - tstartSamplesRecord;
+		//cout<<"shiftFIN: "<<shift<<endl;
 		// In order to subtract the pulse model, it has to be located in the tstart with jitter and know its values in the digitized samples
 		gsl_vector *modelToSubtract = gsl_vector_alloc(model->size);
 		for (int j=0;j<model->size;j++)
@@ -8873,6 +8876,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 								EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 							}
 							xmax = -b/(2*a);
+                                                        //cout<<"xmax= "<<xmax<<endl;
 							*tstartNewDev = indexmax - floor(numlags/2) + xmax;
 							*calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
                                                         
@@ -8881,8 +8885,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 						}
 						else
                                                         *calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,indexmax);
-                                                //cout<<"xmax: "<<xmax<<endl;
                                                 //cout<<"*tstartNewDev: "<<*tstartNewDev<<endl;
+                                                //cout<<"*calculatedEnergy: "<<*calculatedEnergy<<endl;
                                                 
                                                 gsl_vector_free(calculatedEnergy_vectorABS);
 					}
