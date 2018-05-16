@@ -8701,11 +8701,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
         *tstartNewDev = 0;
     
         
-        
-        
         int numlags = 3;
-        
-        
         
         
         double calculatedEnergy2 = 0.0;
@@ -8825,7 +8821,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                 int indexLags = 0;
                                                 int newLag = 0;
                                                 double newEnergy;
-                                                //gsl_vector *calculatedEnergy
+                                                //cout<<"indexmax= "<<indexmax<<endl;
                                                 indexmax = gsl_vector_max_index(calculatedEnergy_vectorABS);
                                                 if (indexmax == 1)  
                                                 {
@@ -8898,8 +8894,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                 }
                                                                 else
                                                                         indexmax = gsl_vector_max_index(calculatedEnergy_vectorABS);
-                                                                               
-                                                        } while ((exitLags == false) || (indexLags >= numlagsOUT/2-1));
+                                                        } while ((exitLags == false) && (indexLags < numlagsOUT/2-1));
                                                 }  
                                                 
                                                 xmax = -b/(2*a);
