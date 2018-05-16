@@ -143,11 +143,11 @@ int tesreconstruction_main() {
       {
 	    nrecord = nrecord + 1;
 	    if(nrecord == record_file->nrows) lastRecord=1;
-	    /*if(nrecord < 921) 
+	    /*if(nrecord < 10) 
             {
 	      continue;
 	    }
-            else if(nrecord > 921)
+            else if(nrecord > 10)
             {
 	      status=1;
 	      CHECK_STATUS_BREAK(status);
@@ -162,7 +162,7 @@ int tesreconstruction_main() {
 	    	strcpy(reconstruct_init_sirena->EnergyMethod,par.EnergyMethod);
 	    }
 	
-	    printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
+	    //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
 	    reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
 				    lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
       }
@@ -172,7 +172,7 @@ int tesreconstruction_main() {
       {
 	  saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
 	  CHECK_STATUS_BREAK(status);
-	  
+          
 	  //Reinitialize event list
 	  event_list->index=0;
       }

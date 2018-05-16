@@ -6542,7 +6542,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 	double energy;
 	double tstartNewDev = -999.0;    	// Deviation of the starting of the pulses (in samples) respect to the tstart calculated
 	//int numlags = 3; 			// Must be odd
-	int numlags = 7; 			// Must be odd
+	int numlags = 9; 			// Must be odd
 
 	double Ealpha, Ebeta;
 	gsl_vector *optimalfilter = NULL;	// Resized optimal filter expressed in the time domain (optimalfilter(t))
@@ -8692,13 +8692,21 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 * - numlags: Number of lags (if OPTFILT, I2R, I2RALL, I2RNAL or I2RFITTED and NSD)
 * - tstartNewDev: Additional deviation of the tstart (if lags)
 ****************************************************************************/
-int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy, int numlags, double *tstartNewDev)
+int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy, int numlagsOUT, double *tstartNewDev)
 {
         string message = "";
 	char valERROR[256];
 
 	double LagsOrNot = reconstruct_init->LagsOrNot;
         *tstartNewDev = 0;
+    
+        
+        
+        
+        int numlags = 3;
+        
+        
+        
         
         double calculatedEnergy2 = 0.0;
 	
@@ -8763,9 +8771,12 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 					{
 						for (int i=0;i<filter->size;i++)
 						{
-							gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i+j)*gsl_vector_get(filter,i));
+							gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i+numlagsOUT/2+j-1)*gsl_vector_get(filter,i));
+                                                        //gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i+j)*gsl_vector_get(filter,i));
+                                                        //if (j==1) cout<<i<<" "<<gsl_vector_get(vector,i+numlagsOUT/2+j-1)<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
 						}
 						gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)*2*SelectedTimeDuration);
+                                                //cout<<"calculatedEnergy_vector("<<j<<"): "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
 					}
 
 					//if ((pulseGrade == 4) || (LagsOrNot == 0))	*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,0);
@@ -8778,7 +8789,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                                                     
                                                 int indexmax = gsl_vector_max_index(calculatedEnergy_vectorABS);
 
-						//if (indexmax == 1)
+						/*//if (indexmax == 1)
                                                  if (indexmax < numlags-1)
 						{
                                                         gsl_vector *lags = gsl_vector_alloc(3);
@@ -8789,7 +8800,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                         temp = gsl_vector_subvector(calculatedEnergy_vector,indexmax-1,3);
                                                         gsl_vector_memcpy(SUBcalculatedEnergy_vector,&temp.vector);
                                                         
-							//if (parabola3Pts (lags_vector, calculatedEnergy_vector, &a, &b, &c))
+							//if (parabola3Pts (lags_vector, calculatedEnergy_vector, &a, &b, &c))      !!!!!! No tendría que ser con calculatedEnergy_vectorABS??????
                                                         if (parabola3Pts (lags, SUBcalculatedEnergy_vector, &a, &b, &c))
 							{
 								message = "Cannot run routine parabola3Pts";
@@ -8805,6 +8816,109 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 						}
 						else
 							*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,indexmax);
+                                                cout<<"*tstartNewDev0= "<<*tstartNewDev<<endl;*/
+                                                
+                                                
+                                                
+                                                
+                                                bool exitLags = false;
+                                                int indexLags = 0;
+                                                int newLag = 0;
+                                                double newEnergy;
+                                                //gsl_vector *calculatedEnergy
+                                                indexmax = gsl_vector_max_index(calculatedEnergy_vectorABS);
+                                                if (indexmax == 1)  
+                                                {
+                                                        if (parabola3Pts (lags_vector, calculatedEnergy_vectorABS, &a, &b, &c))
+                                                        {
+                                                                message = "Cannot run routine parabola3Pts";
+                                                                EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                                                        }
+                                                }
+                                                else
+                                                {
+                                                        do
+                                                        {  
+                                                                indexLags = indexLags + 1;
+                                                                if (indexmax == 0)  
+                                                                {      
+                                                                        newLag = gsl_vector_get(lags_vector,0)-indexLags;
+                                                                        gsl_vector_set(calculatedEnergy_vectorABS,2,gsl_vector_get(calculatedEnergy_vectorABS,1));
+                                                                        gsl_vector_set(calculatedEnergy_vectorABS,1,gsl_vector_get(calculatedEnergy_vectorABS,0));
+                                                                }
+                                                                else    
+                                                                {
+                                                                        newLag = gsl_vector_get(lags_vector,2)+indexLags;
+                                                                        gsl_vector_set(calculatedEnergy_vectorABS,0,gsl_vector_get(calculatedEnergy_vectorABS,1));
+                                                                        gsl_vector_set(calculatedEnergy_vectorABS,1,gsl_vector_get(calculatedEnergy_vectorABS,2));
+                                                                }
+                                                                //cout<<"indexmax= "<<indexmax<<endl;
+                                                                //cout<<"newLag= "<<newLag<<endl;
+                                                                               
+                                                                newEnergy = 0.0;
+                                                                for (int k=0;k<filter->size;k++)
+                                                                {
+                                                                        newEnergy = newEnergy + gsl_vector_get(vector,numlagsOUT/2+newLag+k)*gsl_vector_get(filter,k);
+                                                                        //cout<<k<<" "<<gsl_vector_get(vector,k+5)<<" "<<gsl_vector_get(filter,k)<<" "<<newEnergy<<endl;
+                                                                }
+                                                                newEnergy = fabs(newEnergy*2*SelectedTimeDuration);
+                                                                
+                                                                if (indexmax == 0)
+                                                                {
+                                                                        if (newEnergy < gsl_vector_get(calculatedEnergy_vectorABS,1))
+                                                                        {
+                                                                                exitLags = true;
+                                                                                gsl_vector_set(lags_vector,0,newLag);
+                                                                                gsl_vector_set(lags_vector,1,newLag+1);
+                                                                                gsl_vector_set(lags_vector,2,newLag+2);
+                                                                        }
+                                                                        gsl_vector_set(calculatedEnergy_vectorABS,0,newEnergy);
+                                                                }
+                                                                else    
+                                                                {      
+                                                                       if (newEnergy < gsl_vector_get(calculatedEnergy_vectorABS,1))
+                                                                       {
+                                                                                exitLags = true;
+                                                                                gsl_vector_set(lags_vector,2,newLag);
+                                                                                gsl_vector_set(lags_vector,1,newLag-1);
+                                                                                gsl_vector_set(lags_vector,0,newLag-2);
+                                                                        }
+                                                                        gsl_vector_set(calculatedEnergy_vectorABS,2,newEnergy);
+                                                                }
+                                                                
+                                                                //cout<<gsl_vector_get(calculatedEnergy_vectorABS,0)<<" "<<gsl_vector_get(calculatedEnergy_vectorABS,1)<<" "<<gsl_vector_get(calculatedEnergy_vectorABS,2)<<endl;
+                                                                               
+                                                                if (exitLags == true)
+                                                                {
+                                                                        if (parabola3Pts (lags_vector, calculatedEnergy_vectorABS, &a, &b, &c))
+                                                                        {
+                                                                                message = "Cannot run routine parabola3Pts";
+                                                                                EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                                                                        }
+                                                                }
+                                                                else
+                                                                        indexmax = gsl_vector_max_index(calculatedEnergy_vectorABS);
+                                                                               
+                                                        } while ((exitLags == false) || (indexLags >= numlagsOUT/2-1));
+                                                }  
+                                                
+                                                xmax = -b/(2*a);
+                                                //cout<<"xmax= "<<xmax<<endl;
+                                                *tstartNewDev = xmax;
+                                                //cout<<"*tstartNewDev= "<<*tstartNewDev<<endl;
+						*calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
+                                                //cout<<"*calculatedEnergy= "<<*calculatedEnergy<<endl;
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
                                                 
                                                 gsl_vector_free(calculatedEnergy_vectorABS);
 					}
