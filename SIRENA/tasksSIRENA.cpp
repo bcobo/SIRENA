@@ -6977,7 +6977,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 			if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && tstartNewDev != -999.0)
 			{
 				(*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + tstartNewDev*record->delta_t; // In seconds
-				if (tstartNewDev != 0) (*pulsesInRecord)->pulses_detected[i].grade1 = (*pulsesInRecord)->pulses_detected[i].grade1 - floor(fabs(tstartNewDev)+0.5);
+				//if (tstartNewDev != 0) (*pulsesInRecord)->pulses_detected[i].grade1 = (*pulsesInRecord)->pulses_detected[i].grade1 - floor(fabs(tstartNewDev)+0.5);
 			}
 			//cout<<"Tstart1: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
 			//cout<<"Tstart1: "<<endl;
@@ -8745,6 +8745,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 					gsl_vector_set(lags_vector,i,-numlags/2+i);
 				}
 			}
+			//cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<endl;
 			
 			int index_vector;
 			// It is not necessary to check the allocation because 'numlags' has been fixed > 0 (1 or 5)
@@ -8941,7 +8942,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 						}
 						//gsl_vector_set(calculatedEnergy_vector,j,GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j)));
 						gsl_vector_set(calculatedEnergy_vector,j,fabs(GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j))));
-                                                //cout<<j<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
+                                                //cout<<gsl_vector_get(lags_vector,j)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
 					}
 										
 					//if ((pulseGrade == 4) || (LagsOrNot == 0))
@@ -9040,6 +9041,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                         //gsl_vector_complex_set(calculatedEnergy_vectorcomplex,j,gsl_complex_add(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j),gsl_complex_mul(gsl_vector_complex_get(vectorFFT,i),gsl_vector_complex_get(filterFFT,i))));
                                                                 }
                                                                 newEnergy = fabs(GSL_REAL(newEnergyComplex));
+                                                                //cout<<"newEnergy: "<<newEnergy<<endl;
                                                                 //gsl_vector_set(calculatedEnergy_vector,j,fabs(GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j))));
                                                                 
                                                                 if (indexmax == 0)
@@ -9065,7 +9067,9 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                         gsl_vector_set(calculatedEnergy_vector,2,newEnergy);
                                                                 }
                                                                 
-                                                                //cout<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;
+                                                                /*cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,0)<<endl;
+                                                                cout<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<endl;
+                                                                cout<<gsl_vector_get(lags_vector,2)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;*/
                                                                                
                                                                 if (exitLags == true)
                                                                 {
