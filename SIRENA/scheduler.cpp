@@ -37,11 +37,12 @@ void detection_worker()
     if(detection_queue.wait_and_pop(data)){
       //ReconstructInitSIRENA* aux = &data.rec_init;
       log_trace("Extracting detection data from queue...");
-      th_runDetect(data->rec,
-                   data->n_record,data->last_record,
-                   data->all_pulses,
-                   &(data->rec_init),
-                   &(data->record_pulses));
+      runDetect(data->rec,
+                //data->n_record,
+                data->last_record,
+                data->all_pulses,
+                &(data->rec_init),
+                &(data->record_pulses));
       detected_queue.push(data);
       std::unique_lock<std::mutex> lk(records_detected_mut);
       ++records_detected;
@@ -64,7 +65,7 @@ void energy_worker()
     if(energy_queue.wait_and_pop(data)){
       log_trace("Extracting energy data from queue...");
       log_debug("Energy data in record %i",data->n_record);
-      th_runEnergy(data->rec, 
+      runEnergy(data->rec, 
                    &(data->rec_init),
                    &(data->record_pulses),//copy
                    &(data->optimal_filter));
@@ -90,7 +91,7 @@ void energy_worker_v2()
     if(detected_queue.wait_and_pop(data)){
       log_trace("Extracting energy data from queue...");
       log_debug("Energy data in record %i",data->n_record);
-      th_runEnergy(data->rec, 
+      runEnergy(data->rec, 
                    &(data->rec_init),
                    &(data->record_pulses),//copy
                    &(data->optimal_filter));
@@ -607,6 +608,7 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
 
 void scheduler::get_test_event(TesEventList** test_event, TesRecord** record)
 {
+  if(this->current_record == 100) return;
   log_trace("Getting eventlist from record %i", (this->current_record + 1));
   *test_event = this->data_array[this->current_record]->event_list;
   *record = this->data_array[this->current_record]->rec;
@@ -617,6 +619,7 @@ void scheduler::init()
 {
   if(threading){
     this->num_cores = std::thread::hardware_concurrency();
+    this->num_cores = 1;
     if(this->num_cores < 2){
       this->max_detection_workers = 1;
     }else{
@@ -634,6 +637,7 @@ void scheduler::init_v2()
 {
   if(threading){
     this->num_cores = std::thread::hardware_concurrency();
+    this->num_cores = 1;
     if(this->num_cores < 2){
       this->max_detection_workers = 1;
       this->max_energy_workers = 1;
@@ -656,7 +660,7 @@ void scheduler::init_v2()
 }
 
 scheduler::scheduler():
-  threading(false),
+  threading(true),
   num_cores(0),
   max_detection_workers(0),
   max_energy_workers(0),
@@ -667,7 +671,7 @@ scheduler::scheduler():
   current_record(0),
   data_array(0)
 {
-  this->init();
+  this->init_v2();
 }
 
 scheduler::~scheduler()

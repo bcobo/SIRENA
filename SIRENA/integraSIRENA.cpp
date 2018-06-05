@@ -2544,7 +2544,7 @@ void th_end(ReconstructInitSIRENA* reconstruct_init,
   if(strcmp(reconstruct_init->EnergyMethod,"PCA") != 0){
     scheduler::get()->set_is_running_energy(true);
   }
-  scheduler::get()->finish_reconstruction(reconstruct_init, 
+  scheduler::get()->finish_reconstruction_v2(reconstruct_init, 
                                           pulsesAll, optimalFilter);
   //delete scheduler::get();
 }
