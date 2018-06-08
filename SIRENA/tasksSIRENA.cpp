@@ -8700,9 +8700,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 	double LagsOrNot = reconstruct_init->LagsOrNot;
         *tstartNewDev = 0;
     
-        
         int numlags = 3;
-        
         
         double calculatedEnergy2 = 0.0;
 	
@@ -8764,7 +8762,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 				if ((numlags == 0) && (vector->size != filter->size)) *calculatedEnergy = 0.0;
 				else
 				{
-					for (int j=0;j<numlags;j++)
+					/*for (int j=0;j<numlags;j++)
 					{
 						for (int i=0;i<filter->size;i++)
 						{
@@ -8775,12 +8773,37 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 						//gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)*2*SelectedTimeDuration);
 						gsl_vector_set(calculatedEnergy_vector,j,fabs(gsl_vector_get(calculatedEnergy_vector,j)*2*SelectedTimeDuration));
                                                 //cout<<"calculatedEnergy_vector("<<j<<"): "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
-					}
+					}*/
 
 					//if ((pulseGrade == 4) || (LagsOrNot == 0))	*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,0);
-					if (LagsOrNot == 0)    *calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,0);
+					if (LagsOrNot == 0)   
+                                        {
+                                                
+                                                for (int i=0;i<filter->size;i++)
+                                                {
+                                                    gsl_vector_set(calculatedEnergy_vector,0,gsl_vector_get(calculatedEnergy_vector,0)+gsl_vector_get(vector,i+0)*gsl_vector_get(filter,i));
+                                                    //if (j==1) cout<<i<<" "<<gsl_vector_get(vector,i+numlagsOUT/2+j-1)<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
+                                                }
+                                                //gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)*2*SelectedTimeDuration);
+                                                gsl_vector_set(calculatedEnergy_vector,0,fabs(gsl_vector_get(calculatedEnergy_vector,0)*2*SelectedTimeDuration));
+                                                    
+                                                *calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,0);
+                                                
+                                        }
 					else
 					{
+                                                for (int j=0;j<numlags;j++)
+                                                {
+                                                        for (int i=0;i<filter->size;i++)
+                                                        {
+                                                                gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i+numlagsOUT/2+j-1)*gsl_vector_get(filter,i));
+                                                                //gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i+j)*gsl_vector_get(filter,i));
+                                                                //if (j==1) cout<<i<<" "<<gsl_vector_get(vector,i+numlagsOUT/2+j-1)<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
+                                                        }
+                                                        //gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)*2*SelectedTimeDuration);
+                                                        gsl_vector_set(calculatedEnergy_vector,j,fabs(gsl_vector_get(calculatedEnergy_vector,j)*2*SelectedTimeDuration));
+                                                        //cout<<"calculatedEnergy_vector("<<j<<"): "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
+                                                }
                                                 /*gsl_vector *calculatedEnergy_vectorABS = gsl_vector_alloc(calculatedEnergy_vector->size);
                                                 for (int j=0;j<numlags;j++)    
                                                         gsl_vector_set(calculatedEnergy_vectorABS,j,fabs(gsl_vector_get(calculatedEnergy_vector,j)));*/
@@ -8922,11 +8945,15 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 
 					*calculatedEnergy = 0.0;
 
-                                        //gsl_vector_view temp;
+                                        /*//gsl_vector_view temp;
 					for (int j=0;j<numlags;j++)
 					{
 						gsl_vector  *vectorSHORT = gsl_vector_alloc(filterFFT->size);
 						//temp = gsl_vector_subvector(vector,j,filterFFT->size);
+                                                cout<<"vector->size: "<<vector->size<<endl;
+                                                cout<<"numlagsOUT: "<<numlagsOUT<<endl;
+                                                cout<<"numlagsOUT/2+j-1: "<<numlagsOUT/2+j-1<<endl;
+                                                cout<<"filterFFT->size: "<<filterFFT->size<<endl;
                                                 temp = gsl_vector_subvector(vector,numlagsOUT/2+j-1,filterFFT->size);
 						gsl_vector_memcpy(vectorSHORT,&temp.vector);
 						if (FFT(vectorSHORT,vectorFFT,SelectedTimeDuration))
@@ -8942,16 +8969,54 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 						}
 						//gsl_vector_set(calculatedEnergy_vector,j,GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j)));
 						gsl_vector_set(calculatedEnergy_vector,j,fabs(GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j))));
-                                                //cout<<gsl_vector_get(lags_vector,j)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
-					}
+                                                cout<<gsl_vector_get(lags_vector,j)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
+					}*/
 										
 					//if ((pulseGrade == 4) || (LagsOrNot == 0))
 					if (LagsOrNot == 0)
                                         {
+                                                gsl_vector  *vectorSHORT = gsl_vector_alloc(filterFFT->size);
+                                                temp = gsl_vector_subvector(vector,0,filterFFT->size);
+                                                gsl_vector_memcpy(vectorSHORT,&temp.vector);
+                                                if (FFT(vectorSHORT,vectorFFT,SelectedTimeDuration))
+                                                {
+                                                    message = "Cannot run routine FFT";
+                                                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                                                }
+                                                gsl_vector_free(vectorSHORT);
+                                                
+                                                for (int i=0; i<filterFFT->size; i++)
+                                                {
+                                                    gsl_vector_complex_set(calculatedEnergy_vectorcomplex,0,gsl_complex_add(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,0),gsl_complex_mul(gsl_vector_complex_get(vectorFFT,i),gsl_vector_complex_get(filterFFT,i))));
+                                                }
+                                                //gsl_vector_set(calculatedEnergy_vector,j,GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j)));
+                                                gsl_vector_set(calculatedEnergy_vector,0,fabs(GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,0))));
+                                                //cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,0)<<endl;
+                                                					
                                                 *calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,0);
                                         }
 					else
 					{
+                                                for (int j=0;j<numlags;j++)
+                                                {
+                                                        gsl_vector  *vectorSHORT = gsl_vector_alloc(filterFFT->size);
+                                                        temp = gsl_vector_subvector(vector,numlagsOUT/2+j-1,filterFFT->size);
+                                                        gsl_vector_memcpy(vectorSHORT,&temp.vector);
+                                                        if (FFT(vectorSHORT,vectorFFT,SelectedTimeDuration))
+                                                        {
+                                                                message = "Cannot run routine FFT";
+                                                                EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                                                        }
+                                                        gsl_vector_free(vectorSHORT);
+                                                
+                                                        for (int i=0; i<filterFFT->size; i++)
+                                                        {
+                                                                gsl_vector_complex_set(calculatedEnergy_vectorcomplex,j,gsl_complex_add(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j),gsl_complex_mul(gsl_vector_complex_get(vectorFFT,i),gsl_vector_complex_get(filterFFT,i))));
+                                                        }
+                                                        //gsl_vector_set(calculatedEnergy_vector,j,GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j)));
+                                                        gsl_vector_set(calculatedEnergy_vector,j,fabs(GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j))));
+                                                        //cout<<gsl_vector_get(lags_vector,j)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
+                                                }
                                                 /*gsl_vector *calculatedEnergy_vectorABS = gsl_vector_alloc(calculatedEnergy_vector->size);
                                                 for (int j=0;j<numlags;j++)    
                                                         gsl_vector_set(calculatedEnergy_vectorABS,j,fabs(gsl_vector_get(calculatedEnergy_vector,j)));*/
