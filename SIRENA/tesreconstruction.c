@@ -138,11 +138,11 @@ int tesreconstruction_main() {
       {
 	    nrecord = nrecord + 1;
 	    if(nrecord == record_file->nrows) lastRecord=1;
-	    /*if(nrecord < 921) 
+	    /*if(nrecord < 10) 
             {
 	      continue;
 	    }
-            else if(nrecord > 921)
+            else if(nrecord > 10)
             {
 	      status=1;
 	      CHECK_STATUS_BREAK(status);
@@ -179,7 +179,7 @@ int tesreconstruction_main() {
         if(!is_threading()){
 	  saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
 	  CHECK_STATUS_BREAK(status);
-	  
+          
 	  //Reinitialize event list
 	  event_list->index=0;
         }
@@ -529,6 +529,8 @@ int getpar(struct Parameters* const par)
 		(strcmp(par->EnergyMethod,"I2RFITTED") == 0) || (strcmp(par->EnergyMethod,"PCA") == 0), "EnergyMethod must be OPTFILT, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED or PCA");
 	
 	MyAssert((strcmp(par->OFNoise,"NSD") == 0) || (strcmp(par->OFNoise,"WEIGHTM") == 0), "OFNoise must be NSD or WEIGHTM");
+        
+        MyAssert((strcmp(par->detectionMode,"AD") == 0) || (strcmp(par->detectionMode,"STC") == 0), "detectionMode must be AD or STC");
 	
 	MyAssert((par->LagsOrNot ==0) || (par->LagsOrNot ==1), "LagsOrNot must me 0 or 1");
 
