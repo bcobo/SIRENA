@@ -9,7 +9,7 @@
 #undef log_error
 #undef log_fatal
 
-#define LOG
+//#define LOG
 
 #ifndef LOG
 

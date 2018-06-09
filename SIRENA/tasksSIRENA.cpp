@@ -791,8 +791,6 @@ void th_runDetect(TesRecord* record,
   // Convert I into R if 'EnergyMethod' = I2R or I2RALL or I2RNOL or I2RFITTED
   // It is not necessary to check the allocation because 'invector' 
   // size must be > 0
-  gsl_vector *invectorWithoutConvert2R = gsl_vector_alloc(invector->size);
-  gsl_vector_memcpy(invectorWithoutConvert2R,invector);
   if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) 
       || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) 
       || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
@@ -831,7 +829,6 @@ void th_runDetect(TesRecord* record,
       EP_EXIT_ERROR(message,EPFAIL);
     }
   
-  gsl_vector_free(invectorWithoutConvert2R); invectorWithoutConvert2R = 0;
   if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) 
       || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) 
       || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
@@ -7739,12 +7736,6 @@ void th_runEnergy(TesRecord* record,
 	char valERROR[256];
 
 	fitsfile *dtcObject = NULL;	    // FITS object containing information of the intermediate output FITS file
-	if ((*reconstruct_init)->intermediate == 1)
-	{
-		char dtcName[256];
-		strncpy(dtcName,(*reconstruct_init)->detectFile,255);
-		dtcName[255]='\0';
-	}
 
 	int TorF;
 	if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		// Time
@@ -7803,7 +7794,7 @@ void th_runEnergy(TesRecord* record,
 
 	double energy;
 	double tstartNewDev = -999.0;    	// Deviation of the starting of the pulses (in samples) respect to the tstart calculated
-	int numlags = 3; 			// Must be odd
+	int numlags = 9; 			// Must be odd
 
 	double Ealpha, Ebeta;
 	gsl_vector *optimalfilter = NULL;	// Resized optimal filter expressed in the time domain (optimalfilter(t))
@@ -8232,13 +8223,13 @@ void th_runEnergy(TesRecord* record,
 			gsl_vector_free(pulseToCalculateEnergy); pulseToCalculateEnergy = 0;
                         
                         //cout<<"Tstart0: "<<endl;
-                        std::cout << std::setprecision(15) << (*pulsesInRecord)->pulses_detected[i].Tstart << '\n';
+                        //std::cout << std::setprecision(15) << (*pulsesInRecord)->pulses_detected[i].Tstart << '\n';
                         //cout<<"Tstart0: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
 			// If using lags, it is necessary to modify the tstart of the pulse and the length of the filter used
 			if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && tstartNewDev != -999.0)
 			{
 				(*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + tstartNewDev*record->delta_t; // In seconds
-				if (tstartNewDev != 0) (*pulsesInRecord)->pulses_detected[i].grade1 = (*pulsesInRecord)->pulses_detected[i].grade1 - floor(fabs(tstartNewDev)+0.5);
+				//f (tstartNewDev != 0) (*pulsesInRecord)->pulses_detected[i].grade1 = (*pulsesInRecord)->pulses_detected[i].grade1 - floor(fabs(tstartNewDev)+0.5);
 			}
 			//cout<<"Tstart1: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
 			//cout<<"Tstart1: "<<endl;
@@ -8303,6 +8294,8 @@ void th_runEnergy(TesRecord* record,
 			EP_EXIT_ERROR(message,EPFAIL);
 		}
 		
+                tstartJITTER = ((*pulsesInRecord)->pulses_detected[i].Tstart-record->time)/record->delta_t;
+                shift = tstartJITTER - tstartSamplesRecord;
 		// In order to subtract the pulse model, it has to be located in the tstart with jitter and know its values in the digitized samples
 		gsl_vector *modelToSubtract = gsl_vector_alloc(model->size);
 		for (int j=0;j<model->size;j++)
@@ -8336,16 +8329,6 @@ void th_runEnergy(TesRecord* record,
 		for (int j=tstartSamplesRecord;j<min(tstartSamplesRecord+(model->size),(double) record->trigger_size);j++)
 		{
 			gsl_vector_set(recordAux,j,gsl_vector_get(recordAux,j)-gsl_vector_get(model,j-tstartSamplesRecord));
-		}
-
-		// Write info of the pulse in the output intemediate file if 'intermediate'=1
-		if ((*reconstruct_init)->intermediate == 1)
-		{
-			if (writeFilterHDU(reconstruct_init, i,energy, optimalfilter, optimalfilter_f, optimalfilter_FFT, &dtcObject))
-			{
-				message = "Cannot run writeFilterHDU routine for pulse i=" + boost::lexical_cast<std::string>(i);
-				EP_EXIT_ERROR(message,EPFAIL);
-			}
 		}
 		
 		(*pulsesInRecord)->pulses_detected[i].energy = energy/1e3;	// In SIXTE, SIGNAL is in keV

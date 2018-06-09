@@ -359,7 +359,6 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
   if (scheduler::get()->is_threading() 
       && reconstruct_init->mode == 1
       && (strcmp(reconstruct_init->EnergyMethod, "PCA") != 0)){
-    printf("asdfasdf\n");
     log_trace("Threading mode...");
     ReconstructInitSIRENA* rec = reconstruct_init->get_threading_object(nRecord);
     scheduler::get()->push_detection(record, nRecord, lastRecord, 
@@ -3647,8 +3646,10 @@ PulseDetected::PulseDetected():
   maxDER(0.0f),
   samp1DER(0.0f),
   energy(0.0f),
+  grading(0),
   avg_4samplesDerivative(0.0f),
-  quality(0.0f)
+  quality(0.0f),
+  numLagsUsed(0)
 {
 
 }
@@ -3668,8 +3669,10 @@ PulseDetected::PulseDetected(const PulseDetected& other):
   maxDER(other.maxDER),
   samp1DER(other.samp1DER),
   energy(other.energy),
+  grading(other.grading),
   avg_4samplesDerivative(other.avg_4samplesDerivative),
-  quality(other.quality)
+  quality(other.quality),
+  numLagsUsed(other.numLagsUsed)
 {
   if(other.pulse_adc){
     pulse_adc = gsl_vector_alloc(other.pulse_adc->size);
@@ -3702,7 +3705,10 @@ PulseDetected& PulseDetected::operator=(const PulseDetected& other)
     maxDER = other.maxDER;
     samp1DER = other.samp1DER;
     energy = other.energy;
+    grading = other.grading;
+    avg_4samplesDerivative = other.avg_4samplesDerivative;
     quality = other.quality;
+    numLagsUsed = other.numLagsUsed;
   }
   return *this;
 }

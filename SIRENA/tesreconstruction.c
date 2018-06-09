@@ -160,16 +160,17 @@ int tesreconstruction_main() {
 	    //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
 	    reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
 				    lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
-            /*printf("\nevent list");
+            /*printf("\nevent list single");
             printf("\ndata - %i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
             for (int i = 0; i < event_list->index; ++i){
-            printf("\n%f, %f, %f, %f, %i, %i, %ld",event_list->event_indexes[i],
+            printf("\n%f, %f, %f, %f, %i, %i, %ld, %i",event_list->event_indexes[i],
                      event_list->pulse_heights[i], 
                      event_list->avgs_4samplesDerivative[i],
                      event_list->energies[i],
                      event_list->grades1[i],
                      event_list->grades2[i],
-                     event_list->ph_ids[i]);
+                     event_list->ph_ids[i],
+                     event_list->grading[i]);
                      }*/
       }
       CHECK_STATUS_BREAK(status);
@@ -177,6 +178,9 @@ int tesreconstruction_main() {
       if ((strcmp(par.EnergyMethod,"PCA") != 0) || ((strcmp(par.EnergyMethod,"PCA") == 0) && lastRecord == 1))
       {
         if(!is_threading()){
+          //printf("\n %p - %f", outfile, record_file->delta_t);
+          //printf("\nRecord single");
+          //printf("\n%f - %ld", record->time, record->pixid);
 	  saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
 	  CHECK_STATUS_BREAK(status);
           
@@ -196,16 +200,20 @@ int tesreconstruction_main() {
         printf("\nevent list %i", i);
         printf("\ndata - %i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
         for (int i = 0; i < event_list->index; ++i){
-          printf("\n%f, %f, %f, %f, %i, %i, %ld",event_list->event_indexes[i],
-                 event_list->pulse_heights[i], 
-                 event_list->avgs_4samplesDerivative[i],
-                 event_list->energies[i],
-                 event_list->grades1[i],
-                 event_list->grades2[i],
-                 event_list->ph_ids[i]);
+         printf("\n%f, %f, %f, %f, %i, %i, %ld, %i",event_list->event_indexes[i],
+               event_list->pulse_heights[i], 
+               event_list->avgs_4samplesDerivative[i],
+               event_list->energies[i],
+               event_list->grades1[i],
+               event_list->grades2[i],
+                event_list->ph_ids[i],
+                event_list->grading[i]);
         }
+        //printf("\n %p - %f", outfile, record_file->delta_t);
+        //printf("\nRecord");
+        //printf("\n%f - %ld", record->time, record->pixid);
         //continue;
-        if(i == 101) break;
+        //if(i == 101) break;
         saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
         CHECK_STATUS_BREAK(status);
         ++i;
