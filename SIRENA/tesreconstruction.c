@@ -160,10 +160,10 @@ int tesreconstruction_main() {
 	    //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
 	    reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
 				    lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
-            /*printf("\nevent list single");
+            /*printf("\nevent list");
             printf("\ndata - %i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
             for (int i = 0; i < event_list->index; ++i){
-            printf("\n%f, %f, %f, %f, %i, %i, %ld, %i",event_list->event_indexes[i],
+              printf("\n%f, %f, %f, %f, %i, %i, %ld, %i",event_list->event_indexes[i],
                      event_list->pulse_heights[i], 
                      event_list->avgs_4samplesDerivative[i],
                      event_list->energies[i],
@@ -196,8 +196,8 @@ int tesreconstruction_main() {
       int i = 1;
       int aux = 1;
       while((aux = th_get_event_list(&event_list, &record)) == 1){
-        /*
-        printf("\nevent list %i", i);
+        
+        printf("\nevent list");
         printf("\ndata - %i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
         for (int i = 0; i < event_list->index; ++i){
          printf("\n%f, %f, %f, %f, %i, %i, %ld, %i",event_list->event_indexes[i],
@@ -208,7 +208,7 @@ int tesreconstruction_main() {
                event_list->grades2[i],
                 event_list->ph_ids[i],
                 event_list->grading[i]);
-                }*/
+        }
         //printf("\n %p - %f", outfile, record_file->delta_t);
         //printf("\nRecord");
         //printf("\n%f - %ld", record->time, record->pixid);

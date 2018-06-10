@@ -166,6 +166,8 @@ void scheduler::push_detection(TesRecord* record,
   input->event_list->size = event_list->size;
   //int index
   //int size_energy
+  input->event_list->index = event_list->index;
+  input->event_list->size_energy = event_list->size_energy;
   input->event_list->event_indexes = new double[event_list->size];
   input->event_list->energies = new double[event_list->size];
   input->event_list->avgs_4samplesDerivative = new double[event_list->size];
