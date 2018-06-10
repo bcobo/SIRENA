@@ -222,11 +222,11 @@ int tesreconstruction_main() {
     
     printf("\npulsesAll");
     for (int i = 0; i < pulsesAll->ndetpulses; ++i){
-      printf("\ndata %i - %i, %i, %i, %i, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %i\n",
-             i,
+      printf("\ndata - %i, %i, %i, %i, %f, %f, %f, %f, %f, %f, %f, %f, %i,  %f, %f, %i\n",
              pulsesAll->pulses_detected[i].pulse_duration,
              pulsesAll->pulses_detected[i].grade1,
              pulsesAll->pulses_detected[i].grade2,
+             //pulsesAll->pulses_detected[i].grade2_1,
              pulsesAll->pulses_detected[i].pixid,
              pulsesAll->pulses_detected[i].Tstart,
              pulsesAll->pulses_detected[i].Tend,
@@ -235,12 +235,13 @@ int tesreconstruction_main() {
              pulsesAll->pulses_detected[i].pulse_height,
              pulsesAll->pulses_detected[i].maxDER,
              pulsesAll->pulses_detected[i].samp1DER,
+             pulsesAll->pulses_detected[i].energy,
+             pulsesAll->pulses_detected[i].grading,
              pulsesAll->pulses_detected[i].avg_4samplesDerivative,
              pulsesAll->pulses_detected[i].quality,
              pulsesAll->pulses_detected[i].numLagsUsed);
-      //continue;
       for (int j = 0; j < pulsesAll->pulses_detected[i].pulse_adc->size; ++j){
-        printf("%d, ",*(pulsesAll->pulses_detected[i].pulse_adc->data));
+        printf("%d, ",(pulsesAll->pulses_detected[i].pulse_adc->data[j]));
       }
     }
     /* 
