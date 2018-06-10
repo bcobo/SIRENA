@@ -627,7 +627,7 @@ void scheduler::init()
 {
   if(threading){
     this->num_cores = std::thread::hardware_concurrency();
-    this->num_cores = 1;
+    //this->num_cores = 1;
     if(this->num_cores < 2){
       this->max_detection_workers = 1;
     }else{
@@ -645,7 +645,7 @@ void scheduler::init_v2()
 {
   if(threading){
     this->num_cores = std::thread::hardware_concurrency();
-    this->num_cores = 1;
+    //this->num_cores = 1;
     if(this->num_cores < 2){
       this->max_detection_workers = 1;
       this->max_energy_workers = 1;
