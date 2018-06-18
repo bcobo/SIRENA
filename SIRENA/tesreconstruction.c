@@ -25,7 +25,7 @@
 int tesreconstruction_main() {
   // Containing all programm parameters read by PIL.
   struct Parameters par;
-
+  
   // Error status.
   int status=EXIT_SUCCESS;
   
@@ -184,7 +184,6 @@ int tesreconstruction_main() {
     copyTriggerKeywords(record_file->fptr,outfile->fptr,&status);
     CHECK_STATUS_BREAK(status);
     
-    //printf("Paso1\n");
     // Messages providing info of some columns
     char keyword[9];
     char keywordvalue[9];

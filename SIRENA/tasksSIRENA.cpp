@@ -1870,6 +1870,10 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 		{
 			foundPulses->pulses_detected[i].grade2 = (*reconstruct_init)->pulse_length;
 		}
+		
+		// 'phi' and 'lagsShift' will be known after running 'runEnergy' (but initialize for library creation!)
+		foundPulses->pulses_detected[i].phi = -999;
+                foundPulses->pulses_detected[i].lagsShift = -999;
                 
                 if (foundPulses->pulses_detected[i].pulse_duration == 0 )
                 {
@@ -6543,6 +6547,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 	double tstartNewDev = -999.0;    	// Deviation of the starting of the pulses (in samples) respect to the tstart calculated
 	//int numlags = 3; 			// Must be odd
 	int numlags = 9; 			// Must be odd
+	int lagsShift = -999;                   // Number of samples shifted to find the maximum of the parabola
 
 	double Ealpha, Ebeta;
 	gsl_vector *optimalfilter = NULL;	// Resized optimal filter expressed in the time domain (optimalfilter(t))
@@ -6962,7 +6967,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 			}
 			
 			// Calculate the energy of each pulse
-			if (calculateEnergy(pulseToCalculateEnergy,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,numlags,&tstartNewDev))
+			if (calculateEnergy(pulseToCalculateEnergy,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,numlags,&tstartNewDev,&lagsShift))
 			{
 				message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
 				EP_EXIT_ERROR(message,EPFAIL);
@@ -7091,6 +7096,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 		
 		(*pulsesInRecord)->pulses_detected[i].energy = energy/1e3;	// In SIXTE, SIGNAL is in keV
 		(*pulsesInRecord)->pulses_detected[i].grading = pulseGrade;	
+                (*pulsesInRecord)->pulses_detected[i].phi = tstartNewDev;
+                (*pulsesInRecord)->pulses_detected[i].lagsShift = lagsShift;
 		
 		// Free allocated GSL vectors
 		gsl_vector_free(optimalfilter);
@@ -8691,8 +8698,9 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 *                     If 'pulseGrade'=-1 (rejected) the provided calculated energy is -1
 * - numlags: Number of lags (if OPTFILT, I2R, I2RALL, I2RNAL or I2RFITTED and NSD)
 * - tstartNewDev: Additional deviation of the tstart (if lags)
+* - lagsShift: Number of samples shifted to find the maximum of the parabola
 ****************************************************************************/
-int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy, int numlagsOUT, double *tstartNewDev)
+int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy, int numlagsOUT, double *tstartNewDev, int *lagsShift)
 {
         string message = "";
 	char valERROR[256];
@@ -8701,6 +8709,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
         *tstartNewDev = 0;
     
         int numlags = 3;
+        *lagsShift = 0;
         
         double calculatedEnergy2 = 0.0;
 	
@@ -8839,7 +8848,6 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 							*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,indexmax);
                                                 cout<<"*tstartNewDev0= "<<*tstartNewDev<<endl;*/
                                                 
-                                                
                                                 bool exitLags = false;
                                                 int indexLags = 0;
                                                 int newLag = 0;
@@ -8864,12 +8872,14 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                         newLag = gsl_vector_get(lags_vector,0)-indexLags;
                                                                         gsl_vector_set(calculatedEnergy_vector,2,gsl_vector_get(calculatedEnergy_vector,1));
                                                                         gsl_vector_set(calculatedEnergy_vector,1,gsl_vector_get(calculatedEnergy_vector,0));
+                                                                        *lagsShift = *lagsShift - 1;
                                                                 }
                                                                 else    
                                                                 {
                                                                         newLag = gsl_vector_get(lags_vector,2)+indexLags;
                                                                         gsl_vector_set(calculatedEnergy_vector,0,gsl_vector_get(calculatedEnergy_vector,1));
                                                                         gsl_vector_set(calculatedEnergy_vector,1,gsl_vector_get(calculatedEnergy_vector,2));
+                                                                        *lagsShift = *lagsShift + 1;
                                                                 }
                                                                 //cout<<"indexmax= "<<indexmax<<endl;
                                                                 //cout<<"newLag= "<<newLag<<endl;
@@ -9079,12 +9089,16 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                         newLag = gsl_vector_get(lags_vector,0)-indexLags;
                                                                         gsl_vector_set(calculatedEnergy_vector,2,gsl_vector_get(calculatedEnergy_vector,1));
                                                                         gsl_vector_set(calculatedEnergy_vector,1,gsl_vector_get(calculatedEnergy_vector,0));
+                                                                        
+                                                                        *lagsShift = *lagsShift - 1;
                                                                 }
                                                                 else    
                                                                 {
                                                                         newLag = gsl_vector_get(lags_vector,2)+indexLags;
                                                                         gsl_vector_set(calculatedEnergy_vector,0,gsl_vector_get(calculatedEnergy_vector,1));
                                                                         gsl_vector_set(calculatedEnergy_vector,1,gsl_vector_get(calculatedEnergy_vector,2));
+                                                                        
+                                                                        *lagsShift = *lagsShift + 1;
                                                                 }
                                                                 //cout<<"indexmax= "<<indexmax<<endl;
                                                                 //cout<<"newLag= "<<newLag<<endl;

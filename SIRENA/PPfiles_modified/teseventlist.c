@@ -34,6 +34,8 @@ TesEventList* newTesEventList(int* const status){
 	event_list->pulse_heights=NULL;
 	event_list->avgs_4samplesDerivative=NULL; //BEA
 	event_list->grading=NULL; //BEA
+	event_list->phis=NULL; //BEA
+	event_list->lagsShifts=NULL; //BEA
 	event_list->energies=NULL;
 	event_list->grades1=NULL;
 	event_list->grades2=NULL;
@@ -55,6 +57,8 @@ void freeTesEventList(TesEventList* event_list){
 		free(event_list->energies);
                 free(event_list->avgs_4samplesDerivative); //BEA
 		free(event_list->grading); //BEA
+		free(event_list->phis); //BEA
+		free(event_list->lagsShifts); //BEA
 		free(event_list->grades1);
 		free(event_list->grades2);
 		free(event_list->ph_ids);
@@ -100,6 +104,8 @@ void allocateWholeTesEventList(TesEventList* event_list,unsigned char allocate_p
 			free(event_list->energies);
 			free(event_list->avgs_4samplesDerivative);
 			free(event_list->grading);
+			free(event_list->phis);
+			free(event_list->lagsShifts);
 			free(event_list->grades2);
 			if(NULL!= event_list->ph_ids){
 				free(event_list->ph_ids);
@@ -121,6 +127,20 @@ void allocateWholeTesEventList(TesEventList* event_list,unsigned char allocate_p
 
 		event_list->grading = malloc(event_list->size*sizeof*(event_list->grading)); //BEA
 		if (NULL == event_list->grading){
+			*status=EXIT_FAILURE;
+			SIXT_ERROR("memory allocation for energy array in TesEventList failed");
+			CHECK_STATUS_VOID(*status);
+		}
+
+		event_list->phis = malloc(event_list->size*sizeof*(event_list->phis)); //BEA
+		if (NULL == event_list->phis){
+			*status=EXIT_FAILURE;
+			SIXT_ERROR("memory allocation for energy array in TesEventList failed");
+			CHECK_STATUS_VOID(*status);
+		}
+
+		event_list->lagsShifts = malloc(event_list->size*sizeof*(event_list->lagsShifts)); //BEA
+		if (NULL == event_list->lagsShifts){
 			*status=EXIT_FAILURE;
 			SIXT_ERROR("memory allocation for energy array in TesEventList failed");
 			CHECK_STATUS_VOID(*status);
@@ -206,19 +226,21 @@ TesEventFile* newTesEventFile(int* const status){
 	file->nrows     =0;
 	file->timeCol   =1;
 	file->energyCol =2;
-	file->avg_4samplesDerivativeCol =3; //BEA
+	file->avg_4samplesDerivativeCol =3; //BEA	
 	file->grade1Col =4;
 	file->grade2Col =5;
-	file->pixIDCol  =6;
-	file->phIDCol   =7;
-	file->raCol     =8;
-	file->decCol    =9;
-	file->detxCol   =10;
-	file->detyCol   =11;
-	file->gradingCol=12;
-	file->srcIDCol  =13;
-	file->nxtCol    =14;
-	file->extCol    =15;
+	file->phiCol =6; //BEA
+	file->lagsShiftCol =7; //BEA
+	file->pixIDCol  =8;
+	file->phIDCol   =9;
+	file->raCol     =10;
+	file->decCol    =11;
+	file->detxCol   =12;
+	file->detyCol   =13;
+	file->gradingCol=14;
+	file->srcIDCol  =15;
+	file->nxtCol    =16;
+	file->extCol    =17;
 
 	return(file);
 }
@@ -282,11 +304,11 @@ TesEventFile* opennewTesEventFile(const char* const filename,
 	// Create table
 
 	//first column TIME
-	char *ttype[]={"TIME","SIGNAL","AVG4SD","GRADE1","GRADE2","PIXID","PH_ID","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"}; //BEA
-	char *tform[]={"1D",  "1D",    "1D",    "1J",    "1J",    "1J",   "1J",   "1D","1D","1E","1E", "1I","1J","1I","1D"};
-	char *tunit[]={"s",   "keV",   "",      "",      "",      "",     "",     "deg","deg","m","m","","","","keV"};
+	char   *ttype[]={"TIME","SIGNAL","AVG4SD","GRADE1","GRADE2","PHI","LAGS","PIXID","PH_ID","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"}; //BEA
+	char *tform[]={"1D",  "1D",    "1D",    "1J",    "1J", "1D", "1J" ,  "1J",   "1J",   "1D","1D","1E","1E", "1I","1J","1I","1D"};
+	char *tunit[]={"s",   "keV",   "",      "",      "",      "",      "",       "",     "",     "deg","deg","m","m","","","","keV"};
 
-	fits_create_tbl(file->fptr, BINARY_TBL, 0, 15,		// BEA (15 instead of 14)
+	fits_create_tbl(file->fptr, BINARY_TBL, 0, 17,		// BEA (17 instead of 14)
 			ttype, tform, tunit,"EVENTS", status);
 	sixt_add_fits_stdkeywords(file->fptr,2,keywords,status);
 	CHECK_STATUS_RET(*status,file);
@@ -331,6 +353,10 @@ TesEventFile* openTesEventFile(const char* const filename,const int mode, int* c
 	  file->grade2Col=-1;
 	  *status=0;
 	}
+
+	fits_get_colnum(file->fptr, CASEINSEN, "PHI", &file->phiCol, status);  //BEA
+	fits_get_colnum(file->fptr, CASEINSEN, "LAGS", &file->lagsShiftCol, status);  //BEA
+
 	fits_get_colnum(file->fptr, CASEINSEN, "PIXID", &file->pixIDCol, status);
 	if (*status==COL_NOT_FOUND) {
 	  file->pixIDCol=-1;
@@ -410,6 +436,16 @@ void saveEventListToFile(TesEventFile* file,TesEventList * event_list,
 					file->row, 1, event_list->index, event_list->avgs_4samplesDerivative, status);
 	CHECK_STATUS_VOID(*status);
 
+	//Save phis (PHI) column   //BEA
+ 	fits_write_col(file->fptr, TDOUBLE, file->phiCol,
+					file->row, 1, event_list->index, event_list->phis, status);
+	CHECK_STATUS_VOID(*status);
+
+	//Save lagsShifts (LAGS) column   //BEA
+ 	fits_write_col(file->fptr, TINT, file->lagsShiftCol,
+					file->row, 1, event_list->index, event_list->lagsShifts, status);
+	CHECK_STATUS_VOID(*status);
+
 	//Save grading (GRADING) column   //BEA
  	fits_write_col(file->fptr, TINT, file->gradingCol,
 					file->row, 1, event_list->index, event_list->grading, status);
@@ -434,7 +470,6 @@ void saveEventListToFile(TesEventFile* file,TesEventList * event_list,
 
 	file->row = file->row + event_list->index;
 	file->nrows+= event_list->index;
-
 }
 
 /** Updates the RA, DEC and DETX/Y columns with the given coordinates */

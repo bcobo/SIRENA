@@ -48,6 +48,12 @@ typedef struct {
 	/** Average of the first 4 samples of the derivative of the event (pulse) */
 	double * avgs_4samplesDerivative;  //BEA
 
+	/** Offset relative to the central point of the parabola */
+	double * phis;  //BEA
+
+	/** Number of samples shifted to find the maximum of the parabola */
+	int * lagsShifts;  //BEA
+
 	/** Pulse grade */
 	int * grading;  //BEA
 
@@ -78,7 +84,7 @@ typedef struct {
 	long nrows;
 
 	/** Column numbers for time, energy, grade1, grade2, pixID, RA and DEC columns */
-	int timeCol,energyCol,avg_4samplesDerivativeCol,grade1Col,grade2Col,pixIDCol,phIDCol,raCol,decCol,detxCol,detyCol,gradingCol,srcIDCol,nxtCol,extCol; //BEA
+	int timeCol,energyCol,avg_4samplesDerivativeCol,grade1Col,grade2Col,phiCol,lagsShiftCol,pixIDCol,phIDCol,raCol,decCol,detxCol,detyCol,gradingCol,srcIDCol,nxtCol,extCol; //BEA
 
 } TesEventFile;
 
