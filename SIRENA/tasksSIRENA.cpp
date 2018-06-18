@@ -7096,9 +7096,9 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 		
 		(*pulsesInRecord)->pulses_detected[i].energy = energy/1e3;	// In SIXTE, SIGNAL is in keV
 		(*pulsesInRecord)->pulses_detected[i].grading = pulseGrade;	
-                (*pulsesInRecord)->pulses_detected[i].phi = tstartNewDev;
+                (*pulsesInRecord)->pulses_detected[i].phi = tstartNewDev - lagsShift;
                 (*pulsesInRecord)->pulses_detected[i].lagsShift = lagsShift;
-		
+                
 		// Free allocated GSL vectors
 		gsl_vector_free(optimalfilter);
 		gsl_vector_free(optimalfilter_f);
@@ -9146,9 +9146,9 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                         gsl_vector_set(calculatedEnergy_vector,2,newEnergy);
                                                                 }
                                                                 
-                                                                /*cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,0)<<endl;
-                                                                cout<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<endl;
-                                                                cout<<gsl_vector_get(lags_vector,2)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;*/
+                                                                /*cout<<"lAGS_vector: "<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,0)<<endl;
+                                                                cout<<"lAGS_vector: "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<endl;
+                                                                cout<<"lAGS_vector: "<<gsl_vector_get(lags_vector,2)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;*/
                                                                                
                                                                 if (exitLags == true)
                                                                 {
@@ -9169,7 +9169,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                 //cout<<"*tstartNewDev= "<<*tstartNewDev<<endl;
 						*calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
                                                 //cout<<"*calculatedEnergy= "<<*calculatedEnergy<<endl;
-                                                
+                                                //cout<<"phi= "<<xmax-(*lagsShift)<<endl;
+                                                //cout<<"lagsShift= "<<*lagsShift<<endl;
                                                 //gsl_vector_free(calculatedEnergy_vectorABS);
 					}
 					
