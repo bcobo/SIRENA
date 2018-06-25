@@ -281,6 +281,9 @@ typedef struct PulseDetected
 
 	/** Start time of the Pulse */
 	double Tstart;
+        
+        /** Start time of the Pulse in samples */
+	double TstartSamples;
 
 	/** End time of the Pulse */
 	double Tend;

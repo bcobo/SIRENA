@@ -2711,6 +2711,7 @@ PulseDetected::PulseDetected():
 		pixid(0),
 		pulse_adc(0),
 		Tstart(0.0f),
+		TstartSamples(0.0f),
 		Tend(0.0f),
 		riseTime(0.0f),
 		fallTime(0.0f),
@@ -2721,7 +2722,8 @@ PulseDetected::PulseDetected():
                 avg_4samplesDerivative(0.0f),
                 phi(0.0f),
                 lagsShift(0),
-		quality(0.0f)
+		quality(0.0f),
+		numLagsUsed(0)
 {
 
 }
