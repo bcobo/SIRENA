@@ -43,7 +43,7 @@
 void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord);
 
 void th_runDetect(TesRecord* record, 
-                  int nRecord, 
+                  //int nRecord, 
                   int lastRecord, 
                   PulsesCollection *pulsesAll, 
                   ReconstructInitSIRENA** reconstruct_init, 

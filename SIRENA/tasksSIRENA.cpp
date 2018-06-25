@@ -724,7 +724,7 @@ std::mutex library_mut;
 std::mutex fits_file_mut;
 
 void th_runDetect(TesRecord* record, 
-                  int nRecord, 
+                  //int nRecord, 
                   int lastRecord, 
                   PulsesCollection *pulsesAll, 
                   ReconstructInitSIRENA** reconstruct_init, 

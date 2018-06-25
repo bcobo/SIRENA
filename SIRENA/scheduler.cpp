@@ -37,7 +37,7 @@ void detection_worker()
     if(detection_queue.wait_and_pop(data)){
       //ReconstructInitSIRENA* aux = &data.rec_init;
       log_trace("Extracting detection data from queue...");
-      runDetect(data->rec,
+      th_runDetect(data->rec,
                 //data->n_record,
                 data->last_record,
                 data->all_pulses,
@@ -65,7 +65,7 @@ void energy_worker()
     if(energy_queue.wait_and_pop(data)){
       log_trace("Extracting energy data from queue...");
       log_debug("Energy data in record %i",data->n_record);
-      runEnergy(data->rec, 
+      th_runEnergy(data->rec, 
                    &(data->rec_init),
                    &(data->record_pulses),//copy
                    &(data->optimal_filter));
@@ -91,7 +91,7 @@ void energy_worker_v2()
     if(detected_queue.wait_and_pop(data)){
       log_trace("Extracting energy data from queue...");
       log_debug("Energy data in record %i",data->n_record);
-      runEnergy(data->rec, 
+      th_runEnergy(data->rec, 
                    &(data->rec_init),
                    &(data->record_pulses),//copy
                    &(data->optimal_filter));
