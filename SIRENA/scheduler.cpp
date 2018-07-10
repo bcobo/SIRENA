@@ -144,6 +144,8 @@ void scheduler::push_detection(TesRecord* record,
   input->event_list->pulse_heights = new double[event_list->size];
   input->event_list->ph_ids = new long[event_list->size];
   input->event_list->grading = new int[event_list->size];
+  input->event_list->phis = new double[event_list->size];
+  input->event_list->lagsShifts = new int[event_list->size];
   detection_queue.push(input);
   ++num_records;
 }
@@ -295,6 +297,8 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
         event_list->grades2[ip]  = record_pulses->pulses_detected[ip].grade2;
         event_list->pulse_heights[ip]  = record_pulses->pulses_detected[ip].pulse_height;
         event_list->ph_ids[ip]   = 0;
+        event_list->phis[ip] = record_pulses->pulses_detected[ip].phi;
+        event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
       }
       if (data_array[i]->last_record == 1) {
         log_debug("eventlist last record");
@@ -335,6 +339,8 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
           event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
           event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
           event_list->ph_ids[ip]   = 0;    
+          event_list->phis[ip] = record_pulses->pulses_detected[ip].phi;
+          event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
         }
       }
     }
@@ -501,6 +507,8 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
         event_list->grades2[ip]  = record_pulses->pulses_detected[ip].grade2;
         event_list->pulse_heights[ip]  = record_pulses->pulses_detected[ip].pulse_height;
         event_list->ph_ids[ip]   = 0;
+        event_list->phis[ip] = record_pulses->pulses_detected[ip].phi;
+        event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
       }
       if (data_array[i]->last_record == 1) {
         log_debug("eventlist last record");
@@ -541,6 +549,8 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
           event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
           event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
           event_list->ph_ids[ip]   = 0;    
+          event_list->phis[ip] = record_pulses->pulses_detected[ip].phi;
+          event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
         }
       }
     }

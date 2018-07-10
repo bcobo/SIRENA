@@ -3080,6 +3080,7 @@ int FindSecondariesSTC
 							}
 							gsl_vector_set(*maxDERgsl,*numberPulses,possiblemaxDER);
 							gsl_vector_set(*tstartgsl,*numberPulses,possibleTstart);
+                                                        //cout<<"tstart0: "<<gsl_vector_get(*tstartgsl,*numberPulses)<<endl;
                                                         gsl_vector_set(*samp1DERgsl,*numberPulses,possiblesamp1DER);
                                                         
                                                         // Average of the first 4 samples of the derivative

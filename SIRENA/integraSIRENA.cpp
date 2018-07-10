@@ -408,6 +408,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	{
 		if (event_list->energies != NULL) 	delete [] event_list->energies;
                 if (event_list->avgs_4samplesDerivative != NULL) 	delete [] event_list->avgs_4samplesDerivative;
+                if (event_list->phis != NULL) 	delete [] event_list->phis;
+                if (event_list->lagsShifts != NULL) 	delete [] event_list->lagsShifts;
                 if (event_list->grading != NULL) 	delete [] event_list->grading;
                 if (event_list->grades1 != NULL) 	delete [] event_list->grades1;
 		if (event_list->grades2 != NULL) 	delete [] event_list->grades2;
@@ -458,6 +460,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	event_list->index = pulsesInRecord->ndetpulses;
 	event_list->energies = new double[event_list->index];
         event_list->avgs_4samplesDerivative = new double[event_list->index];
+        event_list->phis = new double[event_list->index];
+        event_list->lagsShifts = new int[event_list->index];
         event_list->grading  = new int[event_list->index];
 	event_list->grades1  = new int[event_list->index];
 	event_list->grades2  = new int[event_list->index];
@@ -480,6 +484,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			}
 
 			event_list->avgs_4samplesDerivative[ip] = pulsesInRecord->pulses_detected[ip].avg_4samplesDerivative;
+                        event_list->phis[ip] = pulsesInRecord->pulses_detected[ip].phi;
+                        event_list->lagsShifts[ip] = pulsesInRecord->pulses_detected[ip].lagsShift;
                         event_list->grading[ip]  = pulsesInRecord->pulses_detected[ip].grading;
 			event_list->grades1[ip]  = pulsesInRecord->pulses_detected[ip].grade1;
 			event_list->grades2[ip]  = pulsesInRecord->pulses_detected[ip].grade2;
@@ -513,6 +519,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                         event_list->event_indexes = new double[event_list->index];
 			event_list->energies = new double[event_list->index];
                         event_list->avgs_4samplesDerivative = new double[event_list->index];
+                        event_list->phis = new double[event_list->index];
+                        event_list->lagsShifts = new int[event_list->index];
                         event_list->grading  = new int[event_list->index];
                         event_list->grades1  = new int[event_list->index];
 			event_list->grades2  = new int[event_list->index];
@@ -533,6 +541,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 				}
 
 				event_list->avgs_4samplesDerivative[ip]  = (*pulsesAll)->pulses_detected[ip].avg_4samplesDerivative;
+                                event_list->phis[ip] = (*pulsesAll)->pulses_detected[ip].phi;
+                                event_list->lagsShifts[ip] = (*pulsesAll)->pulses_detected[ip].lagsShift;
                                 event_list->grading[ip]  = (*pulsesAll)->pulses_detected[ip].grading;
 				event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
 				event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
@@ -2593,6 +2603,8 @@ ReconstructInitSIRENA::ReconstructInitSIRENA():
   //OFInterp(""),
   //OFStrategy(""),
   OFLength(0),
+  //detectFile(""),
+  //filterFile(""),
   clobber(0),
   SaturationValue(0.0f),
   tstartPulse1(0),
@@ -2645,6 +2657,8 @@ ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other)
   OFLength(other.OFLength),
   intermediate(intermediate),
   clobber(other.clobber),
+  //detectFile(""),
+  //filterFile(""),
   SaturationValue(other.SaturationValue),
   tstartPulse1(other.tstartPulse1),
   tstartPulse2(other.tstartPulse2),
@@ -3532,6 +3546,7 @@ PulseDetected::PulseDetected():
   pixid(0),
   pulse_adc(0),
   Tstart(0.0f),
+  TstartSamples(0.0f),
   Tend(0.0f),
   riseTime(0.0f),
   fallTime(0.0f),
@@ -3541,6 +3556,8 @@ PulseDetected::PulseDetected():
   energy(0.0f),
   grading(0),
   avg_4samplesDerivative(0.0f),
+  phi(0.0f),
+  lagsShift(0),//
   quality(0.0f),
   numLagsUsed(0)
 {
@@ -3555,6 +3572,7 @@ PulseDetected::PulseDetected(const PulseDetected& other):
   pixid(other.pixid),
   pulse_adc(0),
   Tstart(other.Tstart),
+  TstartSamples(other.TstartSamples),
   Tend(other.Tend),
   riseTime(other.riseTime),
   fallTime(other.fallTime),
@@ -3564,6 +3582,8 @@ PulseDetected::PulseDetected(const PulseDetected& other):
   energy(other.energy),
   grading(other.grading),
   avg_4samplesDerivative(other.avg_4samplesDerivative),
+  phi(other.phi),
+  lagsShift(other.lagsShift),
   quality(other.quality),
   numLagsUsed(other.numLagsUsed)
 {
@@ -3590,6 +3610,7 @@ PulseDetected& PulseDetected::operator=(const PulseDetected& other)
       gsl_vector_memcpy(pulse_adc, other.pulse_adc);
     }
     Tstart = other.Tstart;
+    TstartSamples = other.TstartSamples;
     Tend = other.Tend;
     riseTime = other.riseTime;
     fallTime = other.fallTime;
@@ -3599,6 +3620,8 @@ PulseDetected& PulseDetected::operator=(const PulseDetected& other)
     energy = other.energy;
     grading = other.grading;
     avg_4samplesDerivative = other.avg_4samplesDerivative;
+    phi = other.phi;
+    lagsShift = other.lagsShift;
     quality = other.quality;
     numLagsUsed = other.numLagsUsed;
   }

@@ -303,6 +303,9 @@ typedef struct PulseDetected
 
 	/** Start time of the Pulse */
 	double Tstart;
+        
+        /** Start time of the Pulse in samples */
+	double TstartSamples;
 
 	/** End time of the Pulse */
 	double Tend;
@@ -330,6 +333,12 @@ typedef struct PulseDetected
 
         /** Average of the first 4 samples of the derivative of the Pulse */
 	double avg_4samplesDerivative;
+        
+        /** Offset relative to the central point of the parabola */
+        double phi;
+        
+        /** Number of samples shifted to find the maximum of the parabola  */
+        int lagsShift;
         
 	/** Quality of the Pulse */
 	double quality;
