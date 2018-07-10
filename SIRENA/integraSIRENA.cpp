@@ -360,7 +360,6 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
       && reconstruct_init->mode == 1
       && (strcmp(reconstruct_init->EnergyMethod, "PCA") != 0)){
     log_trace("Threading mode...");
-    printf("threading mode...\n");
     ReconstructInitSIRENA* rec = reconstruct_init->get_threading_object(nRecord);
     scheduler::get()->push_detection(record, nRecord, lastRecord, 
                                      *pulsesAll, &rec, &pulsesInRecord,
@@ -2524,14 +2523,6 @@ NoiseSpec* getNoiseSpec(const char* const filename, int mode, int hduPRCLOFWM, c
 }
 /*xxxx end of SECTION 10 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
-void th_start_energy(PulsesCollection** pulsesAll, 
-                     OptimalFilterSIRENA** optimalFilter)
-{
-  //scheduler::get()->finish_reconstruction(pulsesAll, optimalFilter);
-  //delete scheduler::get();
-  //th_wait_end();
-}
-
 void th_end(ReconstructInitSIRENA* reconstruct_init,
             PulsesCollection** pulsesAll, 
             OptimalFilterSIRENA** optimalFilter)
@@ -2546,19 +2537,13 @@ void th_end(ReconstructInitSIRENA* reconstruct_init,
   }
   scheduler::get()->finish_reconstruction_v2(reconstruct_init, 
                                           pulsesAll, optimalFilter);
-  //delete scheduler::get();
-}
-
-void th_set_files(TesEventFile *outfile, double delta_t)
-{
-  scheduler::get()->set_files(outfile, delta_t);
 }
 
 int th_get_event_list(TesEventList** test_event, TesRecord** record)
 {
   log_trace("Getting event list...");
   if(!scheduler::get()->has_records()) {
-    delete scheduler::get();//TODO: check
+    delete scheduler::get();
     *test_event = 0;
     *record = 0;
     return 0;
@@ -2567,11 +2552,6 @@ int th_get_event_list(TesEventList** test_event, TesRecord** record)
   scheduler::get()->get_test_event(test_event, record);
 
   return 1;
-}
-
-void th_wait_end()
-{
-  delete scheduler::get();
 }
 
 int is_threading(){
@@ -2820,16 +2800,9 @@ ReconstructInitSIRENA::~ReconstructInitSIRENA()
   if(library_collection) {
     delete library_collection; library_collection = 0;
   }
-  // FIXME
-  //printf("fits pointer %p\n", record_file_fptr);
-  //int status = 0;
-  //if(record_file_fptr) 
-    //delete record_file_fptr;
-    //fits_close_file(record_file_fptr, &status);
   if(noise_spectrum) {
     delete noise_spectrum; noise_spectrum = 0;
   }
-  // FIXME
   if(grading) {
     delete grading; grading = 0;
   }
@@ -2857,9 +2830,7 @@ ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object(int n_record)
   ret->record_file_fptr = this->record_file_fptr;
   
   strcpy(ret->noise_file, this->noise_file);
-  //sprintf(ret->noise_file, "%s_%i", ret->noise_file, n_record); 
   strcpy(ret->event_file, this->event_file);
-  //sprintf(ret->event_file, "%s_%i", ret->event_file, n_record);
   
   ret->pulse_length = this->pulse_length;
   ret->scaleFactor = this->scaleFactor;
@@ -2903,7 +2874,6 @@ ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object(int n_record)
   strcpy(ret->detectFile, this->detectFile);
   sprintf(ret->detectFile, "%s_%i", ret->detectFile, n_record);
   strcpy(ret->filterFile, this->filterFile);
-  //sprintf(ret->filterFile, "%s_%i", ret->filterFile, n_record);
   
   ret->clobber = this->clobber;
   ret->maxPulsesPerRecord = this->maxPulsesPerRecord;
@@ -3171,9 +3141,7 @@ LibraryCollection::LibraryCollection(const LibraryCollection& other):
 
 LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
 {
-  //printf("operator LibraryCollection\n");
   if (this != &other){
-    //printf("%i - %i\n", ntemplates, ntemplates);
     ntemplates = other.ntemplates;
     nfixedfilters = other.nfixedfilters;
     
@@ -3181,7 +3149,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
       gsl_vector_free(energies); energies = 0;
     }
     if(other.energies){
-      //gsl_vector_fprintf(stdout, other.energies, "%g");
       energies = gsl_vector_alloc(other.energies->size);
       gsl_vector_memcpy(energies, other.energies);
     }
@@ -3192,7 +3159,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
       pulse_heights = gsl_vector_alloc(other.pulse_heights->size);
       gsl_vector_memcpy(pulse_heights, other.pulse_heights);
     }
-    //PulseTemplate* pulse_templatesMaxLengthFixedFilter;
     if(ntemplates > 0 && pulse_templatesMaxLengthFixedFilter) {
       delete [] pulse_templatesMaxLengthFixedFilter;
       pulse_templatesMaxLengthFixedFilter = 0;
@@ -3204,9 +3170,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
           other.pulse_templatesMaxLengthFixedFilter[i];
       }
     }
-    //*pulse_templatesMaxLengthFixedFilter = 
-    //(*other.pulse_templatesMaxLengthFixedFilter);
-    //PulseTemplate* pulse_templates;
     if(ntemplates > 0 && pulse_templates) {
       delete [] pulse_templates; pulse_templates = 0;
     }
@@ -3216,8 +3179,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
         pulse_templates[i] = other.pulse_templates[i];
       }
     }
-    //*pulse_templates = (*other.pulse_templates);
-    //PulseTemplate* pulse_templates_filder;
     if(ntemplates > 0 && pulse_templates_filder) {
       delete [] pulse_templates_filder; pulse_templates_filder = 0;
     }
@@ -3227,7 +3188,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
         pulse_templates_filder[i] = other.pulse_templates_filder[i];
       }
     }
-    //*pulse_templates_filder = (*other.pulse_templates_filder);
     
     if(maxDERs) {
       gsl_vector_free(maxDERs); maxDERs = 0;
@@ -3244,8 +3204,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
       samp1DERs = gsl_vector_alloc(other.samp1DERs->size);
       gsl_vector_memcpy(samp1DERs, other.samp1DERs);
     }
-    
-    //PulseTemplate* pulse_templates_B0;
     if(ntemplates > 0 && pulse_templates_B0){
       delete [] pulse_templates_B0; pulse_templates_B0 = 0;
     }
@@ -3255,8 +3213,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
         pulse_templates_B0[i] = other.pulse_templates_B0[i];
       }
     }
-    //*pulse_templates_B0 = (*other.pulse_templates_B0);
-    //MatchedFilter* matched_filters;
     if(ntemplates > 0 && matched_filters) {
       delete [] matched_filters; matched_filters = 0;
     }
@@ -3266,8 +3222,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
         matched_filters[i] = other.matched_filters[i];
       }
     }
-    //*matched_filters = (*other.matched_filters);
-    //MatchedFilter* matched_filters_B0;
     if(ntemplates > 0 && matched_filters_B0){ 
       delete [] matched_filters_B0; matched_filters_B0 = 0;
     }
@@ -3277,8 +3231,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
         matched_filters_B0[i] = other.matched_filters_B0[i];
       }
     }
-    //*matched_filters_B0 = (*other.matched_filters_B0);
-    //OptimalFilterSIRENA* optimal_filters;
     if(ntemplates > 0 && optimal_filters) {
       delete [] optimal_filters; optimal_filters = 0;
     }
@@ -3288,8 +3240,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
         optimal_filters[i] = other.optimal_filters[i];
       }
     }
-    //*optimal_filters = (*other.optimal_filters);
-    //OptimalFilterSIRENA* optimal_filtersFREQ;
     if(ntemplates > 0 && optimal_filtersFREQ) {
       delete [] optimal_filtersFREQ; optimal_filtersFREQ = 0;
     }
@@ -3299,8 +3249,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
         optimal_filtersFREQ[i] = other.optimal_filtersFREQ[i];
       }
     }
-    //*optimal_filtersFREQ = (*other.optimal_filtersFREQ);
-    //OptimalFilterSIRENA* optimal_filtersTIME;
     if(ntemplates > 0 && optimal_filtersTIME) {
       delete [] optimal_filtersTIME; optimal_filtersTIME = 0;
     }
@@ -3310,7 +3258,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
         optimal_filtersTIME[i] = other.optimal_filtersTIME[i];
       }
     }
-    //*optimal_filtersTIME = (*other.optimal_filtersTIME);
     
     if(V) {
       gsl_matrix_free(V); V = 0;
@@ -3418,7 +3365,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
       gsl_matrix_memcpy(DAB, other.DAB);
     }
     
-    //OptimalFilterSIRENA* optimal_filtersab;
     if(ntemplates > 0 && optimal_filtersab) {
       delete [] optimal_filtersab; optimal_filtersab = 0;
     }
@@ -3428,8 +3374,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
         optimal_filtersab[i] = other.optimal_filtersab[i];
       }
     }
-    //*optimal_filtersab = (*other.optimal_filtersab);
-    //OptimalFilterSIRENA* optimal_filtersabTIME;
     if(ntemplates > 0 && optimal_filtersabTIME) {
       delete [] optimal_filtersabTIME; optimal_filtersabTIME = 0;
     }
@@ -3439,8 +3383,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
         optimal_filtersabTIME[i] = other.optimal_filtersabTIME[i];
       }
     }
-    //*optimal_filtersabTIME = (*other.optimal_filtersabTIME);
-    //OptimalFilterSIRENA* optimal_filtersabFREQ;
     if(ntemplates > 0 && optimal_filtersabFREQ) {
       delete [] optimal_filtersabFREQ; optimal_filtersabFREQ = 0;
     }
@@ -3450,7 +3392,6 @@ LibraryCollection& LibraryCollection::operator=(const LibraryCollection& other)
         optimal_filtersabFREQ[i] = other.optimal_filtersabFREQ[i];
       }
     }
-    //*optimal_filtersabFREQ = (*other.optimal_filtersabFREQ);
     
     if(PRECALWN) {
       gsl_matrix_free(PRECALWN); PRECALWN = 0;
@@ -3483,26 +3424,14 @@ LibraryCollection::~LibraryCollection()
   }
   
   if(ntemplates > 0 && pulse_templatesMaxLengthFixedFilter){
-    /*for (int i = 0; i < ntemplates; ++i){
-      if(pulse_templatesMaxLengthFixedFilter[i].ptemplate)
-        gsl_vector_free(pulse_templatesMaxLengthFixedFilter[i].ptemplate);
-        }*/
     delete [] pulse_templatesMaxLengthFixedFilter;
     pulse_templatesMaxLengthFixedFilter = 0;
   }
   if(ntemplates > 0 && pulse_templates){
-    /*for (int i = 0; i < ntemplates; ++i){
-      if(pulse_templates[i].ptemplate)
-        gsl_vector_free(pulse_templates[i].ptemplate);
-        }*/
     delete [] pulse_templates;
     pulse_templates = 0;
   }
   if(ntemplates > 0 && pulse_templates_filder){
-    /*for (int i = 0; i < ntemplates; ++i){
-      if(pulse_templates_filder[i].ptemplate)
-        gsl_vector_free(pulse_templates_filder[i].ptemplate);
-        }*/
     delete [] pulse_templates_filder;
     pulse_templates_filder = 0;
   }
@@ -3515,51 +3444,26 @@ LibraryCollection::~LibraryCollection()
   }
   
   if(ntemplates > 0 && pulse_templates_B0){
-    /*for (int i = 0; i < ntemplates; ++i){
-      if(pulse_templates_B0[i].ptemplate)
-        gsl_vector_free(pulse_templates_B0[i].ptemplate);
-        }*/
     delete [] pulse_templates_B0;
     pulse_templates_B0 = 0;
   }
   if(ntemplates > 0 && matched_filters){
-    /*for (int i = 0; i < ntemplates; ++i){
-      if(matched_filters[i].mfilter)
-        gsl_vector_free(matched_filters[i].mfilter);
-        }*/
     delete [] matched_filters;
     matched_filters = 0;
   }
   if(ntemplates > 0 && matched_filters_B0){
-    /*for (int i = 0; i < ntemplates; ++i){
-      if(matched_filters_B0[i].mfilter)
-        gsl_vector_free(matched_filters_B0[i].mfilter);
-        }*/
     delete [] matched_filters_B0;
     matched_filters_B0 = 0;
   }
   if(ntemplates > 0 && optimal_filters){
-    /*if(ntemplates > 2)
-      for (int i = 0; i < ntemplates; ++i){
-        if(optimal_filters[i].ofilter)
-          gsl_vector_free(optimal_filters[i].ofilter);
-          }*/
     delete [] optimal_filters;
     optimal_filters = 0;
   }
   if(ntemplates > 0 && optimal_filtersFREQ){
-    /*for (int i = 0; i < ntemplates; ++i){
-      if(optimal_filtersFREQ[i].ofilter)
-        gsl_vector_free(optimal_filtersFREQ[i].ofilter);
-        }*/
     delete [] optimal_filtersFREQ;
     optimal_filtersFREQ = 0;
   }
   if(ntemplates > 0 && optimal_filtersTIME){
-    /*for (int i = 0; i < ntemplates; ++i){
-      if(optimal_filtersTIME[i].ofilter)
-        gsl_vector_free(optimal_filtersTIME[i].ofilter);
-        }*/
     delete [] optimal_filtersTIME;
     optimal_filtersTIME = 0;
   }
@@ -3602,24 +3506,12 @@ LibraryCollection::~LibraryCollection()
   }
   
   if(ntemplates > 0 && optimal_filtersab){
-    /*for (int i = 0; i < ntemplates; ++i){
-      if(optimal_filtersab[i].ofilter)
-        gsl_vector_free(optimal_filtersab[i].ofilter);
-        }*/
     delete [] optimal_filtersab;
   }
   if(ntemplates > 0 && optimal_filtersabFREQ){
-    /*for (int i = 0; i < ntemplates; ++i){
-      if(optimal_filtersabFREQ[i].ofilter)
-        gsl_vector_free(optimal_filtersabFREQ[i].ofilter);
-        }*/
     delete [] optimal_filtersabFREQ;
   }
   if(ntemplates > 0 && optimal_filtersabTIME){
-    /*for (int i = 0; i < ntemplates; ++i){
-      if(optimal_filtersabTIME[i].ofilter)
-        gsl_vector_free(optimal_filtersabTIME[i].ofilter);
-        }*/
     delete [] optimal_filtersabTIME;
   }
   
@@ -3683,7 +3575,6 @@ PulseDetected::PulseDetected(const PulseDetected& other):
 
 PulseDetected& PulseDetected::operator=(const PulseDetected& other)
 {
-  //printf("operator PulseDetected\n");
   if(this != &other){
     
     pulse_duration = other.pulse_duration;
@@ -3716,7 +3607,6 @@ PulseDetected& PulseDetected::operator=(const PulseDetected& other)
 
 PulseDetected::~PulseDetected()
 {
-  //printf("pulse_adc %p\n", pulse_adc);
   if(pulse_adc) {
     gsl_vector_free(pulse_adc); pulse_adc = 0;
   }
@@ -3735,9 +3625,6 @@ MatrixStruct::MatrixStruct(const MatrixStruct& other)
    matrixColumns(other.matrixColumns),
    matrixBody(0)
 {
-  //matrixRows = other.matrixRows;
-  //matrixColumns = other.matrixColumns;
-  //matrixBody = 0;
   if(other.matrixBody){
     matrixBody = gsl_matrix_alloc(matrixRows, matrixColumns);
     gsl_matrix_memcpy(matrixBody, other.matrixBody);
@@ -3746,7 +3633,6 @@ MatrixStruct::MatrixStruct(const MatrixStruct& other)
 
 MatrixStruct& MatrixStruct::operator=(const MatrixStruct& other)
 {
-  //printf("operator MatrixStruct\n");
   if(this != &other){
     matrixRows = other.matrixRows;
     matrixColumns = other.matrixColumns;
@@ -3791,7 +3677,6 @@ PulseTemplate::PulseTemplate(const PulseTemplate& other):
 
 PulseTemplate& PulseTemplate::operator=(const PulseTemplate& other)
 {
-  //printf("operator PulseTemplate\n");
   if(this != &other){
     template_duration = other.template_duration;
     energy = other.energy;
@@ -3807,7 +3692,6 @@ PulseTemplate& PulseTemplate::operator=(const PulseTemplate& other)
   return *this;
 }
 
-// FIXME
 PulseTemplate::~PulseTemplate()
 {
   if(ptemplate) {
@@ -3838,7 +3722,6 @@ MatchedFilter::MatchedFilter(const MatchedFilter& other):
 
 MatchedFilter& MatchedFilter::operator=(const MatchedFilter& other)
 {
-  //printf("operator MatchedFilter\n");
   if(this != &other){
     mfilter_duration = other.mfilter_duration;
     energy = other.energy;
@@ -3854,7 +3737,6 @@ MatchedFilter& MatchedFilter::operator=(const MatchedFilter& other)
   return *this;
 }
 
-// FIXME
 MatchedFilter::~MatchedFilter()
 {
   if(mfilter) {
@@ -3884,7 +3766,6 @@ OptimalFilterSIRENA::OptimalFilterSIRENA(const OptimalFilterSIRENA& other):
 OptimalFilterSIRENA& 
 OptimalFilterSIRENA::operator=(const OptimalFilterSIRENA& other)
 {
-  //printf("operator OptimalFilterSIRENA\n");
   if(this != &other){
     ofilter_duration = other.ofilter_duration;
     energy = other.energy;
@@ -3899,7 +3780,6 @@ OptimalFilterSIRENA::operator=(const OptimalFilterSIRENA& other)
   return *this;
 }
 
-// FIXME
 OptimalFilterSIRENA::~OptimalFilterSIRENA()
 {
   if(ofilter) {
@@ -3943,7 +3823,6 @@ NoiseSpec::NoiseSpec(const NoiseSpec& other):
 
 NoiseSpec& NoiseSpec::operator=(const NoiseSpec& other)
 {
-  //printf("operator NOiseSpec\n");
   if(this != &other){
     noiseStd = other.noiseStd;
     baseline = other.baseline;
@@ -4012,7 +3891,6 @@ Grading::Grading(const Grading& other):
 
 Grading& Grading::operator=(const Grading& other)
 {
-  //printf("operator Grading\n");
   if(this != &other){
     ngrades = other.ngrades;
     if (value) {
@@ -4066,7 +3944,6 @@ PulsesCollection::PulsesCollection(const PulsesCollection& other):
 
 PulsesCollection& PulsesCollection::operator=(const PulsesCollection& other)
 {
-  //printf("operator PUlsesCollection\n");
   if(this != &other){
     ndetpulses = other.ndetpulses;
     size = other.size;
@@ -4083,7 +3960,6 @@ PulsesCollection& PulsesCollection::operator=(const PulsesCollection& other)
   return *this;
 }
 
-// FIXME
 PulsesCollection::~PulsesCollection()
 {
   if(ndetpulses > 0 && pulses_detected) {

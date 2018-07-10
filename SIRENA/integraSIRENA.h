@@ -519,12 +519,6 @@ typedef struct ReconstructInitSIRENA
 #ifdef __cplusplus
 extern "C"
 #endif
-void th_start_energy(PulsesCollection** pulsesAll, 
-                     OptimalFilterSIRENA** optimalFilter);
-
-#ifdef __cplusplus
-extern "C"
-#endif
 void th_end(ReconstructInitSIRENA* reconstruct_init,
             PulsesCollection** pulsesAll, 
             OptimalFilterSIRENA** optimalFilter);
@@ -533,16 +527,6 @@ void th_end(ReconstructInitSIRENA* reconstruct_init,
 extern "C"
 #endif
 int th_get_event_list(TesEventList** test_event, TesRecord** record);
-
-#ifdef __cplusplus
-extern "C"
-#endif
-void th_set_files(TesEventFile *outfile, double delta_t);
-
-#ifdef __cplusplus
-extern "C"
-#endif
-void th_wait_end();
 
 #ifdef __cplusplus
 extern "C"

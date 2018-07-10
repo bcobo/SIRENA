@@ -768,7 +768,7 @@ void th_runDetect(TesRecord* record,
   //(only for the first record)
   if ((*reconstruct_init)->mode == 1)
     {
-      // TODO: check thread safe
+      // thread safe
       // Not treadsafe for the library
       // lock here
       if (filderLibrary(reconstruct_init, 1/record->delta_t))
@@ -796,7 +796,7 @@ void th_runDetect(TesRecord* record,
       || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
       || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
     {
-      // TODO: check thread safe
+      // thread safe
       // Not thread safe for the record_file_ptr
       // If the cfitsio is not compiled with -D_REENTRANT, we need to lock
       // here in order to read the file.
@@ -821,7 +821,7 @@ void th_runDetect(TesRecord* record,
     }
   
   // Process each record
-  // TODO: check thread safe
+  // thread safe
   if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, 
                  invector, *pulsesInRecord))
     {
@@ -889,7 +889,7 @@ void th_runDetect(TesRecord* record,
           EP_EXIT_ERROR(message,EPFAIL);
         }
       gsl_vector_set_all(nonpileup,1);
-      // TODO: check thread safe
+      // thread safe
       if (weightMatrix(*reconstruct_init, false, pulsesAll, *pulsesInRecord, 
                        (pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses), 
                        nonpileup , pulsetemplate, &covarianceData, &weightData))
@@ -8032,7 +8032,6 @@ void th_runEnergy(TesRecord* record,
                                                 pulseToCalculateEnergy = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
                                                 gsl_vector_memcpy(pulseToCalculateEnergy,pulse_aux);
                                                 gsl_vector_free(pulse_aux);
-                                                //>>>>>>> master
 					}
 				  
 					// It is not necessary to check the allocation because '(*reconstruct_init)->pulse_length'='PulseLength'(input parameter) has been checked previously

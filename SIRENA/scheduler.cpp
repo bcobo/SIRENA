@@ -5,18 +5,16 @@
 
 #include "threadsafe_queue.h"
 #include "tasksSIRENA.h"
-//#include "teseventlist.h"
-//#include "testriggerfile.h"
 
 std::mutex end_workers_mut;
 std::mutex end_eworkers_mut;
 std::mutex records_detected_mut;
 std::mutex records_energy_mut;
 
-threadsafe_queue<detection_input*> detection_queue;
-threadsafe_queue<detection_input*> detected_queue;
-threadsafe_queue<detection_input*> energy_queue;
-threadsafe_queue<detection_input*> end_queue;
+threadsafe_queue<sirena_data*> detection_queue;
+threadsafe_queue<sirena_data*> detected_queue;
+threadsafe_queue<sirena_data*> energy_queue;
+threadsafe_queue<sirena_data*> end_queue;
 
 scheduler* scheduler::instance = 0;
 
@@ -33,12 +31,10 @@ void detection_worker()
 {
   log_trace("Starting detection worker...");
   while(1){
-    detection_input* data;
+    sirena_data* data;
     if(detection_queue.wait_and_pop(data)){
-      //ReconstructInitSIRENA* aux = &data.rec_init;
       log_trace("Extracting detection data from queue...");
       th_runDetect(data->rec,
-                //data->n_record,
                 data->last_record,
                 data->all_pulses,
                 &(data->rec_init),
@@ -61,13 +57,13 @@ void energy_worker()
 {
   log_trace("Starting energy worker...");
   while(1){
-    detection_input* data;
+    sirena_data* data;
     if(energy_queue.wait_and_pop(data)){
       log_trace("Extracting energy data from queue...");
       log_debug("Energy data in record %i",data->n_record);
       th_runEnergy(data->rec, 
                    &(data->rec_init),
-                   &(data->record_pulses),//copy
+                   &(data->record_pulses),
                    &(data->optimal_filter));
       end_queue.push(data);
       std::unique_lock<std::mutex> lk(records_energy_mut);
@@ -87,13 +83,13 @@ void energy_worker_v2()
 {
   log_trace("Starting energy worker...");
   while(1){
-    detection_input* data;
+    sirena_data* data;
     if(detected_queue.wait_and_pop(data)){
       log_trace("Extracting energy data from queue...");
       log_debug("Energy data in record %i",data->n_record);
       th_runEnergy(data->rec, 
                    &(data->rec_init),
-                   &(data->record_pulses),//copy
+                   &(data->record_pulses),
                    &(data->optimal_filter));
       end_queue.push(data);
       std::unique_lock<std::mutex> lk(records_energy_mut);
@@ -109,33 +105,6 @@ void energy_worker_v2()
   }
 }
 
-#if 0
-void reconstruction_worker()
-{
-  while(1){
-    detection_input* data;
-    if(energy_queue.wait_and_pop(data)){      
-                data->rec_init->pulse_length);
-#if 0
-      if(strcmp(data.rec_init.EnergyMethod, "PCA") != 0){
-        ReconstructInitSIRENA* aux = &data.rec_init;
-        runEnergy(data.rec, &aux, &data.record_pulses, &data.optimal_filter);
-      }
-      if(data.n_record == 1){
-        
-      }
-#endif
-    }
-    std::unique_lock<std::mutex> lk(end_workers_mut);
-    if(end_workers && energy_queue.empty()){
-      lk.unlock();
-      break;
-    }
-    lk.unlock();
-  }
-}
-#endif
-
 /* ****************************************************************************/
 /* Scheduler ******************************************************************/
 /* ****************************************************************************/
@@ -149,7 +118,7 @@ void scheduler::push_detection(TesRecord* record,
                                TesEventList* event_list)
 {
   log_trace("pushing detection data into the queue...");
-  detection_input* input = new detection_input;
+  sirena_data* input = new sirena_data;
   tesrecord* rec = new tesrecord(record);
   input->rec = rec->get_TesRecord();
   input->n_record = nRecord;
@@ -158,14 +127,13 @@ void scheduler::push_detection(TesRecord* record,
   if (pulsesAll and pulsesAll->ndetpulses > 0){
     *input->all_pulses = *pulsesAll;
   }
-  //input->all_pulses = pulsesAll;//TODO copy?
+
   input->record_pulses = *pulsesInRecord;
   input->rec_init = *reconstruct_init;
-  input->optimal_filter = new OptimalFilterSIRENA;//*optimal;
+  input->optimal_filter = new OptimalFilterSIRENA;
   input->event_list = new TesEventList;
   input->event_list->size = event_list->size;
-  //int index
-  //int size_energy
+
   input->event_list->index = event_list->index;
   input->event_list->size_energy = event_list->size_energy;
   input->event_list->event_indexes = new double[event_list->size];
@@ -178,15 +146,6 @@ void scheduler::push_detection(TesRecord* record,
   input->event_list->grading = new int[event_list->size];
   detection_queue.push(input);
   ++num_records;
-  //this->push_detection(input);
-}
-
-void scheduler::push_detection(const detection_input &input)
-{ 
-#if 0
-  //std::this_thread::sleep_for(std::chrono::milliseconds(900));
-  detection_queue.push(input);
-#endif
 }
 
 void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
@@ -217,9 +176,9 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
   (*pulsesAll)->pulses_detected = new PulseDetected[this->num_records];
 
   log_debug("Number of records %i", this->num_records);
-  this->data_array = new detection_input*[this->num_records];//+1];
+  this->data_array = new sirena_data*[this->num_records];//+1];
   while(!detected_queue.empty()){
-    detection_input* data;
+    sirena_data* data;
     if(detected_queue.wait_and_pop(data)){
       data_array[data->n_record-1] = data;
     }
@@ -379,19 +338,7 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
         }
       }
     }
-#if 0
-    int status=EXIT_SUCCESS;
-    saveEventListToFile(this->outfile,
-                        event_list,
-                        data_array[i]->rec->time,
-                        this->record_file_delta_t,
-                        data_array[i]->rec->pixid,
-                        &status);
-    //CHECK_STATUS_BREAK(status);
-    if (EXIT_SUCCESS!=status){
-      EP_EXIT_ERROR("Something went wrong while saving the event_list",EPFAIL);
-    }
-#endif
+
     log_debug("Eventlist from record %i", (i + 1) );
     log_debug("%i, %i, %i",event_list->size, event_list->size_energy, event_list->index);
     for (int j = 0; j < event_list->index; ++j){
@@ -402,7 +349,6 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
                 event_list->grades1[j],
                 event_list->grades2[j],
                 event_list->ph_ids[j]);
-      printf(" grading %i ",event_list->grading[j]); 
     }
   }// for event_list
 }
@@ -460,9 +406,9 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
   (*pulsesAll)->pulses_detected = new PulseDetected[this->num_records];
 
   log_debug("Number of records %i", this->num_records);
-  this->data_array = new detection_input*[this->num_records];//+1];
+  this->data_array = new sirena_data*[this->num_records];//+1];
   while(!end_queue.empty()){
-    detection_input* data;
+    sirena_data* data;
     if(end_queue.wait_and_pop(data)){
       data_array[data->n_record-1] = data;
     }
@@ -480,7 +426,6 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
       aux = *(*pulsesAll);
       delete *pulsesAll;
       *pulsesAll = new PulsesCollection;
-      //**pulsesAll = aux;
       (*pulsesAll)->ndetpulses = aux.ndetpulses;
       (*pulsesAll)->size = (*pulsesAll)->ndetpulses + in_record->ndetpulses;
       (*pulsesAll)->pulses_detected =  new PulseDetected[(*pulsesAll)->size];
@@ -637,7 +582,6 @@ void scheduler::init()
     for (unsigned int i = 0; i < this->max_detection_workers; ++i){
       this->detection_workers[i] = std::thread (detection_worker);
     }
-    //this->reconstruct_worker = std::thread(reconstruction_worker);
   }
 }
 
@@ -645,7 +589,6 @@ void scheduler::init_v2()
 {
   if(threading){
     this->num_cores = std::thread::hardware_concurrency();
-    //this->num_cores = 1;
     if(this->num_cores < 2){
       this->max_detection_workers = 1;
       this->max_energy_workers = 1;
@@ -674,8 +617,6 @@ scheduler::scheduler():
   max_energy_workers(0),
   num_records(0),
   is_running_energy(false),
-  outfile(0),
-  record_file_delta_t(0.0f),
   current_record(0),
   data_array(0)
 {
@@ -686,16 +627,6 @@ scheduler::~scheduler()
 {
   if(threading){
     instance = 0;
-#if 0
-    std::unique_lock<std::mutex> lk(end_workers_mut);
-    end_workers = true;
-    lk.unlock();
-    //TODO: clean the threads
-    for(unsigned int i = 0; i < this->max_detection_workers; ++i){
-      this->detection_workers[i].join();
-    }
-#endif
-    //this->reconstruct_worker.join();
   }
 }
 
@@ -962,7 +893,7 @@ TesRecord* tesrecord::get_TesRecord() const
   return ret;
 }
 
-detection::detection():
+data::data():
   n_record(0),
   last_record(0),
   all_pulses(0),
@@ -971,7 +902,7 @@ detection::detection():
   
 }
 
-detection::detection(const detection& other):
+data::data(const data& other):
   n_record(other.n_record),
   last_record(other.last_record),
   all_pulses(0),
@@ -979,52 +910,23 @@ detection::detection(const detection& other):
   rec(other.rec),
   rec_init(other.rec_init)
 {
-  //TODO:
   
 }
 
-detection& detection::operator=(const detection& other)
+data& data::operator=(const data& other)
 {
   if(this != &other){
     n_record = other.n_record;
     last_record = other.last_record;
     rec = other.rec;
     rec_init = other.rec_init;
-    //TODO:
   }
   return *this;
 }
 
-detection::~detection()
+data::~data()
 {
-  //TODO:
+
 }
 
-energy::energy():
-  record_pulses(0),
-  optimal_filter(0)
-{
-  //TODO:
-}
 
-energy::energy(const energy& other):
-  rec_init(other.rec_init),
-  record_pulses(0),
-  optimal_filter(0)
-{
-  //TODO:
-}
-
-energy& energy::operator=(const energy& other)
-{
-  if(this != &other){
-    rec_init = other.rec_init;
-    //TODO:
-  }
-  return *this;
-}
-
-energy::~energy()
-{
-  //TODO:
-}

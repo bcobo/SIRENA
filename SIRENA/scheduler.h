@@ -68,17 +68,8 @@ struct tesrecord{
   TesRecord* get_TesRecord() const;
 };//TesRecord;
 
-struct detection
-{
-#if 0
-  int pulse_length;//recontruct_init->pulse_length
-  int eventsz;//record->trigger_size
-  int tstart_pulse1;//reconstruct_init->tstartPulse1
-  int tstart_pulse2;//reconstruct_init->tstartPulse2
-  int tstart_pulse3;//reconstruct_init->tstartPulse3
-  int intermediate;//reconstruct_init->intermediate
-#endif
-  
+struct data
+{ 
   TesRecord* rec;
   ReconstructInitSIRENA* rec_init;
   int n_record;
@@ -88,35 +79,18 @@ struct detection
   OptimalFilterSIRENA* optimal_filter;
   TesEventList* event_list;
 
-  detection();
-  detection(const detection& other);
-  detection& operator=(const detection& other);
-  ~detection();
+  data();
+  data(const data& other);
+  data& operator=(const data& other);
+  ~data();
 };
 
-struct energy
-{
-  tesrecord* rec;
-  ReconstructInitSIRENA* rec_init;
-  int n_record;
-  PulsesCollection* all_pulses;
-  PulsesCollection** record_pulses;
-  OptimalFilterSIRENA** optimal_filter;
-
-  energy();
-  energy(const energy& other);
-  energy& operator=(const energy& other);
-  ~energy();
-};
-
-#define detection_input detection
-#define detection_output energy
+#define sirena_data data
 
 class scheduler
 {
  public:
 
-  void push_detection(const detection_input &input);
   void push_detection(TesRecord* record, 
                       int nRecord, 
                       int lastRecord, 
@@ -125,18 +99,12 @@ class scheduler
                       PulsesCollection** pulsesInRecord,
                       OptimalFilterSIRENA** optimal,
                       TesEventList* event_list);
-  void run_energy(/*TODO: add parameters*/);
   void finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
                              PulsesCollection** pulsesAll, 
                              OptimalFilterSIRENA** optimalFilter);
   void finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init,
                                 PulsesCollection** pulsesAll, 
                                 OptimalFilterSIRENA** optimalFilter);
-
-  inline void set_files(TesEventFile *outfile, double delta_t){
-    this->outfile = outfile;
-    this->record_file_delta_t = delta_t;
-  }
 
   inline bool is_threading() const { return threading; }
   inline bool is_reentrant() const { return fits_is_reentrant(); }
@@ -167,11 +135,7 @@ class scheduler
   unsigned int num_records;
   unsigned int current_record;
 
-  detection_input** data_array;
-
-  TesEventFile *outfile;
-  //TesTriggerFile* record_file;
-  double record_file_delta_t;
+  sirena_data** data_array;
 
   bool is_running_energy;
   

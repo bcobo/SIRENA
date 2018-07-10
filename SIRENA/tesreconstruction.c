@@ -127,7 +127,6 @@ int tesreconstruction_main() {
 
     // Iterate of records and do the reconstruction
     int lastRecord = 0, nrecord = 0; //last record required for SIRENA library creation
-    th_set_files(outfile,record_file->delta_t);
     while(getNextRecord(record_file,record,&status))
     {
       if(!strcmp(par.Rcmethod,"PP"))
@@ -160,18 +159,6 @@ int tesreconstruction_main() {
 	    //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
 	    reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
 				    lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
-            /*printf("\nevent list");
-            printf("\ndata - %i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
-            for (int i = 0; i < event_list->index; ++i){
-              printf("\n%f, %f, %f, %f, %i, %i, %ld, %i",event_list->event_indexes[i],
-                     event_list->pulse_heights[i], 
-                     event_list->avgs_4samplesDerivative[i],
-                     event_list->energies[i],
-                     event_list->grades1[i],
-                     event_list->grades2[i],
-                     event_list->ph_ids[i],
-                     event_list->grading[i]);
-                     }*/
       }
       CHECK_STATUS_BREAK(status);
 
@@ -191,69 +178,16 @@ int tesreconstruction_main() {
     }
 
     if(is_threading()) {
-      //printf("asdasd\n");
       th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
       int i = 1;
       int aux = 1;
       while((aux = th_get_event_list(&event_list, &record)) == 1){
-        
-        printf("\nevent list");
-        printf("\ndata - %i, %i, %i,",event_list->size, event_list->size_energy, event_list->index);
-        for (int i = 0; i < event_list->index; ++i){
-         printf("\n%f, %f, %f, %f, %i, %i, %ld, %i",event_list->event_indexes[i],
-               event_list->pulse_heights[i], 
-               event_list->avgs_4samplesDerivative[i],
-               event_list->energies[i],
-               event_list->grades1[i],
-               event_list->grades2[i],
-                event_list->ph_ids[i],
-                event_list->grading[i]);
-        }
-        //printf("\n %p - %f", outfile, record_file->delta_t);
-        //printf("\nRecord");
-        //printf("\n%f - %ld", record->time, record->pixid);
-        //continue;
-        //if(i == 101) break;
         saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
         CHECK_STATUS_BREAK(status);
         ++i;
       }
     }
     
-    printf("\npulsesAll");
-    for (int i = 0; i < pulsesAll->ndetpulses; ++i){
-      printf("\ndata - %i, %i, %i, %i, %f, %f, %f, %f, %f, %f, %f, %f, %i,  %f, %f, %i\n",
-             pulsesAll->pulses_detected[i].pulse_duration,
-             pulsesAll->pulses_detected[i].grade1,
-             pulsesAll->pulses_detected[i].grade2,
-             //pulsesAll->pulses_detected[i].grade2_1,
-             pulsesAll->pulses_detected[i].pixid,
-             pulsesAll->pulses_detected[i].Tstart,
-             pulsesAll->pulses_detected[i].Tend,
-             pulsesAll->pulses_detected[i].riseTime,
-             pulsesAll->pulses_detected[i].fallTime,
-             pulsesAll->pulses_detected[i].pulse_height,
-             pulsesAll->pulses_detected[i].maxDER,
-             pulsesAll->pulses_detected[i].samp1DER,
-             pulsesAll->pulses_detected[i].energy,
-             pulsesAll->pulses_detected[i].grading,
-             pulsesAll->pulses_detected[i].avg_4samplesDerivative,
-             pulsesAll->pulses_detected[i].quality,
-             pulsesAll->pulses_detected[i].numLagsUsed);
-      for (int j = 0; j < pulsesAll->pulses_detected[i].pulse_adc->size; ++j){
-        printf("%d, ",(pulsesAll->pulses_detected[i].pulse_adc->data[j]));
-      }
-    }
-    /* 
-    
-    printf("\noptimalFilter");
-    printf("\n%i, %f\n", optimalFilter->ofilter_duration, optimalFilter->energy);
-    if(optimalFilter->ofilter){
-      for (unsigned int i = 0; optimalFilter->ofilter->size; ++i){
-        printf("%f, ",*(optimalFilter->ofilter->data));
-      }
-    }
-    */
     if ((!strcmp(par.Rcmethod,"SIRENA")) && (pulsesAll->ndetpulses == 0))  printf("%s","WARNING: no pulses have been detected\n");
     
     // Copy trigger keywords to event file
