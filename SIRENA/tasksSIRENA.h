@@ -40,7 +40,11 @@
 #include "pulseprocess.h"
 #include <iomanip>      // std::setprecision
 
-void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord);
+void runDetect(TesRecord* record, 
+               int lastRecord, 
+               PulsesCollection *pulsesAll, 
+               ReconstructInitSIRENA** reconstruct_init, 
+               PulsesCollection** pulsesInRecord);
 
 void th_runDetect(TesRecord* record, 
                   //int nRecord, 
