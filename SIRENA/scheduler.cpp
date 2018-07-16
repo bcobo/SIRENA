@@ -571,7 +571,7 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
 
 void scheduler::get_test_event(TesEventList** test_event, TesRecord** record)
 {
-  if(this->current_record == 100) return;
+  if(this->current_record == this->num_records) return;
   log_trace("Getting eventlist from record %i", (this->current_record + 1));
   *test_event = this->data_array[this->current_record]->event_list;
   *record = this->data_array[this->current_record]->rec;

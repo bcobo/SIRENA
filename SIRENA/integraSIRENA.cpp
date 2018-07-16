@@ -2882,8 +2882,8 @@ ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object(int n_record)
   strcpy(ret->OFInterp, this->OFInterp);
   strcpy(ret->OFStrategy, this->OFStrategy);
     
-  OFLength = this->OFLength;
-  intermediate = this->intermediate;
+  ret->OFLength = this->OFLength;
+  ret->intermediate = this->intermediate;
   
   strcpy(ret->detectFile, this->detectFile);
   sprintf(ret->detectFile, "%s_%i", ret->detectFile, n_record);

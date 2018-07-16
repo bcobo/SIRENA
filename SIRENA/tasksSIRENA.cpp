@@ -729,7 +729,7 @@ void th_runDetect(TesRecord* record,
                   PulsesCollection *pulsesAll, 
                   ReconstructInitSIRENA** reconstruct_init, 
                   PulsesCollection** pulsesInRecord)
-{ 
+{
   scheduler* sc = scheduler::get();
   int inputPulseLength = (*reconstruct_init)->pulse_length;
   
@@ -8038,8 +8038,7 @@ void th_runEnergy(TesRecord* record,
 	{
 		// Establish the pulse grade (HighRes=1, MidRes=2, LimRes=3, LowRes=4, Rejected=-1, Pileup=-2) and the optimal filter length
 		if ((*pulsesInRecord)->pulses_detected[i].quality == 1)		(*pulsesInRecord)->pulses_detected[i].grade1 = -1;
-		else								(*pulsesInRecord)->pulses_detected[i].grade1 = (*pulsesInRecord)->pulses_detected[i].pulse_duration;
-                
+		else								(*pulsesInRecord)->pulses_detected[i].grade1 = (*pulsesInRecord)->pulses_detected[i].pulse_duration;      
                 pulseGrade = 0;
 		if (pulseGrading(*reconstruct_init,(*pulsesInRecord)->pulses_detected[i].grade1,(*pulsesInRecord)->pulses_detected[i].grade2,OFlength_strategy,&pulseGrade,&resize_mf))
 		{
