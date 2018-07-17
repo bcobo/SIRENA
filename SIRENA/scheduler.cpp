@@ -669,7 +669,7 @@ phidlist::phidlist(const phidlist& other):
       phid_array[i] = other.phid_array[i];
     }
   }
-  if (other.times && other.size > 0){
+  if (other.wait_list && other.times && other.size > 0){
     times = new double[other.size];
     for (unsigned int i = 0; i < size; ++i){
       times[i] = other.times[i];
@@ -691,7 +691,8 @@ phidlist::phidlist(PhIDList* other):
       phid_array[i] = other->phid_array[i];
     }
   }
-  if (other->times && size > 0){
+  
+  if (wait_list && other->times && size > 0){
     times = new double[size];
     for (unsigned int i = 0; i < size; ++i){
       times[i] = other->times[i];
@@ -718,7 +719,7 @@ phidlist& phidlist::operator=(const phidlist& other)
         phid_array[i] = other.phid_array[i];
       }
     }
-    if (other.times && other.size > 0){
+    if (other.wait_list && other.times && other.size > 0){
       times = new double[other.size];
       for (unsigned int i = 0; i < size; ++i){
         times[i] = other.times[i];
@@ -751,7 +752,7 @@ PhIDList* phidlist::get_PhIDList() const
       ret->phid_array[i] = phid_array[i];
     }
   }
-  if (times && size > 0){
+  if (wait_list && times && size > 0){
     ret->times = new double[size];
     for (unsigned int i = 0; i < size; ++i){
       ret->times[i] = times[i];
@@ -925,6 +926,7 @@ data::data(const data& other):
 
 data& data::operator=(const data& other)
 {
+  printf("operator = date\n");
   if(this != &other){
     n_record = other.n_record;
     last_record = other.last_record;
