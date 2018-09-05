@@ -188,13 +188,13 @@ int main (int argc, char **argv)
 	samprate = 1/samprate;
 	ivcal=1.0;
 	asquid = 1.0;
-	strcpy(keyname,"MONOEN");
+	/*strcpy(keyname,"MONOEN");
 	if (fits_read_key(infileObject,TDOUBLE,keyname, &energy,comment,&status))
 	{
 		message = "Cannot read keyword " + string(keyname) + " in input file";
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
 	}
-	energy = energy*1e3;
+	energy = energy*1e3;*/
 	plspolar = 1.0;
 
 	// Get structure of input FITS file columns
