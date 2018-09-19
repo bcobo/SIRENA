@@ -1,8 +1,8 @@
 1. Simular con xifusim
-2. Reconstruir con el SIXTE de 9May o con el nuevo pero cambiando el fichero 'testriggerfile.c'(*)
+2. Reconstruir con el SIXTE nuevo pero CAMBIANDO el fichero 'testriggerfile.c', no vale con poner el mismo fichero que el 9May (*)
 
 (*) SIXTE-9May: Funciona con ADC variable                        |
-    SIXTE-nuevo(18/09/2018): Funcionan con la columna ADC fija   | =>  Por eso para reconstruir hay que usar el SIXTE de 9May o el nuevo cambiando 'testriggerfile.c'
+    SIXTE-nuevo(18/09/2018): Funcionan con la columna ADC fija   | =>  Por eso para reconstruir hay que usar el SIXTE nuevo cambiando 'testriggerfile.c'
     xifusim: Crea la columna ADC de longitud variable            |
 
 
