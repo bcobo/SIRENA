@@ -26,8 +26,6 @@ int tesreconstruction_main() {
   // Containing all programm parameters read by PIL.
   struct Parameters par;
   
-  //printf("Paso1\n");
-  
   // Error status.
   int status=EXIT_SUCCESS;
   
@@ -43,15 +41,12 @@ int tesreconstruction_main() {
     // Get program parameters.
     status=getpar(&par);
     CHECK_STATUS_BREAK(status);
-    //printf("Paso2\n");
     // Sixt standard keywords structure
     SixtStdKeywords* keywords = newSixtStdKeywords(&status);
     CHECK_STATUS_BREAK(status);
-    //printf("Paso2_1\n");
     // Open record file
     TesTriggerFile* record_file = openexistingTesTriggerFile(par.RecordFile,keywords,&status);
     CHECK_STATUS_BREAK(status);
-    //printf("Paso2_2\n");
     //Open outfile
     TesEventFile * outfile = opennewTesEventFile(par.TesEventFile,
     		keywords,
@@ -76,7 +71,7 @@ int tesreconstruction_main() {
     }else{
 	  initializeReconstructionSIRENA(reconstruct_init_sirena, par.RecordFile, record_file->fptr, par.LibraryFile, par.TesEventFile, 
 		par.PulseLength, par.scaleFactor, par.samplesUp, par.samplesDown, par.nSgms, par.detectSP, par.mode, par.detectionMode, par.LrsT, par.LbT, par.NoiseFile, 
-		par.FilterDomain, par.FilterMethod, par.EnergyMethod, par.filtEev, par.OFNoise, par.LagsOrNot, par.OFIter, par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength,
+		par.FilterDomain, par.FilterMethod, par.EnergyMethod, par.filtEev, par.OFNoise, par.LagsOrNot, par.nLags, par.Parabola3OrFitting5, par.OFIter, par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength,
 		par.monoenergy, par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, par.filterFile, par.clobber, par.EventListSize, par.SaturationValue,
 		par.tstartPulse1, par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
           // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
@@ -182,7 +177,7 @@ int tesreconstruction_main() {
         }
       }
     }
-
+    
     // 
     if(is_threading()) {
       th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
@@ -431,6 +426,8 @@ int getpar(struct Parameters* const par)
 	free(sbuffer);
 	
 	status=ape_trad_query_int("LagsOrNot", &par->LagsOrNot);
+        status=ape_trad_query_int("nLags", &par->nLags);
+        status=ape_trad_query_int("Parabola3OrFitting5", &par->Parabola3OrFitting5);
 
 	status=ape_trad_query_int("OFIter", &par->OFIter);
 
@@ -482,6 +479,12 @@ int getpar(struct Parameters* const par)
         MyAssert((strcmp(par->detectionMode,"AD") == 0) || (strcmp(par->detectionMode,"STC") == 0), "detectionMode must be AD or STC");
 	
 	MyAssert((par->LagsOrNot ==0) || (par->LagsOrNot ==1), "LagsOrNot must me 0 or 1");
+        if ((par->nLags)%2 == 0)
+	{
+		SIXT_ERROR("parameter error: nLgas must be odd");
+		return(EXIT_FAILURE);
+	}
+	MyAssert((par->Parabola3OrFitting5 ==0) || (par->Parabola3OrFitting5 ==1), "Parabola3OrFitting5 must me 0 or 1");
 
 	if (((strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0)) && (par->LagsOrNot == 1))
 	{

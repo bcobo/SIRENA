@@ -139,6 +139,7 @@ void scheduler::push_detection(TesRecord* record,
   input->event_list->event_indexes = new double[event_list->size];
   input->event_list->energies = new double[event_list->size];
   input->event_list->avgs_4samplesDerivative = new double[event_list->size];
+  input->event_list->Es_lowres = new double[event_list->size];
   input->event_list->grades1 = new int[event_list->size];
   input->event_list->grades2 = new int[event_list->size];
   input->event_list->pulse_heights = new double[event_list->size];
@@ -292,6 +293,7 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
         
         event_list->avgs_4samplesDerivative[ip] = 
           record_pulses->pulses_detected[ip].avg_4samplesDerivative;
+        event_list->Es_lowres[ip] = record_pulses->pulses_detected[ip].E_lowres;
         event_list->grading[ip] = record_pulses->pulses_detected[ip].grading;
         event_list->grades1[ip]  = record_pulses->pulses_detected[ip].grade1;
         event_list->grades2[ip]  = record_pulses->pulses_detected[ip].grade2;
@@ -334,6 +336,7 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
           event_list->energies[ip] = (*pulsesAll)->pulses_detected[ip].energy;
           
           event_list->avgs_4samplesDerivative[ip]  = (*pulsesAll)->pulses_detected[ip].avg_4samplesDerivative;
+          event_list->Es_lowres[ip]  = (*pulsesAll)->pulses_detected[ip].E_lowres;
           event_list->grading[ip] = (*pulsesAll)->pulses_detected[ip].grading;
           event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
           event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
@@ -502,6 +505,7 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
         
         event_list->avgs_4samplesDerivative[ip] = 
           record_pulses->pulses_detected[ip].avg_4samplesDerivative;
+        event_list->Es_lowres[ip] = record_pulses->pulses_detected[ip].E_lowres;
         event_list->grading[ip] = record_pulses->pulses_detected[ip].grading;
         event_list->grades1[ip]  = record_pulses->pulses_detected[ip].grade1;
         event_list->grades2[ip]  = record_pulses->pulses_detected[ip].grade2;
@@ -544,6 +548,7 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
           event_list->energies[ip] = (*pulsesAll)->pulses_detected[ip].energy;
           
           event_list->avgs_4samplesDerivative[ip]  = (*pulsesAll)->pulses_detected[ip].avg_4samplesDerivative;
+          event_list->Es_lowres[ip]  = (*pulsesAll)->pulses_detected[ip].E_lowres;
           event_list->grading[ip] = (*pulsesAll)->pulses_detected[ip].grading;
           event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
           event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;

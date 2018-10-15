@@ -134,7 +134,7 @@ int _resize_array(int size, int pulses){ return (size * MUL_FAC  < pulses) ? pul
 extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init, char* const record_file, fitsfile *fptr,
 		char* const library_file, char* const event_file, int pulse_length, double scaleFactor, double samplesUp, double samplesDown,
 		double nSgms, int detectSP, int mode, char *detectionMode, double LrsT, double LbT, char* const noise_file, char* filter_domain, char* filter_method, 
-		char* energy_method, double filtEev, char *ofnoise, int lagsornot, int ofiter, char oflib, char *ofinterp,
+		char* energy_method, double filtEev, char *ofnoise, int lagsornot, int nLags, int Parabola3OrFitting5, int ofiter, char oflib, char *ofinterp,
 		char* oflength_strategy, int oflength,
 		double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, char* const filterFile,
 		char clobber, int maxPulsesPerRecord, double SaturationValue,
@@ -271,6 +271,8 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
         reconstruct_init->filtEev     = filtEev;
 	strcpy(reconstruct_init->OFNoise,ofnoise);
 	reconstruct_init->LagsOrNot = lagsornot;
+        reconstruct_init->nLags = nLags;
+        reconstruct_init->Parabola3OrFitting5 = Parabola3OrFitting5;
 	reconstruct_init->OFIter = ofiter;
 	if (0 != oflib)	reconstruct_init->OFLib = 1;
 	else		reconstruct_init->OFLib = 0;
@@ -418,6 +420,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	{
 		if (event_list->energies != NULL) 	delete [] event_list->energies;
                 if (event_list->avgs_4samplesDerivative != NULL) 	delete [] event_list->avgs_4samplesDerivative;
+                if (event_list->Es_lowres != NULL) 	delete [] event_list->Es_lowres;
                 if (event_list->phis != NULL) 	delete [] event_list->phis;
                 if (event_list->lagsShifts != NULL) 	delete [] event_list->lagsShifts;
                 if (event_list->grading != NULL) 	delete [] event_list->grading;
@@ -470,6 +473,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	event_list->index = pulsesInRecord->ndetpulses;
 	event_list->energies = new double[event_list->index];
         event_list->avgs_4samplesDerivative = new double[event_list->index];
+        event_list->Es_lowres = new double[event_list->index];
         event_list->phis = new double[event_list->index];
         event_list->lagsShifts = new int[event_list->index];
         event_list->grading  = new int[event_list->index];
@@ -494,6 +498,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			}
 
 			event_list->avgs_4samplesDerivative[ip] = pulsesInRecord->pulses_detected[ip].avg_4samplesDerivative;
+                        event_list->Es_lowres[ip] = pulsesInRecord->pulses_detected[ip].E_lowres;
                         event_list->phis[ip] = pulsesInRecord->pulses_detected[ip].phi;
                         event_list->lagsShifts[ip] = pulsesInRecord->pulses_detected[ip].lagsShift;
                         event_list->grading[ip]  = pulsesInRecord->pulses_detected[ip].grading;
@@ -529,6 +534,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                         event_list->event_indexes = new double[event_list->index];
 			event_list->energies = new double[event_list->index];
                         event_list->avgs_4samplesDerivative = new double[event_list->index];
+                        event_list->Es_lowres = new double[event_list->index];
                         event_list->phis = new double[event_list->index];
                         event_list->lagsShifts = new int[event_list->index];
                         event_list->grading  = new int[event_list->index];
@@ -551,6 +557,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 				}
 
 				event_list->avgs_4samplesDerivative[ip]  = (*pulsesAll)->pulses_detected[ip].avg_4samplesDerivative;
+                                event_list->Es_lowres[ip]  = (*pulsesAll)->pulses_detected[ip].E_lowres;
                                 event_list->phis[ip] = (*pulsesAll)->pulses_detected[ip].phi;
                                 event_list->lagsShifts[ip] = (*pulsesAll)->pulses_detected[ip].lagsShift;
                                 event_list->grading[ip]  = (*pulsesAll)->pulses_detected[ip].grading;
@@ -2611,6 +2618,8 @@ ReconstructInitSIRENA::ReconstructInitSIRENA():
   filtEev(0.0f),
   //OFNoise(""),
   LagsOrNot(0),
+  nLags(0),
+  Parabola3OrFitting5(0),
   OFIter(0),
   OFLib(0),
   //OFInterp(""),
@@ -2663,6 +2672,8 @@ ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other)
   filtEev(other.filtEev),
   //OFNoise(""),
   LagsOrNot(other.LagsOrNot),
+  nLags(other.nLags),
+  Parabola3OrFitting5(other.Parabola3OrFitting5),
   OFIter(other.OFIter),
   OFLib(other.OFLib),
   //OFInterp(""),
@@ -2786,6 +2797,8 @@ ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
     strcpy(OFNoise, other.OFNoise);
     
     LagsOrNot = other.LagsOrNot;
+    nLags = other.nLags;
+    Parabola3OrFitting5 = other.Parabola3OrFitting5;
     OFIter = other.OFIter;
     OFLib = other.OFLib;
     
@@ -2889,6 +2902,8 @@ ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object(int n_record)
   strcpy(ret->OFNoise, this->OFNoise);
     
   ret->LagsOrNot = this->LagsOrNot;
+  ret->nLags = this->nLags;
+  ret->Parabola3OrFitting5 = this->Parabola3OrFitting5;
   ret->OFIter = this->OFIter;
   ret->OFLib = this->OFLib;
     
@@ -3569,6 +3584,7 @@ PulseDetected::PulseDetected():
   energy(0.0f),
   grading(0),
   avg_4samplesDerivative(0.0f),
+  E_lowres(0.0f),
   phi(0.0f),
   lagsShift(0),//
   quality(0.0f),
@@ -3595,6 +3611,7 @@ PulseDetected::PulseDetected(const PulseDetected& other):
   energy(other.energy),
   grading(other.grading),
   avg_4samplesDerivative(other.avg_4samplesDerivative),
+  E_lowres(other.E_lowres),
   phi(other.phi),
   lagsShift(other.lagsShift),
   quality(other.quality),
@@ -3633,6 +3650,7 @@ PulseDetected& PulseDetected::operator=(const PulseDetected& other)
     energy = other.energy;
     grading = other.grading;
     avg_4samplesDerivative = other.avg_4samplesDerivative;
+    E_lowres = other.E_lowres;
     phi = other.phi;
     lagsShift = other.lagsShift;
     quality = other.quality;

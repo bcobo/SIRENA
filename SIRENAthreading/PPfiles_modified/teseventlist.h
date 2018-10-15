@@ -48,6 +48,9 @@ typedef struct {
 
 	/** Average of the first 4 samples of the derivative of the event (pulse) */
 	double * avgs_4samplesDerivative;  //BEA
+	
+	/** Low resolution energy estimator (4 samples-long filter) */
+	double * Es_lowres;  //BEA
 
 	/** Offset relative to the central point of the parabola */
 	double * phis;  //BEA
@@ -85,7 +88,7 @@ typedef struct {
 	long nrows;
 
 	/** Column numbers for time, energy, grade1, grade2, pixID, RA and DEC columns */
-	int timeCol,energyCol,avg_4samplesDerivativeCol,grade1Col,grade2Col,phiCol,lagsShiftCol,pixIDCol,phIDCol,raCol,decCol,detxCol,detyCol,gradingCol,srcIDCol,nxtCol,extCol; //BEA
+	int timeCol,energyCol,avg_4samplesDerivativeCol,E_lowresCol,grade1Col,grade2Col,phiCol,lagsShiftCol,pixIDCol,phIDCol,raCol,decCol,detxCol,detyCol,gradingCol,srcIDCol,nxtCol,extCol; //BEA
 
 } TesEventFile;
 

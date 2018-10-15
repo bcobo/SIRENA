@@ -334,6 +334,9 @@ typedef struct PulseDetected
         /** Average of the first 4 samples of the derivative of the Pulse */
 	double avg_4samplesDerivative;
         
+        /** Low resolution energy estimator (4 samples-long filter) */
+	double E_lowres;
+        
         /** Offset relative to the central point of the parabola */
         double phi;
         
@@ -467,6 +470,12 @@ typedef struct ReconstructInitSIRENA
   //LagsOrNot: LAGS == True or NOLAGS == False **/
   int LagsOrNot;
   
+  //Number of lags (odd number **/
+  int nLags;
+  
+  //Using 3 lags to analytically calculate a parabola or using 5 lags to fit **/
+  int Parabola3OrFitting5;
+  
   //OFIter: Iterate == 1 or NOTIterate == 0 **/
   int OFIter;
   
@@ -568,7 +577,7 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     char* filter_domain,
                                     char* filter_method, char* energy_method, 
                                     double filtEev, char* ofnoise, 
-                                    int lagsornot, int ofiter, char oflib, 
+                                    int lagsornot, int nLags, int Parabola3OrFitting5, int ofiter, char oflib, 
                                     char *ofinterp, char* oflength_strategy, 
                                     int oflength,
                                     double monoenergy, char hduPRECALWN, 
