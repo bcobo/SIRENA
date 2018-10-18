@@ -248,11 +248,9 @@ int getNextRecord(TesTriggerFile* const file,TesRecord* record,int* const status
     fits_read_col(file->fptr, TLONG, file->pixIDCol,
 		  file->row,1,1,0,&(record->pixid), &anynul,status);
     CHECK_STATUS_RET(*status,0);
-    printf("desp pix\n");
     fits_read_col(file->fptr, TDOUBLE, file->timeCol,
 		  file->row,1,1,0,&(record->time), &anynul,status);
     CHECK_STATUS_RET(*status,0);
-    printf("desp TIME\n");
     //Changed below by MTC//    for (unsigned long i=0 ; i < file->trigger_size ; i++) {
     /* Comment again because now ADC is double
     for (unsigned long i=0 ; i < record->trigger_size ; i++) {
