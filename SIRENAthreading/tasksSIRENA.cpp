@@ -10353,8 +10353,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
         *tstartNewDev = 0;
     
         int numlags;
-        if (reconstruct_init->Fitting35 == 0)         numlags = 3;
-        else if (reconstruct_init->Fitting35 == 1)    numlags = 5;
+        if (reconstruct_init->Fitting35 == 3)         numlags = 3;
+        else if (reconstruct_init->Fitting35 == 5)    numlags = 5;
         *lagsShift = 0;
         
         double calculatedEnergy2 = 0.0;
