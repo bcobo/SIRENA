@@ -144,8 +144,8 @@ struct Parameters {
         //Number of lags (odd number) **/
 	int nLags;
         
-         //Using 3 lags to analytically calculate a parabola (0) or using 5 lags to fit (1) **/
-	int Parabola3OrFitting5;
+         //Using 3 lags to analytically calculate a parabola (3) or using 5 lags to fit (5) **/
+	int Fitting35;
 
 	//OFIter: Iterate == 1 or NOTIterate == 0 **/
 	int OFIter;

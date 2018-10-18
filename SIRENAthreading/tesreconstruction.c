@@ -71,7 +71,7 @@ int tesreconstruction_main() {
     }else{
 	  initializeReconstructionSIRENA(reconstruct_init_sirena, par.RecordFile, record_file->fptr, par.LibraryFile, par.TesEventFile, 
 		par.PulseLength, par.scaleFactor, par.samplesUp, par.samplesDown, par.nSgms, par.detectSP, par.mode, par.detectionMode, par.LrsT, par.LbT, par.NoiseFile, 
-		par.FilterDomain, par.FilterMethod, par.EnergyMethod, par.filtEev, par.OFNoise, par.LagsOrNot, par.nLags, par.Parabola3OrFitting5, par.OFIter, par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength,
+		par.FilterDomain, par.FilterMethod, par.EnergyMethod, par.filtEev, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter, par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength,
 		par.monoenergy, par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, par.filterFile, par.clobber, par.EventListSize, par.SaturationValue,
 		par.tstartPulse1, par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
           // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
@@ -427,7 +427,7 @@ int getpar(struct Parameters* const par)
 	
 	status=ape_trad_query_int("LagsOrNot", &par->LagsOrNot);
         status=ape_trad_query_int("nLags", &par->nLags);
-        status=ape_trad_query_int("Parabola3OrFitting5", &par->Parabola3OrFitting5);
+        status=ape_trad_query_int("Fitting35", &par->Fitting35);
 
 	status=ape_trad_query_int("OFIter", &par->OFIter);
 
@@ -484,7 +484,7 @@ int getpar(struct Parameters* const par)
 		SIXT_ERROR("parameter error: nLgas must be odd");
 		return(EXIT_FAILURE);
 	}
-	MyAssert((par->Parabola3OrFitting5 ==0) || (par->Parabola3OrFitting5 ==1), "Parabola3OrFitting5 must me 0 or 1");
+	MyAssert((par->Fitting35 ==3) || (par->Fitting35 ==3), "Fitting35 must me 3 or 5");
 
 	if (((strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0)) && (par->LagsOrNot == 1))
 	{

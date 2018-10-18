@@ -134,7 +134,7 @@ int _resize_array(int size, int pulses){ return (size * MUL_FAC  < pulses) ? pul
 extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init, char* const record_file, fitsfile *fptr,
 		char* const library_file, char* const event_file, int pulse_length, double scaleFactor, double samplesUp, double samplesDown,
 		double nSgms, int detectSP, int mode, char *detectionMode, double LrsT, double LbT, char* const noise_file, char* filter_domain, char* filter_method, 
-		char* energy_method, double filtEev, char *ofnoise, int lagsornot, int nLags, int Parabola3OrFitting5, int ofiter, char oflib, char *ofinterp,
+		char* energy_method, double filtEev, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
 		char* oflength_strategy, int oflength,
 		double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, char* const filterFile,
 		char clobber, int maxPulsesPerRecord, double SaturationValue,
@@ -272,7 +272,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	strcpy(reconstruct_init->OFNoise,ofnoise);
 	reconstruct_init->LagsOrNot = lagsornot;
         reconstruct_init->nLags = nLags;
-        reconstruct_init->Parabola3OrFitting5 = Parabola3OrFitting5;
+        reconstruct_init->Fitting35 = Fitting35;
 	reconstruct_init->OFIter = ofiter;
 	if (0 != oflib)	reconstruct_init->OFLib = 1;
 	else		reconstruct_init->OFLib = 0;
@@ -2619,7 +2619,7 @@ ReconstructInitSIRENA::ReconstructInitSIRENA():
   //OFNoise(""),
   LagsOrNot(0),
   nLags(0),
-  Parabola3OrFitting5(0),
+  Fitting35(0),
   OFIter(0),
   OFLib(0),
   //OFInterp(""),
@@ -2673,7 +2673,7 @@ ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other)
   //OFNoise(""),
   LagsOrNot(other.LagsOrNot),
   nLags(other.nLags),
-  Parabola3OrFitting5(other.Parabola3OrFitting5),
+  Fitting35(other.Fitting35),
   OFIter(other.OFIter),
   OFLib(other.OFLib),
   //OFInterp(""),
@@ -2798,7 +2798,7 @@ ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
     
     LagsOrNot = other.LagsOrNot;
     nLags = other.nLags;
-    Parabola3OrFitting5 = other.Parabola3OrFitting5;
+    Fitting35 = other.Fitting35;
     OFIter = other.OFIter;
     OFLib = other.OFLib;
     
@@ -2903,7 +2903,7 @@ ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object(int n_record)
     
   ret->LagsOrNot = this->LagsOrNot;
   ret->nLags = this->nLags;
-  ret->Parabola3OrFitting5 = this->Parabola3OrFitting5;
+  ret->Fitting35 = this->Fitting35;
   ret->OFIter = this->OFIter;
   ret->OFLib = this->OFLib;
     

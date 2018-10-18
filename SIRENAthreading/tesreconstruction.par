@@ -40,7 +40,7 @@ filtEeV,r,h,1000,,,"Energy of the filters of the library to be used to calculate
 OFNoise,s,h,"NSD",,,"Noise to use with Optimal Filtering: NSD or WEIGHTM"
 LagsOrNot,i,h,0,,,"Lags or no lags (1/0)" 
 nLags,i,h,9,,,"Number of lags (odd number)"
-Parabola3OrFitting5,i,h,0,,,"Using 3 lags to analytically calculate a parabola (0) or using 5 lags to fit (1)"
+Fitting35,i,h,0,,,"Using 3 lags to analytically calculate a parabola (3) or using 5 lags to fit (5)"
 OFIter,i,h,0,,,"Iterate or not iterate (1/0)"
 OFLib,b,h,no,,,"Work or not with a library with optimal filters (1/0)"
 #OFInterp,s,h,"MF",,,"Optimal Filter by using the Matched Filter or the DAB as matched filter (MF/DAB)"

@@ -173,24 +173,18 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
 
 	//Open record file in READONLY mode
 	fits_open_file(&(file->fptr), filename, READONLY, status);
-
 	//Read standard keywords
 	//(shouldn't we read these from the record extension?)
 	sixt_read_fits_stdkeywords(file->fptr,keywords,status);
-
 	//Move to the binary table
 	fits_movnam_hdu(file->fptr,ANY_HDU,"RECORDS",0, status);
-
 	//Get number of rows
 	char comment[FLEN_COMMENT];
 	fits_read_key(file->fptr, TINT, "NAXIS2", &(file->nrows), comment, status);
-
 	//Get trigger_size
 	fits_read_key(file->fptr, TULONG, "TRIGGSZ", &(file->trigger_size), comment, status);
-
 	//Get delta_t
 	fits_read_key(file->fptr, TDOUBLE, "DELTAT", &(file->delta_t), comment, status);
-
 	//Associate column numbers
 	fits_get_colnum(file->fptr, CASEINSEN,"TIME", &(file->timeCol), status);
 	fits_get_colnum(file->fptr, CASEINSEN,"ADC", &(file->trigCol), status);
@@ -204,6 +198,9 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
 /** Populates a TesRecord structure with the next record */
 int getNextRecord(TesTriggerFile* const file,TesRecord* record,int* const status){
   int anynul=0;
+  char tform2ADC[20];
+  LONGLONG rec_trigsize;
+
   if (NULL==file || NULL==file->fptr) {
     *status=EXIT_FAILURE;
     SIXT_ERROR("No opened trigger file to read from");
@@ -214,27 +211,35 @@ int getNextRecord(TesTriggerFile* const file,TesRecord* record,int* const status
     // get length of this record
     // (although unlikely, we might have a very large file, so we best
     // use the LONGLONG interface to the descriptor
-    LONGLONG rec_trigsize;
-    LONGLONG offset;
-    fits_read_descriptll(file->fptr,file->trigCol,file->row,&rec_trigsize,&offset,status);
-    CHECK_STATUS_RET(*status,0);    
+    
+    // read TFORM for ADC to know if it is FIXED or VARIABLE length
+    fits_read_key(file->fptr,TSTRING, "TFORM2", &tform2ADC, NULL, status);
+    if(strstr(tform2ADC, "(") != NULL){
+      LONGLONG offset;
+      fits_read_descriptll(file->fptr,file->trigCol,file->row,&rec_trigsize,&offset,status);
+      CHECK_STATUS_RET(*status,0);    
 
-    /*LONGLONG rec_trigsize;
-    LONGLONG col_width;
-    int adc_col_typecode;
-    fits_get_coltypell(file->fptr,file->trigCol,&adc_col_typecode,
-		       &rec_trigsize,&col_width,status);
-    CHECK_STATUS_RET(*status,0);*/
-
+    }else{
+      LONGLONG col_width;
+      int adc_col_typecode;
+      fits_get_coltypell(file->fptr,file->trigCol,&adc_col_typecode,
+			 &rec_trigsize,&col_width,status);
+      CHECK_STATUS_RET(*status,0);
+    }
     // resize buffers if that is necessary
     if (record->trigger_size!=(unsigned long) rec_trigsize) {
       resizeTesRecord(record,(unsigned long) rec_trigsize,status);
       CHECK_STATUS_RET(*status,0);
     }
 
-    fits_read_col(file->fptr, TUSHORT, file->trigCol,
-		  file->row,1,record->trigger_size,0,record->adc_array, &anynul,status);
+    // when ADC is integer
+    //fits_read_col(file->fptr, TUSHORT, file->trigCol,
+    //		  file->row,1,record->trigger_size,0,record->adc_array, &anynul,status);
+    // when ADC is DOUBLE
+    fits_read_col(file->fptr, TDOUBLE, file->trigCol,
+		  file->row,1,record->trigger_size,0,record->adc_double, &anynul,status);
     CHECK_STATUS_RET(*status,0);
+
 
 //		fits_read_col(file->fptr, TLONG, file->ph_idCol,
 //					  file->row,1,MAXIMPACTNUMBER,0,record->phid_array, &anynul,status);
@@ -243,16 +248,18 @@ int getNextRecord(TesTriggerFile* const file,TesRecord* record,int* const status
     fits_read_col(file->fptr, TLONG, file->pixIDCol,
 		  file->row,1,1,0,&(record->pixid), &anynul,status);
     CHECK_STATUS_RET(*status,0);
-    
+    printf("desp pix\n");
     fits_read_col(file->fptr, TDOUBLE, file->timeCol,
 		  file->row,1,1,0,&(record->time), &anynul,status);
     CHECK_STATUS_RET(*status,0);
-    
+    printf("desp TIME\n");
     //Changed below by MTC//    for (unsigned long i=0 ; i < file->trigger_size ; i++) {
+    /* Comment again because now ADC is double
     for (unsigned long i=0 ; i < record->trigger_size ; i++) {
 
       record->adc_double[i]= (double) (record->adc_array[i]);
     }
+    */
     
     file->row++;
     return(1);

@@ -1499,8 +1499,8 @@ int createLibrary(ReconstructInitSIRENA* reconstruct_init, bool *appendToLibrary
 		keyvalstr[999]='\0';
 		fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
                 
-                char str_Parabola3OrFitting5[125];	snprintf(str_Parabola3OrFitting5,125,"%d",reconstruct_init->Parabola3OrFitting5);
-		strproc=string("Parabola3OrFitting5 = ") + string(str_Parabola3OrFitting5);
+                char str_Parabola3OrFitting5[125];	snprintf(str_Parabola3OrFitting5,125,"%d",reconstruct_init->Fitting35);
+		strproc=string("Fitting35 = ") + string(str_Parabola3OrFitting5);
 		strncpy(keyvalstr,strproc.c_str(),999);
 		keyvalstr[999]='\0';
 		fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
@@ -1868,8 +1868,8 @@ int createDetectFile(ReconstructInitSIRENA* reconstruct_init, double samprate, f
 		keyvalstr[999]='\0';
 		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
                 
-                char str_Parabola3OrFitting5[125];      	snprintf(str_Parabola3OrFitting5,125,"%d",reconstruct_init->Parabola3OrFitting5);
-		strhistory=string("Parabola3OrFitting5 = ") + string(str_Parabola3OrFitting5);
+                char str_Parabola3OrFitting5[125];      	snprintf(str_Parabola3OrFitting5,125,"%d",reconstruct_init->Fitting35);
+		strhistory=string("Fitting35 = ") + string(str_Parabola3OrFitting5);
 		strncpy(keyvalstr,strhistory.c_str(),999);
 		keyvalstr[999]='\0';
 		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
@@ -3930,8 +3930,8 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
                 strcpy(keyvalstr,strproc.c_str());
                 fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
                 
-                char str_Parabola3OrFitting5[125];                snprintf(str_Parabola3OrFitting5,125,"%d",(*reconstruct_init)->Parabola3OrFitting5);
-                strproc=string("Parabola3OrFitting5 = ") + string(str_Parabola3OrFitting5);
+                char str_Parabola3OrFitting5[125];                snprintf(str_Parabola3OrFitting5,125,"%d",(*reconstruct_init)->Fitting35);
+                strproc=string("Fitting35 = ") + string(str_Parabola3OrFitting5);
                 strcpy(keyvalstr,strproc.c_str());
                 fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
                
@@ -10353,8 +10353,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
         *tstartNewDev = 0;
     
         int numlags;
-        if (reconstruct_init->Parabola3OrFitting5 == 0)         numlags = 3;
-        else if (reconstruct_init->Parabola3OrFitting5 == 1)    numlags = 5;
+        if (reconstruct_init->Fitting35 == 0)         numlags = 3;
+        else if (reconstruct_init->Fitting35 == 1)    numlags = 5;
         *lagsShift = 0;
         
         double calculatedEnergy2 = 0.0;
@@ -10459,7 +10459,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                 bool exitLags = false;
                                                 double newEnergy;
                                                                                         
-                                                if ((reconstruct_init->Parabola3OrFitting5) == 0)   // Parabola by using 3 points
+                                                if ((reconstruct_init->Fitting35) == 0)   // Parabola by using 3 points
                                                 {   
                                                     //cout<<"Parabola"<<endl;
                                                     //cout<<"indexmax= "<<indexmax<<endl;
@@ -10533,7 +10533,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                         } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
                                                     }
                                                 }
-                                                else if ((reconstruct_init->Parabola3OrFitting5) == 1) //Fitting by using 5 points
+                                                else if ((reconstruct_init->Fitting35) == 1) //Fitting by using 5 points
                                                 {
                                                     //cout<<"Fitting"<<endl;
                                                     if (polyFit(lags_vector, calculatedEnergy_vector, &a, &b, &c))
