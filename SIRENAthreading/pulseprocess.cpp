@@ -3144,6 +3144,9 @@ int FindSecondariesSTC
 	//if (reconstruct_init->tstartPulse1 != 0)	findTstarts = false;
         
         /*cout<<"Umbral:  "<<adaptativethreshold<<endl;
+        cout<<"994 "<<gsl_vector_get(der,994)<<endl;
+        cout<<"995 "<<gsl_vector_get(der,995)<<endl;
+        cout<<"996 "<<gsl_vector_get(der,996)<<endl;
         cout<<"997 "<<gsl_vector_get(der,997)<<endl;
         cout<<"998 "<<gsl_vector_get(der,998)<<endl;
         cout<<"999 "<<gsl_vector_get(der,999)<<endl;
