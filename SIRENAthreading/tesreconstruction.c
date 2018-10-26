@@ -484,7 +484,7 @@ int getpar(struct Parameters* const par)
 		SIXT_ERROR("parameter error: nLgas must be odd");
 		return(EXIT_FAILURE);
 	}
-	MyAssert((par->Fitting35 ==3) || (par->Fitting35 ==3), "Fitting35 must me 3 or 5");
+	MyAssert((par->Fitting35 ==3) || (par->Fitting35 ==5), "Fitting35 must me 3 or 5");
 
 	if (((strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0)) && (par->LagsOrNot == 1))
 	{
