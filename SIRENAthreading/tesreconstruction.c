@@ -481,10 +481,20 @@ int getpar(struct Parameters* const par)
 	MyAssert((par->LagsOrNot ==0) || (par->LagsOrNot ==1), "LagsOrNot must me 0 or 1");
         if ((par->nLags)%2 == 0)
 	{
-		SIXT_ERROR("parameter error: nLgas must be odd");
+		SIXT_ERROR("parameter error: nLags must be odd");
 		return(EXIT_FAILURE);
 	}
 	MyAssert((par->Fitting35 ==3) || (par->Fitting35 ==5), "Fitting35 must me 3 or 5");
+        if ((par->Fitting35 ==3) && (par->nLags<3))
+        {
+                SIXT_ERROR("parameter error: nLags must be at least 3");
+		return(EXIT_FAILURE);
+        }
+        if ((par->Fitting35 ==5) && (par->nLags<5))
+        {
+                SIXT_ERROR("parameter error: nLags must be at least 5");
+		return(EXIT_FAILURE);
+        }
 
 	if (((strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0)) && (par->LagsOrNot == 1))
 	{
