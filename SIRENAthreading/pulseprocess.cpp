@@ -1687,6 +1687,8 @@ int find_model_samp1DERs(double samp1DER, ReconstructInitSIRENA *reconstruct_ini
 				// Interpolate between the two corresponding rows in "models"
 				//gsl_vector_set_zero(modelFound_aux);
                             
+                                //cout<<samp1DER<<" "<<gsl_vector_get(reconstruct_init->library_collection->samp1DERs,i)<<" "<<gsl_vector_get(reconstruct_init->library_collection->samp1DERs,i+1)<<endl;
+                            
                                 gsl_vector *modelA = gsl_vector_alloc((*modelFound)->size);
                                 gsl_vector *modelB = gsl_vector_alloc((*modelFound)->size);
                                 gsl_vector_set_zero(*modelFound);
@@ -2343,12 +2345,24 @@ int FindSecondaries
         // Establishing the criteria of the slope of the derivative depending on the sampling rate
         double criteriaDER_value;
         if (samprate == 156250)
-            criteriaDER_value = 86.7; // In degrees,  samprate = 156250 Hz
+            //criteriaDER_value = 86.7; // In degrees,  samprate = 156250 Hz
+            criteriaDER_value = 88; // In degrees,  samprate = 156250 Hz
         else if (samprate == 156250/2)
-            criteriaDER_value = 87.5; // In degrees, samprate/2 = 78125 Hz      
+            //criteriaDER_value = 87.5; // In degrees, samprate/2 = 78125 Hz
+            criteriaDER_value = 89; // In degrees, samprate/2 = 78125 Hz      
         
         double sum_samp1DER;
         int limitMin, limitMax;
+        
+        /*cout<<"Umbral:  "<<adaptativethreshold<<endl;
+        cout<<"994 "<<gsl_vector_get(adjustedDerivative,994)<<endl;
+        cout<<"995 "<<gsl_vector_get(adjustedDerivative,995)<<endl;
+        cout<<"996 "<<gsl_vector_get(adjustedDerivative,996)<<endl;
+        cout<<"997 "<<gsl_vector_get(adjustedDerivative,997)<<endl;
+        cout<<"998 "<<gsl_vector_get(adjustedDerivative,998)<<endl;
+        cout<<"999 "<<gsl_vector_get(adjustedDerivative,999)<<endl;
+        cout<<"1000 "<<gsl_vector_get(adjustedDerivative,1000)<<endl;
+        cout<<"1001 "<<gsl_vector_get(adjustedDerivative,1001)<<endl;*/
       
 	//if (findTstarts == true)   // It is necessary to find the tstarts...
 	//{
@@ -2372,7 +2386,8 @@ int FindSecondaries
 				if (foundPulse == false)
 				{	
                                         // The first condition to detect a pulse is that the adjustedDerivative was over the threshold
-					if (gsl_vector_get(adjustedDerivative,i) > adaptativethreshold)
+                                        if (gsl_vector_get(adjustedDerivative,i) > adaptativethreshold)
+					//if ((gsl_vector_get(adjustedDerivative,i) > adaptativethreshold) && (i>0))
 					{
                                                 if (*numberPulses == (*maxDERgsl)->size)
                                                 {
@@ -2390,6 +2405,14 @@ int FindSecondaries
                                                 *numberPulses = *numberPulses +1;
                                                 foundPulse = true;
                                                 //cout<<"Supera el umbral en "<<i<<" "<<gsl_vector_get(adjustedDerivative,i-1)<<" "<<gsl_vector_get(adjustedDerivative,i)<<" "<<adaptativethreshold<<endl;
+                                                /*if (i == 1998)
+                                                {
+                                                    cout<<1997<<" "<<gsl_vector_get(adjustedDerivative,1997)<<endl;
+                                                    cout<<1998<<" "<<gsl_vector_get(adjustedDerivative,1998)<<endl;
+                                                    cout<<1999<<" "<<gsl_vector_get(adjustedDerivative,1999)<<endl;
+                                                    cout<<2000<<" "<<gsl_vector_get(adjustedDerivative,2000)<<endl;
+                                                    cout<<2001<<" "<<gsl_vector_get(adjustedDerivative,2001)<<endl;
+                                                }*/
                                                 indexM = 0;
                                                 indexMin = gsl_vector_alloc(10);
                                                 indexMax = gsl_vector_alloc(10);
@@ -2532,7 +2555,7 @@ int FindSecondaries
                                                         {
                                                                 // tstart is the first sample crossing above the threshold (without jitter)
                                                                 tstartJITTER = gsl_vector_get(*tstartgsl,*numberPulses-1);
-                                                                //tstartcout<<"tstartJITTER: "<<tstartJITTER<<endl;
+                                                                //cout<<"tstartJITTER: "<<tstartJITTER<<endl;
                                                                 
                                                                 // Average of the first 4 samples of the derivative
                                                                 sum_samp1DER = 0.0;
@@ -2704,6 +2727,7 @@ int FindSecondaries
                                                                 {
                                                                         // samp1der correction
                                                                         samp1DER_Aux = gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1));
+                                                                        //cout<<"Muestra SIN CORREGIR con la que buscar el modelo: "<<samp1DER_Aux<<endl;
                                                                         if (xmax < 0)
                                                                         {
                                                                                 prev_samp1DER_Aux = gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1)-1);
@@ -2724,7 +2748,8 @@ int FindSecondaries
                                                                         if (reconstruct_init->detectSP == 1)
                                                                         {
                                                                                 // Find model in order to subtract
-                                                                                gsl_vector *modelToSubtract_Aux = gsl_vector_alloc(pulse_length_ToSubtract);;
+                                                                                gsl_vector *modelToSubtract_Aux = gsl_vector_alloc(pulse_length_ToSubtract);
+                                                                                //cout<<"Muestra con la que buscar el modelo: "<<gsl_vector_get(*samp1DERgsl,*numberPulses-1)<<endl;
                                                                                 if (find_model_samp1DERs(gsl_vector_get(*samp1DERgsl,*numberPulses-1), reconstruct_init, &modelToSubtract_Aux))
                                                                                 {
                                                                                         message = "Cannot run find_model_samp1DERs routine";
@@ -2759,8 +2784,8 @@ int FindSecondaries
                                                                                         }
                                                                                 }
                                                                 
-                                                                                /*cout<<"modelToSubtract"<<endl;
-                                                                                for (int j=0;j<100;j++)
+                                                                                //cout<<"modelToSubtract"<<endl;
+                                                                                /*for (int j=0;j<10;j++)
                                                                                         cout<<j<<" "<<gsl_vector_get(modelToSubtract_Aux,j)<<" "<<gsl_vector_get(modelToSubtract,j)<<endl;*/
                                                                                 
                                                                                 gsl_vector_free(modelToSubtract_Aux);
@@ -2852,6 +2877,9 @@ int FindSecondaries
                                                                 {
                                                                         gsl_vector_set(adjustedDerivative,j,gsl_vector_get(adjustedDerivative,j)-gsl_vector_get(modelToSubtract,j-gsl_vector_get(*tstartgsl,*numberPulses-1)));
                                                                 }
+                                                                /*cout<<"afterSubtracting"<<endl;
+                                                                for (int j=0;j<10;j++)
+                                                                    cout<<j<<" "<<gsl_vector_get(adjustedDerivative,j)<<" "<<gsl_vector_get(adjustedDerivative,j)<<endl;*/
                                                                 gsl_vector_set(*tstartgsl,*numberPulses-1,tstartJITTER);  // This should be the new tstart
                                                                                                                                 
                                                                 if (gsl_vector_get(*flagTruncated,*numberPulses-1) == 1)	i = 0;
@@ -3144,14 +3172,32 @@ int FindSecondariesSTC
 	//if (reconstruct_init->tstartPulse1 != 0)	findTstarts = false;
         
         /*cout<<"Umbral:  "<<adaptativethreshold<<endl;
-        cout<<"994 "<<gsl_vector_get(der,994)<<endl;
-        cout<<"995 "<<gsl_vector_get(der,995)<<endl;
         cout<<"996 "<<gsl_vector_get(der,996)<<endl;
         cout<<"997 "<<gsl_vector_get(der,997)<<endl;
         cout<<"998 "<<gsl_vector_get(der,998)<<endl;
         cout<<"999 "<<gsl_vector_get(der,999)<<endl;
         cout<<"1000 "<<gsl_vector_get(der,1000)<<endl;
-        cout<<"1001 "<<gsl_vector_get(der,1001)<<endl;*/
+        cout<<"1001 "<<gsl_vector_get(der,1001)<<endl;
+        cout<<"1002 "<<gsl_vector_get(der,1002)<<endl;
+        cout<<"1003 "<<gsl_vector_get(der,1003)<<endl;
+        cout<<"1004 "<<gsl_vector_get(der,1004)<<endl;
+        cout<<"1005 "<<gsl_vector_get(der,1005)<<endl;
+        cout<<"1006 "<<gsl_vector_get(der,1006)<<endl;
+        cout<<"1007 "<<gsl_vector_get(der,1007)<<endl;
+        cout<<"1008 "<<gsl_vector_get(der,1008)<<endl;
+        cout<<"1009 "<<gsl_vector_get(der,1009)<<endl;
+        cout<<"1010 "<<gsl_vector_get(der,1010)<<endl;
+        cout<<"1011 "<<gsl_vector_get(der,1011)<<endl;
+        cout<<"1012 "<<gsl_vector_get(der,1012)<<endl;
+        cout<<"1013 "<<gsl_vector_get(der,1013)<<endl;
+        cout<<"1014 "<<gsl_vector_get(der,1014)<<endl;
+        cout<<"1015 "<<gsl_vector_get(der,1015)<<endl;
+        cout<<"1016 "<<gsl_vector_get(der,1016)<<endl;
+        cout<<"1017 "<<gsl_vector_get(der,1017)<<endl;
+        cout<<"1018 "<<gsl_vector_get(der,1018)<<endl;
+        cout<<"1019 "<<gsl_vector_get(der,1019)<<endl;
+        cout<<"1020 "<<gsl_vector_get(der,1020)<<endl;*/
+        
         	
 	//if (findTstarts == true)
         // It is necessary to find the tstarts... 

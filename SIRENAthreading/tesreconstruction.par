@@ -30,7 +30,7 @@ monoenergy,r,h,-999.,,,"Monochromatic energy of the pulses in the input FITS fil
 hduPRECALWN,b,h,no,,,"Add or not the PRECALWN HDU in the library file (1/0) (only for library creation)"
 hduPRCLOFWM,b,h,no,,,"Add or not the PRCLOFWM HDU in the library file (1/0) (only for library creation)"
 largeFilter,i,h,-999,,,"Length of the longest fixed filter (only for library creation)"
-mode,i,h,1,,,"Calibration run (0) or energy reconstruction run (1)"
+opmode,i,h,1,,,"Calibration run (0) or energy reconstruction run (1)"
 detectionMode,s,h,"AD",,,"Adjusted Derivative (AD) or Single Threshold Crossing (STC)"
 NoiseFile,s,h,"noise.fits",,,"Noise FITS file with noise spectrum"
 FilterDomain,s,h,"F",,,"Filtering Domain: Time (T) or Frequency (F)"

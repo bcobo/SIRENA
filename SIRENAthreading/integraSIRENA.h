@@ -293,7 +293,7 @@ typedef struct PulseDetected
 	/** tstart(i)-tstart(i-1)*/
 	int grade2;
 
-  int grade2_1;
+        int grade2_1;
 
 	/** PIX_ID of the detected pulse*/
 	int pixid;
@@ -445,7 +445,7 @@ typedef struct ReconstructInitSIRENA
   //double baseline;
   
   /** Run mode (0: calibration/lib creation  1:energy reconstruction) **/
-  int mode;
+  int opmode;
   
   /** Detection Mode: AD (Adjusted Derivative) or A1 (Alternative1) **/
   char detectionMode[4];
@@ -572,7 +572,7 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     int pulse_length, double scaleFactor, 
                                     double samplesUp, double samplesDown, 
                                     double nSgms, int detectSP,
-                                    int mode, char* detectionMode,double LrsT, 
+                                    int opmode, char* detectionMode,double LrsT, 
                                     double LbT, char* const noise_file, 
                                     char* filter_domain,
                                     char* filter_method, char* energy_method, 
@@ -628,8 +628,23 @@ extern "C"
 void reconstructRecordSIRENA(TesRecord* record,TesEventList* event_list, ReconstructInitSIRENA* reconstruct_init, int lastRecord, int nRecord, PulsesCollection **pulsesAll, OptimalFilterSIRENA **optimalFilter, int* const status);
 
 
-LibraryCollection* getLibraryCollection(const char* const filename, int mode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char *filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int* const status);
+LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char *filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int* const status);
 
-NoiseSpec* getNoiseSpec(const char* const filename,int mode,int hduPRCLOFWM,char *energy_method,char *ofnoise,char *filter_method,int* const status);
+NoiseSpec* getNoiseSpec(const char* const filename,int opmode,int hduPRCLOFWM,char *energy_method,char *ofnoise,char *filter_method,int* const status);
+
+/*#ifdef __cplusplus
+extern "C"
+#endif
+void calculateAverageRecord(TesRecord* record, int lastRecord, int nrecord, gsl_vector **averageRecord, int* const status);*/
+
+#ifdef __cplusplus
+extern "C"
+#endif
+void calculateAverageRecord(TesRecord* record, int lastRecord, int *nrecordOK, gsl_vector **averageRecord, int* const status);
+
+#ifdef __cplusplus
+extern "C"
+#endif
+void calculateRecordsError(TesRecord* record, int nrecord, gsl_vector *averageRecord, int* const status);
 
 #endif /* INTEGRASIRENA_H */

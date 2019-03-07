@@ -70,7 +70,7 @@ int tesreconstruction_main() {
     		par.DerivateExclusion,par.SaturationValue,&status);
     }else{
 	  initializeReconstructionSIRENA(reconstruct_init_sirena, par.RecordFile, record_file->fptr, par.LibraryFile, par.TesEventFile, 
-		par.PulseLength, par.scaleFactor, par.samplesUp, par.samplesDown, par.nSgms, par.detectSP, par.mode, par.detectionMode, par.LrsT, par.LbT, par.NoiseFile, 
+		par.PulseLength, par.scaleFactor, par.samplesUp, par.samplesDown, par.nSgms, par.detectSP, par.opmode, par.detectionMode, par.LrsT, par.LbT, par.NoiseFile, 
 		par.FilterDomain, par.FilterMethod, par.EnergyMethod, par.filtEev, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter, par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength,
 		par.monoenergy, par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, par.filterFile, par.clobber, par.EventListSize, par.SaturationValue,
 		par.tstartPulse1, par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
@@ -125,8 +125,41 @@ int tesreconstruction_main() {
     allocateTesEventListTrigger(event_list,par.EventListSize,&status);
     CHECK_STATUS_BREAK(status);
 
+    // Iterate of records and do the averageRecord
+    //printf("%s %s", "averageRecord:","\n");
+    int lastRecord = 0, nrecord = 0;
+    int nrecordOK = 0;
+    TesTriggerFile* record_fileAux1 = openexistingTesTriggerFile(par.RecordFile,keywords,&status);
+    gsl_vector * averageRecord = gsl_vector_alloc(record_fileAux1->trigger_size);
+    gsl_vector_set_zero(averageRecord);
+    CHECK_STATUS_BREAK(status);
+    while(getNextRecord(record_fileAux1,record,&status))
+    {
+        nrecord = nrecord + 1;
+        //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
+        if(nrecord == record_file->nrows) lastRecord=1;
+        
+        //calculateAverageRecord(record,lastRecord,nrecord,&averageRecord,&status);
+        calculateAverageRecord(record,lastRecord,&nrecordOK,&averageRecord,&status);
+    }
+    CHECK_STATUS_BREAK(status);
+    freeTesTriggerFile(&record_fileAux1,&status);
+    //printf("%s %d %s","recordsOK = ",nrecordOK,"\n");
+    
+    TesTriggerFile* record_fileAux2 = openexistingTesTriggerFile(par.RecordFile,keywords,&status);
+    CHECK_STATUS_BREAK(status);
+    nrecord = 0;
+    while(getNextRecord(record_fileAux2,record,&status))
+    {
+        nrecord = nrecord + 1;
+        calculateRecordsError(record,nrecord,averageRecord,&status);
+    }
+    CHECK_STATUS_BREAK(status);
+    freeTesTriggerFile(&record_fileAux2,&status);
+    
     // Iterate of records and do the reconstruction
-    int lastRecord = 0, nrecord = 0; //last record required for SIRENA library creation
+    //int lastRecord = 0, nrecord = 0; //last record required for SIRENA library creation
+    lastRecord = 0, nrecord = 0;
     while(getNextRecord(record_file,record,&status))
     {
       if(!strcmp(par.Rcmethod,"PP"))
@@ -156,7 +189,7 @@ int tesreconstruction_main() {
 	    	strcpy(reconstruct_init_sirena->EnergyMethod,par.EnergyMethod);
 	    }
 	
-	    //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
+            //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
 	    reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
 				    lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
       }
@@ -376,7 +409,7 @@ int getpar(struct Parameters* const par)
         
         status=ape_trad_query_int("detectSP", &par->detectSP);
   
-	status=ape_trad_query_int("mode", &par->mode);
+	status=ape_trad_query_int("opmode", &par->opmode);
         
         status=ape_trad_query_string("detectionMode", &sbuffer);
 	strcpy(par->detectionMode, sbuffer);
@@ -460,11 +493,11 @@ int getpar(struct Parameters* const par)
 		return(status);
 	}
 	
-	MyAssert((par->mode == 0) || (par->mode == 1), "mode must be 0 or 1");
+	MyAssert((par->opmode == 0) || (par->opmode == 1), "opmode must be 0 or 1");
 	  
 	MyAssert((par->intermediate == 0) || (par->intermediate == 1), "intermediate must be 0 or 1");
 	
-        if (par->mode == 0) MyAssert(par->monoenergy > 0, "monoenergy must be greater than 0");
+        if (par->opmode == 0) MyAssert(par->monoenergy > 0, "monoenergy must be greater than 0");
 	
 	MyAssert((strcmp(par->FilterDomain,"T") == 0) || (strcmp(par->FilterDomain,"F") == 0), "FilterDomain must be T or F");
 	

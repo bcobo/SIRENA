@@ -28,6 +28,7 @@
 #include "testrigger.h"
 #include "gti.h"
 #include "integraSIRENA.h"
+#include <gsl/gsl_vector.h>
 
 #define TOOLSUB tesreconstruction_main
 #include "headas_main.c"
@@ -97,7 +98,7 @@ struct Parameters {
         int detectSP;
 
 	//Calibration run (0) or energy reconstruction run (1)?
-	int mode;
+	int opmode;
         
         //DetectionMode: Adjusted Derivative(AD) or Single Threshold Crossing(STC)
 	char detectionMode[3];
