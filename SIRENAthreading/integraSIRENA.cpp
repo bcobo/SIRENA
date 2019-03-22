@@ -377,6 +377,101 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	//log_trace("Before runDetect");
         //cout<<"Before runDetect"<<endl;
 	// Detect pulses in record
+        reconstruct_init->i2rdata = NULL;
+        reconstruct_init->i2rdata = (I2RData*)malloc(sizeof(I2RData));
+	//reconstruct_init->i2rdata->R0 = -999;
+	reconstruct_init->i2rdata->I0_START = -999;
+        reconstruct_init->i2rdata->IMIN = -999;
+        reconstruct_init->i2rdata->IMAX = -999;
+        reconstruct_init->i2rdata->TTR = -999;
+        reconstruct_init->i2rdata->RPARA = -999;
+        reconstruct_init->i2rdata->LFILTER = -999;
+        if (nRecord == 1)
+        {
+                if ((strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RALL") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RNOL") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RFITTED") == 0)) 
+                {
+                        double IMIN;		// Current corresponding to 0 ADU [A]
+                        double IMAX;
+                        
+                        char extname[20];
+                        char keyname[10];
+                        
+                        int hdunum; // Number of the current HDU (RECORDS or TESRECORDS)
+                        int hdutype;
+                        fits_get_hdu_num(reconstruct_init->record_file_fptr, &hdunum);
+                        fits_get_hdu_type(reconstruct_init->record_file_fptr, &hdutype, status);
+                        
+                        strcpy(extname,"ADCPARAM");
+                        if (fits_movnam_hdu(reconstruct_init->record_file_fptr, ANY_HDU,extname, 0, status))
+                        {
+                                EP_EXIT_ERROR("Cannot move to HDU ",EPFAIL);
+                        }
+                        strcpy(keyname,"IMIN");
+                        fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMIN,NULL,status);
+                        //cout<<"IMIN: "<<IMIN<<endl;
+                        reconstruct_init->i2rdata->IMIN = IMIN;
+                        strcpy(keyname,"IMAX");
+                        fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMAX,NULL,status);
+                        //cout<<"IMAX: "<<IMAX<<endl;
+                        reconstruct_init->i2rdata->IMAX = IMAX;
+                        if (*status != 0)
+                        {
+                                EP_EXIT_ERROR("Cannot read keyword in convertI2R",EPFAIL);
+                        }
+                        
+                        IOData obj;
+                        obj.inObject = reconstruct_init->record_file_fptr;
+                        obj.nameTable = new char [255];
+                        strcpy(obj.nameTable,"TESPARAM");
+                        obj.iniCol = 0;
+                        obj.nameCol = new char [255];
+                        obj.unit = new char [255];
+                        strcpy(obj.nameCol,"R0");
+                        obj.type = TDOUBLE;
+                        obj.iniRow = 1;
+                        obj.endRow = 1;
+                        gsl_vector *vector = gsl_vector_alloc(1);
+                        if (readFitsSimple (obj,&vector))
+                        {
+                                EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                        }
+                        reconstruct_init->i2rdata->R0 = gsl_vector_get(vector,0);
+                        strcpy(obj.nameCol,"I0_START");
+                        if (readFitsSimple (obj,&vector))
+                        {
+                                EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                        }
+                        reconstruct_init->i2rdata->I0_START = gsl_vector_get(vector,0);
+                        strcpy(obj.nameCol,"RPARA");
+                        if (readFitsSimple (obj,&vector))
+                        {
+                                EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                        }
+                        reconstruct_init->i2rdata->RPARA = gsl_vector_get(vector,0);
+                        strcpy(obj.nameCol,"TTR");
+                        if (readFitsSimple (obj,&vector))
+                        {
+                                EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                        }
+                        reconstruct_init->i2rdata->TTR = gsl_vector_get(vector,0);
+                        strcpy(obj.nameCol,"LFILTER");
+                        if (readFitsSimple (obj,&vector))
+                        {
+                                EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                        }
+                        reconstruct_init->i2rdata->LFILTER = gsl_vector_get(vector,0);
+                        
+                        if (fits_movabs_hdu(reconstruct_init->record_file_fptr, hdunum, &hdutype, status))
+                        {
+                                EP_EXIT_ERROR("Cannot move to HDU ",EPFAIL);
+                        }
+                        
+                        gsl_vector_free(vector);
+                        delete [] obj.nameTable;
+                        delete [] obj.nameCol;
+                        delete [] obj.unit;
+                }
+        }
 	runDetect(record, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
         //log_trace("After runDetect");
         //cout<<"After runDetect"<<endl;
@@ -2593,6 +2688,7 @@ ReconstructInitSIRENA::ReconstructInitSIRENA():
   library_collection(0),
   noise_spectrum(0),
   grading(0),
+  i2rdata(0),
   //record_file(""),
   record_file_fptr(0),
   //library_file(""),
@@ -2646,6 +2742,7 @@ ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other)
   library_collection(0),
   noise_spectrum(0),
   grading(0),
+  i2rdata(0),
   //record_file(""),
   record_file_fptr(0),
   //library_file(""),
@@ -2735,6 +2832,11 @@ ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other)
   if(other.grading){
     grading = new Grading();
     *grading = (*other.grading);
+  }
+  
+  if(other.i2rdata){
+    i2rdata = new I2RData();
+    *i2rdata = (*other.i2rdata);
   }
 }
 
@@ -2831,6 +2933,15 @@ ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
       *grading = (*other.grading);
     }
     
+    //I2RData
+    if(i2rdata) {
+      delete i2rdata; i2rdata = 0;
+    }
+    if(other.i2rdata){
+      i2rdata = new I2RData();
+      *i2rdata = (*other.i2rdata);
+    }
+    
   }
   return *this;
 }
@@ -2845,6 +2956,9 @@ ReconstructInitSIRENA::~ReconstructInitSIRENA()
   }
   if(grading) {
     delete grading; grading = 0;
+  }
+  if(i2rdata) {
+    delete i2rdata; i2rdata = 0;
   }
 }
 
@@ -2932,6 +3046,11 @@ ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object(int n_record)
   if(this->grading){
     ret->grading = new Grading();
     *ret->grading = (*this->grading);
+  }
+  //Grading
+  if(this->i2rdata){
+    ret->i2rdata = new I2RData();
+    *ret->i2rdata = (*this->i2rdata);
   }
   return ret;
 }
@@ -3973,6 +4092,49 @@ Grading::~Grading()
   if(gradeData) {
     gsl_matrix_free(gradeData); gradeData = 0;
   }
+}
+
+I2RData::I2RData():
+  R0(0.0f),
+  I0_START(0.0f),
+  IMIN(0.0f), 
+  IMAX(0.0f),
+  RPARA(0.0f),
+  TTR(0.0f),
+  LFILTER(0.0f)
+{
+
+}
+  
+I2RData::I2RData(const I2RData& other):
+  R0(other.R0),
+  I0_START(other.I0_START), 
+  IMIN(other.IMIN),
+  IMAX(other.IMAX), 
+  RPARA(other.RPARA), 
+  TTR(other.TTR), 
+  LFILTER(other.LFILTER)
+{
+  
+  
+}
+
+I2RData& I2RData::operator=(const I2RData& other)
+{
+  if(this != &other){
+    R0 = other.R0;
+    I0_START = other.I0_START;
+    IMIN = other.IMIN;
+    IMAX = other.IMAX;
+    RPARA = other.RPARA;
+    TTR = other.TTR;
+    LFILTER = other.LFILTER;
+  }
+  return *this;
+}
+
+I2RData::~I2RData()
+{
 }
 
 PulsesCollection::PulsesCollection():

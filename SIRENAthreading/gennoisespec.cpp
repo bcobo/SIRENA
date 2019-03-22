@@ -50,11 +50,12 @@ MAP OF SECTIONS IN THIS FILE:
  - 8. find_baseline
  - 9. findPulsesNoise
  - 10. findTstartNoise
+ - 11. weightMatrixNoise
+ - 12. convertI2R
  
 *******************************************************************************/
 
 #include <gennoisespec.h>
-
 
 /***** SECTION 1 ************************************
 * MAIN function: This function calculates the current noise spectral density.
@@ -141,20 +142,115 @@ int main (int argc, char **argv)
 		message = "Cannot open file " + string(infileName);
 		EP_EXIT_ERROR(message,status);
 	}
+	
+	if (strcmp(I2R,"I") != 0)  // Transform to resistance space
+        {
+                strcpy(extname,"ADCPARAM");
+                if (fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status))
+                {
+                        message = "Cannot move to HDU " + string(extname) + " in " + string(infileName);
+                        EP_EXIT_ERROR(message,status);
+                }
+                strcpy(keyname,"IMIN");
+                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
+                {
+                        message = "Cannot read keyword " + string(keyname) + " in input file";
+                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
+                strcpy(keyname,"IMAX");
+                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
+                {
+                        message = "Cannot read keyword " + string(keyname) + " in input file";
+                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
+                
+                IOData obj;
+                obj.inObject = infileObject;
+                obj.nameTable = new char [255];
+                strcpy(obj.nameTable,"TESPARAM");
+                obj.iniCol = 0;
+                obj.nameCol = new char [255];
+                obj.unit = new char [255];
+                obj.type = TDOUBLE;
+                obj.iniRow = 1;
+                obj.endRow = 1;
+                gsl_vector *vector = gsl_vector_alloc(1);
+                strcpy(obj.nameCol,"R0");
+                char colName[20];
+                strcpy(colName,"R0");
+                if (readFitsSimple (obj,&vector))
+                {
+                        message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
+                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
+                R0 = gsl_vector_get(vector,0);
+                strcpy(obj.nameCol,"I0_START");
+                if (readFitsSimple (obj,&vector))
+                {
+                        message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
+                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
+                Ibias = gsl_vector_get(vector,0);
+                strcpy(obj.nameCol,"RPARA");
+                if (readFitsSimple (obj,&vector))
+                {
+                        message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
+                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
+                RPARA = gsl_vector_get(vector,0);
+                strcpy(obj.nameCol,"TTR");
+                if (readFitsSimple (obj,&vector))
+                {
+                        message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
+                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
+                TTR = gsl_vector_get(vector,0);
+                strcpy(obj.nameCol,"LFILTER");
+                if (readFitsSimple (obj,&vector))
+                {
+                        message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
+                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
+                LFILTER = gsl_vector_get(vector,0);
+                /*cout<<"Imin: "<<Imin<<endl;
+                cout<<"Imax: "<<Imax<<endl;
+                cout<<"R0: "<<R0<<endl;
+                cout<<"Ibias: "<<Ibias<<endl;
+                cout<<"RPARA: "<<RPARA<<endl;
+                cout<<"TTR: "<<TTR<<endl;
+                cout<<"LFILTER: "<<LFILTER<<endl;*/
+                        
+                gsl_vector_free(vector);
+                delete [] obj.nameTable;
+                delete [] obj.nameCol;
+                delete [] obj.unit;
+        }
+	
 	strcpy(extname,"RECORDS");
-	if (fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status))
-	{
+	fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
+	if (status != 0)
+        {
+            status = 0;
+            strcpy(extname,"TESRECORDS");
+            if (fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status))
+            {
 		message = "Cannot move to HDU " + string(extname) + " in " + string(infileName);
 		EP_EXIT_ERROR(message,status);
-	}
+            }
+        }
 
 	// Read and check input keywords
-	strcpy(extname,"RECORDS");
+	//strcpy(extname,"RECORDS");
 	if (fits_get_num_rows(infileObject,&eventcnt, &status))
 	{
 		message = "Cannot get number of rows in HDU " + string(extname);
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
 	}
+        
+        int hdunum; // Number of the current HDU (RECORDS or TESRECORDS)
+        int hdutype;
+        fits_get_hdu_num(infileObject, &hdunum);
+        fits_get_hdu_type(infileObject, &hdutype, &status);
 	
 	baseline = gsl_vector_alloc(eventcnt);
 	gsl_vector_set_all(baseline,-999.0);
@@ -244,10 +340,16 @@ int main (int argc, char **argv)
 
 	strcpy(extname,"RECORDS");
 	if (fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status))
-	{
-		message = "Cannot move to HDU " + string(extname) +" in " + string(infileName);
+	if (status != 0)
+        {
+            status = 0;
+            strcpy(extname,"TESRECORDS");
+            if (fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status))
+            {
+		message = "Cannot move to HDU " + string(extname) + " in " + string(infileName);
 		EP_EXIT_ERROR(message,status);
-	}
+            }
+        }
 
 	// Read Time column
 	strcpy(straux,"TIME");
@@ -517,7 +619,7 @@ int initModule(int argc, char **argv)
 
 	// Define GENNOISESPEC input parameters and assign values to variables
 	// Parameter definition and assignation of default values
-	const int npars = 15, npars1 = 16;
+	const int npars = 16, npars1 = 17;
 	inparam gennoisespecPars[npars];
 	int optidx =0, par=0, fst=0, ipar;
 	string message="";
@@ -613,26 +715,32 @@ int initModule(int argc, char **argv)
 	gennoisespecPars[11].defValStr = "no";
 	gennoisespecPars[11].type = "char";
 	gennoisespecPars[11].ValStr = gennoisespecPars[11].defValStr;
-
-	gennoisespecPars[12].name = "nameLog";
-	gennoisespecPars[12].description = "Output log file name";
-	gennoisespecPars[12].defValStr = "noise_log.txt";
+        
+        gennoisespecPars[12].name = "I2R";
+	gennoisespecPars[12].description = "Transform to resistance space (I2R, I2RALL, I2RNOL, I2RFITTED) or not (I)";
+	gennoisespecPars[12].defValStr = "I";
 	gennoisespecPars[12].type = "char";
-	gennoisespecPars[12].ValStr = gennoisespecPars[11].defValStr;
+	gennoisespecPars[12].ValStr = gennoisespecPars[12].defValStr;
 
-	gennoisespecPars[13].name = "verbosity";
-	gennoisespecPars[13].description = "Verbosity level of the output log file (in [0,3])";
-	gennoisespecPars[13].defValInt = 3;
-	gennoisespecPars[13].type = "int";
-	gennoisespecPars[13].minValInt = 0;
-	gennoisespecPars[13].maxValInt = 3;
-	gennoisespecPars[13].ValInt = gennoisespecPars[13].defValInt;
+	gennoisespecPars[13].name = "nameLog";
+	gennoisespecPars[13].description = "Output log file name";
+	gennoisespecPars[13].defValStr = "noise_log.txt";
+	gennoisespecPars[13].type = "char";
+	gennoisespecPars[13].ValStr = gennoisespecPars[13].defValStr;
 
-	gennoisespecPars[14].name = "clobber";
-	gennoisespecPars[14].description = "Re-write output files if clobber=yes";
-	gennoisespecPars[14].defValStr = "no";
-	gennoisespecPars[14].type = "char";
-	gennoisespecPars[14].ValStr = gennoisespecPars[14].defValStr;
+	gennoisespecPars[14].name = "verbosity";
+	gennoisespecPars[14].description = "Verbosity level of the output log file (in [0,3])";
+	gennoisespecPars[14].defValInt = 3;
+	gennoisespecPars[14].type = "int";
+	gennoisespecPars[14].minValInt = 0;
+	gennoisespecPars[14].maxValInt = 3;
+	gennoisespecPars[14].ValInt = gennoisespecPars[14].defValInt;
+
+	gennoisespecPars[15].name = "clobber";
+	gennoisespecPars[15].description = "Re-write output files if clobber=yes";
+	gennoisespecPars[15].defValStr = "no";
+	gennoisespecPars[15].type = "char";
+	gennoisespecPars[15].ValStr = gennoisespecPars[15].defValStr;
 	
 	// Define structure for command line options
 	static struct option long_options[npars1];
@@ -761,6 +869,10 @@ int initModule(int argc, char **argv)
 			{
 				weightMS=0;
 			}
+		}
+		else if(gennoisespecPars[i].name == "I2R")
+		{
+			strcpy(I2R,gennoisespecPars[i].ValStr.c_str());
 		}
 		else if(gennoisespecPars[i].name == "nameLog")
 		{
@@ -1014,20 +1126,29 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 			}
 		}
 		
-		gsl_vector *intervalsWithoutNoiseTogether = gsl_vector_alloc(nIntervals*intervalMinBins);
+		if (strcmp(I2R,"I") != 0)
+                {
+                    if (convertI2R(&ioutgsl))
+                    {
+                            message = "Cannot run routine convertI2R";
+                            EP_EXIT_ERROR(message,EPFAIL);
+                    }
+                }
+		
+		gsl_vector *intervalsWithoutPulsesTogether = gsl_vector_alloc(nIntervals*intervalMinBins);
 		for (int i=0; i<nIntervals; i++)
 		{
 			for (int j=0; j<intervalMinBins; j++)
 			{
-				gsl_vector_set(intervalsWithoutNoiseTogether,intervalMinBins*i+j,gsl_vector_get(ioutgsl,j+gsl_vector_get(startIntervalgsl,i)));
+				gsl_vector_set(intervalsWithoutPulsesTogether,intervalMinBins*i+j,gsl_vector_get(ioutgsl,j+gsl_vector_get(startIntervalgsl,i)));
 			}
 		}
 
-		findMeanSigma (intervalsWithoutNoiseTogether, &baselineIntervalFreeOfPulses, &sigmaIntervalFreeOfPulses);
+		findMeanSigma (intervalsWithoutPulsesTogether, &baselineIntervalFreeOfPulses, &sigmaIntervalFreeOfPulses);
 		gsl_vector_set(baseline,indexBaseline,baselineIntervalFreeOfPulses);
 		gsl_vector_set(sigma,indexBaseline,sigmaIntervalFreeOfPulses);
 		indexBaseline++;
-		gsl_vector_free(intervalsWithoutNoiseTogether); intervalsWithoutNoiseTogether = 0;
+		gsl_vector_free(intervalsWithoutPulsesTogether); intervalsWithoutPulsesTogether = 0;
 
 		for (int i=0; i<nIntervals;i++)
 		{
@@ -2078,3 +2199,146 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
 	return (EPOK);
 }
 /*xxxx end of SECTION A11 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+
+/***** SECTION 12 ************************************************************
+* convertI2R function: This function ....
+*
+******************************************************************************/
+int convertI2R (gsl_vector **invector)
+{
+	int status = EPOK;
+	string message="";
+  
+        double aducnv;
+	aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534
+        
+        if (strcmp("I2R","I2R") == 0)
+	{	
+		// DeltaI <- I-Ibias
+		// R <- R0 - R0*(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+
+		// It is not necessary to check the allocation beacuse 'invector' size must be > 0
+		gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
+		gsl_vector_scale(*invector,aducnv);             	// invector = I(ADC)*ADUCNV
+		gsl_vector_add_constant(*invector,Imin);		// invector = I(Amp) = I(ADC)*ADUCNV+Imin
+		gsl_vector_add_constant(*invector,-1*Ibias); 		// invector = DeltaI = abs(I(Amp)-Ibias)
+		for (int i=0;i<(*invector)->size;i++)
+		{
+			if (gsl_vector_get(*invector,i)<0) 	gsl_vector_set(*invector,i,(-1.*gsl_vector_get(*invector,i)));
+		}
+		gsl_vector_scale(*invector,1./Ibias); 			// invector = DeltaI/Ibias = (I(Amp)-Ibias)/Ibias
+		gsl_vector_memcpy(invector_modified,*invector);  	// invector_modified = invector = DeltaI/Ibias
+		gsl_vector_add_constant(invector_modified,+1.0);	// invector_modified = 1 + DeltaI/Ibias
+		gsl_vector_div(*invector,invector_modified);     	// invector = invector/invector_modified = (DeltaI/Ibias)/(1+DeltaI/Ibias)
+		gsl_vector_scale(*invector,-1.*R0);			// invector = -R0*(DeltaI/Ibias)/(1+DeltaI/Ibias)
+		gsl_vector_add_constant(*invector,R0); 			// invector = R0 - R0*(DeltaI/Ibias)/(1+DeltaI/Ibias)
+		gsl_vector_free(invector_modified); invector_modified = 0;
+	}
+	else if (strcmp(I2R,"I2RALL") == 0)
+        {
+                double RL;                                              // Shunt/load resistor value [oHM]
+                double V0;
+                double L;
+                // It is not necessary to check the allocation beacuse 'invector' size must be > 0
+                gsl_vector *I = gsl_vector_alloc((*invector)->size);
+                gsl_vector *dI = gsl_vector_alloc((*invector)->size);
+                gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
+
+                RL = RPARA/(pow(TTR,2));                                // RL = RPARA/(TTR)^2
+                V0 = Ibias*(R0+RL);                                     // V0 = I0(R0+RL)
+                L = LFILTER/(pow(TTR,2));                               // L = LFILTER/(TTR)^2
+
+                // I
+                gsl_vector_memcpy(invector_modified,*invector);
+                gsl_vector_scale(*invector,aducnv);                     // invector = I(ADC)*ADUCNV
+                gsl_vector_add_constant(*invector,Imin);                // invector = I(ADC)*ADUCNV+Imin
+                gsl_vector_scale(*invector,-1.0);                       // invector = Ibias-(I(ADC)*ADUCNV+Imin)
+                gsl_vector_add_constant(*invector,Ibias);
+                gsl_vector_memcpy(I,*invector);
+
+                // dI
+                gsl_vector_memcpy(dI,I);
+                if (differentiate (&dI, dI->size))
+                {
+                        message = "Cannot run routine differentiate for convertI2R and I2RALL";
+                        EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                }
+
+                // R = (V0-IRL-LdI/dt)/I
+                gsl_vector_memcpy(*invector,dI);
+                gsl_vector_scale(*invector,samprate);       // dI/dt
+                gsl_vector_scale(*invector,-L);
+                gsl_vector_add_constant(*invector,V0);                  // V0-dI/dt
+                gsl_vector_memcpy(invector_modified,I);
+                gsl_vector_scale(invector_modified,RL);
+                gsl_vector_sub(*invector,invector_modified);            // V0-dI/dt-IRL
+                gsl_vector_div(*invector,I);                            // (V0-IRL-LdI/dt)/I
+               
+                gsl_vector_free(I); I = 0;
+                gsl_vector_free(dI); dI = 0;
+                gsl_vector_free(invector_modified); invector_modified = 0;
+        }
+        else if (strcmp(I2R,"I2RNOL") == 0)
+        {
+                double RL;                                      // Shunt/load resistor value [oHM]
+                double V0;                                           // Transformer Turns Ratio
+                // It is not necessary to check the allocation beacuse 'invector' size must be > 0
+                gsl_vector *I = gsl_vector_alloc((*invector)->size);
+                gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
+               
+                RL = RPARA/(pow(TTR,2));                        // RL = RPARA/(TTR)^2
+                V0 = Ibias*(R0+RL);                             // V0 = I0(R0+RL)
+
+                // I
+                gsl_vector_memcpy(invector_modified,*invector);
+                gsl_vector_scale(*invector,aducnv);             // invector = I(ADC)*ADUCNV
+                gsl_vector_add_constant(*invector,Imin);        // invector = I(ADC)*ADUCNV+Imin
+                gsl_vector_scale(*invector,-1.0);               // invector = Ibias-(I(ADC)*ADUCNV+Imin)
+                gsl_vector_add_constant(*invector,Ibias);
+                gsl_vector_memcpy(I,*invector);
+
+                // R = (V0-IRL)/I
+                gsl_vector_memcpy(*invector,I);
+                gsl_vector_scale(*invector,-RL);                // IRL
+                gsl_vector_add_constant(*invector,V0);          // V0-IRL
+                gsl_vector_div(*invector,I);                    // (V0-IRL)/I
+               
+                gsl_vector_free(I); I = 0;
+                gsl_vector_free(invector_modified); invector_modified = 0;
+        }
+        else if (strcmp(I2R,"I2RFITTED") == 0)
+        {
+                double RL;                                      // Shunt/load resistor value [oHM]
+                double V0;
+                double Ifit = 45.3e-6;                          // Ifit = 45.3 uA
+                // It is not necessary to check the allocation beacuse 'invector' size must be > 0
+                gsl_vector *I = gsl_vector_alloc((*invector)->size);
+                gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
+                gsl_vector *IfitIgsl = gsl_vector_alloc((*invector)->size);
+               
+                RL = RPARA/(pow(TTR,2));                        // RL = RPARA/(TTR)^2
+                V0 = Ibias*(R0+RL);                             // V0 = I0(R0+RL)
+
+                // I
+                gsl_vector_memcpy(invector_modified,*invector);
+                gsl_vector_scale(*invector,aducnv);             // invector = I(ADC)*ADUCNV
+                gsl_vector_add_constant(*invector,Imin);        // invector = I(ADC)*ADUCNV+Imin
+                gsl_vector_scale(*invector,-1.0);               // invector = Ibias-(I(ADC)*ADUCNV+Imin)
+                gsl_vector_add_constant(*invector,Ibias);
+                gsl_vector_memcpy(I,*invector);
+
+                // R = V0/(Ifit+I)
+                gsl_vector_memcpy(IfitIgsl,I);
+                gsl_vector_add_constant(IfitIgsl,Ifit);         // Ifit+I
+                gsl_vector_set_all(*invector,V0);
+                gsl_vector_div(*invector,IfitIgsl);             // V0/(Ifit+I)
+               
+                gsl_vector_free(I); I = 0;
+                gsl_vector_free(invector_modified); invector_modified = 0;
+                gsl_vector_free(IfitIgsl); IfitIgsl = 0;
+        }
+  
+	return(EPOK);
+}
+/*xxxx end of SECTION A12 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
