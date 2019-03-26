@@ -214,8 +214,6 @@
 	int find_baseline(gsl_vector *invector, double kappa, double stopCriteria, int boxLPF, double *mean, double *sigma, double *baseline);
 	
 	int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight);
-        
-        int convertI2R (gsl_vector **invector);
 
 	using namespace std;
 

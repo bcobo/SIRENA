@@ -216,11 +216,17 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 	if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
 		|| (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
 	{
-		if (convertI2R(reconstruct_init, &record, &invector))
+                //if (convertI2R(reconstruct_init, &record, &invector))
+                if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->RPARA,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER, 1/record->delta_t, &invector))
 		{
 			message = "Cannot run routine convertI2R";
 			EP_EXIT_ERROR(message,EPFAIL);
 		}
+		
+		for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+                {
+                        record->adc_double[i] = gsl_vector_get(invector,i);
+                }
 	}
 	
 	// Process each record
@@ -808,19 +814,40 @@ void th_runDetect(TesRecord* record,
       // same pointer.
       if (!sc->is_reentrant()){
         std::unique_lock<std::mutex> lk(fits_file_mut);
-        if (convertI2R(reconstruct_init, &record, &invector))
+        /*if (convertI2R(reconstruct_init, &record, &invector))
           {
             lk.unlock();
             message = "Cannot run routine convertI2R";
             EP_EXIT_ERROR(message,EPFAIL);
-          }
+          }*/
+        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->RPARA,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER, 1/record->delta_t, &invector))
+	{
+                lk.unlock();
+		message = "Cannot run routine convertI2R";
+		EP_EXIT_ERROR(message,EPFAIL);
+	}
+		
+	for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+        {
+                record->adc_double[i] = gsl_vector_get(invector,i);
+        }  
         lk.unlock();
       }else{
-        if (convertI2R(reconstruct_init, &record, &invector))
+        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->RPARA,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER, 1/record->delta_t, &invector))
+	{
+		message = "Cannot run routine convertI2R";
+		EP_EXIT_ERROR(message,EPFAIL);
+	}
+		
+	for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+        {
+                record->adc_double[i] = gsl_vector_get(invector,i);
+        }  
+        /*if (convertI2R(reconstruct_init, &record, &invector))
         {
           message = "Cannot run routine convertI2R";
           EP_EXIT_ERROR(message,EPFAIL);
-        }
+        }*/
       }
     }
   
@@ -6731,33 +6758,35 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
 * - record: Structure containing the input record
 * - invector: Input current (ADC) vector & output resistance (I2R, I2RALL or I2RNOL) vector
 ******************************************************************************/
-int convertI2R (ReconstructInitSIRENA** reconstruct_init, TesRecord **record, gsl_vector **invector)
+//int convertI2R (ReconstructInitSIRENA** reconstruct_init, TesRecord **record, gsl_vector **invector)
+int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double Imax, double TTR, double LFILTER, double RPARA, double samprate, gsl_vector **invector)
 {
 	int status = EPOK;
 	string message="";
   
-	double R0;		// Operating point resistance [Ohm]
-	double Ibias;		// I0_START = Initial bias current [A]
+	//double R0;		// Operating point resistance [Ohm]
+	//double Ibias;		// I0_START = Initial bias current [A]
 	double aducnv;		// ADU conversion factor [A/ADU]
 	//double baselineNew;
 	double baseline;
-	double Imin;		// Current corresponding to 0 ADU [A]
-	double Imax;
-        double TTR;                                             // Transformer Turns Ratio
-        double LFILTER;                                         // Circuit filter inductance [H]
-        double RPARA;
+	//double Imin;		// Current corresponding to 0 ADU [A]
+	//double Imax;
+        //double TTR;                                             // Transformer Turns Ratio
+        //double LFILTER;                                         // Circuit filter inductance [H]
+        //double RPARA;
         
-        R0 = (*reconstruct_init)->i2rdata->R0;
+        /*R0 = (*reconstruct_init)->i2rdata->R0;
         Ibias = (*reconstruct_init)->i2rdata->I0_START;
         Imin = (*reconstruct_init)->i2rdata->IMIN;
         Imax = (*reconstruct_init)->i2rdata->IMAX;
         RPARA = (*reconstruct_init)->i2rdata->RPARA;
         TTR = (*reconstruct_init)->i2rdata->TTR;
-        LFILTER = (*reconstruct_init)->i2rdata->LFILTER;
+        LFILTER = (*reconstruct_init)->i2rdata->LFILTER;*/
         
 	aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534
 
-	if (strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0)
+	//if (strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0)
+	if (strcmp(EnergyMethod,"I2R") == 0)
 	{	
 		// DeltaI <- I-Ibias
 		// R <- R0 - R0*(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
@@ -6779,7 +6808,8 @@ int convertI2R (ReconstructInitSIRENA** reconstruct_init, TesRecord **record, gs
 		gsl_vector_add_constant(*invector,R0); 			// invector = R0 - R0*(DeltaI/Ibias)/(1+DeltaI/Ibias)
 		gsl_vector_free(invector_modified); invector_modified = 0;
 	}
-	else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0)
+	//else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0)
+	else if (strcmp(EnergyMethod,"I2RALL") == 0)
         {
                 double RL;                                              // Shunt/load resistor value [oHM]
                 double V0;
@@ -6812,7 +6842,8 @@ int convertI2R (ReconstructInitSIRENA** reconstruct_init, TesRecord **record, gs
 
                 // R = (V0-IRL-LdI/dt)/I
                 gsl_vector_memcpy(*invector,dI);
-                gsl_vector_scale(*invector,1/(*record)->delta_t);       // dI/dt
+                //gsl_vector_scale(*invector,1/(*record)->delta_t);       // dI/dt
+                gsl_vector_scale(*invector,samprate);               // dI/dt
                 gsl_vector_scale(*invector,-L);
                 gsl_vector_add_constant(*invector,V0);                  // V0-dI/dt
                 gsl_vector_memcpy(invector_modified,I);
@@ -6824,7 +6855,8 @@ int convertI2R (ReconstructInitSIRENA** reconstruct_init, TesRecord **record, gs
                 gsl_vector_free(dI); dI = 0;
                 gsl_vector_free(invector_modified); invector_modified = 0;
         }
-        else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
+        //else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
+        else if (strcmp(EnergyMethod,"I2RNOL") == 0)
         {
                 double RL;                                      // Shunt/load resistor value [oHM]
                 double V0;
@@ -6852,7 +6884,8 @@ int convertI2R (ReconstructInitSIRENA** reconstruct_init, TesRecord **record, gs
                 gsl_vector_free(I); I = 0;
                 gsl_vector_free(invector_modified); invector_modified = 0;
         }
-        else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0)
+        //else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0)
+        else if (strcmp(EnergyMethod,"I2RFITTED") == 0)
         {
                 double RL;                                      // Shunt/load resistor value [oHM]
                 double V0;
@@ -6884,10 +6917,10 @@ int convertI2R (ReconstructInitSIRENA** reconstruct_init, TesRecord **record, gs
                 gsl_vector_free(IfitIgsl); IfitIgsl = 0;
         }
 
-	for (int i=0;i<(*invector)->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+	/*for (int i=0;i<(*invector)->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
 	{
 		(*record)->adc_double[i] = gsl_vector_get(*invector,i);
-	}
+	}*/
 	  
 	return(EPOK);
 }
