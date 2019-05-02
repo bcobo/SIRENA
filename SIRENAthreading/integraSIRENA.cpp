@@ -378,7 +378,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
         {
                 reconstruct_init->i2rdata = NULL;
                 reconstruct_init->i2rdata = (I2RData*)malloc(sizeof(I2RData));
-                //reconstruct_init->i2rdata->R0 = -999;
+                reconstruct_init->i2rdata->R0 = -999;
                 reconstruct_init->i2rdata->I0_START = -999;    
                 reconstruct_init->i2rdata->IMIN = -999;
                 reconstruct_init->i2rdata->IMAX = -999;
@@ -593,6 +593,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 		if (event_list->grades2 != NULL) 	delete [] event_list->grades2;
 		if (event_list->pulse_heights != NULL) 	delete [] event_list->pulse_heights;
 		if (event_list->ph_ids != NULL) 	delete [] event_list->ph_ids;
+                
+                if (event_list->event_indexes != NULL) 	delete [] event_list->event_indexes;    //!!!!!!!!!!!!!!!
 	
 		pulsesAllAux->ndetpulses = (*pulsesAll)->ndetpulses;
 		
@@ -629,10 +631,12 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			(*pulsesAll)->pulses_detected[i+pulsesAllAux->ndetpulses] = pulsesInRecord->pulses_detected[i];
 		}
 	}
+	//cout<<"After runEnergy1"<<endl;
 		
 	//cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
 	//cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
 	
+        //if (event_list->energies != NULL)   cout<<"event_list->energies != NULL"<<endl;
 	// Free & Fill TesEventList structure
 	event_list->index = pulsesInRecord->ndetpulses;
 	event_list->energies = new double[event_list->index];
@@ -645,9 +649,13 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	event_list->grades2  = new int[event_list->index];
 	event_list->pulse_heights  = new double[event_list->index];
 	event_list->ph_ids   = new long[event_list->index];
+        
+        event_list->event_indexes   = new double[event_list->index];   //!!!!!!!!!!!!
+        //cout<<"After runEnergy2"<<endl;
 	
 	if (strcmp(reconstruct_init->EnergyMethod,"PCA") != 0)     // Different from PCA
 	{
+                //cout<<"After runEnergyA"<<endl;
 	   	for (int ip=0; ip<pulsesInRecord->ndetpulses; ip++)
 		{	  			
                         event_list->event_indexes[ip] = (pulsesInRecord->pulses_detected[ip].Tstart - record->time)/record->delta_t;	
@@ -671,8 +679,10 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			event_list->pulse_heights[ip]  = pulsesInRecord->pulses_detected[ip].pulse_height;
 			event_list->ph_ids[ip]   = 0;
 		}
+		//cout<<"After runEnergyB"<<endl;
 		if (lastRecord == 1)
                 {       
+                        //cout<<"After runEnergyC"<<endl;
                         double numLagsUsed_mean;
                         double numLagsUsed_sigma;
                         gsl_vector *numLagsUsed_vector = gsl_vector_alloc((*pulsesAll)->ndetpulses);
@@ -687,7 +697,9 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                         }
                  
                         gsl_vector_free(numLagsUsed_vector);
+                        //cout<<"After runEnergyD"<<endl;
                 }
+                //cout<<"After runEnergyE"<<endl;
 	}
 	else
 	{
@@ -732,10 +744,24 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			}
 		}
 	}
+	//cout<<"After runEnergy3"<<endl;
         
+        /*if(pulsesAllAux->ndetpulses == 0) 
+	{
+          delete pulsesAllAux; pulsesAllAux = 0;
+	}
+	if(pulsesInRecord->pulses_detected == 0) 
+	{
+          delete [] pulsesInRecord->pulses_detected; pulsesInRecord->pulses_detected = 0;
+	}
+	if(pulsesInRecord->ndetpulses == 0) 
+	{
+          delete pulsesInRecord; pulsesInRecord = 0;
+	}*/
 	delete pulsesAllAux; pulsesAllAux = 0;
 	delete [] pulsesInRecord->pulses_detected; pulsesInRecord->pulses_detected = 0;
 	delete pulsesInRecord; pulsesInRecord = 0;
+        //cout<<"After runEnergy4"<<endl;
 
 	return;
 }
@@ -1172,6 +1198,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 	
 	// It is not necessary to check the allocation because 'ntemplates' and 'template_duration' have been checked previously
 	gsl_matrix *matrixAux_PULSE = gsl_matrix_alloc(ntemplates,template_duration);
+        //cout<<"matrixAux_PULSE: "<<matrixAux_PULSE->size1<<" "<<matrixAux_PULSE->size2<<endl;
 	strcpy(obj.nameCol,"PULSE");
 	if (readFitsComplex (obj,&matrixAux_PULSE))
 	{
@@ -1916,7 +1943,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 			gsl_matrix *matrixAux_PRCLOFWMx = NULL;
 			index = 0;
 			strcpy(obj.nameTable,"PRCLOFWM");
-			for (int i=0;i<nOFs;i++)
+                        for (int i=0;i<nOFs;i++)
 			{
                                 if ((ncols == 7) || (ncols == 9) || (ncols == 10) || (ncols == 19))
 				{
@@ -2350,6 +2377,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 		}
 		library_collection->nfixedfilters = nOFs;
 		
+                cout<<"nOFs: " <<nOFs<<endl;
+                cout<<"ncols: " <<ncols<<endl;
 		int lengthALL_PRCLOFWM = 0;
 		for (int i=0;i<nOFs;i++)
 		{
@@ -2385,6 +2414,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 				snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
 				matrixAux_PRCLOFWMx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i)*2);
 			}
+			cout<<"size2: "<<pow(2,floor(log2(template_duration))-i+1)*2<<endl;
 						  
 			strcpy(obj.nameCol,(string("OFW")+string(str_length)).c_str());
 			if (readFitsComplex (obj,&matrixAux_PRCLOFWMx))
@@ -2411,6 +2441,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 			gsl_matrix_free(matrixAux_PRCLOFWMx);
 		}
 		
+		cout<<"ntemplates: "<<ntemplates<<endl;
+                cout<<"lengthALL_PRCLOFWM: "<<lengthALL_PRCLOFWM<<endl;
 		library_collection->PRCLOFWM = gsl_matrix_alloc(ntemplates, lengthALL_PRCLOFWM);
 		gsl_matrix_memcpy(library_collection->PRCLOFWM,matrixALL_PRCLOFWMx);
 		gsl_matrix_free(matrixALL_PRCLOFWMx);
