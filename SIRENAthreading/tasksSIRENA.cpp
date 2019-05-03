@@ -10287,6 +10287,13 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                         double calculatedEnergy_Nolags;
                         double xmax_Nolags;
                         int dolags = 0;
+                        
+                        gsl_vector *Ei = gsl_vector_alloc(reconstruct_init->nLags+1);
+                        gsl_vector_set_all(Ei,-999);
+                        gsl_vector *xmaxi = gsl_vector_alloc(reconstruct_init->nLags+1);
+                        gsl_vector_set_all(xmaxi,-999);
+                        gsl_vector *lagsShifti = gsl_vector_alloc(reconstruct_init->nLags+1);
+                        gsl_vector_set_all(lagsShifti,-999);
 
 			double SelectedTimeDuration;
 			if (domain == 0)	SelectedTimeDuration = filter->size/samprate;
@@ -10348,6 +10355,11 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     xmax = -b/(2*a);
                                                     calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
                                                     xmax_Nolags = xmax;
+                                                    
+                                                    gsl_vector_set(Ei,0,a*pow(xmax,2.0) + b*xmax +c);
+                                                    gsl_vector_set(xmaxi,0,xmax);
+                                                    gsl_vector_set(lagsShifti,0,0);
+                                                    
                                                     //if ((xmax < -1) || (xmax > 1))
                                                     if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
                                                     {
@@ -10409,6 +10421,11 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                                                             }
                                                             xmax = -b/(2*a);
+                                                            
+                                                            gsl_vector_set(Ei,indexLags,a*pow(xmax,2.0) + b*xmax +c);
+                                                            gsl_vector_set(xmaxi,indexLags,xmax);
+                                                            gsl_vector_set(lagsShifti,indexLags,*lagsShift);
+                                                            
                                                             if ((xmax >= -1) && (xmax <= 1))      exitLags = true;
                                                             else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
                                                             /*cout<<"xmax: "<<xmax<<endl;
@@ -10440,6 +10457,11 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     xmax = -b/(2*a);
                                                     calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
                                                     xmax_Nolags = xmax;
+                                                    
+                                                    gsl_vector_set(Ei,0,a*pow(xmax,2.0) + b*xmax +c);
+                                                    gsl_vector_set(xmaxi,0,xmax);
+                                                    gsl_vector_set(lagsShifti,0,0);
+                                                    
                                                     //if ((xmax < -2) || (xmax > 2))
                                                     if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5))
                                                     {
@@ -10507,6 +10529,11 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                                                             }
                                                             xmax = -b/(2*a);
+                                                            
+                                                            gsl_vector_set(Ei,indexLags,a*pow(xmax,2.0) + b*xmax +c);
+                                                            gsl_vector_set(xmaxi,indexLags,xmax);
+                                                            gsl_vector_set(lagsShifti,indexLags,*lagsShift);
+                                                            
                                                             if ((xmax >= -2) && (xmax <= 2))    exitLags = true;
                                                             else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
                                                             
@@ -10514,30 +10541,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     }
                                                 }
                                                     
-                                                /*if ((((dolags == 0) && ((xmax_Nolags>-1) && (xmax_Nolags<1) && (reconstruct_init->Fitting35 == 3)))
-                                                    || ((dolags == 0) && ((xmax_Nolags>-2) && (xmax_Nolags<2) && (reconstruct_init->Fitting35 == 5)))) 
-                                                    || (dolags == 1))
-                                                {
-                                                    //xmax = -b/(2*a);
-                                                    //cout<<"xmax= "<<xmax<<endl;
-                                                    //cout<<xmax<<endl;
-                                                    //if (*lagsShift==0) cout<<xmax<<endl;
-                                                    *tstartNewDev = xmax;
-                                                    //cout<<"*tstartNewDev= "<<*tstartNewDev<<endl;
-                                                    *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
-                                                    //cout<<"*calculatedEnergy= "<<*calculatedEnergy<<endl;
-                                                    //cout<<"phi= "<<xmax-(*lagsShift)<<endl;
-                                                    //cout<<"phi= "<<xmax<<endl;
-                                                    //cout<<"lagsShift= "<<*lagsShift<<endl;
-                                                    //gsl_vector_free(calculatedEnergy_vectorABS);
-                                                }
-                                                else if (((dolags == 0) && (((xmax_Nolags<-1) || (xmax_Nolags>1)) && (reconstruct_init->Fitting35 == 3)))
-                                                    || ((dolags == 0) && ((xmax_Nolags<-2) || (xmax_Nolags>2) && (reconstruct_init->Fitting35 == 5))))
-                                                {
-                                                    *tstartNewDev = 0;
-                                                    *calculatedEnergy = calculatedEnergy_Nolags;
-                                                }*/
-                                                if ((dolags == 0) || ((dolags == 1) && (exitLags == true)))
+                                                /*if ((dolags == 0) || ((dolags == 1) && (exitLags == true)))
                                                 {
                                                     //xmax = -b/(2*a);
                                                     //cout<<"xmax= "<<xmax<<endl;
@@ -10557,6 +10561,24 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     *tstartNewDev = 0;
                                                     *calculatedEnergy = calculatedEnergy_Nolags;
                                                     *lagsShift = 0;
+                                                }*/
+                                                int flag_biggerthan2Ei = 0;
+                                                for (int i=0;i<numlags-1;i++)
+                                                {
+                                                    if (gsl_vector_get(Ei,indexLags)>gsl_vector_get(calculatedEnergy_vector,i))
+                                                        flag_biggerthan2Ei++;
+                                                }
+                                                if (flag_biggerthan2Ei >= 2)
+                                                {
+                                                    *calculatedEnergy = gsl_vector_get(Ei,numlags);
+                                                    *tstartNewDev = gsl_vector_get(xmaxi,numlags);
+                                                    *lagsShift = gsl_vector_get(lagsShifti,numlags);
+                                                }
+                                                else
+                                                {
+                                                    *calculatedEnergy = gsl_vector_max(Ei);
+                                                    *tstartNewDev = gsl_vector_get(xmaxi,gsl_vector_max_index(Ei));
+                                                    *lagsShift = gsl_vector_get(lagsShifti,gsl_vector_max_index(Ei));
                                                 }
                                                
 					}
@@ -10641,6 +10663,10 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                                                     }
                                                     xmax = -b/(2*a);
+                                                    gsl_vector_set(Ei,0,a*pow(xmax,2.0) + b*xmax +c);
+                                                    gsl_vector_set(xmaxi,0,xmax);
+                                                    gsl_vector_set(lagsShifti,0,0);
+                                            
                                                     calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
                                                     xmax_Nolags = xmax;
                                                     //cout<<"calculatedEnergy_Nolags: "<<calculatedEnergy_Nolags<<endl;
@@ -10711,7 +10737,12 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                     EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                                                             }
                                                             xmax = -b/(2*a);
-                                                            //cout<<"xmaxi: "<<xmax<<endl;
+                                                            /*cout<<"xmaxi: "<<xmax<<endl;
+                                                            cout<<"Ei: "<<a*pow(xmax,2.0) + b*xmax +c<<endl;
+                                                            cout<<"indexLags: "<<indexLags<<endl;*/
+                                                            gsl_vector_set(Ei,indexLags,a*pow(xmax,2.0) + b*xmax +c);
+                                                            gsl_vector_set(xmaxi,indexLags,xmax);
+                                                            gsl_vector_set(lagsShifti,indexLags,*lagsShift);
                                                             
                                                             if ((xmax >= -1) && (xmax <= 1))      exitLags = true;
                                                             else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector);
@@ -10754,6 +10785,11 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     xmax = -b/(2*a);
                                                     calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
                                                     xmax_Nolags = xmax;
+                                                    
+                                                    gsl_vector_set(Ei,0,a*pow(xmax,2.0) + b*xmax +c);
+                                                    gsl_vector_set(xmaxi,0,xmax);
+                                                    gsl_vector_set(lagsShifti,0,0);
+                                                    
                                                     //cout<<"xmax0: "<<xmax<<endl;
                                                     //if ((xmax < -2) || (xmax > 2))
                                                     //if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 5))
@@ -10835,38 +10871,38 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                             }
                                                             xmax = -b/(2*a);
                                                             //cout<<"xmaxi: "<<xmax<<endl;
+                                                            
+                                                            gsl_vector_set(Ei,indexLags,a*pow(xmax,2.0) + b*xmax +c);
+                                                            gsl_vector_set(xmaxi,indexLags,xmax);
+                                                            gsl_vector_set(lagsShifti,indexLags,*lagsShift);
+                                                            
                                                             if ((xmax >= -2) && (xmax <= 2))    exitLags = true;
                                                             else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
                                                             
                                                         } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-2));
                                                     }
                                                 }
-                                                
-                                                /*if ((((dolags == 0) && ((xmax_Nolags>-1) && (xmax_Nolags<1) && (reconstruct_init->Fitting35 == 3)))
-                                                    || ((dolags == 0) && ((xmax_Nolags>-2) && (xmax_Nolags<2) && (reconstruct_init->Fitting35 == 5)))) 
-                                                    || (dolags == 1))
+
+                                                int flag_biggerthan2Ei = 0;
+                                                for (int i=0;i<numlags-1;i++)
                                                 {
-                                                    //xmax = -b/(2*a);
-                                                    //cout<<"xmax= "<<xmax<<endl;
-                                                    //cout<<xmax<<endl;
-                                                    //if (*lagsShift==0) cout<<xmax<<endl;
-                                                    *tstartNewDev = xmax;
-                                                    //cout<<"*tstartNewDev= "<<*tstartNewDev<<endl;
-                                                    *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
-                                                    //cout<<"*calculatedEnergy= "<<*calculatedEnergy<<endl;
-                                                    //cout<<"phi= "<<xmax-(*lagsShift)<<endl;
-                                                    //cout<<"phi= "<<xmax<<endl;
-                                                    //cout<<"lagsShift= "<<*lagsShift<<endl;
-                                                    //gsl_vector_free(calculatedEnergy_vectorABS);
+                                                    if (gsl_vector_get(Ei,indexLags)>gsl_vector_get(calculatedEnergy_vector,i))
+                                                        flag_biggerthan2Ei++;
                                                 }
-                                                else if (((dolags == 0) && (((xmax_Nolags<-1) || (xmax_Nolags>1)) && (reconstruct_init->Fitting35 == 3)))
-                                                    || ((dolags == 0) && ((xmax_Nolags<-2) || (xmax_Nolags>2) && (reconstruct_init->Fitting35 == 5))))
+                                                if (flag_biggerthan2Ei >= 2)
                                                 {
-                                                    *tstartNewDev = 0;
-                                                    *calculatedEnergy = calculatedEnergy_Nolags;
-                                                }*/
+                                                    *calculatedEnergy = gsl_vector_get(Ei,numlags);
+                                                    *tstartNewDev = gsl_vector_get(xmaxi,numlags);
+                                                    *lagsShift = gsl_vector_get(lagsShifti,numlags);
+                                                }
+                                                else
+                                                {
+                                                    *calculatedEnergy = gsl_vector_max(Ei);
+                                                    *tstartNewDev = gsl_vector_get(xmaxi,gsl_vector_max_index(Ei));
+                                                    *lagsShift = gsl_vector_get(lagsShifti,gsl_vector_max_index(Ei));
+                                                }
                                                 
-                                                if ((dolags == 0) || ((dolags == 1) && (exitLags == true)))
+                                                /*if ((dolags == 0) || ((dolags == 1) && (exitLags == true)))
                                                 {
                                                     //xmax = -b/(2*a);
                                                     //cout<<"xmax= "<<xmax<<endl;
@@ -10886,10 +10922,10 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     *tstartNewDev = 0;
                                                     *calculatedEnergy = calculatedEnergy_Nolags;
                                                     *lagsShift = 0;
-                                                }
+                                                }*/
                                                 
-                                                //cout<<"*calculatedEnergy: "<<*calculatedEnergy<<endl;
-                                                /*cout<<"*tstartNewDev= "<<*tstartNewDev<<endl;
+                                                /*cout<<"*calculatedEnergy: "<<*calculatedEnergy<<endl;
+                                                cout<<"*tstartNewDev= "<<*tstartNewDev<<endl;
                                                 cout<<"lagsShift= "<<*lagsShift<<endl;*/
 					}
 					
