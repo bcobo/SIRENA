@@ -61,7 +61,7 @@ int tesreconstruction_main() {
     //if (strncmp(strndup(par.RecordFile+strlen(par.RecordFile)-5, 5),".fits",5) != 0)
     if (strcmp(firstchar2,"@") == 0)
     {
-            FILE *filetxt = fopen(par.RecordFile, "r");
+            FILE *filetxt = fopen(strndup(par.RecordFile+1, strlen(par.RecordFile)-1), "r");
             if (filetxt == NULL)    
             {
                     printf("%s","File given in RecordFile does not exist\n");
@@ -227,7 +227,6 @@ int tesreconstruction_main() {
     
     if (strcmp(firstchar2,"@") == 0)
     {
-            //FILE *filetxt = fopen(par.RecordFile, "r");
             FILE *filetxt = fopen(strndup(par.RecordFile+1, strlen(par.RecordFile)-1), "r");
             char filefits[256];
             int numfits = 0;
