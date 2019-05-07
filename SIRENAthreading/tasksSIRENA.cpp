@@ -7110,7 +7110,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                 //tstartSamplesRecordStartDOUBLE = ((*pulsesInRecord)->pulses_detected[i].Tstart-record->time)/record->delta_t-numlags2;
                 tstartSamplesRecordStartINT = tstartSamplesRecord-numlags2;
                 tstartSamplesRecordStartDOUBLE = tstartSamplesRecord-numlags2;              //He cambiado esto
-                tstartSamplesRecordStartDOUBLE = tstartSamplesRecord-(numlags-1);
+                //tstartSamplesRecordStartDOUBLE = tstartSamplesRecord-(numlags-1);
                 //cout<<"tstartSamplesRecord: "<<tstartSamplesRecord<<endl;
                 //cout<<"tstartSamplesRecordStartDOUBLE0: "<<tstartSamplesRecordStartDOUBLE<<endl;
                 
@@ -7234,8 +7234,9 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         /*cout<<"recordAux->size: "<<recordAux->size<<endl;
                         cout<<"tstartSamplesRecord: "<<tstartSamplesRecord<<endl;*/
                         //cout<<"tstartSamplesRecordStartDOUBLE: "<<tstartSamplesRecordStartDOUBLE<<endl;
-			if ((tstartSamplesRecordStartDOUBLE-numlags/2 < 0) || (tstartSamplesRecordStartDOUBLE-numlags/2 > recordAux->size-2)
-				|| (resize_mfNEW < 1) || (resize_mfNEW > recordAux->size-tstartSamplesRecordStartDOUBLE+numlags/2))
+			if ((tstartSamplesRecordStartDOUBLE < 0) || (tstartSamplesRecordStartDOUBLE > recordAux->size-2)
+				//|| (resize_mfNEW < 1) || (resize_mfNEW > recordAux->size-tstartSamplesRecordStartDOUBLE+numlags/2))
+                                || (resize_mfNEW < 1) || (tstartSamplesRecordStartDOUBLE+resize_mfNEW > recordAux->size))
 			{
 				sprintf(valERROR,"%d",__LINE__+5);
 				string str(valERROR);
