@@ -10087,15 +10087,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 			double a,b,c;
 			double xmax;
                         double calculatedEnergy_Nolags;
-                        double xmax_Nolags;
+                        bool maxParabolaFound = false;
                         int dolags = 0;
-                        
-                        gsl_vector *Ei = gsl_vector_alloc(reconstruct_init->nLags/2-1+1);
-                        gsl_vector_set_all(Ei,-999);
-                        gsl_vector *xmaxi = gsl_vector_alloc(reconstruct_init->nLags/2-1+1);
-                        gsl_vector_set_all(xmaxi,-999);
-                        gsl_vector *lagsShifti = gsl_vector_alloc(reconstruct_init->nLags/2-1+1);
-                        gsl_vector_set_all(lagsShifti,-999);
 
 			double SelectedTimeDuration;
 			if (domain == 0)	SelectedTimeDuration = filter->size/samprate;
@@ -10158,14 +10151,11 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     }
                                                     xmax = -b/(2*a);
                                                     calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
-                                                    xmax_Nolags = xmax;
                                                     
-                                                    gsl_vector_set(Ei,0,a*pow(xmax,2.0) + b*xmax +c);
-                                                    gsl_vector_set(xmaxi,0,xmax);
-                                                    gsl_vector_set(lagsShifti,0,0);
+                                                    if ((xmax >= -1) && (xmax <= 1)) maxParabolaFound = true;
                                                     
-                                                    //if ((xmax < -1) || (xmax > 1))
-                                                    if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
+                                                    if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3) && (filter->size >= 512))
+                                                    // With the CBE pixel (LPA75um) it has no sense to look for a parabola if filter_size<512
                                                     {
                                                         dolags = 1;
                                                         do
@@ -10226,12 +10216,11 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                             }
                                                             xmax = -b/(2*a);
                                                             
-                                                            gsl_vector_set(Ei,indexLags,a*pow(xmax,2.0) + b*xmax +c);
-                                                            gsl_vector_set(xmaxi,indexLags,xmax);
-                                                            gsl_vector_set(lagsShifti,indexLags,*lagsShift);
-                                                            
-                                                            //if ((xmax >= -1) && (xmax <= 1))      exitLags = true;
-                                                            if (((xmax >= -1) && (xmax <= 1)) || (fabs(xmax)>20))      exitLags = true;
+                                                            if ((xmax >= -1) && (xmax <= 1))      
+                                                            {   
+                                                                exitLags = true;
+                                                                maxParabolaFound = true;
+                                                            }
                                                             else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
                                                             /*cout<<"xmax: "<<xmax<<endl;
                                                             cout<<"exitLags: "<<exitLags<<endl;
@@ -10261,14 +10250,11 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     }
                                                     xmax = -b/(2*a);
                                                     calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
-                                                    xmax_Nolags = xmax;
                                                     
-                                                    gsl_vector_set(Ei,0,a*pow(xmax,2.0) + b*xmax +c);
-                                                    gsl_vector_set(xmaxi,0,xmax);
-                                                    gsl_vector_set(lagsShifti,0,0);
+                                                    if ((xmax >= -2) && (xmax <= 2)) maxParabolaFound = true;
                                                     
-                                                    //if ((xmax < -2) || (xmax > 2))
-                                                    if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5))
+                                                    if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5) && (filter->size >= 512))
+                                                    // With the CBE pixel (LPA75um) it has no sense to look for a parabola if filter_size<512
                                                     {
                                                         dolags = 1;
                                                         do
@@ -10334,78 +10320,18 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                                                             }
                                                             xmax = -b/(2*a);
-                                                            
-                                                            gsl_vector_set(Ei,indexLags,a*pow(xmax,2.0) + b*xmax +c);
-                                                            gsl_vector_set(xmaxi,indexLags,xmax);
-                                                            gsl_vector_set(lagsShifti,indexLags,*lagsShift);
-                                                            
-                                                            //if ((xmax >= -2) && (xmax <= 2))    exitLags = true;
-                                                            if (((xmax >= -2) && (xmax <= 2)) || (fabs(xmax)>20))      exitLags = true;
+                                                                                                                        
+                                                            if ((xmax >= -2) && (xmax <= 2))
+                                                            {       
+                                                                exitLags = true;
+                                                            }
                                                             else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
                                                             
                                                         } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-2));
                                                     }
                                                 }
                                                     
-                                                int flag_biggerthan2Ei = 0;
-                                                for (int i=0;i<numlags-1;i++)
-                                                {
-                                                    if (gsl_vector_get(Ei,indexLags)>gsl_vector_get(calculatedEnergy_vector,i))
-                                                        flag_biggerthan2Ei++;
-                                                }
-                                                /*cout<<"flag_biggerthan2Ei: "<<flag_biggerthan2Ei<<endl;
-                                                cout<<"Ei: "<<gsl_vector_get(Ei,0)<<" "<<gsl_vector_get(Ei,1)<<" "<<gsl_vector_get(Ei,2)<<" "<<gsl_vector_get(Ei,3)<<endl;
-                                                cout<<"xmaxi: "<<gsl_vector_get(xmaxi,0)<<" "<<gsl_vector_get(xmaxi,1)<<" "<<gsl_vector_get(xmaxi,2)<<" "<<gsl_vector_get(xmaxi,3)<<endl;
-                                                cout<<"lagsShifti: "<<gsl_vector_get(lagsShifti,0)<<" "<<gsl_vector_get(lagsShifti,1)<<" "<<gsl_vector_get(lagsShifti,2)<<" "<<gsl_vector_get(lagsShifti,3)<<endl;*/
-                                                                                                
-                                                if (flag_biggerthan2Ei >= 2)
-                                                {
-                                                    if (fabs(xmax) >20)
-                                                    {
-                                                        if (indexLags == 0)
-                                                        {
-                                                            *tstartNewDev = 0;
-                                                            *calculatedEnergy = calculatedEnergy_Nolags;
-                                                            *lagsShift = 0;
-                                                        }
-                                                        else
-                                                        {
-                                                            *calculatedEnergy = gsl_vector_get(Ei,indexLags-1);
-                                                            *tstartNewDev = gsl_vector_get(xmaxi,indexLags-1);
-                                                            *lagsShift = gsl_vector_get(lagsShifti,indexLags-1);
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        *calculatedEnergy = gsl_vector_get(Ei,indexLags);
-                                                        *tstartNewDev = gsl_vector_get(xmaxi,indexLags);
-                                                        *lagsShift = gsl_vector_get(lagsShifti,indexLags);
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    
-                                                    gsl_vector *Ei_copy = gsl_vector_alloc(Ei->size);
-                                                    gsl_vector_memcpy(Ei_copy,Ei);
-                                                    gsl_sort_vector2(Ei,xmaxi);
-                                                    gsl_sort_vector2(Ei_copy,lagsShifti);
-                                                    gsl_vector_free(Ei_copy); Ei_copy = 0;
-                                                    /*cout<<"Eisort: "<<gsl_vector_get(Ei,0)<<" "<<gsl_vector_get(Ei,1)<<" "<<gsl_vector_get(Ei,2)<<" "<<gsl_vector_get(Ei,3)<<endl;
-                                                    cout<<"xmaxisort: "<<gsl_vector_get(xmaxi,0)<<" "<<gsl_vector_get(xmaxi,1)<<" "<<gsl_vector_get(xmaxi,2)<<" "<<gsl_vector_get(xmaxi,3)<<endl;
-                                                    cout<<"lagsShiftisort: "<<gsl_vector_get(lagsShifti,0)<<" "<<gsl_vector_get(lagsShifti,1)<<" "<<gsl_vector_get(lagsShifti,2)<<" "<<gsl_vector_get(lagsShifti,3)<<endl;*/
                                                 
-                                                    for (int i=0;i<Ei->size;i++)
-                                                    {
-                                                        if (fabs(gsl_vector_get(xmaxi,Ei->size-1-i))<20)
-                                                        {
-                                                            *calculatedEnergy = gsl_vector_get(Ei,Ei->size-1-i);
-                                                            *tstartNewDev = gsl_vector_get(xmaxi,Ei->size-1-i);
-                                                            *lagsShift = gsl_vector_get(lagsShifti,Ei->size-1-i);
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                               
 					}
 				}
 			}
@@ -10488,18 +10414,13 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                                                     }
                                                     xmax = -b/(2*a);
-                                                    gsl_vector_set(Ei,0,a*pow(xmax,2.0) + b*xmax +c);
-                                                    gsl_vector_set(xmaxi,0,xmax);
-                                                    gsl_vector_set(lagsShifti,0,0);
-                                            
                                                     calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
-                                                    xmax_Nolags = xmax;
-                                                    //cout<<"calculatedEnergy_Nolags: "<<calculatedEnergy_Nolags<<endl;
                                                     //cout<<"xmax0: "<<xmax<<endl;
-                                                    //if (fabs(xmax) > 20)    cout<<"fabs(xmax0)>20"<<endl;
+                                    
+                                                    if ((xmax >= -1) && (xmax <= 1)) maxParabolaFound = true;
                                                     
-                                                    //if ((xmax < -1) || (xmax > 1))
-                                                    if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
+                                                    if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3) && (filterFFT->size >= 512))
+                                                    // With the CBE pixel (LPA75um) it has no sense to look for a parabola if filter_size<512
                                                     {
                                                         dolags = 1;
                                                         
@@ -10563,19 +10484,15 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                     EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                                                             }
                                                             xmax = -b/(2*a);
-                                                            /*cout<<"xmax_i: "<<xmax<<endl;
-                                                            if (fabs(xmax) > 20)    cout<<"fabs(xmax_i)>20"<<endl;
-                                                            cout<<"Ei: "<<a*pow(xmax,2.0) + b*xmax +c<<endl;
-                                                            cout<<"indexLags: "<<indexLags<<endl;*/
-                                                            gsl_vector_set(Ei,indexLags,a*pow(xmax,2.0) + b*xmax +c);
-                                                            gsl_vector_set(xmaxi,indexLags,xmax);
-                                                            gsl_vector_set(lagsShifti,indexLags,*lagsShift);
                                                             
-                                                            if ((xmax >= -1) && (xmax <= 1))      exitLags = true;
-                                                            //if (((xmax >= -1) && (xmax <= 1)) || (fabs(xmax)>20))      exitLags = true;
+                                                            if ((xmax >= -1) && (xmax <= 1))      
+                                                            {
+                                                                    exitLags = true;
+                                                                    maxParabolaFound = true;
+                                                            }
                                                             else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector);
-                                                            /*cout<<"xmax: "<<xmax<<endl;
-                                                            cout<<"exitLags: "<<exitLags<<endl;
+                                                            //cout<<"xmax: "<<xmax<<endl;
+                                                            /*cout<<"exitLags: "<<exitLags<<endl;
                                                             cout<<"indexLags: "<<indexLags<<" limite="<<(reconstruct_init->nLags)/2-1<<endl;*/
                                                             
                                                         } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
@@ -10612,16 +10529,11 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     }
                                                     xmax = -b/(2*a);
                                                     calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
-                                                    xmax_Nolags = xmax;
                                                     
-                                                    gsl_vector_set(Ei,0,a*pow(xmax,2.0) + b*xmax +c);
-                                                    gsl_vector_set(xmaxi,0,xmax);
-                                                    gsl_vector_set(lagsShifti,0,0);
-                                                    
-                                                    //cout<<"xmax0: "<<xmax<<endl;
-                                                    //if ((xmax < -2) || (xmax > 2))
-                                                    //if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 5))
-                                                    if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5))
+                                                    if ((xmax >= -2) && (xmax <= 2)) maxParabolaFound = true;
+                                                                                                       
+                                                    if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5) && (filterFFT->size >= 512))
+                                                    // With the CBE pixel (LPA75um) it has no sense to look for a parabola if filter_size<512
                                                     {
                                                         dolags = 1;
                                                         do
@@ -10700,74 +10612,36 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                             xmax = -b/(2*a);
                                                             //cout<<"xmaxi: "<<xmax<<endl;
                                                             
-                                                            gsl_vector_set(Ei,indexLags,a*pow(xmax,2.0) + b*xmax +c);
-                                                            gsl_vector_set(xmaxi,indexLags,xmax);
-                                                            gsl_vector_set(lagsShifti,indexLags,*lagsShift);
-                                                            
-                                                            if ((xmax >= -2) && (xmax <= 2))    exitLags = true;
-                                                            //if (((xmax >= -2) && (xmax <= 2)) || (fabs(xmax)>20))      exitLags = true;
+                                                            if ((xmax >= -2) && (xmax <= 2))    
+                                                            {
+                                                                exitLags = true;
+                                                                maxParabolaFound = true;
+                                                            }
                                                             else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
                                                             
                                                         } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-2));
                                                     }
                                                 }
 
-                                                int flag_biggerthan2Ei = 0;
-                                                for (int i=0;i<numlags-1;i++)
-                                                {
-                                                    if (gsl_vector_get(Ei,indexLags)>gsl_vector_get(calculatedEnergy_vector,i))
-                                                        flag_biggerthan2Ei++;
-                                                }
-                                                /*cout<<"flag_biggerthan2Ei: "<<flag_biggerthan2Ei<<endl;
-                                                cout<<"Ei: "<<gsl_vector_get(Ei,0)<<" "<<gsl_vector_get(Ei,1)<<" "<<gsl_vector_get(Ei,2)<<" "<<gsl_vector_get(Ei,3)<<endl;
-                                                cout<<"xmaxi: "<<gsl_vector_get(xmaxi,0)<<" "<<gsl_vector_get(xmaxi,1)<<" "<<gsl_vector_get(xmaxi,2)<<" "<<gsl_vector_get(xmaxi,3)<<endl;
-                                                cout<<"lagsShifti: "<<gsl_vector_get(lagsShifti,0)<<" "<<gsl_vector_get(lagsShifti,1)<<" "<<gsl_vector_get(lagsShifti,2)<<" "<<gsl_vector_get(lagsShifti,3)<<endl;*/
-                                                                                                
-                                                if (flag_biggerthan2Ei >= 2)
-                                                {
-                                                    if (fabs(xmax) >20)
-                                                    {
-                                                        if (indexLags == 0)
-                                                        {
-                                                            *tstartNewDev = 0;
-                                                            *calculatedEnergy = calculatedEnergy_Nolags;
-                                                            *lagsShift = 0;
-                                                        }
-                                                        else
-                                                        {
-                                                            *calculatedEnergy = gsl_vector_get(Ei,indexLags-1);
-                                                            *tstartNewDev = gsl_vector_get(xmaxi,indexLags-1);
-                                                            *lagsShift = gsl_vector_get(lagsShifti,indexLags-1);
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        *calculatedEnergy = gsl_vector_get(Ei,indexLags);
-                                                        *tstartNewDev = gsl_vector_get(xmaxi,indexLags);
-                                                        *lagsShift = gsl_vector_get(lagsShifti,indexLags);
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    
-                                                    gsl_vector *Ei_copy = gsl_vector_alloc(Ei->size);
-                                                    gsl_vector_memcpy(Ei_copy,Ei);
-                                                    gsl_sort_vector2(Ei,xmaxi);
-                                                    gsl_sort_vector2(Ei_copy,lagsShifti);
-                                                    gsl_vector_free(Ei_copy); Ei_copy = 0;
-                                                    /*cout<<"Eisort: "<<gsl_vector_get(Ei,0)<<" "<<gsl_vector_get(Ei,1)<<" "<<gsl_vector_get(Ei,2)<<" "<<gsl_vector_get(Ei,3)<<endl;
-                                                    cout<<"xmaxisort: "<<gsl_vector_get(xmaxi,0)<<" "<<gsl_vector_get(xmaxi,1)<<" "<<gsl_vector_get(xmaxi,2)<<" "<<gsl_vector_get(xmaxi,3)<<endl;
-                                                    cout<<"lagsShiftisort: "<<gsl_vector_get(lagsShifti,0)<<" "<<gsl_vector_get(lagsShifti,1)<<" "<<gsl_vector_get(lagsShifti,2)<<" "<<gsl_vector_get(lagsShifti,3)<<endl;*/
                                                 
-                                                    for (int i=0;i<Ei->size;i++)
+                                                if (maxParabolaFound == true)
+                                                {
+                                                    *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
+                                                    *tstartNewDev = xmax;
+                                                }
+                                                else 
+                                                {
+                                                    if (dolags == 0)    // (Because filter_size<512)
                                                     {
-                                                        if (fabs(gsl_vector_get(xmaxi,Ei->size-1-i))<20)
-                                                        {
-                                                            *calculatedEnergy = gsl_vector_get(Ei,Ei->size-1-i);
-                                                            *tstartNewDev = gsl_vector_get(xmaxi,Ei->size-1-i);
-                                                            *lagsShift = gsl_vector_get(lagsShifti,Ei->size-1-i);
-                                                            break;
-                                                        }
+                                                        *calculatedEnergy = calculatedEnergy_Nolags;
+                                                        *tstartNewDev = 0;
+                                                    }
+                                                    else    // (Because filter_size>512)
+                                                    {
+                                                        *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
+                                                        *tstartNewDev = xmax;
+                                                        message = "Parabola maximum outside the number of lags";
+                                                        EP_PRINT_ERROR(message,-999);	// Only a warning
                                                     }
                                                 }
                                                 
@@ -10783,10 +10657,6 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 
 			gsl_vector_free(lags_vector); lags_vector = 0;
 			gsl_vector_free(calculatedEnergy_vector); calculatedEnergy_vector = 0;
-                        
-                        gsl_vector_free(Ei); Ei = 0;
-                        gsl_vector_free(xmaxi); xmaxi = 0;
-                        gsl_vector_free(lagsShifti); lagsShifti = 0;
 		}
 		else if ((runEMethod == 0) && (strcmp(reconstruct_init->OFNoise,"WEIGHTM") == 0))
 		//else if ((runEMethod == 0) && (strcmp(xxx,"WEIGHTM") == 0))
