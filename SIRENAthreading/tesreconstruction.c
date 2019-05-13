@@ -39,7 +39,6 @@ int tesreconstruction_main() {
     // Get program parameters.
     status=getpar(&par);
     CHECK_STATUS_BREAK(status);
-    //printf("%s","Paso0\n");
     
     // Read XML info
     //--------------
@@ -48,9 +47,10 @@ int tesreconstruction_main() {
     det = loadAdvDet(par.XMLFile, &status);
     CHECK_STATUS_BREAK(status);
     // Read the sampling rate from XML file
-    int sf = -999.; 
-    int div = 1;
+    double sf = -999.; 
+    double div = 1;
     sf = det->SampleFreq;
+    //printf("%s %f %s","sf: ",sf,"\n");
     
     char* firstchar = strndup(par.RecordFile, 1);
     char firstchar2[2];
@@ -110,7 +110,6 @@ int tesreconstruction_main() {
     
     if (hdunum == 8) //xifusim simulated file (with TESRECORDS)
     {    
-        //printf("%s","Paso1\n");
         fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
         CHECK_STATUS_BREAK(status);
         
@@ -155,8 +154,10 @@ int tesreconstruction_main() {
                     strcat(characters_after_srate,each_character_after_srate); 
                 }
                 
-                sampling_rate = atof(characters_after_srate)-1;
+                sampling_rate = atof(characters_after_srate);
+                //printf("%s %s %s","characters_after_srate: ",characters_after_srate,"\n");
             }
+            //printf("%s %f %s","sampling_rate: ",sampling_rate,"\n");
             
             // Get RECORD LENGTH from TRIGGERPARAM
             long reclen_key;
@@ -171,7 +172,9 @@ int tesreconstruction_main() {
             // Read DELTA_T keyword from "TESRECORDS" HDU
             double delta_t_key;            
             fits_read_key(fptr,TDOUBLE,"DELTA_T", &delta_t_key,NULL,&status);  
-            div = sf/(1/delta_t_key);  // Grading i//strcpy(firstchar2,firstchar);nfo is unique in XML file -> adjust for different sf
+            //printf("%s %2.10f %s","delta_t_key: ",delta_t_key,"\n");
+            div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
+            //printf("%s %2.10f %s","div: ",div,"\n");
             // Read NAXIS2 keyword from "TESRECORDS" HDU
             long naxis2_key;
             fits_read_key(fptr,TLONG,"NAXIS2", &naxis2_key,NULL,&status);  
@@ -185,6 +188,17 @@ int tesreconstruction_main() {
             fits_write_key(fptr,TDOUBLE,"DELTAT",&keyvalue_double,NULL,&status);
             //fits_update_key(fptr,TLONG,"NETTOT", &nettot_key_long,NULL,&status);
             fits_update_key(fptr,TLONG,"NETTOT", &naxis2_key,NULL,&status);
+        }
+        else
+        {
+            fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
+            CHECK_STATUS_BREAK(status);
+            double keyvalue_double;
+            fits_read_key(fptr,TDOUBLE,"DELTAT",&keyvalue_double,NULL,&status);
+            double sampling_rate = 1/keyvalue_double;
+            //printf("%s %2.10f %s","sampling_rate(2nd run): ",sampling_rate,"\n");
+            div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
+            //printf("%s %2.10f %s","div(2nd run): ",div,"\n");
         }
     } //if hdunum==8 (xifusim file)
     fits_close_file(fptr,&status);
@@ -230,15 +244,19 @@ int tesreconstruction_main() {
         SIXT_ERROR("The provided XMLFile does not have the grading info");
         return(EXIT_FAILURE);
     }
-    //div = sf/(1/record_file->delta_t);  // Grading info is unique in XML file -> adjust for different sf
+    //printf("%s %f %s","div: ",div,"\n");
     reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
     //reconstruct_init_sirena->grading->value = gsl_vector_alloc(det->pix->ngrades);
     reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->pix->ngrades,2);
     for (int i=0;i<det->pix->ngrades;i++)
     {
         //gsl_vector_set(reconstruct_init_sirena->grading->value,i,det->pix->(int) (grades[i].value/div));
+        //printf("%s %d %s","grades[i].gradelimpre: ",det->pix->grades[i].gradelim_pre,"\n");
         gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->pix->grades[i].gradelim_pre)/div);
+        //printf("%s %f %s","grades[i].gradelimpre",gsl_matrix_get(reconstruct_init_sirena->grading->gradeData,i,0),"\n");
+        //printf("%s %d %s","grades[i].gradelimpost: ",det->pix->grades[i].gradelim_post,"\n");
         gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post)/div);
+        //printf("%s %f %s","grades[i].gradelimpost",gsl_matrix_get(reconstruct_init_sirena->grading->gradeData,i,1),"\n");
     }
     destroyAdvDet(&det);
     
