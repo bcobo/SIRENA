@@ -76,7 +76,7 @@ int tesreconstruction_main() {
             fgets(filefits, 256, filetxt);
             strtok(filefits, "\n");     // To delete '/n' from filefits (if not, 'fits_open_file' can not open the file)
             
-            fits_open_file(&fptr, filefits, READONLY, &status);
+            fits_open_file(&fptr, filefits, READWRITE, &status);
             if (status != 0)    printf("%s","FITS file read from ASCII file does not exist\n");
             CHECK_STATUS_BREAK(status);  
             
