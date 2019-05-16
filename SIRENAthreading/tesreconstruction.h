@@ -104,7 +104,7 @@ struct Parameters {
 	int opmode;
         
         //DetectionMode: Adjusted Derivative(AD) or Single Threshold Crossing(STC)
-	char detectionMode[3];
+	char detectionMode[4];
 
 	/** Monochromatic energy for library creation **/
 	double monoenergy;
