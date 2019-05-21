@@ -7081,6 +7081,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
         double valaux;
         int newidx;
         	  
+        int resize_mfNEW;
+        
         int extraSizeDueToLags = 0;
 	for (int i=0; i<(*pulsesInRecord)->ndetpulses ;i++)
 	{      
@@ -7198,11 +7200,28 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 		}
 		else if (((*reconstruct_init)->LagsOrNot == 1) && (strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0))	
 		{
-                        int resize_mfNEW;
-                        if (tstartSamplesRecordStartDOUBLE+resize_mf+numlags -1 <= recordAux->size)
+                        //cout<<"resize_mf: "<<resize_mf<<endl;
+                        //int resize_mfNEW;
+                        /*if (tstartSamplesRecordStartDOUBLE+resize_mf+numlags -1 <= recordAux->size)
                             resize_mfNEW = resize_mf + numlags -1;
                         else
                             resize_mfNEW = resize_mf + numlags/2;
+                        */
+                        if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
+                        {
+                            if (tstartSamplesRecordStartDOUBLE+8192+numlags -1 <= recordAux->size)
+                                resize_mfNEW = 8192 + numlags -1;
+                            else
+                                resize_mfNEW = 8192 + numlags/2;
+                        }
+                        else
+                        {
+                            if (tstartSamplesRecordStartDOUBLE+resize_mf+numlags -1 <= recordAux->size)
+                                resize_mfNEW = resize_mf + numlags -1;
+                            else
+                                resize_mfNEW = resize_mf + numlags/2;
+                        }
+                        
                         //cout<<"resize_mfNEW: "<<resize_mfNEW<<endl;
 			if ((pulseToCalculateEnergy = gsl_vector_alloc(resize_mfNEW)) == 0)
 			{
@@ -7224,13 +7243,38 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         
                         temp = gsl_vector_subvector(recordAux,tstartSamplesRecordStartDOUBLE,resize_mfNEW);
                         
-			if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
+                        if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
+                        {
+                            gsl_vector *vectoraux = gsl_vector_alloc(resize_mfNEW);
+                            gsl_vector_memcpy(vectoraux,&temp.vector);
+                            
+                            gsl_vector_set_all(pulseToCalculateEnergy,gsl_vector_get(recordAux,tstartSamplesRecordStartDOUBLE));
+                            
+                            for (int k=0;k<(*reconstruct_init)->pulse_length+numlags-1;k++)
+                            {
+                                gsl_vector_set(pulseToCalculateEnergy,k,gsl_vector_get(vectoraux,k));
+                            }
+                            
+                            gsl_vector_free(vectoraux); vectoraux = 0;
+                        }
+                        else
+                        {
+                            if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
+                            {
+                                    sprintf(valERROR,"%d",__LINE__-2);
+                                    string str(valERROR);	
+                                    message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+                                    EP_EXIT_ERROR(message,EPFAIL);
+                            }
+                        }
+                        
+			/*if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
 			{
 				sprintf(valERROR,"%d",__LINE__-2);
 				string str(valERROR);	
 				message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
 				EP_EXIT_ERROR(message,EPFAIL);
-			}
+			}*/
                         
 			extraSizeDueToLags = numlags-1;
 		}
@@ -7297,6 +7341,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 				}
 				else if ((*reconstruct_init)->OFLib == 1)
 				{
+                                        resize_mf= resize_mfNEW-numlags+1;
+                                        //cout<<"resize_mf0: "<<resize_mf<<endl;
                                         // Choose the base-2 system value closest (lower than or equal) to the pulse length
 					if ((strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0) 
 					    && ((((*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration != -999) && (resize_mf != (*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration))
@@ -7311,6 +7357,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                                                 gsl_vector_memcpy(pulseToCalculateEnergy,pulse_aux);
                                                 gsl_vector_free(pulse_aux);
 					}
+					//cout<<"resize_mf1: "<<resize_mf<<endl;
                                   
 					// It is not necessary to check the allocation because '(*reconstruct_init)->pulse_length'='PulseLength'(input parameter) has been checked previously
 					if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		filtergsl= gsl_vector_alloc(resize_mf);
@@ -10016,6 +10063,10 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
         //cout<<"filter->size: "<<filter->size<<endl;
         //cout<<"filterFFT->size: "<<filterFFT->size<<endl;
         //cout<<"vector->size: "<<vector->size<<endl;
+        /*for (int i=0;i<vector->size;i++)
+        {
+            cout<<i<<" "<<gsl_vector_get(vector,i)<<endl;
+        }*/
         
         string message = "";
 	char valERROR[256];
@@ -10151,10 +10202,12 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     }
                                                     xmax = -b/(2*a);
                                                     calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
+                                                    //cout<<"xmax0: "<<xmax<<endl;
                                                     
                                                     if ((xmax >= -1) && (xmax <= 1)) maxParabolaFound = true;
                                                     
-                                                    if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3) && (filter->size >= 512))
+                                                    if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
+                                                    //if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3) && (filter->size >= 512))
                                                     // With the CBE pixel (LPA75um) it has no sense to look for a parabola if filter_size<512
                                                     {
                                                         dolags = 1;
@@ -10222,9 +10275,11 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                 maxParabolaFound = true;
                                                             }
                                                             else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
-                                                            /*cout<<"xmax: "<<xmax<<endl;
+                                                            /*cout<<"maxParabolaFound: "<<maxParabolaFound<<endl;
+                                                            cout<<"xmax: "<<xmax<<endl;
                                                             cout<<"exitLags: "<<exitLags<<endl;
                                                             cout<<"indexLags: "<<indexLags<<" limite="<<(reconstruct_init->nLags)/2-1<<endl;*/
+                                                            
                                                         } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
                                                     }
                                                 }
@@ -10253,7 +10308,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     
                                                     if ((xmax >= -2) && (xmax <= 2)) maxParabolaFound = true;
                                                     
-                                                    if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5) && (filter->size >= 512))
+                                                    if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5))
+                                                    //if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5) && (filter->size >= 512))
                                                     // With the CBE pixel (LPA75um) it has no sense to look for a parabola if filter_size<512
                                                     {
                                                         dolags = 1;
@@ -10331,7 +10387,30 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     }
                                                 }
                                                     
+                                                if (maxParabolaFound == true)
+                                                {
+                                                    *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
+                                                    *tstartNewDev = xmax;
+                                                }
+                                                else 
+                                                {
+                                                    if (dolags == 0)    // (Because filter_size<512)
+                                                    {
+                                                        *calculatedEnergy = calculatedEnergy_Nolags;
+                                                        *tstartNewDev = 0;
+                                                    }
+                                                    else    // (Because filter_size>512)
+                                                    {
+                                                        *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
+                                                        *tstartNewDev = xmax;
+                                                        message = "Parabola maximum outside the number of lags";
+                                                        EP_PRINT_ERROR(message,-999);	// Only a warning
+                                                    }
+                                                }
                                                 
+                                                /*cout<<"*calculatedEnergy: "<<*calculatedEnergy<<endl;
+                                                cout<<"*tstartNewDev= "<<*tstartNewDev<<endl;
+                                                cout<<"lagsShift= "<<*lagsShift<<endl;*/
 					}
 				}
 			}
@@ -10419,7 +10498,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                     
                                                     if ((xmax >= -1) && (xmax <= 1)) maxParabolaFound = true;
                                                     
-                                                    if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3) && (filterFFT->size >= 512))
+                                                    if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
+                                                    //if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3) && (filterFFT->size >= 512))
                                                     // With the CBE pixel (LPA75um) it has no sense to look for a parabola if filter_size<512
                                                     {
                                                         dolags = 1;
@@ -10491,8 +10571,9 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                     maxParabolaFound = true;
                                                             }
                                                             else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector);
-                                                            //cout<<"xmax: "<<xmax<<endl;
-                                                            /*cout<<"exitLags: "<<exitLags<<endl;
+                                                            /*cout<<"xmax: "<<xmax<<endl;
+                                                            cout<<"maxParabolaFound: "<<maxParabolaFound<<endl;
+                                                            cout<<"exitLags: "<<exitLags<<endl;
                                                             cout<<"indexLags: "<<indexLags<<" limite="<<(reconstruct_init->nLags)/2-1<<endl;*/
                                                             
                                                         } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
@@ -10532,7 +10613,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     
                                                     if ((xmax >= -2) && (xmax <= 2)) maxParabolaFound = true;
                                                                                                        
-                                                    if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5) && (filterFFT->size >= 512))
+                                                    if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5))
+                                                    //if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5) && (filterFFT->size >= 512))
                                                     // With the CBE pixel (LPA75um) it has no sense to look for a parabola if filter_size<512
                                                     {
                                                         dolags = 1;
