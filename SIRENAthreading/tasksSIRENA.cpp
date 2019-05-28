@@ -2371,7 +2371,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 		// 'energy' will be known after running 'runEnergy'
 		foundPulses->pulses_detected[i].quality = gsl_vector_get(qualitygsl,i);
                 foundPulses->pulses_detected[i].numLagsUsed = gsl_vector_get(lagsgsl,i);
-		cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<" , Tstart="<<foundPulses->pulses_detected[i].Tstart<<endl;
+		//cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<" , Tstart="<<foundPulses->pulses_detected[i].Tstart<<endl;
                 //log_debug("Pulse %d", i," tstart=%f",gsl_vector_get(tstartgsl,i), " maxDER=%f",foundPulses->pulses_detected[i].maxDER, " samp1DER=%f",gsl_vector_get(samp1DERgsl,i), " //pulse_duration=%d",foundPulses->pulses_detected[i].pulse_duration," quality=%d",foundPulses->pulses_detected[i].quality," lags=%f",gsl_vector_get(lagsgsl,i));
                 //log_debug("Pulse %i tstart=%f maxDER=%f samp1DER=%f pulse_duration=%i quality=%f lags=%f",i,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].maxDER,gsl_vector_get(samp1DERgsl,i),foundPulses->pulses_detected[i].pulse_duration,foundPulses->pulses_detected[i].quality,gsl_vector_get(lagsgsl,i));
                 
@@ -7081,7 +7081,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
         double valaux;
         int newidx;
         	  
-        int resize_mfNEW;
+        int resize_mfNEW = -999;
         
         int extraSizeDueToLags = 0;
 	for (int i=0; i<(*pulsesInRecord)->ndetpulses ;i++)
@@ -7201,19 +7201,25 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 		else if (((*reconstruct_init)->LagsOrNot == 1) && (strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0))	
 		{
                         //cout<<"resize_mf: "<<resize_mf<<endl;
+                        //cout<<"resize_mfNEW: "<<resize_mfNEW<<endl;
                         //int resize_mfNEW;
                         /*if (tstartSamplesRecordStartDOUBLE+resize_mf+numlags -1 <= recordAux->size)
                             resize_mfNEW = resize_mf + numlags -1;
                         else
-                            resize_mfNEW = resize_mf + numlags/2;
-                        */
-                        if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
+                            resize_mfNEW = resize_mf + numlags/2;*/
+                        
+                        //if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
+                        if ((strcmp((*reconstruct_init)->OFNoise,"NSD") == 0) && ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength))
                         {
                             // (*reconstruct_init)->library_collection->pulse_templates[0].template_duration is the max length of the filter (8182 for samprate and 4096 for samprate2)
-                            if (tstartSamplesRecordStartDOUBLE+(*reconstruct_init)->library_collection->pulse_templates[0].template_duration+numlags -1 <= recordAux->size)
+                            /*if (tstartSamplesRecordStartDOUBLE+(*reconstruct_init)->library_collection->pulse_templates[0].template_duration+numlags -1 <= recordAux->size)
                                 resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags -1;
                             else
-                                resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags/2;
+                                resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags/2;*/
+                            if (tstartSamplesRecordStartDOUBLE+(*reconstruct_init)->OFLength+numlags -1 <= recordAux->size)
+                                resize_mfNEW = (*reconstruct_init)->OFLength + numlags -1;
+                            else
+                                resize_mfNEW = (*reconstruct_init)->OFLength + numlags/2;
                         }
                         else
                         {
@@ -7244,7 +7250,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         
                         temp = gsl_vector_subvector(recordAux,tstartSamplesRecordStartDOUBLE,resize_mfNEW);
                         
-                        if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
+                        //if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
+                        if ((strcmp((*reconstruct_init)->OFNoise,"NSD") == 0) && ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength))
                         {
                             gsl_vector *vectoraux = gsl_vector_alloc(resize_mfNEW);
                             gsl_vector_memcpy(vectoraux,&temp.vector);
@@ -8000,13 +8007,17 @@ void th_runEnergy(TesRecord* record,
                             resize_mfNEW = resize_mf + numlags -1;
                         else
                             resize_mfNEW = resize_mf + numlags/2;*/
-                        if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
+                        if ((strcmp((*reconstruct_init)->OFNoise,"NSD") == 0) && ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength))
                         {
                             // (*reconstruct_init)->library_collection->pulse_templates[0].template_duration is the max length of the filter (8182 for samprate and 4096 for samprate2)
-                            if (tstartSamplesRecordStartDOUBLE+(*reconstruct_init)->library_collection->pulse_templates[0].template_duration+numlags -1 <= recordAux->size)
+                            /*if (tstartSamplesRecordStartDOUBLE+(*reconstruct_init)->library_collection->pulse_templates[0].template_duration+numlags -1 <= recordAux->size)
                                 resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags -1;
                             else
-                                resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags/2;
+                                resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags/2;*/
+                            if (tstartSamplesRecordStartDOUBLE+(*reconstruct_init)->OFLength+numlags -1 <= recordAux->size)
+                                resize_mfNEW = (*reconstruct_init)->OFLength + numlags -1;
+                            else
+                                resize_mfNEW = (*reconstruct_init)->OFLength + numlags/2;
                         }
                         else
                         {
@@ -8036,13 +8047,38 @@ void th_runEnergy(TesRecord* record,
                         
                         temp = gsl_vector_subvector(recordAux,tstartSamplesRecordStartDOUBLE,resize_mfNEW);
                         
-			if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
+                        if ((strcmp((*reconstruct_init)->OFNoise,"NSD") == 0) && ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength))
+                        {
+                            gsl_vector *vectoraux = gsl_vector_alloc(resize_mfNEW);
+                            gsl_vector_memcpy(vectoraux,&temp.vector);
+                            
+                            gsl_vector_set_all(pulseToCalculateEnergy,gsl_vector_get(recordAux,tstartSamplesRecordStartDOUBLE));
+                            
+                            for (int k=0;k<(*reconstruct_init)->pulse_length+numlags-1;k++)
+                            {
+                                gsl_vector_set(pulseToCalculateEnergy,k,gsl_vector_get(vectoraux,k));
+                            }
+                            
+                            gsl_vector_free(vectoraux); vectoraux = 0;
+                        }
+                        else
+                        {
+                            if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
+                            {
+                                    sprintf(valERROR,"%d",__LINE__-2);
+                                    string str(valERROR);	
+                                    message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+                                    EP_EXIT_ERROR(message,EPFAIL);
+                            }
+                        }
+                        
+			/*if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
 			{
 				sprintf(valERROR,"%d",__LINE__-2);
 				string str(valERROR);	
 				message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
 				EP_EXIT_ERROR(message,EPFAIL);
-			}
+			}*/
                         
 			extraSizeDueToLags = numlags-1;
 		}
