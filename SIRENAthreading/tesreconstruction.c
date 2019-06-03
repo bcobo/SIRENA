@@ -305,7 +305,7 @@ int tesreconstruction_main() {
     SixtStdKeywords* keywords = newSixtStdKeywords(&status);
     CHECK_STATUS_BREAK(status);
     
-    //Open outfile
+    //Open outfile 
     //------------
     TesEventFile * outfile = opennewTesEventFile(par.TesEventFile,
                                                  keywords,
@@ -894,7 +894,10 @@ int getpar(struct Parameters* const par)
 	
 	status=ape_trad_query_int("OFLength", &par->OFLength);
 
-	status=ape_trad_query_int("tstartPulse1", &par->tstartPulse1);
+	//status=ape_trad_query_int("tstartPulse1", &par->tstartPulse1);
+        status=ape_trad_query_string("tstartPulse1", &sbuffer);
+	strcpy(par->tstartPulse1, sbuffer);
+	free(sbuffer);
 	
 	status=ape_trad_query_int("tstartPulse2", &par->tstartPulse2);
 	
@@ -914,6 +917,20 @@ int getpar(struct Parameters* const par)
 	}
 	
 	MyAssert((par->opmode == 0) || (par->opmode == 1), "opmode must be 0 or 1");
+        int isNumber = 1;
+        for (int i = 0; i < strlen(par->tstartPulse1); i++) 
+        {
+            if (isdigit(par->tstartPulse1[i]) == 0)    
+            {
+                isNumber = 0;
+                break;
+            }
+        }
+        if ((isNumber == 0) && (par->opmode == 0))
+        {
+            SIXT_ERROR("tstartPulse1 can not be a file if CALIBRATION mode");
+            return(EXIT_FAILURE);
+        }
 	  
 	MyAssert((par->intermediate == 0) || (par->intermediate == 1), "intermediate must be 0 or 1");
 	

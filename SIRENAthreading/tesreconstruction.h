@@ -176,7 +176,10 @@ struct Parameters {
 	char filterFile[256];
 	
 	// Tstart of the pulses (to be used instead of calculating them if tstartPulse1 =! 0)
-	int tstartPulse1;
+	//int tstartPulse1;
+        char tstartPulse1[MAXFILENAME]; // Integer number: Sample where the first pulse starts 
+                                        // or
+                                        // nameFile: File where is the tstart (in seconds) of every pulse
 	int tstartPulse2;
 	int tstartPulse3;
 	

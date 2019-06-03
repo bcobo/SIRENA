@@ -49,7 +49,11 @@ OFLength,i,h,512,,,"Optimal Filter length (taken into account if OFStrategy=FIXE
 intermediate,i,h,0,,,"Write or not intermediate files (1/0)"
 detectFile,s,h,"detections.fits",,,"Intermediate detections file (if intermediate=1)"
 filterFile,s,h,"filters.fits",,,"Intermediate filters file (if intermediate=1)" 
-tstartPulse1,i,h,0,,,"Tstart (samples) of the first pulse (different from 0 if the tstartPulsei input parameters are going to be used)"
+#tstartPulse1,i,h,0,,,"Tstart (samples) of the first pulse (different from 0 if the tstartPulsei input parameters are going to be used)"
+#
+# tstartPulse1 can not start with '@' because the function HDpar_stamp which writes the parameter in the HISTORY output FITS file does not work
+#
+tstartPulse1,s,h,"0",,,"Integer number: Sample where the first pulse starts or nameFile: File where is the tstart (in seconds) of every pulse"
 tstartPulse2,i,h,0,,,"Tstart (samples) of the second pulse"
 tstartPulse3,i,h,0,,,"Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS)"
 energyPCA1,r,h,500,,,"First energy (only for PCA)"

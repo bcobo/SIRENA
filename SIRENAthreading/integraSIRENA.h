@@ -529,9 +529,14 @@ typedef struct ReconstructInitSIRENA
   double SaturationValue;
   
   /** Tstart of the pulses (to be used instead of calculating them if tstartPulse1 =! 0) **/
-  int tstartPulse1;
+  //int tstartPulse1;
+  char tstartPulse1[256];  // Integer number: Sample where the first pulse starts 
+                           // or
+                           // _nameFile: File where is the tstart (in seconds) of every pulse
   int tstartPulse2;
   int tstartPulse3;
+  
+  gsl_vector *tstartPulse1_i; // If tstartPulse1=_nameFile, all the tstart in the file are stored in this matrix 
   
   /** Energies for PCA **/
   double energyPCA1;
@@ -607,7 +612,8 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     char* filterFile, char clobber, 
                                     int maxPulsesPerRecord, 
                                     double SaturationValue,
-                                    int tstartPulse1, int tstartPulse2, 
+                                    //int tstartPulse1, int tstartPulse2, 
+                                    char* const tstartPulse1, int tstartPulse2, 
                                     int tstartPulse3, double energyPCA1, 
                                     double energyPCA2, char * const XMLFile, 
                                     int* const status);

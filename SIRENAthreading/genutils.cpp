@@ -54,6 +54,7 @@ MAP OF SECTIONS IN THIS FILE::
  - 12. writeLog
  - 13. fileExists
  - 14. parabola3Pts
+ - 15. isNumber
 
 *******************************************************************************/
 
@@ -490,3 +491,20 @@ int parabola3Pts (gsl_vector *x, gsl_vector *y, double *a, double *b, double *c)
 	return EPOK;
 }
 /*xxxx end of SECTION 14 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+
+/***** SECTION 15 ************************************************************
+* isNumber: This function returns TRUE if the input string is a number or FALSE if not
+* 
+* Parameters:
+* - s: Input string
+****************************************************************************/
+bool isNumber(string s) 
+{ 
+    for (int i = 0; i < s.length(); i++) 
+        if (isdigit(s[i]) == false) 
+            return false; 
+  
+    return true; 
+} 
+/*xxxx end of SECTION 15 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
