@@ -7071,8 +7071,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
         double energy_lowres;
         //long resize_mf_lowres = 4; // In order to get the low resolution energy estimator by filtering with a 4-samples-long filter
         //gsl_vector *pulse_lowres = gsl_vector_alloc(4);
-        long resize_mf_lowres = 8192; // In order to get the low resolution energy estimator by filtering with a 4-samples-long filter
-        gsl_vector *pulse_lowres = gsl_vector_alloc(8192);
+        long resize_mf_lowres = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration; // In order to get the low resolution energy estimator by filtering with a 4-samples-long filter
+        gsl_vector *pulse_lowres = gsl_vector_alloc((*reconstruct_init)->library_collection->pulse_templates[0].template_duration);
         gsl_vector *filtergsl_lowres = NULL;
         if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres);
         else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)	filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres*2);
@@ -7947,8 +7947,8 @@ void th_runEnergy(TesRecord* record,
         double energy_lowres;
         //long resize_mf_lowres = 4; // In order to get the low resolution energy estimator by filtering with a 4-samples-long filter
         //gsl_vector *pulse_lowres = gsl_vector_alloc(4);
-        long resize_mf_lowres = 8192; // In order to get the low resolution energy estimator by filtering with a 4-samples-long filter
-        gsl_vector *pulse_lowres = gsl_vector_alloc(8192);
+        long resize_mf_lowres = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration; // In order to get the low resolution energy estimator by filtering with a 4-samples-long filter
+        gsl_vector *pulse_lowres = gsl_vector_alloc((*reconstruct_init)->library_collection->pulse_templates[0].template_duration);
         gsl_vector *filtergsl_lowres = NULL;
         if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres);
         else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)	filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres*2);
