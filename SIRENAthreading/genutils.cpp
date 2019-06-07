@@ -199,8 +199,14 @@ int FFT(gsl_vector *invector,gsl_vector_complex *outvector,double STD)
  	for (int i=0; i< invector->size; i++) {
  		gsl_vector_complex_set(outvector,i,gsl_complex_rect(REAL(data,i),IMAG(data,i)));
  	}
- 	gsl_vector_complex_scaleIFCA(outvector,gsl_complex_rect(1.0/sqrt(invector->size),0.0)); //Factor 1/sqrt(N), in the FFT expression
- 	gsl_vector_complex_scaleIFCA(outvector,gsl_complex_rect(sqrt(2*STD),0.0));
+ 	// To return a correct FFT amplitude, it is necessary to normalize FFTs by the number of sample points to calculate the FFT
+ 	// Normalization factor = 1/n
+	// With this normalization, if the input signal is a sin signal with amplitude A, A·sin(2·pi·fo·t) =>
+	// The amplitude of the 2 tones (fo,-fo) in frequency domain is A/2 
+ 	gsl_vector_complex_scaleIFCA(outvector,gsl_complex_rect(1.0/(invector->size),0.0));
+        // PP
+        /*double fs = (invector->size)/STD;
+        gsl_vector_complex_scaleIFCA(outvector,gsl_complex_rect(sqrt(2.0/((invector->size)*fs)),0.0)); */
 
  	gsl_fft_complex_wavetable_free(wavetable); wavetable = 0;
  	gsl_fft_complex_workspace_free(work); work = 0;
@@ -236,8 +242,11 @@ int FFTinverse(gsl_vector_complex *invector,gsl_vector *outvector,double STD)
 	{
 		gsl_vector_set(outvector,i,cd[i].real());
 	}
-	gsl_vector_scale(outvector,sqrt(invector->size)); //Factor 1/sqrt(N), in the FFT expression
-	gsl_vector_scale(outvector,1/sqrt(2*STD));
+	// To be consistent with the normalization factor of the FFT (1/n) => n
+	gsl_vector_scale(outvector,invector->size); 
+	//PP
+	/*double fs = (invector->size)/STD;
+        gsl_vector_scale(outvector,sqrt(((invector->size)*fs)/2)); */
 
 	gsl_fft_complex_wavetable_free(wavetable); wavetable = 0;
 	gsl_fft_complex_workspace_free(work); work = 0;

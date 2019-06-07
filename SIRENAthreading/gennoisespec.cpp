@@ -143,6 +143,38 @@ int main (int argc, char **argv)
 		EP_EXIT_ERROR(message,status);
 	}
 	
+	// To calculate ADUCNV
+	strcpy(extname,"RECORDS");
+        fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
+        if (status != 0)
+        {
+                status = 0;
+                strcpy(extname,"ADCPARAM");
+                if (fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status))
+                {
+                    message = "Cannot move to HDU " + string(extname) + " in " + string(infileName);
+                    EP_EXIT_ERROR(message,status);
+                }
+                strcpy(keyname,"IMIN");
+                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
+                {
+                    message = "Cannot read keyword " + string(keyname) + " in input file";
+                    EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
+                strcpy(keyname,"IMAX");
+                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
+                {
+                    message = "Cannot read keyword " + string(keyname) + " in input file";
+                    EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
+        }
+        strcpy(keyname,"IMIN");
+        fits_read_key(infileObject,TDOUBLE,keyname, &Imin,NULL,&status);
+        //cout<<"IMIN: "<<Imin<<endl;
+        strcpy(keyname,"IMAX");
+        fits_read_key(infileObject,TDOUBLE,keyname, &Imax,NULL,&status);
+        //cout<<"IMAX: "<<Imax<<endl;
+	
 	if (strcmp(I2R,"I") != 0)  // Transform to resistance space
         {
                 strcpy(extname,"RECORDS");
@@ -150,7 +182,7 @@ int main (int argc, char **argv)
                 if (status != 0)
                 {
                         status = 0;
-                        //cout<<"en TESRECORDS structure"<<endl;
+                        /*//cout<<"en TESRECORDS structure"<<endl;
                         strcpy(extname,"ADCPARAM");
                         if (fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status))
                         {
@@ -168,7 +200,7 @@ int main (int argc, char **argv)
                         {
                                 message = "Cannot read keyword " + string(keyname) + " in input file";
                                 EP_PRINT_ERROR(message,status); return(EPFAIL);
-                        }
+                        }*/
                         
                         IOData obj;
                         obj.inObject = infileObject;
@@ -254,11 +286,11 @@ int main (int argc, char **argv)
                         strcpy(keyname,"I0_START");
                         fits_read_key(infileObject,TDOUBLE,keyname, &Ibias,NULL,&status);
                         //cout<<"I0_START: "<<Ibias<<endl;
-                        strcpy(keyname,"IMIN");
+                        /*strcpy(keyname,"IMIN");
                         fits_read_key(infileObject,TDOUBLE,keyname, &Imin,NULL,&status);
                         //cout<<"IMIN: "<<Imin<<endl;
                         strcpy(keyname,"IMAX");
-                        fits_read_key(infileObject,TDOUBLE,keyname, &Imax,NULL,&status);
+                        fits_read_key(infileObject,TDOUBLE,keyname, &Imax,NULL,&status);*/
                         //cout<<"IMAX: "<<Imax<<endl;
                         strcpy(keyname,"RPARA");
                         fits_read_key(infileObject,TDOUBLE,keyname, &RPARA,NULL,&status);
@@ -381,7 +413,7 @@ int main (int argc, char **argv)
                         writeLog(fileRef, "Error", verbosity, message);
                         EP_EXIT_ERROR(message,EPFAIL);
                 }
-                samprate = 1/samprate;
+                samprate = 1.0/samprate;
         }
             
 	if (eventsz <= 0)
@@ -392,6 +424,7 @@ int main (int argc, char **argv)
 	}
 	
 	ivcal=1.0;
+        aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534  // If this calculus changes => Change it also in TASKSSIRENA
 	asquid = 1.0;
 	/*strcpy(keyname,"MONOEN");
 	if (fits_read_key(infileObject,TDOUBLE,keyname, &energy,comment,&status))
@@ -533,6 +566,10 @@ int main (int argc, char **argv)
 		}
 	}
 	gsl_vector_sqrtIFCA(EventSamplesFFTMean,EventSamplesFFTMean);
+        
+        // Extra normalization (further than the FFT normalization factor,1/n) in order 
+        // to get the apropriate noise level provided by Peille (54 pA/rHz)
+        gsl_vector_scale(EventSamplesFFTMean,sqrt(2*intervalMinBins/samprate));
         	
         if (weightMS == 1)
         {
@@ -1167,7 +1204,7 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 	}
 	
 	// Pulse-free segments are divided into pulse-free intervals with intervalMinBins size
-	SelectedTimeDuration = eventsz/((double)samprate);
+        SelectedTimeDuration = intervalMinBins/((double)samprate);
 	
 	// Processing each record
 	for (int i=0; i< nrows; i++)
@@ -1190,14 +1227,16 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 		gsl_vector_memcpy(timegsl,timegsl_block);
 		gsl_matrix_get_row(ioutgsl,ioutgsl_block,i);
 		gsl_vector_scale(ioutgsl,ivcal);		//IVCAL to change arbitrary units of voltage to non-arbitrary units of current (Amps)
+		
+		// Just in case the last record has been filled out with 0's => Last record discarded
+		if ((gsl_vector_get(ioutgsl,ioutgsl->size-1) == 0) && (gsl_vector_get(ioutgsl,ioutgsl->size-2) == 0))		break;
+		
+		gsl_vector_scale(ioutgsl,aducnv);
 
 		// Assigning positive polarity (by using ASQUID and PLSPOLAR)
 		gsl_vector_memcpy(ioutgsl_aux,ioutgsl);
 		if (((asquid>0) && (plspolar<0)) || ((asquid<0) && (plspolar>0)))	gsl_vector_scale(ioutgsl_aux,-1.0);
 		gsl_vector_memcpy(ioutgslNOTFIL,ioutgsl_aux);
-		
-		// Just in case the last record has been filled out with 0's => Last record discarded
-		if ((gsl_vector_get(ioutgsl,ioutgsl->size-1) == 0) && (gsl_vector_get(ioutgsl,ioutgsl->size-2) == 0))		break;
 
 		// To avoid taking into account the pulse tails at the beginning of a record as part of a pulse-free interval
 		tail_duration = 0;
@@ -1713,6 +1752,8 @@ int createTPSreprFile ()
 *
 * - Allocate GSL vectors
 * - Write the data in the output FITS file (print only half of FFT to prevent aliasing)
+* - NOISE HDU only contains positive frequencies (=>Multiply by 2 the amplitude)
+* - NOISEALL HDU contains negative and positive frequencies => It is the HDU read to build the optimal filters
 *****************************************************************************/
 int writeTPSreprExten ()
 {	string message = "";
@@ -1733,14 +1774,14 @@ int writeTPSreprExten ()
 	for (int i=0; i< (intervalMinBins/2); i++)
 	{
 		gsl_vector_set(freqgsl,i,i/SelectedTimeDuration);
-		gsl_vector_set(csdgsl,i,gsl_vector_get(EventSamplesFFTMean,i));
+		gsl_vector_set(csdgsl,i,2*gsl_vector_get(EventSamplesFFTMean,i)); // *2 if only positive frequencies
 		gsl_vector_set(sigmacsdgslnew,i,gsl_vector_get(sigmacsdgsl,i));
 		gsl_vector_set(freqALLgsl,i,i/SelectedTimeDuration);
 		gsl_vector_set(csdALLgsl,i,gsl_vector_get(EventSamplesFFTMean,i));
 	}
 	gsl_vector_set(freqALLgsl,intervalMinBins/2,(intervalMinBins/2)/SelectedTimeDuration);
 	gsl_vector_set(csdALLgsl,intervalMinBins/2,gsl_vector_get(EventSamplesFFTMean,intervalMinBins/2));
-	for (int i=1; i<(intervalMinBins/2); i++)
+	for (double i=1; i<(intervalMinBins/2); i++)
 	{
 		gsl_vector_set(freqALLgsl,i+intervalMinBins/2,-(i+intervalMinBins/2-i*2)/SelectedTimeDuration);
 		gsl_vector_set(csdALLgsl,i+intervalMinBins/2,gsl_vector_get(EventSamplesFFTMean,i+intervalMinBins/2));
