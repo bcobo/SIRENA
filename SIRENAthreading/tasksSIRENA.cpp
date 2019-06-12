@@ -225,7 +225,7 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 		|| (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
 	{
                 //if (convertI2R(reconstruct_init, &record, &invector))
-                if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->RPARA,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER, 1/record->delta_t, &invector))
+                if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, 1/record->delta_t, &invector))
 		{
 			message = "Cannot run routine convertI2R";
 			EP_EXIT_ERROR(message,EPFAIL);
@@ -837,7 +837,7 @@ void th_runDetect(TesRecord* record,
             message = "Cannot run routine convertI2R";
             EP_EXIT_ERROR(message,EPFAIL);
           }*/
-        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->RPARA,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER, 1/record->delta_t, &invector))
+        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, 1/record->delta_t, &invector))
 	{
                 lk.unlock();
 		message = "Cannot run routine convertI2R";
@@ -850,7 +850,7 @@ void th_runDetect(TesRecord* record,
         }  
         lk.unlock();
       }else{
-        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->RPARA,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER, 1/record->delta_t, &invector))
+        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, 1/record->delta_t, &invector))
 	{
 		message = "Cannot run routine convertI2R";
 		EP_EXIT_ERROR(message,EPFAIL);
@@ -6733,6 +6733,10 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
                
                 RL = RPARA/(pow(TTR,2));                        // RL = RPARA/(TTR)^2
                 V0 = Ibias*(R0+RL);                             // V0 = I0(R0+RL)
+                /*cout<<"Imax: "<<Imax<<endl;
+                cout<<"Imin: "<<Imin<<endl;
+                cout<<"aducnv: "<<aducnv<<endl;
+                cout<<"I2RFITTED_start: "<<gsl_vector_get(*invector,0)<<" "<<gsl_vector_get(*invector,1)<<" "<<gsl_vector_get(*invector,2)<<endl;*/
 
                 // I
                 gsl_vector_memcpy(invector_modified,*invector);
@@ -6751,6 +6755,7 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
                 gsl_vector_free(I); I = 0;
                 gsl_vector_free(invector_modified); invector_modified = 0;
                 gsl_vector_free(IfitIgsl); IfitIgsl = 0;
+                //cout<<"I2RFITTED_end: "<<gsl_vector_get(*invector,0)<<" "<<gsl_vector_get(*invector,1)<<" "<<gsl_vector_get(*invector,2)<<endl;
         }
 
 	/*for (int i=0;i<(*invector)->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used

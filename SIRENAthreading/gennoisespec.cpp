@@ -1304,7 +1304,7 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 		
 		if (strcmp(I2R,"I") != 0)
                 {
-                    if (convertI2R(I2R,R0,Ibias,Imin,Imax,RPARA,TTR,LFILTER,samprate,&ioutgsl))
+                    if (convertI2R(I2R,R0,Ibias,Imin,Imax,TTR,LFILTER,RPARA,samprate,&ioutgsl))
                     {
                             message = "Cannot run routine convertI2R";
                             EP_EXIT_ERROR(message,EPFAIL);
@@ -2265,7 +2265,7 @@ int findTstartNoise
 * 
 *  Vij = E[DiDj]-E[Di]E[Dj] 
 * 
-* Di^p: Value of the ith-sample of the pulse-free interval i
+* Di^p: Value of the pth-sample of the pulse-free interval i
 * N: Number of samples
 *
 * <DiDj> = E[DiDj] = (1/N)sum(p=1,N){(Di^p)(Dj^p)}
@@ -2314,6 +2314,7 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
 		elementValue = elementValue1-elementValue2*elementValue2;
 		
 		gsl_matrix_set(covariance,i,i,elementValue);
+                cout<<i<<" "<<i<<" "<<elementValue<<endl;
 
 		elementValue = 0.0;
 		elementValue1 = 0.0;
@@ -2350,6 +2351,7 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
 			elementValue3 = 0.0;
 		}
 	}
+	
 	/*cout<<"Final de los elementos FUERA de la diagonal de la matriz "<<covariance->size1<<"x"<<covariance->size1<<endl;
         t = clock() - t;
         cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;*/

@@ -597,15 +597,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                                 //cout<<"LFILTER: "<<LFILTER<<endl;
                                 reconstruct_init->i2rdata->LFILTER = LFILTER;
                                 
-                                /*reconstruct_init->i2rdata->R0 = 0.00711552;
-                                reconstruct_init->i2rdata->I0_START = 1.3555e-05;
-                                reconstruct_init->i2rdata->IMIN = 1.35523e-06;
-                                reconstruct_init->i2rdata->IMAX = 1.39e-05;
-                                reconstruct_init->i2rdata->RPARA = 0.001;
-                                reconstruct_init->i2rdata->TTR = 0.9144;
-                                reconstruct_init->i2rdata->LFILTER = 2e-06;
-                                
-                                cout<<"Imin: "<<reconstruct_init->i2rdata->IMIN<<endl;
+                                /*cout<<"Imin: "<<reconstruct_init->i2rdata->IMIN<<endl;
                                 cout<<"Imax: "<<reconstruct_init->i2rdata->IMAX<<endl;
                                 cout<<"R0: "<<reconstruct_init->i2rdata->R0<<endl;
                                 cout<<"Ibias: "<<reconstruct_init->i2rdata->I0_START<<endl;
