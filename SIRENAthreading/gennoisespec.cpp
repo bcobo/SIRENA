@@ -1043,6 +1043,11 @@ int initModule(int argc, char **argv)
 		else if(gennoisespecPars[i].name == "I2R")
 		{
 			strcpy(I2R,gennoisespecPars[i].ValStr.c_str());
+                        if ((strcmp(I2R,"I") != 0) && (strcmp(I2R,"I2R") != 0) && (strcmp(I2R,"I2RALL") != 0) && (strcmp(I2R,"I2RNOL") != 0) && (strcmp(I2R,"I2RFITTED") != 0))
+                        {
+                            message = "Parameter name " + gennoisespecPars[i].name + " out of range: [I, I2R, I2RALL, I2RNOL, I2RFITTED]";
+                            EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                        }
 		}
 		else if(gennoisespecPars[i].name == "nameLog")
 		{
@@ -1600,9 +1605,10 @@ int createTPSreprFile ()
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
 	}
 	 
-        HDpar_stamp(gnoiseObject, 0, &status);  // Write the wholw list of input parameters in HISTORY
+        //HDpar_stamp(gnoiseObject, 1, &status);  // Write the whole list of input parameters in HISTORY
+        //cout<<"status: "<<status<<endl;
 
-	/*strcpy(keyname,"HISTORY");
+	strcpy(keyname,"HISTORY");
 	const char * charhistory= "HISTORY Starting parameter list";
 	strcpy(keyvalstr,charhistory);
 	if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
@@ -1612,20 +1618,35 @@ int createTPSreprFile ()
 	}
 
 	string strhistory (string("Input File = ") + string(infileName));
-	strcpy(keyvalstr,strhistory.c_str());
-	if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
-	{
-		message = "Cannot write keyword " + string(keyname) + " in noise file " + string(gnoiseName);
-		EP_PRINT_ERROR(message,status); return(EPFAIL);
-	}
-
+        int num_pieces = strhistory.length()/65+1;    // 65 is a bit less than the length line allowed to write in HISTORY
+        string piece_i;
+        for (int i=0; i<num_pieces; i++)
+        {
+            if (i == 0) piece_i = strhistory.substr(0+64*i,64+64*i);
+            else        piece_i = strhistory.substr(0+64*i+1,64+64*i);
+                
+            strcpy(keyvalstr,piece_i.c_str());
+            if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+            {
+                    message = "Cannot write keyword " + string(keyname) + " in noise file " + string(gnoiseName);
+                    EP_PRINT_ERROR(message,status); return(EPFAIL);
+            }
+        }
+	
 	strhistory = string("Noise File = ") + string(gnoiseName);
-	strcpy(keyvalstr,strhistory.c_str());
-	if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
-	{
-		message = "Cannot write keyword " + string(keyname) + " in noise file " + string(gnoiseName);
-		EP_PRINT_ERROR(message,status); return(EPFAIL);
-	}
+        num_pieces = strhistory.length()/65+1;    // 65 is a bit less than the length line allowed to write in HISTORY
+	for (int i=0; i<num_pieces; i++)
+        {
+            if (i == 0) piece_i = strhistory.substr(0+64*i,64+64*i);
+            else        piece_i = strhistory.substr(0+64*i+1,64+64*i);
+                
+            strcpy(keyvalstr,piece_i.c_str());
+            if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+            {
+                    message = "Cannot write keyword " + string(keyname) + " in noise file " + string(gnoiseName);
+                    EP_PRINT_ERROR(message,status); return(EPFAIL);
+            }
+        }
 
 	char str_intervalMinSamples[125];		sprintf(str_intervalMinSamples,"%d",intervalMinSamples);
 	strhistory=string("intervalMinSamples = ") + string(str_intervalMinSamples);
@@ -1715,6 +1736,32 @@ int createTPSreprFile ()
 		message = "Cannot write keyword " + string(keyname) + " in noise file " + string(gnoiseName);
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
 	}
+	
+	char str_weightMS[125];      sprintf(str_weightMS,"%d",weightMS);
+	strhistory=string("weightMS = ") + string(str_weightMS);
+	strcpy(keyvalstr,strhistory.c_str());
+	if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+	{
+		message = "Cannot write keyword " + string(keyname) + " in noise file " + string(gnoiseName);
+		EP_PRINT_ERROR(message,status); return(EPFAIL);
+	}
+	
+	string str_i2r (string("I2R = ") + string(I2R));
+	strcpy(keyvalstr,str_i2r.c_str());
+	if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+	{
+		message = "Cannot write keyword " + string(keyname) + " in noise file " + string(gnoiseName);
+		EP_PRINT_ERROR(message,status); return(EPFAIL);
+	}
+	
+	char str_matrixSize[125];			sprintf(str_matrixSize,"%d",matrixSize);
+	strhistory=string("matrixSize = ") + string(str_matrixSize);
+	strcpy(keyvalstr,strhistory.c_str());
+	if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+	{
+		message = "Cannot write keyword " + string(keyname) + " in noise file " + string(gnoiseName);
+		EP_PRINT_ERROR(message,status); return(EPFAIL);
+	}
 
 	char str_verb[125];			sprintf(str_verb,"%d",verbosity);
 	strhistory=string("verbosity = ") + string(str_verb);
@@ -1740,7 +1787,7 @@ int createTPSreprFile ()
 	{
 		message = "Cannot write keyword " + string(keyname) + " in noise file " + string(gnoiseName);
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
-	}*/
+	}
 
 	return EPOK;
 }
@@ -2314,7 +2361,6 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
 		elementValue = elementValue1-elementValue2*elementValue2;
 		
 		gsl_matrix_set(covariance,i,i,elementValue);
-                cout<<i<<" "<<i<<" "<<elementValue<<endl;
 
 		elementValue = 0.0;
 		elementValue1 = 0.0;
@@ -2365,6 +2411,7 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
         t = clock() - t;
         cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;
         t = clock();*/
+        //gsl_matrix_memcpy(*weight,covarianceaux);
 	gsl_linalg_LU_decomp(covarianceaux, perm, &s);
 	if (gsl_linalg_LU_invert(covarianceaux, perm, *weight) != 0) 
 	{
