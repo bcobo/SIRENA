@@ -7205,7 +7205,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 		gsl_vector *vectoraux = gsl_vector_alloc(length_lowres);
                 gsl_vector_memcpy(vectoraux,&temp.vector);
                 
-                gsl_vector_set_all(pulse_lowres,gsl_vector_get(recordAux,tstartSamplesRecord));
+                //gsl_vector_set_all(pulse_lowres,gsl_vector_get(recordAux,tstartSamplesRecord));
+                gsl_vector_set_all(pulse_lowres,0.0);
                 
                 for (int k=0;k<length_lowres;k++)
                 {
@@ -7319,7 +7320,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                             gsl_vector *vectoraux = gsl_vector_alloc(resize_mfNEW);
                             gsl_vector_memcpy(vectoraux,&temp.vector);
                             
-                            gsl_vector_set_all(pulseToCalculateEnergy,gsl_vector_get(recordAux,tstartSamplesRecordStartDOUBLE));
+                            //gsl_vector_set_all(pulseToCalculateEnergy,gsl_vector_get(recordAux,tstartSamplesRecordStartDOUBLE));
+                            gsl_vector_set_all(pulseToCalculateEnergy,0.0);
                             
                             for (int k=0;k<(*reconstruct_init)->pulse_length+numlags-1;k++)
                             {
@@ -8077,7 +8079,8 @@ void th_runEnergy(TesRecord* record,
                 gsl_vector *vectoraux = gsl_vector_alloc(length_lowres);
                 gsl_vector_memcpy(vectoraux,&temp.vector);
                 
-                gsl_vector_set_all(pulse_lowres,gsl_vector_get(recordAux,tstartSamplesRecord));
+                //gsl_vector_set_all(pulse_lowres,gsl_vector_get(recordAux,tstartSamplesRecord));
+                gsl_vector_set_all(pulse_lowres,0.0);
                 
                 for (int k=0;k<length_lowres;k++)
                 {
@@ -8183,7 +8186,8 @@ void th_runEnergy(TesRecord* record,
                             gsl_vector *vectoraux = gsl_vector_alloc(resize_mfNEW);
                             gsl_vector_memcpy(vectoraux,&temp.vector);
                             
-                            gsl_vector_set_all(pulseToCalculateEnergy,gsl_vector_get(recordAux,tstartSamplesRecordStartDOUBLE));
+                            //gsl_vector_set_all(pulseToCalculateEnergy,gsl_vector_get(recordAux,tstartSamplesRecordStartDOUBLE));
+                            gsl_vector_set_all(pulseToCalculateEnergy,0.0);
                             
                             for (int k=0;k<(*reconstruct_init)->pulse_length+numlags-1;k++)
                             {
