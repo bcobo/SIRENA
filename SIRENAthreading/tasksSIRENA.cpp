@@ -7274,24 +7274,47 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         else
                             resize_mfNEW = resize_mf + numlags/2;
                         */
-                        if ((strcmp((*reconstruct_init)->OFNoise,"NSD") == 0) && ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength))
+                        /*if ((strcmp((*reconstruct_init)->OFNoise,"NSD") == 0) && ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength))
                         {
                             // (*reconstruct_init)->library_collection->pulse_templates[0].template_duration is the max length of the filter (8182 for samprate and 4096 for samprate2)
-                            /*if (tstartSamplesRecordStartDOUBLE+(*reconstruct_init)->library_collection->pulse_templates[0].template_duration+numlags -1 <= recordAux->size)
-                                resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags -1;
-                            else
-                                resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags/2;*/
+                            //if (tstartSamplesRecordStartDOUBLE+(*reconstruct_init)->library_collection->pulse_templates[0].template_duration+numlags -1 <= recordAux->size)
+                            //    resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags -1;
+                            //else
+                            //    resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags/2;
                             if (tstartSamplesRecordStartDOUBLE+(*reconstruct_init)->OFLength+numlags -1 <= recordAux->size)
+                            {
                                 resize_mfNEW = (*reconstruct_init)->OFLength + numlags -1;
+                                cout<<"Opcion1A"<<endl;
+                            }
                             else
+                            {
                                 resize_mfNEW = (*reconstruct_init)->OFLength + numlags/2;
+                                cout<<"Opcion1B"<<endl;
+                            }
                         }
                         else
                         {
                             if (tstartSamplesRecordStartDOUBLE+resize_mf+numlags -1 <= recordAux->size)
+                            {
                                 resize_mfNEW = resize_mf + numlags -1;
+                                cout<<"Opcion2A"<<endl;
+                            }
                             else
+                            {
                                 resize_mfNEW = resize_mf + numlags/2;
+                                cout<<"Opcion2B"<<endl;
+                            }
+                        }*/
+                        if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
+                        {
+                                if (tstartSamplesRecordStartDOUBLE+resize_mf+numlags -1 <= recordAux->size)
+                                {
+                                    resize_mfNEW = resize_mf + numlags -1;
+                                }
+                                else
+                                {
+                                    resize_mfNEW = resize_mf + numlags/2;
+                                }
                         }
                         
                         //cout<<"resize_mfNEW: "<<resize_mfNEW<<endl;
@@ -10287,11 +10310,11 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
         //cout<<"filterFFT->size: "<<filterFFT->size<<endl;
         //cout<<"vector->size: "<<vector->size<<endl;
         //for (int i=0;i<vector->size;i++)
-        //for (int i=0;i<10;i++)
-        //{
+        /*for (int i=0;i<10;i++)
+        {
             //cout<<i<<" "<<gsl_vector_get(vector,i)<<endl;
-        //    cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
-        //}
+            cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
+        }*/
         
         string message = "";
 	char valERROR[256];
@@ -10392,13 +10415,16 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                 for (int i=0;i<filter->size;i++)
                                                 {
                                                     gsl_vector_set(calculatedEnergy_vector,0,gsl_vector_get(calculatedEnergy_vector,0)+gsl_vector_get(vector,i+0)*gsl_vector_get(filter,i));
-                                                    //if (j==1) cout<<i<<" "<<gsl_vector_get(vector,i+numlagsOUT/2+j-1)<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
+                                                    //cout<<i<<" "<<gsl_vector_get(vector,i+0)<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(vector,i+0)*gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,0)<<endl;
                                                 }
                                                 gsl_vector_set(calculatedEnergy_vector,0,fabs(gsl_vector_get(calculatedEnergy_vector,0))/filter->size);
+                                                
+                                                // Because of the FFT and FFTinverse normalization factors
+                                                //gsl_vector_set(calculatedEnergy_vector,0,fabs(gsl_vector_get(calculatedEnergy_vector,0)*2*SelectedTimeDuration));
                                                     
                                                 *calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,0);
                                                 //cout<<"energy: "<<*calculatedEnergy<<endl;
-                                                
+                                                //std::cout << std::setprecision(17) << *calculatedEnergy << '\n';
                                         }
 					else
 					{
@@ -10421,7 +10447,12 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                                     //if (i<10 || i>8185)   cout<<"j="<<j<<" i="<<i<<" "<<gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)<<" "<<gsl_vector_get(filter,i)<<endl;
                                                             }
                                                             gsl_vector_set(calculatedEnergy_vector,j,fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size);
+                                                            
+                                                            // Because of the FFT and FFTinverse normalization factors
+                                                            //gsl_vector_set(calculatedEnergy_vector,j,fabs(gsl_vector_get(calculatedEnergy_vector,j)*2*SelectedTimeDuration));
+                                                            
                                                             //cout<<gsl_vector_get(lags_vector,j)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
+                                                            //std::cout << std::setprecision(17) << gsl_vector_get(calculatedEnergy_vector,j) << '\n';
                                                     }
                                                     indexmax = gsl_vector_max_index(calculatedEnergy_vector);
                                                     //cout<<"indexmax= "<<indexmax<<endl;
