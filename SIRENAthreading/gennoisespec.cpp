@@ -639,58 +639,61 @@ int main (int argc, char **argv)
                         gsl_matrix_free(noiseIntervals_weightPoints);
                         gsl_matrix_free(weightMatrix);
                         
-                        int NumMeanSamplesNew;
-                        gsl_matrix *matrixi;
-                        gsl_matrix *noiseIntervalsAux;
-                        for (int i=1;i<weightpoints->size;i++)
-                        {	
-                                weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,i),gsl_vector_get(weightpoints,i));
-                                if (NumMeanSamples*pow(2,i) >= nintervals)	NumMeanSamplesNew = nintervals;
-                                else 						NumMeanSamplesNew = NumMeanSamples*pow(2,i);
-                                noiseIntervals_weightPoints = gsl_matrix_alloc(NumMeanSamplesNew,gsl_vector_get(weightpoints,i));
-                                
-                                noiseIntervalsAux = gsl_matrix_alloc(NumMeanSamples*pow(2,i),gsl_vector_get(weightpoints,i));
-                                for (int ii=0;ii<pow(2,i);ii++)
-                                {	
-                                        matrixi = gsl_matrix_alloc(NumMeanSamples,gsl_vector_get(weightpoints,i));
-                                        tempm = gsl_matrix_submatrix(noiseIntervals,0,ii*gsl_vector_get(weightpoints,i),NumMeanSamples,gsl_vector_get(weightpoints,i));
-                                        gsl_matrix_memcpy(matrixi,&tempm.matrix);
-                                        for (int j=0;j<matrixi->size1;j++)
-                                        {
-                                                for (int k=0;k<matrixi->size2;k++)
-                                                {
-                                                        gsl_matrix_set(noiseIntervalsAux,j+ii*NumMeanSamples,k,gsl_matrix_get(matrixi,j,k));
-                                                }
-                                        }
-                                        gsl_matrix_free(matrixi);
-                                        
-                                        if (NumMeanSamples+NumMeanSamples*ii >= nintervals)	
-                                        {
-                                                tempm = gsl_matrix_submatrix(noiseIntervalsAux,0,0,nintervals,gsl_vector_get(weightpoints,i));
-                                                gsl_matrix_memcpy(noiseIntervals_weightPoints,&tempm.matrix);
-                                        
-                                                break;
-                                        }
-                                }
-                                gsl_matrix_free(noiseIntervalsAux);
-                                
-                                sprintf(str_stat,"%ld",noiseIntervals_weightPoints->size1);
-                                sprintf(str_stat1,"%d",(int) gsl_vector_get(weightpoints,i));
-                                message = "W" + string(str_stat1) + " matrix calculated with " + string(str_stat);
-                                writeLog(fileRef,"Log", verbosity,message);
-                                
-                                weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
-                        
-                                for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
-                                {
-                                        for (int k=0;k<gsl_vector_get(weightpoints,i);k++)
-                                        {
-                                                gsl_matrix_set(weightMatrixes,i,j*gsl_vector_get(weightpoints,i)+k,gsl_matrix_get(weightMatrix,j,k));
-                                        }
-                                }
-                                
-                                gsl_matrix_free(noiseIntervals_weightPoints);
-                                gsl_matrix_free(weightMatrix);
+                        if (matrixSize != 0)
+                        {
+                            int NumMeanSamplesNew;
+                            gsl_matrix *matrixi;
+                            gsl_matrix *noiseIntervalsAux;
+                            for (int i=1;i<weightpoints->size;i++)
+                            {	
+                                    weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,i),gsl_vector_get(weightpoints,i));
+                                    if (NumMeanSamples*pow(2,i) >= nintervals)	NumMeanSamplesNew = nintervals;
+                                    else 						NumMeanSamplesNew = NumMeanSamples*pow(2,i);
+                                    noiseIntervals_weightPoints = gsl_matrix_alloc(NumMeanSamplesNew,gsl_vector_get(weightpoints,i));
+                                    
+                                    noiseIntervalsAux = gsl_matrix_alloc(NumMeanSamples*pow(2,i),gsl_vector_get(weightpoints,i));
+                                    for (int ii=0;ii<pow(2,i);ii++)
+                                    {	
+                                            matrixi = gsl_matrix_alloc(NumMeanSamples,gsl_vector_get(weightpoints,i));
+                                            tempm = gsl_matrix_submatrix(noiseIntervals,0,ii*gsl_vector_get(weightpoints,i),NumMeanSamples,gsl_vector_get(weightpoints,i));
+                                            gsl_matrix_memcpy(matrixi,&tempm.matrix);
+                                            for (int j=0;j<matrixi->size1;j++)
+                                            {
+                                                    for (int k=0;k<matrixi->size2;k++)
+                                                    {
+                                                            gsl_matrix_set(noiseIntervalsAux,j+ii*NumMeanSamples,k,gsl_matrix_get(matrixi,j,k));
+                                                    }
+                                            }
+                                            gsl_matrix_free(matrixi);
+                                            
+                                            if (NumMeanSamples+NumMeanSamples*ii >= nintervals)	
+                                            {
+                                                    tempm = gsl_matrix_submatrix(noiseIntervalsAux,0,0,nintervals,gsl_vector_get(weightpoints,i));
+                                                    gsl_matrix_memcpy(noiseIntervals_weightPoints,&tempm.matrix);
+                                            
+                                                    break;
+                                            }
+                                    }
+                                    gsl_matrix_free(noiseIntervalsAux);
+                                    
+                                    sprintf(str_stat,"%ld",noiseIntervals_weightPoints->size1);
+                                    sprintf(str_stat1,"%d",(int) gsl_vector_get(weightpoints,i));
+                                    message = "W" + string(str_stat1) + " matrix calculated with " + string(str_stat);
+                                    writeLog(fileRef,"Log", verbosity,message);
+                                    
+                                    weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
+                            
+                                    for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
+                                    {
+                                            for (int k=0;k<gsl_vector_get(weightpoints,i);k++)
+                                            {
+                                                    gsl_matrix_set(weightMatrixes,i,j*gsl_vector_get(weightpoints,i)+k,gsl_matrix_get(weightMatrix,j,k));
+                                            }
+                                    }
+                                    
+                                    gsl_matrix_free(noiseIntervals_weightPoints);
+                                    gsl_matrix_free(weightMatrix);
+                            }
                         }
                 }
         }

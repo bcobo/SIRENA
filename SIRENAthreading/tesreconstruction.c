@@ -931,6 +931,11 @@ int getpar(struct Parameters* const par)
             SIXT_ERROR("tstartPulse1 can not be a file if CALIBRATION mode");
             return(EXIT_FAILURE);
         }
+        if ((isNumber == 0) && (strcmp(par->FilterDomain,"F") == 0))    // It is only implemented tstartPulse1 as a file for time domain
+        {
+            SIXT_ERROR("It is not possible to work in FREQUENCY domain if tstartPulse1 is a file => Change FilterDomain to TIME domain (T) ");
+            return(EXIT_FAILURE);
+        }
 	  
 	MyAssert((par->intermediate == 0) || (par->intermediate == 1), "intermediate must be 0 or 1");
 	
