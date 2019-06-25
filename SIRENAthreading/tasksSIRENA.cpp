@@ -7316,6 +7316,10 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                                     resize_mfNEW = resize_mf + numlags/2;
                                 }
                         }
+                        else
+                        {
+                                resize_mfNEW = resize_mf;
+                        }
                         
                         //cout<<"resize_mfNEW: "<<resize_mfNEW<<endl;
 			if ((pulseToCalculateEnergy = gsl_vector_alloc(resize_mfNEW)) == 0)
@@ -8164,13 +8168,13 @@ void th_runEnergy(TesRecord* record,
 		}
 		else if (((*reconstruct_init)->LagsOrNot == 1) && (strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0))	
 		{
-                        if ((strcmp((*reconstruct_init)->OFNoise,"NSD") == 0) && ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength))
+                        /*if ((strcmp((*reconstruct_init)->OFNoise,"NSD") == 0) && ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength))
                         {
                             // (*reconstruct_init)->library_collection->pulse_templates[0].template_duration is the max length of the filter (8182 for samprate and 4096 for samprate2)
-                            /*if (tstartSamplesRecordStartDOUBLE+(*reconstruct_init)->library_collection->pulse_templates[0].template_duration+numlags -1 <= recordAux->size)
-                                resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags -1;
-                            else
-                                resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags/2;*/
+                            //if (tstartSamplesRecordStartDOUBLE+(*reconstruct_init)->library_collection->pulse_templates[0].template_duration+numlags -1 <= recordAux->size)
+                            //    resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags -1;
+                            //else
+                            //    resize_mfNEW = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration + numlags/2;
                             if (tstartSamplesRecordStartDOUBLE+(*reconstruct_init)->OFLength+numlags -1 <= recordAux->size)
                                 resize_mfNEW = (*reconstruct_init)->OFLength + numlags -1;
                             else
@@ -8182,6 +8186,21 @@ void th_runEnergy(TesRecord* record,
                                 resize_mfNEW = resize_mf + numlags -1;
                             else
                                 resize_mfNEW = resize_mf + numlags/2;
+                        }*/
+                        if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
+                        {
+                                if (tstartSamplesRecordStartDOUBLE+resize_mf+numlags -1 <= recordAux->size)
+                                {
+                                    resize_mfNEW = resize_mf + numlags -1;
+                                }
+                                else
+                                {
+                                    resize_mfNEW = resize_mf + numlags/2;
+                                }
+                        }
+                        else
+                        {
+                                resize_mfNEW = resize_mf;
                         }
                         //cout<<"resize_mfNEW: "<<resize_mfNEW<<endl;
 			if ((pulseToCalculateEnergy = gsl_vector_alloc(resize_mfNEW)) == 0)
@@ -10306,6 +10325,8 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 ****************************************************************************/
 int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes)
 {
+        //cout<<"calculateEnergy0"<<endl;
+        //cout<<"LowRes: "<<LowRes<<endl;
         //cout<<"filter->size: "<<filter->size<<endl;
         //cout<<"filterFFT->size: "<<filterFFT->size<<endl;
         //cout<<"vector->size: "<<vector->size<<endl;
@@ -10693,6 +10714,12 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                 }
                                                 gsl_vector_free(vectorSHORT);
                                                 
+                                                /*// Write the pulse FFT in an output file
+                                                for (int i=0; i<vectorFFT->size; i++)
+                                                {
+                                                    cout<<i<<","<<GSL_REAL(gsl_vector_complex_get(vectorFFT,i))<<","<<GSL_IMAG(gsl_vector_complex_get(vectorFFT,i))<<endl;
+                                                }*/
+                                                
                                                 for (int i=0; i<filterFFT->size; i++)
                                                 {
                                                     gsl_vector_complex_set(calculatedEnergy_vectorcomplex,0,gsl_complex_add(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,0),gsl_complex_mul(gsl_vector_complex_get(vectorFFT,i),gsl_vector_complex_get(filterFFT,i))));
@@ -10749,8 +10776,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                     
                                                     if ((xmax >= -1) && (xmax <= 1)) maxParabolaFound = true;
                                                     
+                                                    //if (indexmax != 1)    
                                                     if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
-                                                    //if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3) && (filterFFT->size >= 512))
                                                     // With the CBE pixel (LPA75um) it has no sense to look for a parabola if filter_size<512
                                                     {
                                                         do
@@ -10966,9 +10993,9 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     *lagsShift = 0;
                                                 }
                                                 
-                                                /*cout<<"*calculatedEnergy: "<<*calculatedEnergy<<endl;
+                                                cout<<"*calculatedEnergy: "<<*calculatedEnergy<<endl;
                                                 cout<<"*tstartNewDev= "<<*tstartNewDev<<endl;
-                                                cout<<"lagsShift= "<<*lagsShift<<endl;*/
+                                                cout<<"lagsShift= "<<*lagsShift<<endl;
 					}
 					
 					gsl_vector_complex_free(calculatedEnergy_vectorcomplex); calculatedEnergy_vectorcomplex = 0;
