@@ -169,10 +169,18 @@ int main (int argc, char **argv)
                 }
         }
         strcpy(keyname,"IMIN");
-        fits_read_key(infileObject,TDOUBLE,keyname, &Imin,NULL,&status);
-        //cout<<"IMIN: "<<Imin<<endl;
-        strcpy(keyname,"IMAX");
-        fits_read_key(infileObject,TDOUBLE,keyname, &Imax,NULL,&status);
+        if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,NULL,&status))
+        {
+            message = "Cannot read keyword " + string(keyname) + " in input file";
+            EP_PRINT_ERROR(message,status); return(EPFAIL);
+        }
+        cout<<"IMIN: "<<Imin<<endl;
+        //strcpy(keyname,"IMAX");
+        if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,NULL,&status))
+        {
+            message = "Cannot read keyword " + string(keyname) + " in input file";
+            EP_PRINT_ERROR(message,status); return(EPFAIL);
+        }
         //cout<<"IMAX: "<<Imax<<endl;
 	
 	if (strcmp(I2R,"I") != 0)  // Transform to resistance space
