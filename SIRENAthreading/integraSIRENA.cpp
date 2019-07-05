@@ -138,7 +138,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 		char* const library_file, char* const event_file, int pulse_length, double scaleFactor, double samplesUp, double samplesDown,
 		double nSgms, int detectSP, int opmode, char *detectionMode, double LrsT, double LbT, char* const noise_file, char* filter_domain, char* filter_method, 
 		char* energy_method, double filtEev, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
-		char* oflength_strategy, int oflength,
+		char* oflength_strategy, int oflength, int preBuffer,
 		double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, char* const filterFile,
 		char clobber, int maxPulsesPerRecord, double SaturationValue,
 		//int tstartPulse1, int tstartPulse2, int tstartPulse3, double energyPCA1, double energyPCA2, char * const XMLFile, int* const status)
@@ -163,7 +163,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	{	
 		if (opmode == 1)		largeFilter = pulse_length;
                 
-		reconstruct_init->library_collection = getLibraryCollection(library_file, opmode, hduPRECALWN, hduPRCLOFWM, largeFilter, filter_domain, pulse_length, energy_method, ofnoise, filter_method, oflib, &ofinterp, filtEev, lagsornot, status);
+		reconstruct_init->library_collection = getLibraryCollection(library_file, opmode, hduPRECALWN, hduPRCLOFWM, largeFilter, filter_domain, pulse_length, energy_method, ofnoise, filter_method, oflib, &ofinterp, filtEev, lagsornot, preBuffer, status);
 		if (*status)
 		{
 			EP_EXIT_ERROR((char*)"Error in getLibraryCollection",EPFAIL); 
@@ -347,6 +347,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	strcpy(reconstruct_init->OFInterp,ofinterp);
 	strcpy(reconstruct_init->OFStrategy,oflength_strategy);
 	reconstruct_init->OFLength      = oflength;
+        reconstruct_init->preBuffer      = preBuffer;
 	reconstruct_init->intermediate  = interm;
 	reconstruct_init->SaturationValue  = SaturationValue;
         
@@ -974,7 +975,7 @@ extern "C" void freeOptimalFilterSIRENA(OptimalFilterSIRENA* OFilterColl)
 * - lagsornot: Lags (1) or no lags (0)
 * - status: Input/output status
 ******************************************************************************/
-LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char* filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int* const status)
+LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char* filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int preBuffer, int* const status)
 {  	
         // Create LibraryCollection structure
 	LibraryCollection* library_collection = new LibraryCollection;
@@ -2098,7 +2099,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 			{
 				int nOFs_aux;
 				nOFs_aux = nOFs-1;		// -1 because the ENERGYcolumn
-				if (nOFs_aux == floor(log2(template_duration)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
+				//if (nOFs_aux == floor(log2(template_duration)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
+				if (nOFs_aux == floor(log2(template_duration - preBuffer)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
 				else 							nOFs = (nOFs-1)/2;	// /2 because the AB column
 			}
 			else 								nOFs = (nOFs-1)/2;	// /2 because the AB column
@@ -2117,7 +2119,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 					if (i==0)	lengthALL_F = lengthALL_F + template_durationPLSMXLFF*2;
 					else		lengthALL_F = lengthALL_F + pow(2,floor(log2(template_duration))-i+1)*2;
 				}
-				else	lengthALL_F = lengthALL_F + pow(2,floor(log2(template_duration))-i)*2;
+				//else	lengthALL_F = lengthALL_F + pow(2,floor(log2(template_duration))-i)*2;
+                                else	lengthALL_F = lengthALL_F + (pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer)*2;
 			}
 						
 			strcpy(obj.nameTable,"FIXFILTF");
@@ -2144,8 +2147,10 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 					}
 					else
 					{
-						snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
-						matrixAux_OFFx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i)*2);
+						//snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
+                                                //matrixAux_OFFx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i)*2);
+                                                snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)) + preBuffer);
+						matrixAux_OFFx = gsl_matrix_alloc(ntemplates,(pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer)*2);
 					}
 					strcpy(obj.nameCol,(string("F")+string(str_length)).c_str());
 					if (readFitsComplex (obj,&matrixAux_OFFx))
@@ -2166,7 +2171,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 						if (i==0)	index = index + template_durationPLSMXLFF*2;
 						else 		index = index + pow(2,floor(log2(template_duration))-i+1)*2;
 					}
-					else    index = index + pow(2,floor(log2(template_duration))-i)*2;
+					//else    index = index + pow(2,floor(log2(template_duration))-i)*2;
+					else    index = index + (pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer)*2;
 						
 					gsl_matrix_free(matrixAux_OFFx);
 				}
@@ -2264,7 +2270,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 			{
 				  int nOFs_aux;
 				  nOFs_aux = nOFs-1;		// -1 because the ENERGYcolumn
-				  if (nOFs_aux == floor(log2(template_duration)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
+				  //if (nOFs_aux == floor(log2(template_duration)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
+				  if (nOFs_aux == floor(log2(template_duration - preBuffer)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
 				  else 								nOFs = (nOFs-1)/2;	// /2 because the AB column
 			}
 			else	  nOFs = (nOFs-1)/2;	// /2 because the AB column
@@ -2283,7 +2290,11 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 					if (i==0)	lengthALL_T = lengthALL_T + template_durationPLSMXLFF;
 					else  		lengthALL_T = lengthALL_T + pow(2,floor(log2(template_duration))-i+1);
 				}
-				else    lengthALL_T = lengthALL_T + pow(2,floor(log2(template_duration))-i);
+				//else    lengthALL_T = lengthALL_T + pow(2,floor(log2(template_duration))-i);
+				else    
+                                {
+                                        lengthALL_T = lengthALL_T + pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer;
+                                }
 			}
 		
 			strcpy(obj.nameTable,"FIXFILTT");
@@ -2310,15 +2321,19 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 					}
 					else
 					{
-						snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
-						matrixAux_OFTx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i));
+						//snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
+						//matrixAux_OFTx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i));
+                                                snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer));
+						matrixAux_OFTx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer);
 					}
 					strcpy(obj.nameCol,(string("T")+string(str_length)).c_str());
+                                        //cout<<"obj.nameCol: "<<obj.nameCol<<endl;
 					if (readFitsComplex (obj,&matrixAux_OFTx))
 					{
 						EP_PRINT_ERROR("Cannot run readFitsComplex in integraSIRENA.cpp",*status);
 						*status=EPFAIL; return(library_collection);
 					}
+                                        
 					for (int j=0;j<matrixAux_OFTx->size1;j++)
 					{
 						for (int k=0;k<matrixAux_OFTx->size2;k++)
@@ -2332,7 +2347,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 						if (i==0)	index = index + template_durationPLSMXLFF;
 						else		index = index + pow(2,floor(log2(template_duration))-i+1);
 					}
-					else    index = index + pow(2,floor(log2(template_duration))-i);
+					//else    index = index + pow(2,floor(log2(template_duration))-i);
+					else    index = index + pow(2,floor(log2(template_duration -preBuffer))-i) + preBuffer;
 					
 					gsl_matrix_free(matrixAux_OFTx);
 				}
@@ -2889,6 +2905,7 @@ ReconstructInitSIRENA::ReconstructInitSIRENA():
   //OFInterp(""),
   //OFStrategy(""),
   OFLength(0),
+  preBuffer(0),
   //detectFile(""),
   //filterFile(""),
   clobber(0),
@@ -2944,6 +2961,7 @@ ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other)
   //OFInterp(""),
   //OFStrategy(""),
   OFLength(other.OFLength),
+  preBuffer(other.preBuffer),
   intermediate(intermediate),
   clobber(other.clobber),
   //detectFile(""),
@@ -3076,6 +3094,7 @@ ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
     strcpy(OFStrategy, other.OFStrategy);
 
     OFLength = other.OFLength;
+    preBuffer = other.preBuffer;
     intermediate = other.intermediate;
     
     strcpy(detectFile, other.detectFile);
@@ -3194,6 +3213,7 @@ ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object(int n_record)
   strcpy(ret->OFStrategy, this->OFStrategy);
     
   ret->OFLength = this->OFLength;
+  ret->preBuffer = this->preBuffer;
   ret->intermediate = this->intermediate;
   
   strcpy(ret->detectFile, this->detectFile);
@@ -3862,6 +3882,7 @@ PulseDetected::PulseDetected():
   grade2_1(0),
   pixid(0),
   pulse_adc(0),
+  pulse_adc_preBuffer(0),
   Tstart(0.0f),
   TstartSamples(0.0f),
   Tend(0.0f),
@@ -3889,6 +3910,7 @@ PulseDetected::PulseDetected(const PulseDetected& other):
   grade2_1(other.grade2_1),
   pixid(other.pixid),
   pulse_adc(0),
+  pulse_adc_preBuffer(0),
   Tstart(other.Tstart),
   TstartSamples(other.TstartSamples),
   Tend(other.Tend),
@@ -3910,6 +3932,10 @@ PulseDetected::PulseDetected(const PulseDetected& other):
     pulse_adc = gsl_vector_alloc(other.pulse_adc->size);
     gsl_vector_memcpy(pulse_adc, other.pulse_adc);
   }
+  if(other.pulse_adc_preBuffer){
+    pulse_adc_preBuffer = gsl_vector_alloc(other.pulse_adc_preBuffer->size);
+    gsl_vector_memcpy(pulse_adc_preBuffer, other.pulse_adc_preBuffer);
+  }
 }
 
 PulseDetected& PulseDetected::operator=(const PulseDetected& other)
@@ -3927,6 +3953,13 @@ PulseDetected& PulseDetected::operator=(const PulseDetected& other)
     if(other.pulse_adc){
       pulse_adc = gsl_vector_alloc(other.pulse_adc->size);
       gsl_vector_memcpy(pulse_adc, other.pulse_adc);
+    }
+    if(pulse_adc_preBuffer) {
+      gsl_vector_free(pulse_adc_preBuffer); pulse_adc_preBuffer = 0;
+    }
+    if(other.pulse_adc_preBuffer){
+      pulse_adc_preBuffer = gsl_vector_alloc(other.pulse_adc_preBuffer->size);
+      gsl_vector_memcpy(pulse_adc_preBuffer, other.pulse_adc_preBuffer);
     }
     Tstart = other.Tstart;
     TstartSamples = other.TstartSamples;
@@ -3952,6 +3985,9 @@ PulseDetected::~PulseDetected()
 {
   if(pulse_adc) {
     gsl_vector_free(pulse_adc); pulse_adc = 0;
+  }
+  if(pulse_adc_preBuffer) {
+    gsl_vector_free(pulse_adc_preBuffer); pulse_adc_preBuffer = 0;
   }
 }
 

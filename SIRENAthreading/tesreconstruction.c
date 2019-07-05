@@ -90,7 +90,7 @@ int tesreconstruction_main() {
                     strtok(filefits, "\n");     // To delete '/n' from filefits (if not, 'fits_open_file' can not open the file)
                     //printf("%s %s %s","FITS file i: ",filefits,"\n");
             
-                    fits_open_file(&fptr, filefits, READWRITE, &status);
+                    fits_open_file(&fptr, filefits, READONLY, &status);
                     if (status != 0)    printf("%s","FITS file read from ASCII file does not exist\n");
                     CHECK_STATUS_BREAK(status);  
                     
@@ -98,97 +98,61 @@ int tesreconstruction_main() {
     
                     if (hdunum == 8) //xifusim simulated file (with TESRECORDS)
                     {    
-                        fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
-                        CHECK_STATUS_BREAK(status);
                         
-                        // Read NETTOT keyword from "TESRECORDS" HDU
-                        // (used to check detection)
-                        long nettot_key;
-                        fits_read_key(fptr,TLONG,"NETTOT", &nettot_key,NULL,&status);  
-                        if (nettot_key == 0)
+                        // Move to "Primary" HDU to obtain SAMPLING_RATE
+                        fits_movabs_hdu(fptr, 1, NULL, &status); 
+                        CHECK_STATUS_BREAK(status);
+                        // and read full Primary HDU and store it in 'headerPrimary'
+                        int numberkeywords;
+                        char *headerPrimary;
+                        fits_hdr2str(fptr, 0, NULL, 0,&headerPrimary, &numberkeywords, &status); 
+                        CHECK_STATUS_BREAK(status);
+                            
+                        // Pointer to where the text "sample_rate=" is in HISTORY block
+                        double sampling_rate = -999.0;
+                        char * sample_rate_pointer;
+                        sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    
+                        if(!sample_rate_pointer)
                         {
-                            // Move to "Primary" HDU to obtain SAMPLING_RATE
-                            fits_movabs_hdu(fptr, 1, NULL, &status); 
-                            CHECK_STATUS_BREAK(status);
-                            // and read full Primary HDU and store it in 'headerPrimary'
-                            int numberkeywords;
-                            char *headerPrimary;
-                            fits_hdr2str(fptr, 0, NULL, 0,&headerPrimary, &numberkeywords, &status); 
-                            CHECK_STATUS_BREAK(status);
-                            
-                            // Pointer to where the text "sample_rate=" is in HISTORY block
-                            double sampling_rate = -999.0;
-                            char * sample_rate_pointer;
-                            sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    
-                            if(!sample_rate_pointer)
-                            {
-                                // read it from xml file
-                                sampling_rate = sf;
-                            }
-                            else
-                            {
-                                // Pointer to the next character to "sample_rate=" (12 characters)   
-                                sample_rate_pointer = sample_rate_pointer + 12; 
-                                char each_character_after_srate[125];		
-                                snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
-                                
-                                char characters_after_srate[125];
-                                snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
-                                
-                                while (*sample_rate_pointer != ' ')
-                                {
-                                    sample_rate_pointer = sample_rate_pointer + 1;
-                                    snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
-                                    strcat(characters_after_srate,each_character_after_srate); 
-                                }
-                                
-                                sampling_rate = atof(characters_after_srate);
-                                //printf("%s %s %s","characters_after_srate: ",characters_after_srate,"\n");
-                            }
-                            //printf("%s %f %s","sampling_rate: ",sampling_rate,"\n");
-                            
-                            // Get RECORD LENGTH from TRIGGERPARAM
-                            long reclen_key;
-                            fits_movnam_hdu(fptr, ANY_HDU,"TRIGGERPARAM", 0, &status);
-                            CHECK_STATUS_BREAK(status);
-                            fits_read_key(fptr,TLONG,"RECLEN", &reclen_key,NULL,&status);
-                            
-                            // Write missing/required keys to TESRECORDS
-                            fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
-                            CHECK_STATUS_BREAK(status);
-                            
-                            // Read DELTA_T keyword from "TESRECORDS" HDU
-                            double delta_t_key;            
-                            fits_read_key(fptr,TDOUBLE,"DELTA_T", &delta_t_key,NULL,&status);  
-                            //printf("%s %2.10f %s","delta_t_key: ",delta_t_key,"\n");
-                            div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
-                            //printf("%s %2.10f %s","div: ",div,"\n");
-                            // Read NAXIS2 keyword from "TESRECORDS" HDU
-                            long naxis2_key;
-                            fits_read_key(fptr,TLONG,"NAXIS2", &naxis2_key,NULL,&status);  
-                            //long nettot_key_long;
-                            //nettot_key_long = naxis2_key*2;
-                            // Write TRIGGSZ, DELTAT & NETTOT keywords in "TESRECORDS" HDU
-                            fits_write_key(fptr,TULONG,"TRIGGSZ",&reclen_key,NULL,&status);
-                            double keyvalue_double;
-                            //keyvalue_double = delta_t_key * decimate_factor;
-                            keyvalue_double = 1./sampling_rate;
-                            fits_write_key(fptr,TDOUBLE,"DELTAT",&keyvalue_double,NULL,&status);
-                            //fits_update_key(fptr,TLONG,"NETTOT", &nettot_key_long,NULL,&status);
-                            fits_update_key(fptr,TLONG,"NETTOT", &naxis2_key,NULL,&status);
+                            // read it from xml file
+                            sampling_rate = sf;
                         }
                         else
                         {
-                            fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
-                            CHECK_STATUS_BREAK(status);
-                            double keyvalue_double;
-                            fits_read_key(fptr,TDOUBLE,"DELTAT",&keyvalue_double,NULL,&status);
-                            double sampling_rate = 1/keyvalue_double;
-                            //printf("%s %2.10f %s","sampling_rate(2nd run): ",sampling_rate,"\n");
-                            div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
-                            //printf("%s %2.10f %s","div(2nd run): ",div,"\n");
+                            // Pointer to the next character to "sample_rate=" (12 characters)   
+                            sample_rate_pointer = sample_rate_pointer + 12; 
+                            char each_character_after_srate[125];		
+                            snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+                              
+                            char characters_after_srate[125];
+                            snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
+                                
+                            while (*sample_rate_pointer != ' ')
+                            {
+                                sample_rate_pointer = sample_rate_pointer + 1;
+                                snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+                                strcat(characters_after_srate,each_character_after_srate); 
+                            }
+                                
+                            sampling_rate = atof(characters_after_srate);
+                            //printf("%s %s %s","characters_after_srate: ",characters_after_srate,"\n");
                         }
-                    } //if hdunum==8 (xifusim file)
+                        //printf("%s %f %s","sampling_rate: ",sampling_rate,"\n");
+                            
+                        div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
+            
+                    }//if hdunum==8 (xifusim file)
+                    else
+                    {
+                        fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
+                        CHECK_STATUS_BREAK(status);
+                        double keyvalue_double;
+                        fits_read_key(fptr,TDOUBLE,"DELTAT",&keyvalue_double,NULL,&status);
+                        double sampling_rate = 1/keyvalue_double;
+                        //printf("%s %2.10f %s","sampling_rate(2nd run): ",sampling_rate,"\n");
+                        div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
+                        //printf("%s %2.10f %s","div(2nd run): ",div,"\n");
+                    }//(tessim)
                     fits_close_file(fptr,&status);
                     CHECK_STATUS_BREAK(status);
             }
@@ -198,104 +162,71 @@ int tesreconstruction_main() {
     else
     {
             numfits = 1;
-            fits_open_file(&fptr, par.RecordFile, READWRITE, &status);
+            fits_open_file(&fptr, par.RecordFile, READONLY, &status);
             if (status != 0)    printf("%s","File given in RecordFile does not exist\n");
             
             fits_get_num_hdus(fptr, &hdunum,&status);
     
             if (hdunum == 8) //xifusim simulated file (with TESRECORDS)
             {    
-                fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
+                // Move to "Primary" HDU to obtain SAMPLING_RATE
+                fits_movabs_hdu(fptr, 1, NULL, &status); 
+                CHECK_STATUS_BREAK(status);
+                // and read full Primary HDU and store it in 'headerPrimary'
+                int numberkeywords;
+                char *headerPrimary;
+                fits_hdr2str(fptr, 0, NULL, 0,&headerPrimary, &numberkeywords, &status); 
                 CHECK_STATUS_BREAK(status);
                 
-                // Read NETTOT keyword from "TESRECORDS" HDU
-                // (used to check detection)
-                long nettot_key;
-                fits_read_key(fptr,TLONG,"NETTOT", &nettot_key,NULL,&status);  
-                if (nettot_key == 0)
+                // Pointer to where the text "sample_rate=" is in HISTORY block
+                double sampling_rate = -999.0;
+                char * sample_rate_pointer;
+                sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    
+                if(!sample_rate_pointer)
                 {
-                    // Move to "Primary" HDU to obtain SAMPLING_RATE
-                    fits_movabs_hdu(fptr, 1, NULL, &status); 
-                    CHECK_STATUS_BREAK(status);
-                    // and read full Primary HDU and store it in 'headerPrimary'
-                    int numberkeywords;
-                    char *headerPrimary;
-                    fits_hdr2str(fptr, 0, NULL, 0,&headerPrimary, &numberkeywords, &status); 
-                    CHECK_STATUS_BREAK(status);
-                    
-                    // Pointer to where the text "sample_rate=" is in HISTORY block
-                    double sampling_rate = -999.0;
-                    char * sample_rate_pointer;
-                    sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    
-                    if(!sample_rate_pointer)
-                    {
-                        // read it from xml file
-                        sampling_rate = sf;
-                    }
-                    else
-                    {
-                        // Pointer to the next character to "sample_rate=" (12 characters)   
-                        sample_rate_pointer = sample_rate_pointer + 12; 
-                        char each_character_after_srate[125];		
-                        snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
-                        
-                        char characters_after_srate[125];
-                        snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
-                        
-                        while (*sample_rate_pointer != ' ')
-                        {
-                            sample_rate_pointer = sample_rate_pointer + 1;
-                            snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
-                            strcat(characters_after_srate,each_character_after_srate); 
-                        }
-                        
-                        sampling_rate = atof(characters_after_srate);
-                        //printf("%s %s %s","characters_after_srate: ",characters_after_srate,"\n");
-                    }
-                    //printf("%s %f %s","sampling_rate: ",sampling_rate,"\n");
-                    
-                    // Get RECORD LENGTH from TRIGGERPARAM
-                    long reclen_key;
-                    fits_movnam_hdu(fptr, ANY_HDU,"TRIGGERPARAM", 0, &status);
-                    CHECK_STATUS_BREAK(status);
-                    fits_read_key(fptr,TLONG,"RECLEN", &reclen_key,NULL,&status);
-                    
-                    // Write missing/required keys to TESRECORDS
-                    fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
-                    CHECK_STATUS_BREAK(status);
-                    
-                    // Read DELTA_T keyword from "TESRECORDS" HDU
-                    double delta_t_key;            
-                    fits_read_key(fptr,TDOUBLE,"DELTA_T", &delta_t_key,NULL,&status);  
-                    //printf("%s %2.10f %s","delta_t_key: ",delta_t_key,"\n");
-                    div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
-                    //printf("%s %2.10f %s","div: ",div,"\n");
-                    // Read NAXIS2 keyword from "TESRECORDS" HDU
-                    long naxis2_key;
-                    fits_read_key(fptr,TLONG,"NAXIS2", &naxis2_key,NULL,&status);  
-                    //long nettot_key_long;
-                    //nettot_key_long = naxis2_key*2;
-                    // Write TRIGGSZ, DELTAT & NETTOT keywords in "TESRECORDS" HDU
-                    fits_write_key(fptr,TULONG,"TRIGGSZ",&reclen_key,NULL,&status);
-                    double keyvalue_double;
-                    //keyvalue_double = delta_t_key * decimate_factor;
-                    keyvalue_double = 1./sampling_rate;
-                    fits_write_key(fptr,TDOUBLE,"DELTAT",&keyvalue_double,NULL,&status);
-                    //fits_update_key(fptr,TLONG,"NETTOT", &nettot_key_long,NULL,&status);
-                    fits_update_key(fptr,TLONG,"NETTOT", &naxis2_key,NULL,&status);
+                    // read it from xml file
+                    sampling_rate = sf;
                 }
                 else
                 {
-                    fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
-                    CHECK_STATUS_BREAK(status);
-                    double keyvalue_double;
-                    fits_read_key(fptr,TDOUBLE,"DELTAT",&keyvalue_double,NULL,&status);
-                    double sampling_rate = 1/keyvalue_double;
-                    //printf("%s %2.10f %s","sampling_rate(2nd run): ",sampling_rate,"\n");
-                    div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
-                    //printf("%s %2.10f %s","div(2nd run): ",div,"\n");
+                    // Pointer to the next character to "sample_rate=" (12 characters)   
+                    sample_rate_pointer = sample_rate_pointer + 12; 
+                    char each_character_after_srate[125];		
+                    snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+                        
+                    char characters_after_srate[125];
+                    snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
+                        
+                    while (*sample_rate_pointer != ' ')
+                    {
+                        sample_rate_pointer = sample_rate_pointer + 1;
+                        snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+                        strcat(characters_after_srate,each_character_after_srate); 
+                    }
+                       
+                    sampling_rate = atof(characters_after_srate);
+                    //printf("%s %s %s","characters_after_srate: ",characters_after_srate,"\n");
                 }
-            } //if hdunum==8 (xifusim file)
+                //printf("%s %f %s","sampling_rate: ",sampling_rate,"\n");
+                
+                div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
+            }//if hdunum==8 (xifusim file)
+            else
+            {
+                fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
+                if (status != 0)
+                {
+                    status = 0;
+                    fits_movnam_hdu(fptr, ANY_HDU,"RECORDS", 0, &status);
+                }
+                CHECK_STATUS_BREAK(status);
+                double keyvalue_double;
+                fits_read_key(fptr,TDOUBLE,"DELTAT",&keyvalue_double,NULL,&status);
+                double sampling_rate = 1/keyvalue_double;
+                //printf("%s %2.10f %s","sampling_rate(2nd run): ",sampling_rate,"\n");
+                div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
+                //printf("%s %2.10f %s","div(2nd run): ",div,"\n");
+            } // (tessim file)
             fits_close_file(fptr,&status);
             CHECK_STATUS_BREAK(status);
     }
@@ -398,7 +329,7 @@ int tesreconstruction_main() {
                                                     par.samplesDown, par.nSgms, par.detectSP, par.opmode, par.detectionMode, par.LrsT, 
                                                     par.LbT, par.NoiseFile, par.FilterDomain, par.FilterMethod, par.EnergyMethod, 
                                                     par.filtEev, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter, 
-                                                    par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.monoenergy, 
+                                                    par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer,par.monoenergy, 
                                                     par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, 
                                                     par.filterFile, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
                                                     par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
@@ -523,7 +454,7 @@ int tesreconstruction_main() {
                         par.samplesDown, par.nSgms, par.detectSP, par.opmode, par.detectionMode, par.LrsT, 
                         par.LbT, par.NoiseFile, par.FilterDomain, par.FilterMethod, par.EnergyMethod, 
                         par.filtEev, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter, 
-                        par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.monoenergy, 
+                        par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer, par.monoenergy, 
                         par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, 
                         par.filterFile, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
                         par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
@@ -544,9 +475,10 @@ int tesreconstruction_main() {
             // Iterate of records and do the averageRecord
             //printf("%s %s", "averageRecord:","\n");
             //int lastRecord = 0, nrecord = 0;
-            int nrecordOK = 0;
+            /*int nrecordOK = 0;
             TesTriggerFile* record_fileAux1 = openexistingTesTriggerFile(par.RecordFile,keywords,&status);
             gsl_vector * averageRecord = gsl_vector_alloc(record_fileAux1->trigger_size);
+            printf("%s %d %s","record_fileAux1->trigger_size: ",record_fileAux1->trigger_size,"\n");
             gsl_vector_set_zero(averageRecord);
             CHECK_STATUS_BREAK(status);
             while(getNextRecord(record_fileAux1,record,&status))
@@ -570,7 +502,7 @@ int tesreconstruction_main() {
                 calculateRecordsError(record,nrecord,averageRecord,&status);
             }
             CHECK_STATUS_BREAK(status);
-            freeTesTriggerFile(&record_fileAux2,&status);
+            freeTesTriggerFile(&record_fileAux2,&status);*/
             
             // Iterate of records and do the reconstruction
             lastRecord = 0, nrecord = 0;    //last record required for SIRENA library creation
@@ -893,6 +825,8 @@ int getpar(struct Parameters* const par)
 	free(sbuffer);
 	
 	status=ape_trad_query_int("OFLength", &par->OFLength);
+        
+        status=ape_trad_query_int("preBuffer", &par->preBuffer);
 
 	//status=ape_trad_query_int("tstartPulse1", &par->tstartPulse1);
         status=ape_trad_query_string("tstartPulse1", &sbuffer);
@@ -1000,6 +934,8 @@ int getpar(struct Parameters* const par)
 		 "OFStrategy must be FREE, BASE2, BYGRADE or FIXED");
 	
         MyAssert(par->OFLength > 0, "OFLength must be greater than 0");
+        
+        MyAssert(par->preBuffer >= 0, "preBuffer must be 0 or greater than 0");
 	
 	MyAssert(par->energyPCA1 > 0, "energyPCA1 must be greater than 0");
         MyAssert(par->energyPCA2 > 0, "energyPCA2 must be greater than 0");

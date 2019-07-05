@@ -149,6 +149,12 @@ int main (int argc, char **argv)
         if (status != 0)
         {
                 status = 0;
+                strcpy(extname,"TESRECORDS");
+                fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status);
+        }
+        if (status != 0)
+        {
+                status = 0;
                 strcpy(extname,"ADCPARAM");
                 if (fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status))
                 {
@@ -168,25 +174,34 @@ int main (int argc, char **argv)
                     EP_PRINT_ERROR(message,status); return(EPFAIL);
                 }
         }
-        strcpy(keyname,"IMIN");
-        if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,NULL,&status))
+        else
         {
-            message = "Cannot read keyword " + string(keyname) + " in input file";
-            EP_PRINT_ERROR(message,status); return(EPFAIL);
+                strcpy(keyname,"IMIN");
+                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,NULL,&status))
+                {
+                    message = "Cannot read keyword " + string(keyname) + " in input file";
+                    EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
+                strcpy(keyname,"IMAX");
+                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,NULL,&status))
+                {
+                    message = "Cannot read keyword " + string(keyname) + " in input file";
+                    EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
         }
-        cout<<"IMIN: "<<Imin<<endl;
-        //strcpy(keyname,"IMAX");
-        if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,NULL,&status))
-        {
-            message = "Cannot read keyword " + string(keyname) + " in input file";
-            EP_PRINT_ERROR(message,status); return(EPFAIL);
-        }
+        //cout<<"IMIN: "<<Imin<<endl;
         //cout<<"IMAX: "<<Imax<<endl;
 	
 	if (strcmp(I2R,"I") != 0)  // Transform to resistance space
         {
                 strcpy(extname,"RECORDS");
                 fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
+                if (status != 0)
+                {
+                        status = 0;
+                        strcpy(extname,"TESRECORDS");
+                        fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
+                }
                 if (status != 0)
                 {
                         status = 0;

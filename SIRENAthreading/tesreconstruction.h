@@ -165,6 +165,9 @@ struct Parameters {
 
 	//Optimal Filter length (taken into account if OFStrategy=FIXED) **/
 	int OFLength;
+        
+        //0-padding filter if 0 (from pulseLength to OFLength filter filled in with 0's) or filter with a filter+preBuffer if different from 0 **/
+	int preBuffer;
 	
 	//Write intermediate files (Yes:1, No:0)
 	int intermediate;

@@ -319,6 +319,9 @@ typedef struct PulseDetected
 	
 	/** Vector containing the pulse adc values */
 	gsl_vector *pulse_adc;
+        
+        /** Vector containing the pulse adc values and the preBuffer*/
+	gsl_vector *pulse_adc_preBuffer;
 
 	/** Start time of the Pulse */
 	double Tstart;
@@ -509,6 +512,9 @@ typedef struct ReconstructInitSIRENA
   
   //Optimal Filter length (taken into account if OFStrategy=FIXED) **/
   int OFLength;
+  
+  //0-padding filter if 0 (from pulseLength to OFLength filter filled in with 0's) or filter with a filter+preBuffer if different from 0
+  int preBuffer;
 
   /** Write intermediate files **/
   int intermediate;
@@ -605,7 +611,7 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     double filtEev, char* ofnoise, 
                                     int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, 
                                     char *ofinterp, char* oflength_strategy, 
-                                    int oflength,
+                                    int oflength, int preBuffer,
                                     double monoenergy, char hduPRECALWN, 
                                     char hduPRCLOFWM, int largeFilter, 
                                     int interm, char* detectFile, 
@@ -655,7 +661,7 @@ extern "C"
 void reconstructRecordSIRENA(TesRecord* record,TesEventList* event_list, ReconstructInitSIRENA* reconstruct_init, int lastRecord, int nRecord, PulsesCollection **pulsesAll, OptimalFilterSIRENA **optimalFilter, int* const status);
 
 
-LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char *filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int* const status);
+LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char *filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int preBuffer, int* const status);
 
 NoiseSpec* getNoiseSpec(const char* const filename,int opmode,int hduPRCLOFWM,char *energy_method,char *ofnoise,char *filter_method,int* const status);
 
