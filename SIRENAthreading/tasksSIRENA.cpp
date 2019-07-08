@@ -7159,14 +7159,20 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
         //gsl_vector *pulse_lowres = gsl_vector_alloc(4);
         if (preBuffer == 0)
         {
-            resize_mf_lowres = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration; 
-            pulse_lowres = gsl_vector_alloc((*reconstruct_init)->library_collection->pulse_templates[0].template_duration);
+            if ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength)
+            {
+                resize_mf_lowres = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration; 
+            }
+            else
+            {
+                resize_mf_lowres = 4; 
+            }    
         }
         else
         {
             resize_mf_lowres = 4 + preBuffer; // In order to get the low resolution energy estimator by filtering with a 4-samples-long filter
-            pulse_lowres = gsl_vector_alloc(resize_mf_lowres);
         }
+        pulse_lowres = gsl_vector_alloc(resize_mf_lowres);
         gsl_vector *filtergsl_lowres = NULL;
         if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres);
         else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)	filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres*2);
@@ -7277,6 +7283,9 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 //////////// In order to get the low resolution energy estimator by filtering with a 4-samples-long filter ///////////////////
                 // Pulse 
+                //cout<<"resize_mf_lowres: "<<resize_mf_lowres<<endl;
+                //cout<<"recordAux->size: "<<recordAux->size<<endl;
+                //cout<<"tstartSamplesRecord: "<<tstartSamplesRecord<<endl;
                 if (resize_mf_lowres > recordAux->size-tstartSamplesRecord)
 		{
 			sprintf(valERROR,"%d",__LINE__+5);
@@ -10453,18 +10462,21 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 {
         //cout<<"calculateEnergy0"<<endl;
         //cout<<"LowRes: "<<LowRes<<endl;
-        //cout<<"filter->size: "<<filter->size<<endl;
+        ////cout<<"filter->size: "<<filter->size<<endl;
         //cout<<"filterFFT->size: "<<filterFFT->size<<endl;
-        //cout<<"vector->size: "<<vector->size<<endl;
+        ////cout<<"vector->size: "<<vector->size<<endl;
+        //int minimo = 20;
+        ////int minimo;
+        //if (vector->size < 20) minimo = vector->size;
+        ////if (vector->size < filter->size) minimo = vector->size;
+        ////else minimo = filter->size;
         //for (int i=0;i<vector->size;i++)
-        /*int minimo = 20;
-        if (vector->size < 20) minimo = vector->size;
-        for (int i=0;i<minimo;i++)
-        {
+        ////for (int i=0;i<minimo;i++)
+        //{
             //cout<<i<<" "<<gsl_vector_get(vector,i)<<endl;
-            cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
+            ////cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
             //cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<GSL_REAL(gsl_vector_complex_get(filterFFT,i))<<"+i"<<GSL_IMAG(gsl_vector_complex_get(filterFFT,i))<<endl;
-        }*/
+        //}
         
         string message = "";
 	char valERROR[256];
