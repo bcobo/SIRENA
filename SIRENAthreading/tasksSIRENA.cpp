@@ -10461,22 +10461,19 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes)
 {
         //cout<<"calculateEnergy0"<<endl;
-        //cout<<"LowRes: "<<LowRes<<endl;
+        ////cout<<"LowRes: "<<LowRes<<endl;
         ////cout<<"filter->size: "<<filter->size<<endl;
         //cout<<"filterFFT->size: "<<filterFFT->size<<endl;
         ////cout<<"vector->size: "<<vector->size<<endl;
-        //int minimo = 20;
         ////int minimo;
-        //if (vector->size < 20) minimo = vector->size;
         ////if (vector->size < filter->size) minimo = vector->size;
-        ////else minimo = filter->size;
-        //for (int i=0;i<vector->size;i++)
+        ////else                             minimo = filter->size;                            
         ////for (int i=0;i<minimo;i++)
-        //{
+        ////{
             //cout<<i<<" "<<gsl_vector_get(vector,i)<<endl;
             ////cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
             //cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<GSL_REAL(gsl_vector_complex_get(filterFFT,i))<<"+i"<<GSL_IMAG(gsl_vector_complex_get(filterFFT,i))<<endl;
-        //}
+        ////}
         
         string message = "";
 	char valERROR[256];

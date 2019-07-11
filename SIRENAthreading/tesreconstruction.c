@@ -52,6 +52,8 @@ int tesreconstruction_main() {
     sf = det->SampleFreq;
     //printf("%s %f %s","sf: ",sf,"\n");
     
+    double sampling_rate;
+    
     char* firstchar = strndup(par.RecordFile, 1);
     char firstchar2[2];
     strcpy(firstchar2,firstchar);
@@ -109,7 +111,7 @@ int tesreconstruction_main() {
                         CHECK_STATUS_BREAK(status);
                             
                         // Pointer to where the text "sample_rate=" is in HISTORY block
-                        double sampling_rate = -999.0;
+                        sampling_rate = -999.0;
                         char * sample_rate_pointer;
                         sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    
                         if(!sample_rate_pointer)
@@ -148,7 +150,7 @@ int tesreconstruction_main() {
                         CHECK_STATUS_BREAK(status);
                         double keyvalue_double;
                         fits_read_key(fptr,TDOUBLE,"DELTAT",&keyvalue_double,NULL,&status);
-                        double sampling_rate = 1/keyvalue_double;
+                        sampling_rate = 1/keyvalue_double;
                         //printf("%s %2.10f %s","sampling_rate(2nd run): ",sampling_rate,"\n");
                         div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
                         //printf("%s %2.10f %s","div(2nd run): ",div,"\n");
@@ -179,7 +181,7 @@ int tesreconstruction_main() {
                 CHECK_STATUS_BREAK(status);
                 
                 // Pointer to where the text "sample_rate=" is in HISTORY block
-                double sampling_rate = -999.0;
+                sampling_rate = -999.0;
                 char * sample_rate_pointer;
                 sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    
                 if(!sample_rate_pointer)
@@ -207,7 +209,7 @@ int tesreconstruction_main() {
                     sampling_rate = atof(characters_after_srate);
                     //printf("%s %s %s","characters_after_srate: ",characters_after_srate,"\n");
                 }
-                //printf("%s %f %s","sampling_rate: ",sampling_rate,"\n");
+                //printf("%s %f %s","sampling_rate0: ",sampling_rate,"\n");
                 
                 div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
             }//if hdunum==8 (xifusim file)
@@ -222,7 +224,7 @@ int tesreconstruction_main() {
                 CHECK_STATUS_BREAK(status);
                 double keyvalue_double;
                 fits_read_key(fptr,TDOUBLE,"DELTAT",&keyvalue_double,NULL,&status);
-                double sampling_rate = 1/keyvalue_double;
+                sampling_rate = 1./keyvalue_double;
                 //printf("%s %2.10f %s","sampling_rate(2nd run): ",sampling_rate,"\n");
                 div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
                 //printf("%s %2.10f %s","div(2nd run): ",div,"\n");
@@ -339,6 +341,9 @@ int tesreconstruction_main() {
                     // Build up TesRecord to read the file
                     //TesRecord* record = newTesRecord(&status);
                     record = newTesRecord(&status);
+                    //printf("%s %f %s","sampling_rate00= ",sampling_rate,"\n");
+                    if (record_file->delta_t == -999) record_file->delta_t = 1./sampling_rate;
+                    //printf("%s %f %s","record_file->delta_t= ",record_file->delta_t,"\n");
                     allocateTesRecord(record,record_file->trigger_size,record_file->delta_t,0,&status);
                     CHECK_STATUS_BREAK(status);
                     
@@ -464,6 +469,7 @@ int tesreconstruction_main() {
             // Build up TesRecord to read the file
             //TesRecord* record = newTesRecord(&status);
             record = newTesRecord(&status);
+            if (record_file->delta_t == -999) record_file->delta_t = 1./sampling_rate;
             allocateTesRecord(record,record_file->trigger_size,record_file->delta_t,0,&status);
             CHECK_STATUS_BREAK(status);
 
@@ -525,11 +531,11 @@ int tesreconstruction_main() {
                             //  status=1;
                             //  CHECK_STATUS_BREAK(status);
                             //}
-                            //if(nrecord > 9)
-                            //{
-                            //	status=1;
-                            //    CHECK_STATUS_BREAK(status);
-                            //}
+                            /*if(nrecord > 1)
+                            {
+                            	status=1;
+                                CHECK_STATUS_BREAK(status);
+                            }*/
                             if ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2RALL") == 0) 
                                 || (strcmp(par.EnergyMethod,"I2RNOL") == 0) || (strcmp(par.EnergyMethod,"I2RFITTED") == 0))
                             {
