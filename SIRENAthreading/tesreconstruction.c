@@ -333,7 +333,7 @@ int tesreconstruction_main() {
                                                     par.filtEev, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter, 
                                                     par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer,par.monoenergy, 
                                                     par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, 
-                                                    par.filterFile, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
+                                                    par.filterFile, par.errorT, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
                                                     par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
                     }  
                     CHECK_STATUS_BREAK(status);
@@ -461,7 +461,7 @@ int tesreconstruction_main() {
                         par.filtEev, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter, 
                         par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer, par.monoenergy, 
                         par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, 
-                        par.filterFile, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
+                        par.filterFile, par.errorT, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
                         par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
             }  
             CHECK_STATUS_BREAK(status);
@@ -531,7 +531,7 @@ int tesreconstruction_main() {
                             //  status=1;
                             //  CHECK_STATUS_BREAK(status);
                             //}
-                            /*if(nrecord > 1)
+                            /*if(nrecord > 10)
                             {
                             	status=1;
                                 CHECK_STATUS_BREAK(status);
@@ -833,6 +833,8 @@ int getpar(struct Parameters* const par)
 	status=ape_trad_query_int("OFLength", &par->OFLength);
         
         status=ape_trad_query_int("preBuffer", &par->preBuffer);
+        
+        status=ape_trad_query_int("errorT", &par->errorT);
 
 	//status=ape_trad_query_int("tstartPulse1", &par->tstartPulse1);
         status=ape_trad_query_string("tstartPulse1", &sbuffer);

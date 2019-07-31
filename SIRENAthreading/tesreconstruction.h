@@ -148,7 +148,7 @@ struct Parameters {
         //Number of lags (odd number) **/
 	int nLags;
         
-         //Using 3 lags to analytically calculate a parabola (3) or using 5 lags to fit (5) **/
+        //Using 3 lags to analytically calculate a parabola (3) or using 5 lags to fit (5) **/
 	int Fitting35;
 
 	//OFIter: Iterate == 1 or NOTIterate == 0 **/
@@ -177,6 +177,9 @@ struct Parameters {
 	
 	// File with the output filter (only in calibration)
 	char filterFile[256];
+        
+        // Additional error (in samples) added to the detected time"  (Logically, it changes the reconstructed energies) 
+	int errorT;
 	
 	// Tstart of the pulses (to be used instead of calculating them if tstartPulse1 =! 0)
 	//int tstartPulse1;

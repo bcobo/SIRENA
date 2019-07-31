@@ -139,7 +139,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 		double nSgms, int detectSP, int opmode, char *detectionMode, double LrsT, double LbT, char* const noise_file, char* filter_domain, char* filter_method, 
 		char* energy_method, double filtEev, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
 		char* oflength_strategy, int oflength, int preBuffer,
-		double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, char* const filterFile,
+		double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, char* const filterFile, int errorT,
 		char clobber, int maxPulsesPerRecord, double SaturationValue,
 		//int tstartPulse1, int tstartPulse2, int tstartPulse3, double energyPCA1, double energyPCA2, char * const XMLFile, int* const status)
                 char* const tstartPulse1, int tstartPulse2, int tstartPulse3, double energyPCA1, double energyPCA2, char * const XMLFile, int* const status)
@@ -348,6 +348,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	strcpy(reconstruct_init->OFStrategy,oflength_strategy);
 	reconstruct_init->OFLength      = oflength;
         reconstruct_init->preBuffer      = preBuffer;
+        reconstruct_init->errorT = errorT;
 	reconstruct_init->intermediate  = interm;
 	reconstruct_init->SaturationValue  = SaturationValue;
         
@@ -2099,8 +2100,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 			{
 				int nOFs_aux;
 				nOFs_aux = nOFs-1;		// -1 because the ENERGYcolumn
-				//if (nOFs_aux == floor(log2(template_duration)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
-				if (nOFs_aux == floor(log2(template_duration - preBuffer)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
+				if (nOFs_aux == floor(log2(template_duration)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
+				//if (nOFs_aux == floor(log2(template_duration - preBuffer)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
 				else 							nOFs = (nOFs-1)/2;	// /2 because the AB column
 			}
 			else 								nOFs = (nOFs-1)/2;	// /2 because the AB column
@@ -2119,8 +2120,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 					if (i==0)	lengthALL_F = lengthALL_F + template_durationPLSMXLFF*2;
 					else		lengthALL_F = lengthALL_F + pow(2,floor(log2(template_duration))-i+1)*2;
 				}
-				//else	lengthALL_F = lengthALL_F + pow(2,floor(log2(template_duration))-i)*2;
-                                else	lengthALL_F = lengthALL_F + (pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer)*2;
+				else	lengthALL_F = lengthALL_F + pow(2,floor(log2(template_duration))-i)*2;
+                                //else	lengthALL_F = lengthALL_F + (pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer)*2;
 			}
 						
 			strcpy(obj.nameTable,"FIXFILTF");
@@ -2147,10 +2148,10 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 					}
 					else
 					{
-						//snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
-                                                //matrixAux_OFFx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i)*2);
-                                                snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)) + preBuffer);
-						matrixAux_OFFx = gsl_matrix_alloc(ntemplates,(pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer)*2);
+						snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
+                                                matrixAux_OFFx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i)*2);
+                                                //snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)) + preBuffer);
+						//matrixAux_OFFx = gsl_matrix_alloc(ntemplates,(pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer)*2);
 					}
 					strcpy(obj.nameCol,(string("F")+string(str_length)).c_str());
 					if (readFitsComplex (obj,&matrixAux_OFFx))
@@ -2171,8 +2172,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 						if (i==0)	index = index + template_durationPLSMXLFF*2;
 						else 		index = index + pow(2,floor(log2(template_duration))-i+1)*2;
 					}
-					//else    index = index + pow(2,floor(log2(template_duration))-i)*2;
-					else    index = index + (pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer)*2;
+					else    index = index + pow(2,floor(log2(template_duration))-i)*2;
+					//else    index = index + (pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer)*2;
 						
 					gsl_matrix_free(matrixAux_OFFx);
 				}
@@ -2270,8 +2271,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 			{
 				  int nOFs_aux;
 				  nOFs_aux = nOFs-1;		// -1 because the ENERGYcolumn
-				  //if (nOFs_aux == floor(log2(template_duration)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
-				  if (nOFs_aux == floor(log2(template_duration - preBuffer)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
+				  if (nOFs_aux == floor(log2(template_duration)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
+				  //if (nOFs_aux == floor(log2(template_duration - preBuffer)))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
 				  else 								nOFs = (nOFs-1)/2;	// /2 because the AB column
 			}
 			else	  nOFs = (nOFs-1)/2;	// /2 because the AB column
@@ -2290,10 +2291,10 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 					if (i==0)	lengthALL_T = lengthALL_T + template_durationPLSMXLFF;
 					else  		lengthALL_T = lengthALL_T + pow(2,floor(log2(template_duration))-i+1);
 				}
-				//else    lengthALL_T = lengthALL_T + pow(2,floor(log2(template_duration))-i);
 				else    
                                 {
-                                        lengthALL_T = lengthALL_T + pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer;
+                                        lengthALL_T = lengthALL_T + pow(2,floor(log2(template_duration))-i);
+                                        //lengthALL_T = lengthALL_T + pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer;
                                 }
 			}
 		
@@ -2321,10 +2322,10 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 					}
 					else
 					{
-						//snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
-						//matrixAux_OFTx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i));
-                                                snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer));
-						matrixAux_OFTx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer);
+						snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
+						matrixAux_OFTx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i));
+                                                //snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer));
+						//matrixAux_OFTx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration - preBuffer))-i) + preBuffer);
 					}
 					strcpy(obj.nameCol,(string("T")+string(str_length)).c_str());
                                         //cout<<"obj.nameCol: "<<obj.nameCol<<endl;
@@ -2347,8 +2348,8 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 						if (i==0)	index = index + template_durationPLSMXLFF;
 						else		index = index + pow(2,floor(log2(template_duration))-i+1);
 					}
-					//else    index = index + pow(2,floor(log2(template_duration))-i);
-					else    index = index + pow(2,floor(log2(template_duration -preBuffer))-i) + preBuffer;
+					else    index = index + pow(2,floor(log2(template_duration))-i);
+					//else    index = index + pow(2,floor(log2(template_duration -preBuffer))-i) + preBuffer;
 					
 					gsl_matrix_free(matrixAux_OFTx);
 				}
@@ -2900,6 +2901,7 @@ ReconstructInitSIRENA::ReconstructInitSIRENA():
   LagsOrNot(0),
   nLags(0),
   Fitting35(0),
+  errorT(0),
   OFIter(0),
   OFLib(0),
   //OFInterp(""),
@@ -2956,6 +2958,7 @@ ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other)
   LagsOrNot(other.LagsOrNot),
   nLags(other.nLags),
   Fitting35(other.Fitting35),
+  errorT(other.errorT),
   OFIter(other.OFIter),
   OFLib(other.OFLib),
   //OFInterp(""),
@@ -3095,6 +3098,7 @@ ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
 
     OFLength = other.OFLength;
     preBuffer = other.preBuffer;
+    errorT = other.errorT;
     intermediate = other.intermediate;
     
     strcpy(detectFile, other.detectFile);
@@ -3214,6 +3218,7 @@ ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object(int n_record)
     
   ret->OFLength = this->OFLength;
   ret->preBuffer = this->preBuffer;
+  ret->errorT = this->errorT;
   ret->intermediate = this->intermediate;
   
   strcpy(ret->detectFile, this->detectFile);

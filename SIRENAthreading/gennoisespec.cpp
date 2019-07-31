@@ -200,55 +200,6 @@ int main (int argc, char **argv)
                         }
                 }
         }
-	/*strcpy(extname,"RECORDS");
-        fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
-        cout<<"status0: "<<status<<endl;
-        if (status != 0)
-        {
-                status = 0;
-                strcpy(extname,"TESRECORDS");
-                fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status);
-                cout<<"status1: "<<status<<endl;
-        }
-        if (status != 0)
-        {
-                cout<<"status!=0"<<endl;
-                status = 0;
-                strcpy(extname,"ADCPARAM");
-                if (fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status))
-                {
-                    message = "Cannot move to HDU " + string(extname) + " in " + string(infileName);
-                    EP_EXIT_ERROR(message,status);
-                }
-                strcpy(keyname,"IMIN");
-                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
-                {
-                    message = "Cannot read keyword " + string(keyname) + " in input file";
-                    EP_PRINT_ERROR(message,status); return(EPFAIL);
-                }
-                strcpy(keyname,"IMAX");
-                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
-                {
-                    message = "Cannot read keyword " + string(keyname) + " in input file";
-                    EP_PRINT_ERROR(message,status); return(EPFAIL);
-                }
-        }
-        else
-        {
-                cout<<"status=0"<<endl;
-                strcpy(keyname,"IMIN");
-                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,NULL,&status))
-                {
-                    message = "Cannot read keyword " + string(keyname) + " in input file";
-                    EP_PRINT_ERROR(message,status); return(EPFAIL);
-                }
-                strcpy(keyname,"IMAX");
-                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,NULL,&status))
-                {
-                    message = "Cannot read keyword " + string(keyname) + " in input file";
-                    EP_PRINT_ERROR(message,status); return(EPFAIL);
-                }
-        }*/
         //cout<<"IMIN: "<<Imin<<endl;
         //cout<<"IMAX: "<<Imax<<endl;
 	
