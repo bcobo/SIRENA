@@ -333,7 +333,7 @@ int tesreconstruction_main() {
                                                     par.filtEev, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter, 
                                                     par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer,par.monoenergy, 
                                                     par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, 
-                                                    par.filterFile, par.errorT, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
+                                                    par.filterFile, par.errorT, par.Sum0Filt, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
                                                     par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
                     }  
                     CHECK_STATUS_BREAK(status);
@@ -461,7 +461,7 @@ int tesreconstruction_main() {
                         par.filtEev, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter, 
                         par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer, par.monoenergy, 
                         par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, 
-                        par.filterFile, par.errorT, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
+                        par.filterFile, par.errorT, par.Sum0Filt, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
                         par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
             }  
             CHECK_STATUS_BREAK(status);
@@ -835,6 +835,8 @@ int getpar(struct Parameters* const par)
         status=ape_trad_query_int("preBuffer", &par->preBuffer);
         
         status=ape_trad_query_int("errorT", &par->errorT);
+        
+        status=ape_trad_query_int("Sum0Filt", &par->Sum0Filt);
 
 	//status=ape_trad_query_int("tstartPulse1", &par->tstartPulse1);
         status=ape_trad_query_string("tstartPulse1", &sbuffer);
@@ -912,6 +914,8 @@ int getpar(struct Parameters* const par)
                 SIXT_ERROR("parameter error: nLags must be at least 5");
 		return(EXIT_FAILURE);
         }
+        
+        MyAssert((par->Sum0Filt ==0) || (par->Sum0Filt ==1), "Sum0Filt must be 0 or 1");
 
 	if (((strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0)) && (par->LagsOrNot == 1))
 	{

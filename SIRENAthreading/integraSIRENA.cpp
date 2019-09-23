@@ -140,6 +140,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 		char* energy_method, double filtEev, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
 		char* oflength_strategy, int oflength, int preBuffer,
 		double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, char* const filterFile, int errorT,
+                int Sum0Filt,
 		char clobber, int maxPulsesPerRecord, double SaturationValue,
 		//int tstartPulse1, int tstartPulse2, int tstartPulse3, double energyPCA1, double energyPCA2, char * const XMLFile, int* const status)
                 char* const tstartPulse1, int tstartPulse2, int tstartPulse3, double energyPCA1, double energyPCA2, char * const XMLFile, int* const status)
@@ -349,6 +350,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	reconstruct_init->OFLength      = oflength;
         reconstruct_init->preBuffer      = preBuffer;
         reconstruct_init->errorT = errorT;
+        reconstruct_init->Sum0Filt = Sum0Filt;
 	reconstruct_init->intermediate  = interm;
 	reconstruct_init->SaturationValue  = SaturationValue;
         
@@ -2902,6 +2904,7 @@ ReconstructInitSIRENA::ReconstructInitSIRENA():
   nLags(0),
   Fitting35(0),
   errorT(0),
+  Sum0Filt(0),
   OFIter(0),
   OFLib(0),
   //OFInterp(""),
@@ -2959,6 +2962,7 @@ ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other)
   nLags(other.nLags),
   Fitting35(other.Fitting35),
   errorT(other.errorT),
+  Sum0Filt(other.Sum0Filt),
   OFIter(other.OFIter),
   OFLib(other.OFLib),
   //OFInterp(""),
@@ -3099,6 +3103,7 @@ ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
     OFLength = other.OFLength;
     preBuffer = other.preBuffer;
     errorT = other.errorT;
+    Sum0Filt = other.Sum0Filt;
     intermediate = other.intermediate;
     
     strcpy(detectFile, other.detectFile);
@@ -3219,6 +3224,7 @@ ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object(int n_record)
   ret->OFLength = this->OFLength;
   ret->preBuffer = this->preBuffer;
   ret->errorT = this->errorT;
+  ret->Sum0Filt = this->Sum0Filt;
   ret->intermediate = this->intermediate;
   
   strcpy(ret->detectFile, this->detectFile);

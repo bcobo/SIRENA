@@ -180,6 +180,9 @@ struct Parameters {
         
         // Additional error (in samples) added to the detected time"  (Logically, it changes the reconstructed energies) 
 	int errorT;
+        
+        //Sum0Filt: 0-padding: Subtract the sum of the filter (1) or not (0) **/
+	int Sum0Filt;
 	
 	// Tstart of the pulses (to be used instead of calculating them if tstartPulse1 =! 0)
 	//int tstartPulse1;

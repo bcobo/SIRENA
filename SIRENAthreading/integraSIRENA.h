@@ -528,6 +528,9 @@ typedef struct ReconstructInitSIRENA
   //Additional error (in samples) added to the detected time"  (Logically, it changes the reconstructed energies) 
   int errorT;
   
+  //Sum0Filt: 0-padding: Subtract the sum of the filter (1) or not (0) **/
+  int Sum0Filt;
+  
   /** Overwrite files? **/
   int clobber;
   
@@ -618,7 +621,7 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     double monoenergy, char hduPRECALWN, 
                                     char hduPRCLOFWM, int largeFilter, 
                                     int interm, char* detectFile, 
-                                    char* filterFile, int errorT, char clobber, 
+                                    char* filterFile, int errorT, int Sum0Filt, char clobber, 
                                     int maxPulsesPerRecord, 
                                     double SaturationValue,
                                     //int tstartPulse1, int tstartPulse2, 
