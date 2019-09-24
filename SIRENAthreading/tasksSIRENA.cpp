@@ -8208,7 +8208,8 @@ void th_runEnergy(TesRecord* record,
         gsl_vector *pulse_lowres;
         if ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength)
         {
-            resize_mf_lowres = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration; 
+            //resize_mf_lowres = (*reconstruct_init)->library_collection->pulse_templates[0].template_duration; 
+            resize_mf_lowres = 4; 
         }
         else
         {
@@ -8415,11 +8416,13 @@ void th_runEnergy(TesRecord* record,
                             {
                                 if (tstartSamplesRecordStartDOUBLE+resize_mf+numlags -1 <= recordAux->size)
                                 {
-                                    resize_mfNEW = (*reconstruct_init)->OFLength + numlags -1;
+                                    //resize_mfNEW = (*reconstruct_init)->OFLength + numlags -1;
+                                    resize_mfNEW = resize_mf + numlags -1;
                                 }
                                 else
                                 {
-                                    resize_mfNEW = (*reconstruct_init)->OFLength + numlags/2;
+                                    //resize_mfNEW = (*reconstruct_init)->OFLength + numlags/2;
+                                    resize_mfNEW = resize_mf + numlags/2;
                                 }
                             }
                             else                   // NO 0-padding (or preBuffer or normal)
@@ -8462,7 +8465,7 @@ void th_runEnergy(TesRecord* record,
 			if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
                         {
                             //if (preBuffer == 0)
-                            if ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) // 0-padding
+                            /*if ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) // 0-padding
                             {
                                     gsl_vector *vectoraux = gsl_vector_alloc(resize_mfNEW);
                                     gsl_vector_memcpy(vectoraux,&temp.vector);
@@ -8474,13 +8477,13 @@ void th_runEnergy(TesRecord* record,
                                     {
                                         gsl_vector_set(pulseToCalculateEnergy,k,gsl_vector_get(vectoraux,k));
                                     }
-                                    /*cout<<"puls0Padding: "<<endl;
-                                    for (int k=0;k<pulseToCalculateEnergy->size;k++)    cout<<k<<" "<<gsl_vector_get(pulseToCalculateEnergy,k)<<endl;*/
+                                    //cout<<"puls0Padding: "<<endl;
+                                    //for (int k=0;k<pulseToCalculateEnergy->size;k++)    cout<<k<<" "<<gsl_vector_get(pulseToCalculateEnergy,k)<<endl;
                                     
                                     gsl_vector_free(vectoraux); vectoraux = 0;
                             }
                             else    // preBuffer
-                            {
+                            {*/
                                     if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
                                     {
                                             sprintf(valERROR,"%d",__LINE__-2);
@@ -8490,7 +8493,7 @@ void th_runEnergy(TesRecord* record,
                                     }
                                     /*cout<<"pulsepreBuffer: "<<endl;
                                     for (int k=0;k<pulseToCalculateEnergy->size;k++)    cout<<k<<" "<<gsl_vector_get(pulseToCalculateEnergy,k)<<endl;*/
-                            }
+                            //}
                         }
                         else    // Normal (without 0-padding nor preBuffer)
                         {
@@ -8590,6 +8593,12 @@ void th_runEnergy(TesRecord* record,
 					// It is not necessary to check the allocation because '(*reconstruct_init)->pulse_length'='PulseLength'(input parameter) has been checked previously
 					if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		filtergsl= gsl_vector_alloc(resize_mf);
 					else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)	filtergsl= gsl_vector_alloc(resize_mf*2);
+                                        
+                                        if ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) // 0-padding 
+                                        {
+                                                filtergsl = gsl_vector_alloc(8192);
+                                        }
+                                        
 					Pab = gsl_vector_alloc(resize_mf);
 					if (numiteration == 0)
 					{
@@ -10711,7 +10720,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 					//if ((pulseGrade == 4) || (LagsOrNot == 0))	*calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,0);
 					if (LagsOrNot == 0)   
                                         {
-                                                for (int i=0;i<filter->size;i++)
+                                                //for (int i=0;i<filter->size;i++)
+                                                for (int i=0;i<productSize;i++)
                                                 {
                                                     gsl_vector_set(calculatedEnergy_vector,0,gsl_vector_get(calculatedEnergy_vector,0)+gsl_vector_get(vector,i+0)*gsl_vector_get(filter,i));
                                                     //cout<<i<<" "<<gsl_vector_get(vector,i+0)<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(vector,i+0)*gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,0)<<endl;
@@ -10852,7 +10862,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     //cout<<"Fitting"<<endl;
                                                     for (int j=0;j<numlags;j++)
                                                     {
-                                                            for (int i=0;i<filter->size;i++)
+                                                            //for (int i=0;i<filter->size;i++)
+                                                            for (int i=0;i<productSize;i++)
                                                             {
                                                                     gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-2)*gsl_vector_get(filter,i));
                                                             }
@@ -10905,7 +10916,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                             //cout<<"newLag= "<<newLag<<endl;
                                                             
                                                             newEnergy = 0.0;
-                                                            for (int k=0;k<filter->size;k++)
+                                                            //for (int k=0;k<filter->size;k++)
+                                                            for (int i=0;i<productSize;i++)
                                                             {
                                                                 newEnergy = newEnergy + gsl_vector_get(vector,(reconstruct_init->nLags)/2+newLag+k)*gsl_vector_get(filter,k);
                                                                 //cout<<k<<" "<<gsl_vector_get(vector,k+5)<<" "<<gsl_vector_get(filter,k)<<" "<<newEnergy<<endl;
