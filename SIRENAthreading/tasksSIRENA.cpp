@@ -10917,7 +10917,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                             
                                                             newEnergy = 0.0;
                                                             //for (int k=0;k<filter->size;k++)
-                                                            for (int i=0;i<productSize;i++)
+                                                            for (int k=0;k<productSize;k++)
                                                             {
                                                                 newEnergy = newEnergy + gsl_vector_get(vector,(reconstruct_init->nLags)/2+newLag+k)*gsl_vector_get(filter,k);
                                                                 //cout<<k<<" "<<gsl_vector_get(vector,k+5)<<" "<<gsl_vector_get(filter,k)<<" "<<newEnergy<<endl;
