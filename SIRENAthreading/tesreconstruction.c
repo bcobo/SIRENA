@@ -545,6 +545,10 @@ int tesreconstruction_main() {
                             //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
                             reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
                                                     lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
+                            /*print(("%s %f %s","record_time= ",record->time,"\n");
+                            print(("%s %d %s","record_pixid= ",record->pixid,"\n");
+                            print(("%s %d %s","numpulsesrecord= ",events_list->energies_>size,"\n");
+                            print(("%s %f %s","event_list->energies= ",events_list->energies[0],"\n");*/
                     }
                     CHECK_STATUS_BREAK(status);
 
@@ -917,9 +921,10 @@ int getpar(struct Parameters* const par)
         
         MyAssert((par->Sum0Filt ==0) || (par->Sum0Filt ==1), "Sum0Filt must be 0 or 1");
 
-	if (((strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0)) && (par->LagsOrNot == 1))
+	//if (((strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0)) && (par->LagsOrNot == 1))
+        if ((strcmp(par->EnergyMethod,"WEIGHT") == 0) && (par->LagsOrNot == 1))
 	{
-		SIXT_ERROR("parameter error: EnergyMethod=WEIGHT/WEIGHTN and Lags not implemented yet");
+		SIXT_ERROR("parameter error: EnergyMethod=WEIGHT and Lags not implemented yet");
 		return(EXIT_FAILURE);
 	}
 	

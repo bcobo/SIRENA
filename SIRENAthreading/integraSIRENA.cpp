@@ -210,9 +210,10 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
                 
                 || (((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) 
 		|| (strcmp(energy_method,"I2RFITTED") == 0)) && (opmode == 1) && (oflib == 0))
-                
-		|| ((opmode == 1) && (strcmp(energy_method,"WEIGHT") == 0))
-		|| ((opmode == 1) && (strcmp(energy_method,"WEIGHTN") == 0))) 
+                //|| ((opmode == 1) && (strcmp(energy_method,"WEIGHT") == 0))
+		//|| ((opmode == 1) && (strcmp(energy_method,"WEIGHTN") == 0))) 
+		|| ((opmode == 1) && (strcmp(energy_method,"WEIGHT") == 0) && (oflib == 0))
+		|| ((opmode == 1) && (strcmp(energy_method,"WEIGHTN") == 0) && (oflib == 0))) 
 	{
 		exists=0;
 		if(fits_file_exists(noise_file, &exists, status))

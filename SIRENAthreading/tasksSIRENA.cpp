@@ -7410,7 +7410,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 			pulseToCalculateEnergy = gsl_vector_alloc(pulse->size);
 			gsl_vector_memcpy(pulseToCalculateEnergy,pulse);
 		}
-		else if (((*reconstruct_init)->LagsOrNot == 1) && (strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0))
+		//else if (((*reconstruct_init)->LagsOrNot == 1) && (strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0))
+		//else if (((*reconstruct_init)->LagsOrNot == 1) && ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"WEIGHTN"))))
 		{
                         //cout<<"resize_mf: "<<resize_mf<<endl;
                         //int resize_mfNEW;
@@ -7475,72 +7476,16 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 				message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
 				EP_EXIT_ERROR(message,EPFAIL); 
 			}
-                        
-                        //temp = gsl_vector_subvector(recordAux,tstartSamplesRecordStartDOUBLE,resize_mfNEW);
                         temp = gsl_vector_subvector(recordAux,tstartSamplesRecordStartDOUBLE-preBuffer,resize_mfNEW);
                         //cout<<"Paso3"<<endl;
                         
-                        //if ((strcmp((*reconstruct_init)->OFNoise,"NSD") == 0) && ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength))
-                        if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
+                        if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
                         {
-                            //if (preBuffer == 0)
-                            /*if ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) // 0-padding
-                            {
-                                    cout<<"Paso4"<<endl;
-                                    gsl_vector *vectoraux = gsl_vector_alloc(resize_mfNEW);
-                                    gsl_vector_memcpy(vectoraux,&temp.vector);
-                                    cout<<"Paso4_1"<<endl;
-                                    
-                                    //gsl_vector_set_all(pulseToCalculateEnergy,gsl_vector_get(recordAux,tstartSamplesRecordStartDOUBLE));
-                                    gsl_vector_set_all(pulseToCalculateEnergy,0.0);
-                                    
-                                    //for (int k=0;k<(*reconstruct_init)->pulse_length+numlags-1;k++)
-                                    for (int k=0;k<resize_mfNEW;k++)
-                                    {
-                                        gsl_vector_set(pulseToCalculateEnergy,k,gsl_vector_get(vectoraux,k));
-                                        if (k<10) cout<<gsl_vector_get(pulseToCalculateEnergy,k)<<endl;
-                                    }
-                                    cout<<"Paso4_2"<<endl;
-                                    //cout<<"puls0Padding: "<<endl;
-                                    //for (int k=0;k<pulseToCalculateEnergy->size;k++)    cout<<k<<" "<<gsl_vector_get(pulseToCalculateEnergy,k)<<endl;
-                                    
-                                    gsl_vector_free(vectoraux); vectoraux = 0;
-                                    cout<<"Paso5"<<endl;
-                            }
-                            else    // preBuffer
-                            {*/
-                                    if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
-                                    {
-                                            sprintf(valERROR,"%d",__LINE__-2);
-                                            string str(valERROR);	
-                                            message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
-                                            EP_EXIT_ERROR(message,EPFAIL);
-                                    }
-                                    /*cout<<"pulsepreBuffer: "<<endl;
-                                    for (int k=0;k<pulseToCalculateEnergy->size;k++)    cout<<k<<" "<<gsl_vector_get(pulseToCalculateEnergy,k)<<endl;*/
-                            //}
+                            sprintf(valERROR,"%d",__LINE__-2);
+                            string str(valERROR);	
+                            message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+                            EP_EXIT_ERROR(message,EPFAIL);
                         }
-                        else    // Normal (without 0-padding nor preBuffer)
-                        {
-                            if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
-                            {
-                                    sprintf(valERROR,"%d",__LINE__-2);
-                                    string str(valERROR);	
-                                    message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
-                                    EP_EXIT_ERROR(message,EPFAIL);
-                            }
-                            
-                            /*cout<<"pulseSIN0padding: "<<endl;
-                            for (int k=0;k<pulseToCalculateEnergy->size;k++)    cout<<k<<" "<<gsl_vector_get(pulseToCalculateEnergy,k)<<endl;*/
-                        }
-                        
-			/*if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
-			{
-				sprintf(valERROR,"%d",__LINE__-2);
-				string str(valERROR);	
-				message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
-				EP_EXIT_ERROR(message,EPFAIL);
-			}*/
                         
 			extraSizeDueToLags = numlags-1;
 		}
@@ -7756,15 +7701,63 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 				
 				if ((strcmp((*reconstruct_init)->EnergyMethod,"WEIGHTN") == 0) && ((*reconstruct_init)->OFLib == 1))
 				{
+                                        /*if (tstartSamplesRecordStartDOUBLE+resize_mf+numlags -1 <= recordAux->size)
+                                        {
+                                            //resize_mfNEW = (*reconstruct_init)->OFLength + numlags -1;
+                                            resize_mfNEW = resize_mf + numlags -1;
+                                        }
+                                        else
+                                        {
+                                            //resize_mfNEW = (*reconstruct_init)->OFLength + numlags/2;
+                                            resize_mfNEW = resize_mf + numlags/2;
+                                        }*/
+                                        //cout<<"resize_mf: "<<resize_mf<<endl;
+                                        
+                                        if (tstartSamplesRecordStartDOUBLE+resize_mf+numlags -1 <= recordAux->size)
+                                        {
+                                            //resize_mfNEW = (*reconstruct_init)->OFLength + numlags -1;
+                                            resize_mfNEW = resize_mf + numlags -1;
+                                        }
+                                        else
+                                        {
+                                            //resize_mfNEW = (*reconstruct_init)->OFLength + numlags/2;
+                                            resize_mfNEW = resize_mf + numlags/2;
+                                        }
+                                        if ((pulseToCalculateEnergy = gsl_vector_alloc(resize_mfNEW)) == 0)
+                                        {
+                                                sprintf(valERROR,"%d",__LINE__-2);
+                                                string str(valERROR);
+                                                message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+                                                EP_EXIT_ERROR(message,EPFAIL);
+                                        }
+                                        gsl_vector_set_all(pulseToCalculateEnergy,-999);                                        
+                                        if ((tstartSamplesRecordStartDOUBLE < 0) || (tstartSamplesRecordStartDOUBLE > recordAux->size-2)
+                                                || (resize_mfNEW < 1))
+                                        {
+                                                sprintf(valERROR,"%d",__LINE__+5);
+                                                string str(valERROR);
+                                                message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
+                                                EP_EXIT_ERROR(message,EPFAIL); 
+                                        }
+                                        temp = gsl_vector_subvector(recordAux,tstartSamplesRecordStartDOUBLE,resize_mfNEW);
+                                        if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
+                                        {
+                                                sprintf(valERROR,"%d",__LINE__-2);
+                                                string str(valERROR);	
+                                                message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+                                                EP_EXIT_ERROR(message,EPFAIL);
+                                        }
+                                        extraSizeDueToLags = numlags-1;
+                                        
 					// Choose the base-2 system value closest (lower than or equal) to the pulse length
 					if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0)
 					{
 						resize_mf = pow(2,floor(log2(resize_mf)));
-						gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf);
-						temp = gsl_vector_subvector(pulseToCalculateEnergy,0,resize_mf);
+						gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
+						temp = gsl_vector_subvector(pulseToCalculateEnergy,0,resize_mf+extraSizeDueToLags);
 						gsl_vector_memcpy(pulse_aux,&temp.vector);
 						gsl_vector_free(pulseToCalculateEnergy);
-						pulseToCalculateEnergy = gsl_vector_alloc(resize_mf);
+						pulseToCalculateEnergy = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
 						gsl_vector_memcpy(pulseToCalculateEnergy,pulse_aux);
 						gsl_vector_free(pulse_aux); pulse_aux = 0;
 					}
@@ -11629,14 +11622,20 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 			}
 			else if (reconstruct_init->OFLib == 1)
 			{
+                                //cout<<"WEIGHTN+oflib=1"<<endl;
                                 // It is not necessary to check the allocation because 'vector' size must already be > 0 and 'reconstruct_init->pulse_length'=PulseLength(input parameter) has been checked previously
-                                gsl_vector *P_Pab = gsl_vector_alloc(vector->size);
+                                //gsl_vector *P_Pab = gsl_vector_alloc(vector->size);
+                                gsl_vector *P_Pab;
                                 // It is not necessary to check the allocation because 'vector' size must already be > 0
-                                gsl_vector *Pab_short = gsl_vector_alloc(vector->size);
+                                //gsl_vector *Pab_short = gsl_vector_alloc(vector->size);
+                                gsl_vector *Pab_short;
                                 gsl_vector_view temp;
                                         
                                 if (LagsOrNot = 0)
                                 {
+                                        P_Pab = gsl_vector_alloc(vector->size);
+                                        Pab_short = gsl_vector_alloc(vector->size);
+                                        
 				        gsl_vector_memcpy(P_Pab,vector);      
                                  
                                         temp = gsl_vector_subvector(Pab,0,vector->size);
@@ -11657,6 +11656,147 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                 }
                                 else
                                 {
+                                        P_Pab = gsl_vector_alloc(productSize);
+                                        Pab_short = gsl_vector_alloc(productSize);
+                                        gsl_vector *EB = gsl_vector_alloc(2);
+                                        gsl_vector *calculatedEnergy_vector = gsl_vector_alloc(numlags);
+                                        
+                                        gsl_vector *lags_vector;
+                                        double a,b,c;
+                                        double xmax;
+                                        double calculatedEnergy_Nolags;
+                                        bool maxParabolaFound = false;
+
+                                        
+                                        lags_vector = gsl_vector_alloc(numlags);
+                                        for (int i=0;i<numlags;i++)
+                                        {
+                                            gsl_vector_set(lags_vector,i,-numlags/2+i);
+                                        }
+                                        
+                                        for (int i=0;i<numlags;i++)
+                                        {
+                                                temp = gsl_vector_subvector(vector,(reconstruct_init->nLags)/2+i-1,productSize);
+                                                gsl_vector_memcpy(P_Pab,&temp.vector);
+                                                //for (int j=0;j<10;j++)  cout<<gsl_vector_get(P_Pab,j)<<endl;
+                                                
+                                                temp = gsl_vector_subvector(Pab,0,productSize);
+                                                gsl_vector_memcpy(Pab_short,&temp.vector);
+                                                gsl_vector_sub(P_Pab,Pab_short);
+                                                
+                                                gsl_blas_dgemv(CblasNoTrans,1.0,PRCLWN,P_Pab,0.0,EB); 
+                                                gsl_vector_set(calculatedEnergy_vector,i,gsl_vector_get(EB,0));
+                                                //cout<<"calculatedEnergy_vector("<<i<<"): "<<gsl_vector_get(calculatedEnergy_vector,i)<<endl;
+                                        }
+                                        
+                                        int indexmax; 
+                                        int indexLags = 0;
+                                        int newLag = 0;
+                                        bool exitLags = false;
+                                        double newEnergy;
+                                        
+                                        indexmax = gsl_vector_max_index(calculatedEnergy_vector);
+                                        //cout<<"indexmax: "<<indexmax<<endl;
+                                                
+                                        if (parabola3Pts (lags_vector, calculatedEnergy_vector, &a, &b, &c))
+                                        {
+                                            message = "Cannot run routine parabola3Pts";
+                                            EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                                        }
+                                        xmax = -b/(2*a);
+                                        calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
+                                        //cout<<"xmax0: "<<xmax<<endl;
+                                        
+                                        if ((xmax >= -1) && (xmax <= 1)) maxParabolaFound = true;
+                                        
+                                        if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
+                                        // With the CBE pixel (LPA75um) it has no sense to look for a parabola if filter_size<512
+                                        {
+                                                do
+                                                {  
+                                                        indexLags = indexLags + 1;
+                                                        if (indexmax == 0)  
+                                                        {      
+                                                            newLag = gsl_vector_get(lags_vector,0)-indexLags;
+                                                            gsl_vector_set(calculatedEnergy_vector,2,gsl_vector_get(calculatedEnergy_vector,1));
+                                                            gsl_vector_set(calculatedEnergy_vector,1,gsl_vector_get(calculatedEnergy_vector,0));
+                                                                
+                                                            *lagsShift = *lagsShift - 1;
+                                                        }
+                                                        else    
+                                                        {
+                                                            newLag = gsl_vector_get(lags_vector,2)+indexLags;
+                                                            gsl_vector_set(calculatedEnergy_vector,0,gsl_vector_get(calculatedEnergy_vector,1));
+                                                            gsl_vector_set(calculatedEnergy_vector,1,gsl_vector_get(calculatedEnergy_vector,2));
+                                                                
+                                                            *lagsShift = *lagsShift + 1;
+                                                        }
+                                                        //cout<<"newLag= "<<newLag<<endl;
+                                                        //cout<<"(reconstruct_init->nLags)/2+newLag= "<<(reconstruct_init->nLags)/2+newLag<<endl;
+                                                            
+                                                        temp = gsl_vector_subvector(vector,(reconstruct_init->nLags)/2+newLag,productSize);
+                                                        gsl_vector_memcpy(P_Pab,&temp.vector);
+                                                                                                    
+                                                        temp = gsl_vector_subvector(Pab,0,productSize);
+                                                        gsl_vector_memcpy(Pab_short,&temp.vector);
+                                                        gsl_vector_sub(P_Pab,Pab_short);
+                                                
+                                                        gsl_blas_dgemv(CblasNoTrans,1.0,PRCLWN,P_Pab,0.0,EB);
+                                                        newEnergy = gsl_vector_get(EB,0);
+                                                        //cout<<"newEnergy: "<<newEnergy<<endl;
+                                                                                                                 
+                                                        if (indexmax == 0)
+                                                        {
+                                                            gsl_vector_set(calculatedEnergy_vector,0,newEnergy);
+                                                        }
+                                                        else if (indexmax == 2)
+                                                        {
+                                                            gsl_vector_set(calculatedEnergy_vector,2,newEnergy);
+                                                        }
+                                                            
+                                                        /*std::cout << std::setprecision(17) <<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,0) << '\n';
+                                                        std::cout << std::setprecision(17) <<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,1) << '\n';
+                                                        std::cout << std::setprecision(17) <<gsl_vector_get(lags_vector,2)<<" "<<gsl_vector_get(calculatedEnergy_vector,2) << '\n';*/
+                                                            
+                                                        if (parabola3Pts (lags_vector, calculatedEnergy_vector, &a, &b, &c))
+                                                        {
+                                                            message = "Cannot run routine parabola3Pts";
+                                                            EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                                                        }
+                                                        xmax = -b/(2*a);
+                                                            
+                                                        if ((xmax >= -1) && (xmax <= 1))      
+                                                        {
+                                                            exitLags = true;
+                                                            maxParabolaFound = true;
+                                                        }
+                                                        else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector);
+                                                        /*cout<<"xmax: "<<xmax<<endl;
+                                                        cout<<"maxParabolaFound: "<<maxParabolaFound<<endl;
+                                                        cout<<"exitLags: "<<exitLags<<endl;
+                                                        cout<<"indexLags: "<<indexLags<<" limite="<<(reconstruct_init->nLags)/2-1<<endl;*/
+                                                            
+                                                } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
+                                        
+                                        }
+                                        if (maxParabolaFound == true)
+                                        {
+                                            *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
+                                            *tstartNewDev = xmax;
+                                        }
+                                        else 
+                                        {
+                                            *calculatedEnergy = calculatedEnergy_Nolags;
+                                            *tstartNewDev = 0;
+                                            *lagsShift = 0;
+                                        }
+                                        //cout<<"*calculatedEnergy: "<<*calculatedEnergy<<endl;
+                                        
+                                        gsl_vector_free(lags_vector); lags_vector = 0;
+                                        gsl_vector_free(Pab_short); Pab_short = 0;
+                                        gsl_vector_free(P_Pab); P_Pab = 0;
+                                        gsl_vector_free(EB); EB = 0;
+                                        gsl_vector_free(calculatedEnergy_vector); calculatedEnergy_vector = 0;
                                 }
 				
 				/*// It is not necessary to check the allocation because 'vector' size must already be > 0 and 'reconstruct_init->pulse_length'=PulseLength(input parameter) has been checked previously
