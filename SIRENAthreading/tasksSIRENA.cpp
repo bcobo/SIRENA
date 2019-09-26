@@ -7929,8 +7929,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         }
 			
                         //cout<<"Paso4"<<endl;
+                        //cout<<"resize_mf2: "<<resize_mf<<endl;
 			// Calculate the energy of each pulse
-                        
 			if (calculateEnergy(pulseToCalculateEnergy,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
 			{
 				message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
@@ -10460,7 +10460,16 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 	
 	// pulseGrade and OF length
         if (OFlength_strategy == 0)		*OFlength = grade1;
-        else if (OFlength_strategy == 1) 	*OFlength = pow(2,floor(log2(grade1)));
+        else if (OFlength_strategy == 1) 	
+        {
+            *OFlength = pow(2,floor(log2(grade1)));
+            //cout<<"OFlength0: "<<*OFlength<<endl;
+            if (*OFlength <= 64) 
+            {
+                *OFlength = 4;
+                //cout<<"OFlength1: "<<*OFlength<<endl;
+            }
+        }
         else if (OFlength_strategy == 3)
         {
                 *OFlength = min(reconstruct_init->OFLength,grade1);
