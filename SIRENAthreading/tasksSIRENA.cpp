@@ -241,7 +241,7 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 	
 	//cout<<"pulsesAll->ndetpulses: "<<pulsesAll->ndetpulses<<endl;
 	// Process each record
-	if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, *pulsesInRecord, pulsesAll->ndetpulses))
+	if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid))
 	{
 		message = "Cannot run routine procRecord for record processing";
 		EP_EXIT_ERROR(message,EPFAIL);
@@ -871,7 +871,7 @@ void th_runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll
   // Process each record
   // thread safe
   if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, 
-                 invector, *pulsesInRecord, pulsesAll->ndetpulses))
+                 invector, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid))
     {
       message = "Cannot run routine procRecord for record processing";
       EP_EXIT_ERROR(message,EPFAIL);
@@ -2100,7 +2100,7 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
 * - foundPulses: Input/output structure where the found pulses info is stored 
 * - num_previousDetectedPulses: Number of previous detected pulses (to know the index to get the proper element from tstartPulse1_i in case tstartPulse1=nameFile)
 ****************************************************************************/
-int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, PulsesCollection *foundPulses, long num_previousDetectedPulses)
+int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid)
 {
 	int status = EPOK;
 	string message = "";
@@ -2441,7 +2441,8 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 		// 'energy' will be known after running 'runEnergy'
 		foundPulses->pulses_detected[i].quality = gsl_vector_get(qualitygsl,i);
                 foundPulses->pulses_detected[i].numLagsUsed = gsl_vector_get(lagsgsl,i);
-		//cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<" , Tstart="<<foundPulses->pulses_detected[i].Tstart<<endl;
+                foundPulses->pulses_detected[i].pixid = pixid;
+		//cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<" , Tstart="<<foundPulses->pulses_detected[i].Tstart<<" , Tend="<<foundPulses->pulses_detected[i].Tend<<endl;
                 //log_debug("Pulse %d", i," tstart=%f",gsl_vector_get(tstartgsl,i), " maxDER=%f",foundPulses->pulses_detected[i].maxDER, " samp1DER=%f",gsl_vector_get(samp1DERgsl,i), " //pulse_duration=%d",foundPulses->pulses_detected[i].pulse_duration," quality=%d",foundPulses->pulses_detected[i].quality," lags=%f",gsl_vector_get(lagsgsl,i));
                 //log_debug("Pulse %i tstart=%f maxDER=%f samp1DER=%f pulse_duration=%i quality=%f lags=%f",i,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].maxDER,gsl_vector_get(samp1DERgsl,i),foundPulses->pulses_detected[i].pulse_duration,foundPulses->pulses_detected[i].quality,gsl_vector_get(lagsgsl,i));
                 
@@ -7411,7 +7412,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 			gsl_vector_memcpy(pulseToCalculateEnergy,pulse);
 		}
 		//else if (((*reconstruct_init)->LagsOrNot == 1) && (strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0))
-		//else if (((*reconstruct_init)->LagsOrNot == 1) && ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"WEIGHTN"))))
+		else if (((*reconstruct_init)->LagsOrNot == 1) && ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"WEIGHTN"))))
 		{
                         //cout<<"resize_mf: "<<resize_mf<<endl;
                         //int resize_mfNEW;
@@ -8424,7 +8425,8 @@ void th_runEnergy(TesRecord* record,
 			pulseToCalculateEnergy = gsl_vector_alloc(pulse->size);
 			gsl_vector_memcpy(pulseToCalculateEnergy,pulse);
 		}
-		else if (((*reconstruct_init)->LagsOrNot == 1) && (strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0))	
+		//else if (((*reconstruct_init)->LagsOrNot == 1) && (strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0))	
+		else if (((*reconstruct_init)->LagsOrNot == 1) && ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"WEIGHTN"))))
 		{
                         if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
                         {
@@ -10757,12 +10759,12 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     //cout<<i<<" "<<gsl_vector_get(vector,i+0)<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(vector,i+0)*gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,0)<<endl;
                                                 }
                                                 gsl_vector_set(calculatedEnergy_vector,0,fabs(gsl_vector_get(calculatedEnergy_vector,0))/filter->size);
-                                                
+                                                                                                
                                                 // Because of the FFT and FFTinverse normalization factors
                                                 //gsl_vector_set(calculatedEnergy_vector,0,fabs(gsl_vector_get(calculatedEnergy_vector,0)*2*SelectedTimeDuration));
                                                     
                                                 *calculatedEnergy = gsl_vector_get(calculatedEnergy_vector,0);
-                                               //cout<<"energyNOLAGS: "<<*calculatedEnergy<<endl;
+                                                //cout<<"energyNOLAGS: "<<*calculatedEnergy<<endl;
                                                 //std::cout << std::setprecision(17) << *calculatedEnergy << '\n';
                                         }
 					else

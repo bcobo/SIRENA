@@ -664,6 +664,9 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 		if (event_list->grades2 != NULL) 	delete [] event_list->grades2;
 		if (event_list->pulse_heights != NULL) 	delete [] event_list->pulse_heights;
 		if (event_list->ph_ids != NULL) 	delete [] event_list->ph_ids;
+                if (event_list->pix_ids != NULL) 	delete [] event_list->pix_ids;
+                if (event_list->tstarts != NULL) 	delete [] event_list->tstarts;
+                if (event_list->tends != NULL) 	        delete [] event_list->tends;
                 
                 if (event_list->event_indexes != NULL) 	delete [] event_list->event_indexes;    //!!!!!!!!!!!!!!!
 	
@@ -720,6 +723,9 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	event_list->grades2  = new int[event_list->index];
 	event_list->pulse_heights  = new double[event_list->index];
 	event_list->ph_ids   = new long[event_list->index];
+        event_list->pix_ids   = new long[event_list->index];
+        event_list->tends   = new double[event_list->index];
+        event_list->tstarts   = new double[event_list->index];
         
         event_list->event_indexes   = new double[event_list->index];   //!!!!!!!!!!!!
         //cout<<"After runEnergy2"<<endl;
@@ -749,6 +755,11 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			event_list->grades2[ip]  = pulsesInRecord->pulses_detected[ip].grade2;
 			event_list->pulse_heights[ip]  = pulsesInRecord->pulses_detected[ip].pulse_height;
 			event_list->ph_ids[ip]   = 0;
+                        event_list->pix_ids[ip]  = pulsesInRecord->pulses_detected[ip].pixid;
+                        event_list->tstarts[ip]  = pulsesInRecord->pulses_detected[ip].Tstart;
+                        event_list->tends[ip]  = pulsesInRecord->pulses_detected[ip].Tend;
+                        //cout<<"Tstart: "<<event_list->tstarts[ip]<<endl;
+                        //cout<<"Tend: "<<event_list->tends[ip]<<endl;
 		}
 		//cout<<"After runEnergyB"<<endl;
 		if (lastRecord == 1)
@@ -769,7 +780,199 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                  
                         gsl_vector_free(numLagsUsed_vector);
                         //cout<<"After runEnergyD"<<endl;
-                }
+                        
+                        // Sort the tstart of all the detected photons
+                        /*gsl_vector *allTimes = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allEnergies = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allavg4 = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allEs_lowres = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allphis = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *alllagsShifts = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allgrading = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allgrades1 = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allpulse_heights = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allph_ids = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allpix_ids = gsl_vector_alloc((*pulsesAll)->ndetpulses);*/
+                        gsl_vector *allTstarts = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allTends = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allpulse_duration = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allgrade1 = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        //gsl_vector *allgrade2_1 = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allpixid = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_matrix *allpulse_adc = gsl_matrix_alloc((*pulsesAll)->ndetpulses,reconstruct_init->pulse_length);
+                        gsl_matrix *allpulse_adc_preBuffer = gsl_matrix_alloc((*pulsesAll)->ndetpulses,reconstruct_init->pulse_length);
+                        gsl_matrix_set_all(allpulse_adc,0);
+                        gsl_matrix_set_all(allpulse_adc_preBuffer,0);
+                        gsl_vector *allTstartSamples = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allriseTime = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allfallTime = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allpulse_height = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allmaxDER = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allsamp1DER = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allenergy = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allgrading = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allavg_4samplesDerivative = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allE_lowres = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allphi = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *alllagsShift = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allquality = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        gsl_vector *allnumLagsUsed = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        
+                        for (int i=0;i<(*pulsesAll)->ndetpulses;i++)
+                        {
+                            gsl_vector_set(allTstarts,i,(*pulsesAll)->pulses_detected[i].Tstart);
+                            gsl_vector_set(allTends,i,(*pulsesAll)->pulses_detected[i].Tend);
+                            gsl_vector_set(allpulse_duration,i,(*pulsesAll)->pulses_detected[i].pulse_duration);
+                            gsl_vector_set(allgrade1,i,(*pulsesAll)->pulses_detected[i].grade1);
+                            gsl_vector_set(allpixid,i,(*pulsesAll)->pulses_detected[i].pixid);
+                            for (int j=0;j<(*pulsesAll)->pulses_detected[i].pulse_duration;j++)
+                            {
+                                gsl_matrix_set(allpulse_adc,i,j,gsl_vector_get((*pulsesAll)->pulses_detected[i].pulse_adc,j));
+                                gsl_matrix_set(allpulse_adc_preBuffer,i,j,gsl_vector_get((*pulsesAll)->pulses_detected[i].pulse_adc_preBuffer,j));
+                            }
+                            gsl_vector_set(allTstartSamples,i,(*pulsesAll)->pulses_detected[i].TstartSamples);
+                            gsl_vector_set(allriseTime,i,(*pulsesAll)->pulses_detected[i].riseTime);
+                            gsl_vector_set(allfallTime,i,(*pulsesAll)->pulses_detected[i].fallTime);
+                            gsl_vector_set(allpulse_height,i,(*pulsesAll)->pulses_detected[i].pulse_height);
+                            gsl_vector_set(allmaxDER,i,(*pulsesAll)->pulses_detected[i].maxDER);
+                            gsl_vector_set(allsamp1DER,i,(*pulsesAll)->pulses_detected[i].samp1DER);
+                            gsl_vector_set(allenergy,i,(*pulsesAll)->pulses_detected[i].energy);
+                            gsl_vector_set(allgrading,i,(*pulsesAll)->pulses_detected[i].grading);
+                            gsl_vector_set(allavg_4samplesDerivative,i,(*pulsesAll)->pulses_detected[i].avg_4samplesDerivative);
+                            gsl_vector_set(allE_lowres,i,(*pulsesAll)->pulses_detected[i].E_lowres);
+                            gsl_vector_set(allphi,i,(*pulsesAll)->pulses_detected[i].phi);
+                            gsl_vector_set(alllagsShift,i,(*pulsesAll)->pulses_detected[i].lagsShift);
+                            gsl_vector_set(allquality,i,(*pulsesAll)->pulses_detected[i].quality);
+                            gsl_vector_set(allnumLagsUsed,i,(*pulsesAll)->pulses_detected[i].numLagsUsed);
+                        }
+                        
+                        gsl_permutation *perm = gsl_permutation_alloc((*pulsesAll)->ndetpulses);
+                        gsl_sort_vector_index(perm,allTstarts);
+                        for (int i=0;i<(*pulsesAll)->ndetpulses;i++)
+                        {
+                            (*pulsesAll)->pulses_detected[i].Tstart = gsl_vector_get(allTstarts,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].Tend = gsl_vector_get(allTends,perm->data[i]);
+                            //cout<<"TstartTend("<<i<<"): "<<(*pulsesAll)->pulses_detected[i].Tstart<<" "<<(*pulsesAll)->pulses_detected[i].Tend<<endl;
+                            (*pulsesAll)->pulses_detected[i].pulse_duration = gsl_vector_get(allpulse_duration,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].grade1 = gsl_vector_get(allgrade1,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].pixid = gsl_vector_get(allpixid,perm->data[i]);
+                            if (i==0)   (*pulsesAll)->pulses_detected[i].grade2 = reconstruct_init->pulse_length;
+                            else        
+                            {
+                                (*pulsesAll)->pulses_detected[i].grade2 = floor(((*pulsesAll)->pulses_detected[i].Tstart-(*pulsesAll)->pulses_detected[i-1].Tstart)/record->delta_t);
+                                //cout<<"TstartTstarti-1("<<i<<"): "<<(*pulsesAll)->pulses_detected[i].Tstart<<" "<<(*pulsesAll)->pulses_detected[i-1].Tstart<<endl;
+                            }
+                            //cout<<"grade2("<<i<<"): "<<(*pulsesAll)->pulses_detected[i].grade2<<endl;
+                            (*pulsesAll)->pulses_detected[i].TstartSamples = gsl_vector_get(allTstartSamples,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].riseTime = gsl_vector_get(allriseTime,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].fallTime = gsl_vector_get(allfallTime,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].pulse_height = gsl_vector_get(allpulse_height,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].maxDER = gsl_vector_get(allmaxDER,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].samp1DER = gsl_vector_get(allsamp1DER,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].energy = gsl_vector_get(allenergy,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].grading = gsl_vector_get(allgrading,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].avg_4samplesDerivative = gsl_vector_get(allavg_4samplesDerivative,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].E_lowres = gsl_vector_get(allE_lowres,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].phi = gsl_vector_get(allphi,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].lagsShift = gsl_vector_get(alllagsShift,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].quality = gsl_vector_get(allquality,perm->data[i]);
+                            (*pulsesAll)->pulses_detected[i].numLagsUsed = gsl_vector_get(allnumLagsUsed,perm->data[i]);
+                        }
+                        
+                        gsl_vector_free(allTstarts); allTstarts = 0;
+                        gsl_vector_free(allTends); allTends = 0;
+                        gsl_vector_free(allpulse_duration); allpulse_duration = 0;
+                        gsl_vector_free(allgrade1); allgrade1 = 0;
+                        //gsl_vector_free(allgrade2_1); allgrade2_1 = 0;
+                        gsl_matrix_free(allpulse_adc); allpulse_adc = 0;
+                        gsl_matrix_free(allpulse_adc_preBuffer); allpulse_adc_preBuffer = 0;
+                        gsl_vector_free(allpixid); allpixid = 0;
+                        gsl_vector_free(allTstartSamples); allTstartSamples = 0;
+                        gsl_vector_free(allriseTime); allriseTime = 0;
+                        gsl_vector_free(allfallTime); allfallTime = 0;
+                        gsl_vector_free(allpulse_height); allpulse_height = 0;
+                        gsl_vector_free(allmaxDER); allmaxDER = 0;
+                        gsl_vector_free(allsamp1DER); allsamp1DER = 0;
+                        gsl_vector_free(allenergy); allenergy = 0;
+                        gsl_vector_free(allgrading); allgrading = 0;
+                        gsl_vector_free(allavg_4samplesDerivative); allavg_4samplesDerivative = 0;
+                        gsl_vector_free(allE_lowres); allE_lowres = 0;
+                        gsl_vector_free(allphi); allphi = 0;
+                        gsl_vector_free(alllagsShift); alllagsShift = 0;
+                        gsl_vector_free(allquality); allquality = 0;
+                        gsl_vector_free(allnumLagsUsed); allnumLagsUsed = 0;
+                        
+                        gsl_permutation_free(perm); perm = 0;
+                        
+                        /*gsl_vector *allPulses = gsl_vector_alloc(10);
+                        gsl_vector *allPulses2 = gsl_vector_alloc(10);
+                        gsl_permutation *perm = gsl_permutation_alloc(10);
+                        gsl_vector_set(allPulses,0,2);
+                        gsl_vector_set(allPulses,1,1);
+                        gsl_vector_set(allPulses,2,5);
+                        gsl_vector_set(allPulses,3,9);
+                        gsl_vector_set(allPulses,4,7);
+                        gsl_vector_set(allPulses,5,6);
+                        gsl_vector_set(allPulses,6,10);
+                        gsl_vector_set(allPulses,7,3);
+                        gsl_vector_set(allPulses,8,8);
+                        gsl_vector_set(allPulses,9,4);
+                        gsl_vector_set(allPulses2,0,20);
+                        gsl_vector_set(allPulses2,1,10);
+                        gsl_vector_set(allPulses2,2,50);
+                        gsl_vector_set(allPulses2,3,90);
+                        gsl_vector_set(allPulses2,4,70);
+                        gsl_vector_set(allPulses2,5,60);
+                        gsl_vector_set(allPulses2,6,100);
+                        gsl_vector_set(allPulses2,7,30);
+                        gsl_vector_set(allPulses2,8,80);
+                        gsl_vector_set(allPulses2,9,40);
+                        gsl_sort_vector_index(perm,allPulses); 
+                        for (int i = 0; i < allPulses->size; i++)
+                        {
+                            double vpi = gsl_vector_get (allPulses, perm->data[i]);
+                            printf ("order = %d, value = %g\n", i, vpi);
+                            double vpi2 = gsl_vector_get (allPulses2, perm->data[i]);
+                            printf ("order = %d, value = %g\n", i, vpi2);
+                        }*/
+                        
+                       
+                       
+                        
+                        
+                        /*int arr[] = { 2, 5, 3, 7, 1 };
+                        int arr2[] = { 20, 50, 30, 70, 10 };
+                        int arr32[] = { }; 
+                        int n = sizeof(arr) / sizeof(arr[0]); 
+                        vector<pair<int, int> > vp;
+                        vector<pair<int, int> > vpout; 
+  
+                        // Inserting element in pair vector 
+                        // to keep track of previous indexes 
+                        for (int i = 0; i < n; ++i) { 
+                            vp.push_back(make_pair(arr[i], i)); 
+                        } 
+                    
+                        // Sorting pair vector 
+                        sort(vp.begin(), vp.end()); 
+                    
+                        // Displaying sorted element 
+                        // with previous indexes 
+                        // corresponding to each element 
+                        cout << "Element\t"
+                            << "index" << endl; 
+                        for (int i = 0; i < vp.size(); i++) { 
+                            cout << vp[i].first << "\t"
+                                << vp[i].second << endl; 
+                                    }
+                        for (int i = 0; i < vp.size(); i++)
+                        {
+                            vpout[i].first = vp[0].first;
+                            cout << vpout[i].first << "\t"
+                                << vpout[i].second << endl; 
+                        }*/
+                }                   
+                                    
                 //cout<<"After runEnergyE"<<endl;
 	}
 	else
@@ -789,6 +992,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			event_list->grades2  = new int[event_list->index];
 			event_list->pulse_heights  = new double[event_list->index];
 			event_list->ph_ids   = new long[event_list->index];
+                        event_list->pix_ids   = new long[event_list->index];
 		
 			for (int ip=0; ip<(*pulsesAll)->ndetpulses; ip++)
 			{	
@@ -812,6 +1016,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 				event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
 				event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
 				event_list->ph_ids[ip]   = 0;		    
+                                event_list->pix_ids[ip]  = (*pulsesAll)->pulses_detected[ip].pixid;
 			}
 		}
 	}
