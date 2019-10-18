@@ -4496,6 +4496,14 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 			EP_PRINT_ERROR(message,status);return(EPFAIL);
 		}
 		
+		/*gsl_vector *pulsetemplatei = gsl_vector alloc(PULSEMaxLengthFixedFilter->size2);
+                gsl_matrix *OFWx = gsl_matrix_alloc();;
+		if (calculateOFWx(reconstruct_init,,))
+                {
+                    message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }*/
+		
 		// Creating ENERGY Column
 		strcpy(objPRCLOFWM.nameTable,"PRCLOFWM");
 		strcpy(objPRCLOFWM.nameCol,"ENERGY");
@@ -4542,7 +4550,8 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 			if (gsl_vector_get(fixedlengths,j) == reconstruct_init->largeFilter)
 			{
 				PULSENORM_row = gsl_vector_alloc(PULSEMaxLengthFixedFilter->size2);
-				gsl_matrix_get_row(PULSENORM_row,PULSEMaxLengthFixedFilter,0);
+				//gsl_matrix_get_row(PULSENORM_row,PULSEMaxLengthFixedFilter,0);
+                                gsl_matrix_get_row(PULSENORM_row,PULSEB0,0);
                                 if (gsl_vector_memcpy(PULSENORMshort,PULSENORM_row) != 0)
                                 {
                                         sprintf(valERROR,"%d",__LINE__-2);
@@ -4555,7 +4564,8 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 			else
 			{
 				PULSENORM_row = gsl_vector_alloc(PULSE->size2);
-				gsl_matrix_get_row(PULSENORM_row,PULSE,0);
+				//gsl_matrix_get_row(PULSENORM_row,PULSE,0);
+                                gsl_matrix_get_row(PULSENORM_row,PULSEB0,0);
                                 if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j) > PULSENORM_row->size))
                                 {
                                         sprintf(valERROR,"%d",__LINE__+5);
@@ -4573,10 +4583,10 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
                                 }   
                                 //gsl_vector_memcpy(PULSENORMshort,&temp.vector);
 			} 
-			gsl_vector *baselinegsl = gsl_vector_alloc(PULSENORMshort->size);
+			/*gsl_vector *baselinegsl = gsl_vector_alloc(PULSENORMshort->size);
 			gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
 			gsl_vector_add(PULSENORMshort,baselinegsl);
-			gsl_vector_free(baselinegsl); baselinegsl = 0;
+			gsl_vector_free(baselinegsl); baselinegsl = 0;*/
 			gsl_vector_scale(PULSENORMshort,1.0/reconstruct_init->monoenergy);
 			gsl_matrix_set_col(R,0,PULSENORMshort);
 			gsl_vector_free(PULSENORMshort); PULSENORMshort = 0;
@@ -4866,6 +4876,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 	int lengthALL_PRCLOFWM = lengthALL_F;
 	gsl_matrix *PRCLOFWMaux = gsl_matrix_alloc(eventcntLib+1,lengthALL_PRCLOFWM);
 	gsl_matrix_set_zero(PRCLOFWMaux);
+        cout<<"lengthALL_PRCLOFWM: "<<lengthALL_PRCLOFWM<<endl;
 	
 	gsl_vector *vectoraux = gsl_vector_alloc(1);
 	gsl_vector *vectoraux1 = gsl_vector_alloc(reconstruct_init->pulse_length);
@@ -5243,14 +5254,14 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 					gsl_permutation_free(perm1); perm1 = 0;
 					gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,inv,R_transW,0.0,matrixaux1);      // matrixaux1 = [(R'WR)^(-1)]\B7R'W       matrixaux1=(2xfixedlengths_j)
 					vectoraux1_2 = gsl_vector_alloc(gsl_vector_get(fixedlengths,j)*2);
-					for (int i=0;i<2;i++)
+					for (int ii=0;ii<2;ii++)
 					{
 						for (int k=0;k<gsl_vector_get(fixedlengths,j);k++)
 						{
-							gsl_vector_set(vectoraux1_2,k+i*gsl_vector_get(fixedlengths,j),gsl_matrix_get(matrixaux1,i,k));
+							gsl_vector_set(vectoraux1_2,k+ii*gsl_vector_get(fixedlengths,j),gsl_matrix_get(matrixaux1,ii,k));
 						}
 					}
-					for (int i=0;i<vectoraux1_2->size;i++)		gsl_matrix_set(PRCLOFWMaux,eventcntLib,i+indexPRCLOFWM,gsl_vector_get(vectoraux1_2,i));
+					for (int ii=0;ii<vectoraux1_2->size;ii++)		gsl_matrix_set(PRCLOFWMaux,eventcntLib,ii+indexPRCLOFWM,gsl_vector_get(vectoraux1_2,ii));
 									
 					indexPRCLOFWM = indexPRCLOFWM + gsl_vector_get(fixedlengths,j)*2;
 					
@@ -10649,11 +10660,12 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
         //cout<<"vector->size: "<<vector->size<<endl;
         /*int minimo;
         if (vector->size < filter->size) minimo = vector->size;
-        else                             minimo = filter->size;                            
-        for (int i=0;i<minimo;i++)
+        else                             minimo = filter->size;*/                          
+        //for (int i=0;i<minimo;i++)
+        /*for (int i=0;i<vector->size;i++)
         {
-            //cout<<i<<" "<<gsl_vector_get(vector,i)<<endl;
-            cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
+            cout<<i<<" "<<gsl_vector_get(vector,i)<<endl;
+            //cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
             //cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<GSL_REAL(gsl_vector_complex_get(filterFFT,i))<<"+i"<<GSL_IMAG(gsl_vector_complex_get(filterFFT,i))<<endl;
         }*/
         //cout<<"productSize: "<<productSize<<endl;
@@ -11339,13 +11351,20 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 		{
                         //cout<<"WEIGHTM: "<<PRCLOFWM->size1<<" "<<PRCLOFWM->size2<<endl;
                         gsl_vector *EB = gsl_vector_alloc(2);
-                        //cout<<"0: "<<gsl_matrix_get(PRCLOFWM,0,0)<<" "<<gsl_matrix_get(PRCLOFWM,0,1)<<" "<<gsl_matrix_get(PRCLOFWM,0,2)<<"..."<<gsl_matrix_get(PRCLOFWM,0,PRCLOFWM->size2-1)<<endl;
-                        //cout<<"1: "<<gsl_matrix_get(PRCLOFWM,1,0)<<" "<<gsl_matrix_get(PRCLOFWM,1,1)<<" "<<gsl_matrix_get(PRCLOFWM,1,2)<<"..."<<gsl_matrix_get(PRCLOFWM,1,PRCLOFWM->size2-1)<<endl;
+                        /*cout<<"0: "<<gsl_matrix_get(PRCLOFWM,0,0)<<" "<<gsl_matrix_get(PRCLOFWM,0,1)<<" "<<gsl_matrix_get(PRCLOFWM,0,2)<<"..."<<gsl_matrix_get(PRCLOFWM,0,PRCLOFWM->size2-1)<<endl;
+                        cout<<"1: "<<gsl_matrix_get(PRCLOFWM,1,0)<<" "<<gsl_matrix_get(PRCLOFWM,1,1)<<" "<<gsl_matrix_get(PRCLOFWM,1,2)<<"..."<<gsl_matrix_get(PRCLOFWM,1,PRCLOFWM->size2-1)<<endl;*/
 		
 			gsl_blas_dgemv(CblasNoTrans,1.0,PRCLOFWM,vector,0.0,EB);                           // [(R'WR)^(-1)]R'W\B7pulse
 			
 			*calculatedEnergy = gsl_vector_get(EB,0);
                         //cout<<"*calculatedEnergy: "<<*calculatedEnergy<<endl;
+                        
+                        /*double Energy2 = 0.0;
+                        for (int i=0;i<PRCLOFWM->size2;i++)
+                        {
+                            Energy2 = Energy2 + gsl_matrix_get(PRCLOFWM,0,i)*gsl_vector_get(vector,i);
+                            cout<<"Energy2( "<<i<<"):"<<gsl_matrix_get(PRCLOFWM,0,i)<<","<<gsl_vector_get(vector,i)<<","<<Energy2<<endl;
+                        }*/
 		
 			//gsl_vector_free(P_Pab);
 			gsl_vector_free(EB); EB = 0;

@@ -271,7 +271,7 @@ int tesreconstruction_main() {
                 
                 div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
             }//if hdunum==8 (xifusim file)
-            else
+            else //if hdunum!=8 (sixtefile)
             {
                 fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
                 if (status != 0)
@@ -290,6 +290,7 @@ int tesreconstruction_main() {
             fits_close_file(fptr,&status);
             CHECK_STATUS_BREAK(status);
     }
+    //printf("%s %f %s","sampling_rate: ",sampling_rate,"\n");
     
     // Sixt standard keywords structure
     //----------------------------------
@@ -589,7 +590,7 @@ int tesreconstruction_main() {
                             //  status=1;
                             //  CHECK_STATUS_BREAK(status);
                             //}
-                            /*if(nrecord > 10)
+                            /*if(nrecord > 1)
                             {
                             	status=1;
                                 CHECK_STATUS_BREAK(status);

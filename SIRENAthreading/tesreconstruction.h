@@ -28,6 +28,7 @@
 #include "testrigger.h"
 #include "gti.h"
 #include "integraSIRENA.h"
+//#include "inoututils.h"
 #include <gsl/gsl_vector.h>
 
 #include<stdio.h>
@@ -35,6 +36,20 @@
 
 #define TOOLSUB tesreconstruction_main
 #include "headas_main.c"
+
+/*struct IOData
+{
+    fitsfile *inObject;
+    char *nameTable[255];
+    char *nameCol[255];
+    char *unit[255];
+    //MC char *type;
+    int type;
+    int iniCol;
+    int endCol;
+    long iniRow;
+    long endRow;
+};*/
 
 struct Parameters {
 	//File containing the optimal filter
