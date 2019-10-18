@@ -1977,7 +1977,7 @@ int writeTPSreprExten ()
 	strcpy(keyname,"BASELINE");
 	double sumBaseline;
 	gsl_vector_Sumsubvector(baseline, 0, indexBaseline, &sumBaseline);
-	double keyvaldouble = sumBaseline/indexBaseline;
+	double keyvaldouble = (sumBaseline/indexBaseline)/aducnv;
 	if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
 	{
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(gnoiseName);
@@ -1987,7 +1987,7 @@ int writeTPSreprExten ()
 	strcpy(keyname,"NOISESTD");
 	double sumSigma;
 	gsl_vector_Sumsubvector(sigma, 0, indexBaseline, &sumSigma);
-	keyvaldouble = sumSigma/indexBaseline;
+	keyvaldouble = (sumSigma/indexBaseline)/aducnv;
 	if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
 	{
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(gnoiseName);

@@ -4029,6 +4029,7 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 		// It is not necessary to check the allocation because 'pulsetemplate' size must already be > 0
 		gsl_vector *baselinegsl = gsl_vector_alloc(pulsetemplate->size);
 		gsl_vector_set_all(baselinegsl,-1.0*(*reconstruct_init)->noise_spectrum->baseline);
+                gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
 		gsl_vector_add(pulsetemplate,baselinegsl);
 		gsl_vector_free(baselinegsl); baselinegsl = 0;
 		gsl_matrix_set_row(pulsetemplatesb0_matrix,0,pulsetemplate);
@@ -4265,8 +4266,6 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
                 }
         }
 
-        //cout<<"reconstruct_init->pulse_length: "<<reconstruct_init->pulse_length<<endl;
-        //cout<<"reconstruct_init->largeFilter: "<<reconstruct_init->largeFilter<<endl;
 	// Writing HDUs with fixed filters in time (FIXFILTT) and frequency (FIXFILTF)
 	char str_length[125];
 	gsl_vector *fixedlengths;
@@ -4550,8 +4549,8 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 			if (gsl_vector_get(fixedlengths,j) == reconstruct_init->largeFilter)
 			{
 				PULSENORM_row = gsl_vector_alloc(PULSEMaxLengthFixedFilter->size2);
-				//gsl_matrix_get_row(PULSENORM_row,PULSEMaxLengthFixedFilter,0);
-                                gsl_matrix_get_row(PULSENORM_row,PULSEB0,0);
+				gsl_matrix_get_row(PULSENORM_row,PULSEMaxLengthFixedFilter,0);
+                                //gsl_matrix_get_row(PULSENORM_row,PULSEB0,0);
                                 if (gsl_vector_memcpy(PULSENORMshort,PULSENORM_row) != 0)
                                 {
                                         sprintf(valERROR,"%d",__LINE__-2);
@@ -4564,8 +4563,8 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 			else
 			{
 				PULSENORM_row = gsl_vector_alloc(PULSE->size2);
-				//gsl_matrix_get_row(PULSENORM_row,PULSE,0);
-                                gsl_matrix_get_row(PULSENORM_row,PULSEB0,0);
+				gsl_matrix_get_row(PULSENORM_row,PULSE,0);
+                                //gsl_matrix_get_row(PULSENORM_row,PULSEB0,0);
                                 if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j) > PULSENORM_row->size))
                                 {
                                         sprintf(valERROR,"%d",__LINE__+5);
@@ -4583,10 +4582,11 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
                                 }   
                                 //gsl_vector_memcpy(PULSENORMshort,&temp.vector);
 			} 
-			/*gsl_vector *baselinegsl = gsl_vector_alloc(PULSENORMshort->size);
+			gsl_vector *baselinegsl = gsl_vector_alloc(PULSENORMshort->size);
 			gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
+                        gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
 			gsl_vector_add(PULSENORMshort,baselinegsl);
-			gsl_vector_free(baselinegsl); baselinegsl = 0;*/
+			gsl_vector_free(baselinegsl); baselinegsl = 0;
 			gsl_vector_scale(PULSENORMshort,1.0/reconstruct_init->monoenergy);
 			gsl_matrix_set_col(R,0,PULSENORMshort);
 			gsl_vector_free(PULSENORMshort); PULSENORMshort = 0;
@@ -4876,7 +4876,6 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 	int lengthALL_PRCLOFWM = lengthALL_F;
 	gsl_matrix *PRCLOFWMaux = gsl_matrix_alloc(eventcntLib+1,lengthALL_PRCLOFWM);
 	gsl_matrix_set_zero(PRCLOFWMaux);
-        cout<<"lengthALL_PRCLOFWM: "<<lengthALL_PRCLOFWM<<endl;
 	
 	gsl_vector *vectoraux = gsl_vector_alloc(1);
 	gsl_vector *vectoraux1 = gsl_vector_alloc(reconstruct_init->pulse_length);
@@ -4896,7 +4895,10 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 		{
 			gsl_matrix_set_row(modelsMaxLengthFixedFilteraux,i,reconstruct_init->library_collection->pulse_templatesMaxLengthFixedFilter[i].ptemplate);
 		}
-		else 	gsl_matrix_set_row(modelsMaxLengthFixedFilteraux,i,reconstruct_init->library_collection->pulse_templates[i].ptemplate);
+		else
+                {
+                        gsl_matrix_set_row(modelsMaxLengthFixedFilteraux,i,reconstruct_init->library_collection->pulse_templates[i].ptemplate);
+                }
 		gsl_matrix_set_row(modelsaux,i,reconstruct_init->library_collection->pulse_templates[i].ptemplate);
 		gsl_matrix_set_row(modelsb0aux,i,reconstruct_init->library_collection->pulse_templates_B0[i].ptemplate);
 		gsl_matrix_set_row(matchedfiltersaux,i,reconstruct_init->library_collection->matched_filters[i].mfilter);
@@ -4962,7 +4964,10 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 	// Add new values
 	gsl_vector_set(energycolumn,eventcntLib,reconstruct_init->monoenergy);	
 	gsl_vector_set(estenergycolumn,eventcntLib,estenergy);
-	if (reconstruct_init->largeFilter != reconstruct_init->pulse_length)   gsl_matrix_set_row(modelsMaxLengthFixedFilteraux,eventcntLib,pulsetemplateMaxLengthFixedFilter);
+	if (reconstruct_init->largeFilter != reconstruct_init->pulse_length) 
+        {
+            gsl_matrix_set_row(modelsMaxLengthFixedFilteraux,eventcntLib,pulsetemplateMaxLengthFixedFilter);
+        }
 	gsl_matrix_set_row(modelsaux,eventcntLib,pulsetemplate);
 	
         vectoraux1 = gsl_vector_alloc(reconstruct_init->pulse_length);
@@ -5133,6 +5138,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 	// It is not necessary to check the allocation because 'pulsetemplate' size must be > 0
 	gsl_vector *baselinegsl = gsl_vector_alloc(pulsetemplate->size);
 	gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
+        gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
 	gsl_vector_add(pulsetemplate,baselinegsl);
 	gsl_matrix_set_row(modelsb0aux,eventcntLib,pulsetemplate);
         gsl_vector_free(baselinegsl); baselinegsl = 0;
@@ -5182,7 +5188,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 												    //    | rm 1 | | .    1|			
 			gsl_matrix_set_all(R,1.0);
 			PULSENORMshort = gsl_vector_alloc(gsl_vector_get(fixedlengths,j));
-			if (gsl_vector_get(fixedlengths,j) == reconstruct_init->largeFilter)
+                        if ((gsl_vector_get(fixedlengths,j) == reconstruct_init->largeFilter) && (reconstruct_init->largeFilter != reconstruct_init->pulse_length))
 			{
 				PULSENORM_row = gsl_vector_alloc(modelsMaxLengthFixedFilteraux->size2);
 				gsl_matrix_get_row(PULSENORM_row,modelsMaxLengthFixedFilteraux,eventcntLib);
@@ -5216,6 +5222,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 			}  
                         baselinegsl = gsl_vector_alloc(PULSENORMshort->size);
                         gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
+                        gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
 			gsl_vector_add(PULSENORMshort,baselinegsl);
                         gsl_vector_free(baselinegsl); baselinegsl = 0;
 			gsl_vector_scale(PULSENORMshort,1.0/reconstruct_init->monoenergy);
@@ -6330,6 +6337,7 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
 	gsl_matrix_get_row(vectoraux1,modelsaux,indexa);
 	gsl_vector_add(Pab,vectoraux1);
 	gsl_vector_add_constant(Pab,-1*reconstruct_init->noise_spectrum->baseline);
+        gsl_vector_add_constant(Pab,-1.0*1800.08687767577);
 	gsl_matrix_set_row(*Pabaux,indexa,Pab);
 	
         gsl_matrix_get_row(vectorMaxLengthFixedFilteraux1,modelsMaxLengthFixedFilteraux,indexb);
@@ -6340,6 +6348,7 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
 	gsl_matrix_get_row(vectorMaxLengthFixedFilteraux1,modelsMaxLengthFixedFilteraux,indexa);
 	gsl_vector_add(PabMaxLengthFixedFilter,vectorMaxLengthFixedFilteraux1);
 	gsl_vector_add_constant(PabMaxLengthFixedFilter,-1*reconstruct_init->noise_spectrum->baseline);
+        gsl_vector_add_constant(PabMaxLengthFixedFilter,-1*1800.08687767577);
 	gsl_matrix_set_row(*PabMaxLengthFixedFilteraux,indexa,PabMaxLengthFixedFilter);
 	
         gsl_matrix_get_row(vectorMaxLengthFixedFilteraux1,modelsMaxLengthFixedFilteraux,indexb);
@@ -7227,6 +7236,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 		// It is not necessary to check the allocation because the allocation of 'recordAux' has been checked previously
 		gsl_vector *baselinegsl = gsl_vector_alloc(recordAux->size);
 		gsl_vector_set_all(baselinegsl,-1.0*(*reconstruct_init)->noise_spectrum->baseline);
+                gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
 		gsl_vector_add(recordAux,baselinegsl);
 		gsl_vector_free(baselinegsl); baselinegsl = 0;
 	}
@@ -8271,6 +8281,7 @@ void th_runEnergy(TesRecord* record,
 		// It is not necessary to check the allocation because the allocation of 'recordAux' has been checked previously
 		gsl_vector *baselinegsl = gsl_vector_alloc(recordAux->size);
 		gsl_vector_set_all(baselinegsl,-1.0*(*reconstruct_init)->noise_spectrum->baseline);
+                gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
 		gsl_vector_add(recordAux,baselinegsl);
 		gsl_vector_free(baselinegsl); baselinegsl = 0;
 	}
