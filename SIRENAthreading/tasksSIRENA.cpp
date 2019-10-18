@@ -3955,13 +3955,21 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
                 strcpy(keyvalstr,strproc.c_str());
                 fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
                
-                char str_tstartPulse1[125];             
-		if ((*reconstruct_init)->tstartPulse1 == 0)			  	snprintf(str_tstartPulse1,125,"%d",(*reconstruct_init)->tstartPulse1);
-		else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0)	snprintf(str_tstartPulse1,125,"%d",(*reconstruct_init)->tstartPulse1+2);
-		else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") != 0)	snprintf(str_tstartPulse1,125,"%d",(*reconstruct_init)->tstartPulse1+1);
-                strproc=string("tstartPulse1 = ") + string(str_tstartPulse1);
-                strcpy(keyvalstr,strproc.c_str());
-                fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
+                char str_tstartPulse1[125]; 
+                if (!isNumber((*reconstruct_init)->tstartPulse1))
+                {
+                    sprintf(comment, "tstartPulse1 = %s", (*reconstruct_init)->tstartPulse1);
+                    fits_write_comment(*inLibObject, comment, &status);
+                }
+                else
+                {
+                    if (atoi((*reconstruct_init)->tstartPulse1) == 0)                         snprintf(str_tstartPulse1,125,"%d",atoi((*reconstruct_init)->tstartPulse1));
+                    else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0)	snprintf(str_tstartPulse1,125,"%d",atoi((*reconstruct_init)->tstartPulse1)+2);
+                    else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") != 0)	snprintf(str_tstartPulse1,125,"%d",atoi((*reconstruct_init)->tstartPulse1)+1);
+                    strproc=string("tstartPulse1 = ") + string(str_tstartPulse1);
+                    strcpy(keyvalstr,strproc.c_str());
+                    fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
+                }
                
                 char str_tstartPulse2[125];             
 		if ((*reconstruct_init)->tstartPulse2 == 0)			  	snprintf(str_tstartPulse2,125,"%d",(*reconstruct_init)->tstartPulse2);
