@@ -1006,8 +1006,8 @@ int getpar(struct Parameters* const par)
 		return(EXIT_FAILURE);
 	}
 	
-	MyAssert((strcmp(par->OFStrategy,"FREE") == 0) || (strcmp(par->OFStrategy,"BASE2") == 0) || (strcmp(par->OFStrategy,"BYGRADE") == 0) || (strcmp(par->OFStrategy,"FIXED") == 0), 
-		 "OFStrategy must be FREE, BASE2, BYGRADE or FIXED");
+	MyAssert((strcmp(par->OFStrategy,"FREE") == 0) || (strcmp(par->OFStrategy,"BYGRADE") == 0) || (strcmp(par->OFStrategy,"FIXED") == 0), 
+		 "OFStrategy must be FREE, BYGRADE or FIXED");
 	
         MyAssert(par->OFLength > 0, "OFLength must be greater than 0");
         

@@ -44,7 +44,7 @@ Fitting35,i,h,3,,,"Using 3 lags to analytically calculate a parabola (3) or usin
 OFIter,i,h,0,,,"Iterate or not iterate (1/0)"
 OFLib,b,h,no,,,"Work or not with a library with optimal filters (1/0)"
 #OFInterp,s,h,"MF",,,"Optimal Filter by using the Matched Filter or the DAB as matched filter (MF/DAB)"
-OFStrategy,s,h,"FREE",,,"Optimal Filter length Strategy: FREE, BASE2, BYGRADE or FIXED"
+OFStrategy,s,h,"FREE",,,"Optimal Filter length Strategy: FREE, BYGRADE or FIXED"
 OFLength,i,h,512,,,"Optimal Filter length (taken into account if OFStrategy=FIXED)"
 preBuffer,i,h,0,,,"0-padding filter if 0 (from pulseLength to OFLength filter filled in with 0's) or filter with a filter+preBuffer if different from 0"
 intermediate,i,h,0,,,"Write or not intermediate files (1/0)"

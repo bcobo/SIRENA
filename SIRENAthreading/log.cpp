@@ -59,13 +59,13 @@ namespace slog
   static void log(level lvl, const char* fmt, va_list args)
   {
     std::lock_guard<std::mutex> guard(write_mutex);
-    /*if (lvl >= get_default_level()){
+    if (lvl >= get_default_level()){
       printf(header.c_str(),
              get_timestamp(),get_thread_id().c_str(),level_to_string(lvl));
       std::string format(fmt);
       format.append("\n");
       vprintf(format.c_str(), args);
-    }*/
+    }
   }
 
   void trace(const char* format, ...)

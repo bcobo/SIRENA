@@ -239,6 +239,7 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
                 }
 	}
 	
+	log_trace("Detecting...");
 	//cout<<"pulsesAll->ndetpulses: "<<pulsesAll->ndetpulses<<endl;
 	// Process each record
 	if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid))
@@ -291,6 +292,7 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 
 	if ((lastRecord == 1) && (*reconstruct_init)->opmode == 0 && (pulsesAll->ndetpulses + (*pulsesInRecord)->ndetpulses >0))	// CALIBRATION mode => Calculate the pulse template by averaging some found pulses
 	{	
+                log_trace("Building the library...");
 		// Calculate an average record 
                 //gsl_vector_scale(averageRecord,1/);
 
@@ -7115,10 +7117,10 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 	{
 		OFlength_strategy = 0;
 	}
-	else if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") == 0)
+	/*else if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") == 0)
 	{
 		OFlength_strategy = 1;
-	}
+	}*/
 	else if (strcmp((*reconstruct_init)->OFStrategy,"BYGRADE") == 0)
 	{
 		OFlength_strategy = 2;
@@ -7139,7 +7141,6 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 	double tstartNewDev = -999.0;    	// Deviation of the starting of the pulses (in samples) respect to the tstart calculated
 				// Must be odd
 	int numlags2 = floor(numlags/2);
-        //cout<<"nLags: "<<numlags<<" numlags2: "<<numlags2<<endl;
 	int lagsShift = -999;                   // Number of samples shifted to find the maximum of the parabola
 
 	int tooshortPulse_NoLags;
@@ -7288,9 +7289,9 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 			message = "Cannot run routine pulseGrading";
 			EP_EXIT_ERROR(message,EPFAIL);
 		}
-		//resize_mf = resize_mf + preBuffer;
+		resize_mf = resize_mf + preBuffer;
 		(*pulsesInRecord)->pulses_detected[i].grade1 = resize_mf;
-                //cout<<"resize_mf: "<<resize_mf<<endl;
+                log_debug("resize_mf (after pulseGrading): %i",resize_mf);
 
 		// Pulse: Load the proper piece of the record in 'pulse'
                 tstartSamplesRecord = (*pulsesInRecord)->pulses_detected[i].TstartSamples;
@@ -7329,6 +7330,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                 
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 //////////// In order to get the low resolution energy estimator by filtering with a 4-samples-long filter ///////////////////
+                log_trace("Calculating the low energy estimator...");
                 // Pulse 
                 /*cout<<"resize_mf_lowres: "<<resize_mf_lowres<<endl;
                 cout<<"recordAux->size: "<<recordAux->size<<endl;
@@ -7340,7 +7342,6 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 			message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
 			EP_EXIT_ERROR(message,EPFAIL); 
 		}
-		//cout<<"PasoA"<<endl;
 		
 		if (preBuffer == 0)
                 {
@@ -7383,7 +7384,6 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                                 EP_EXIT_ERROR(message,EPFAIL);
                         }
                 }
-                //cout<<"PasoB"<<endl;
 				
 		// Filter
                 if (strcmp((*reconstruct_init)->OFInterp,"MF") == 0)
@@ -7402,13 +7402,11 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         EP_EXIT_ERROR(message,EPFAIL);
                     }
                 }
-                //cout<<"PasoC"<<endl;
                 gsl_vector_set_all(optimalfilter_lowres,0);
                 for (int k=0;k<filtergsl_lowres->size/2;k++)
                 {
                     gsl_vector_complex_set(optimalfilter_FFT_complex_lowres,k,gsl_complex_rect(0.0,0.0));
                 }
-                //cout<<"PasoD"<<endl;
                 if (TorF == 0)     gsl_vector_memcpy(optimalfilter_lowres,filtergsl_lowres);
                 else if (TorF == 1)
                 {
@@ -7424,7 +7422,6 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         gsl_vector_complex_set(optimalfilter_FFT_complex_lowres,k,gsl_complex_conjugate(gsl_vector_complex_get(optimalfilter_FFT_complex_lowres,k)));
                     }
                 }
-                //cout<<"PasoE"<<endl;
                 // Calculate the low resolution estimator
                 if (calculateEnergy(pulse_lowres,1,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,0,(*reconstruct_init),TorF,1/record->delta_t,Pab_lowres,PRCLWN_lowres,PRCLOFWM_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,1))
                 {
@@ -7433,7 +7430,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                 }
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 
-                //cout<<"Paso1"<<endl;
+                log_trace("Calculating the energy...");
 		
 		if ((*reconstruct_init)->LagsOrNot == 0)	
 		{
@@ -7465,7 +7462,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                                     resize_mfNEW = resize_mf + numlags/2;
                                 }
                             }
-                            else                   // NO 0-padding (or preBuffer or normal)
+                            else                   // NO 0-padding (or preBuffer or short filter)
                             {
                                 if (tstartSamplesRecordStartDOUBLE+resize_mf+numlags -1 <= recordAux->size)
                                 {
@@ -7481,9 +7478,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         {
                                 resize_mfNEW = resize_mf;
                         }
-                        //cout<<"Paso2"<<endl;
-                        
-                        //cout<<"resize_mfNEW: "<<resize_mfNEW<<endl;
+                        log_debug("resize_mfNEW: %i",resize_mfNEW);
                         
                         if ((pulseToCalculateEnergy = gsl_vector_alloc(resize_mfNEW)) == 0)
 			{
@@ -7493,7 +7488,6 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 				EP_EXIT_ERROR(message,EPFAIL);
 			}
 			gsl_vector_set_all(pulseToCalculateEnergy,-999);
-                        //cout<<"Paso2_1"<<endl;
                         /*cout<<"tstartSamplesRecordStartDOUBLE: "<<tstartSamplesRecordStartDOUBLE<<endl;
                         cout<<"recordAux->size: "<<recordAux->size<<endl;
                         cout<<"resize_mfNEW: "<<resize_mfNEW<<endl;*/
@@ -7507,7 +7501,6 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 				EP_EXIT_ERROR(message,EPFAIL); 
 			}
                         temp = gsl_vector_subvector(recordAux,tstartSamplesRecordStartDOUBLE-preBuffer,resize_mfNEW);
-                        //cout<<"Paso3"<<endl;
                         
                         if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
                         {
@@ -7585,23 +7578,27 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                                         //cout<<"resize_mfNEW: "<<resize_mfNEW<<endl;
                                         //cout<<"numlags: "<<numlags<<endl;
                                         if ((*reconstruct_init)->LagsOrNot == 1) resize_mf= resize_mfNEW-numlags+1;
-                                        //cout<<"resize_mf0: "<<resize_mf<<endl;
+                                        log_debug("resize_mf1: %i",resize_mf);
                                         // Choose the base-2 system value closest (lower than or equal) to the pulse length
-					if ((strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0) 
+					/*if ((strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0) 
 					    && ((((*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration != -999) && (resize_mf != (*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration))
-					    //&& (resize_mf != (*reconstruct_init)->library_collection->pulse_templates[0].template_duration)))
-                                            && (resize_mf != (*reconstruct_init)->library_collection->pulse_templates[0].template_duration)) && (preBuffer == 0))
-					{         
-                                                resize_mf = pow(2,floor(log2(resize_mf)));
-                                                gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
-                                                temp = gsl_vector_subvector(pulseToCalculateEnergy,0,resize_mf+extraSizeDueToLags);
-                                                gsl_vector_memcpy(pulse_aux,&temp.vector);
-                                                gsl_vector_free(pulseToCalculateEnergy);
-                                                pulseToCalculateEnergy = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
-                                                gsl_vector_memcpy(pulseToCalculateEnergy,pulse_aux);
-                                                gsl_vector_free(pulse_aux);
-					}
-					//cout<<"resize_mf1: "<<resize_mf<<endl;
+                                            && (resize_mf != (*reconstruct_init)->library_collection->pulse_templates[0].template_duration)) && (preBuffer == 0))*/
+					//{         
+                                                if ((*reconstruct_init)->pulse_length >= (*reconstruct_init)->OFLength) //No 0-padding
+                                                {
+                                                    log_debug("Entra (no 0-padding)",resize_mf);
+                                                    log_debug("resize_mf2: %i",resize_mf);
+                                                    resize_mf = pow(2,floor(log2(resize_mf)));
+                                                    gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
+                                                    temp = gsl_vector_subvector(pulseToCalculateEnergy,0,resize_mf+extraSizeDueToLags);
+                                                    gsl_vector_memcpy(pulse_aux,&temp.vector);
+                                                    gsl_vector_free(pulseToCalculateEnergy);
+                                                    pulseToCalculateEnergy = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
+                                                    gsl_vector_memcpy(pulseToCalculateEnergy,pulse_aux);
+                                                    gsl_vector_free(pulse_aux);
+                                                }
+					//}
+                                        log_debug("resize_mf3: %i",resize_mf);
                                   
                                         if (resize_mf <= 0)     
                                         {
@@ -7672,8 +7669,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 			else if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && (strcmp((*reconstruct_init)->OFNoise,"WEIGHTM") == 0))
 			{
 				// Choose the base-2 system value closest (lower than or equal) to the pulse length
-				if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0)
-				{
+				//if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0)
+				//{
 					resize_mf = pow(2,floor(log2(resize_mf)));
 					gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf);
 					temp = gsl_vector_subvector(pulseToCalculateEnergy,0,resize_mf);
@@ -7682,7 +7679,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 					pulseToCalculateEnergy = gsl_vector_alloc(resize_mf);
 					gsl_vector_memcpy(pulseToCalculateEnergy,pulse_aux);
 					gsl_vector_free(pulse_aux); pulse_aux = 0;
-				}
+				//}
 				
 				PRCLOFWM = gsl_matrix_alloc(2,resize_mf);
 				if (numiteration == 0)
@@ -7780,8 +7777,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                                         extraSizeDueToLags = numlags-1;
                                         
 					// Choose the base-2 system value closest (lower than or equal) to the pulse length
-					if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0)
-					{
+					//if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0)
+					//{
 						resize_mf = pow(2,floor(log2(resize_mf)));
 						gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
 						temp = gsl_vector_subvector(pulseToCalculateEnergy,0,resize_mf+extraSizeDueToLags);
@@ -7790,7 +7787,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 						pulseToCalculateEnergy = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
 						gsl_vector_memcpy(pulseToCalculateEnergy,pulse_aux);
 						gsl_vector_free(pulse_aux); pulse_aux = 0;
-					}
+					//}
 					
 					// Find the appropriate values of the PRECALWN HDU ('PRCLx' columns)
 					PRCLWN = gsl_matrix_alloc(2,resize_mf);
@@ -8179,10 +8176,10 @@ void th_runEnergy(TesRecord* record,
 	{
 		OFlength_strategy = 0;
 	}
-	else if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") == 0)
+	/*else if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") == 0)
 	{
 		OFlength_strategy = 1;
-	}
+	}*/
 	else if (strcmp((*reconstruct_init)->OFStrategy,"BYGRADE") == 0)
 	{
 		OFlength_strategy = 2;
@@ -8489,7 +8486,6 @@ void th_runEnergy(TesRecord* record,
                         {
                                 resize_mfNEW = resize_mf;
                         }
-                        //cout<<"resize_mfNEW: "<<resize_mfNEW<<endl;
 			if ((pulseToCalculateEnergy = gsl_vector_alloc(resize_mfNEW)) == 0)
 			{
 				sprintf(valERROR,"%d",__LINE__-2);
@@ -8624,10 +8620,12 @@ void th_runEnergy(TesRecord* record,
 				{
                                         if ((*reconstruct_init)->LagsOrNot == 1) resize_mf= resize_mfNEW-numlags+1;
                                         // Choose the base-2 system value closest (lower than or equal) to the pulse length
-					if ((strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0) 
+					/*if ((strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0) 
 					    && ((((*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration != -999) && (resize_mf != (*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration))
 					    && (resize_mf != (*reconstruct_init)->library_collection->pulse_templates[0].template_duration)))
-					{                                             
+					{ */       
+                                            if ((*reconstruct_init)->pulse_length >= (*reconstruct_init)->OFLength) //No 0-padding
+                                            {
                                                 resize_mf = pow(2,floor(log2(resize_mf)));
                                                 gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
                                                 temp = gsl_vector_subvector(pulseToCalculateEnergy,0,resize_mf+extraSizeDueToLags);
@@ -8636,7 +8634,8 @@ void th_runEnergy(TesRecord* record,
                                                 pulseToCalculateEnergy = gsl_vector_alloc(resize_mf+extraSizeDueToLags);
                                                 gsl_vector_memcpy(pulseToCalculateEnergy,pulse_aux);
                                                 gsl_vector_free(pulse_aux);
-					}
+                                            }
+					//}
 				  
 					// It is not necessary to check the allocation because '(*reconstruct_init)->pulse_length'='PulseLength'(input parameter) has been checked previously
 					if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		filtergsl= gsl_vector_alloc(resize_mf);
@@ -8698,8 +8697,8 @@ void th_runEnergy(TesRecord* record,
 			else if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && (strcmp((*reconstruct_init)->OFNoise,"WEIGHTM") == 0))
 			{
 				// Choose the base-2 system value closest (lower than or equal) to the pulse length
-				if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0)
-				{
+				//if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0)
+				//{
 					resize_mf = pow(2,floor(log2(resize_mf)));
 					gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf);
 					temp = gsl_vector_subvector(pulseToCalculateEnergy,0,resize_mf);
@@ -8708,7 +8707,7 @@ void th_runEnergy(TesRecord* record,
 					pulseToCalculateEnergy = gsl_vector_alloc(resize_mf);
 					gsl_vector_memcpy(pulseToCalculateEnergy,pulse_aux);
 					gsl_vector_free(pulse_aux); pulse_aux = 0;
-				}
+				//}
 				
 				PRCLOFWM = gsl_matrix_alloc(2,resize_mf);
 				if (numiteration == 0)
@@ -8758,8 +8757,8 @@ void th_runEnergy(TesRecord* record,
 				if ((strcmp((*reconstruct_init)->EnergyMethod,"WEIGHTN") == 0) && ((*reconstruct_init)->OFLib == 1))
 				{
 					// Choose the base-2 system value closest (lower than or equal) to the pulse length
-					if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0)
-					{
+					//if (strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0)
+					//{
 						resize_mf = pow(2,floor(log2(resize_mf)));
 						gsl_vector *pulse_aux = gsl_vector_alloc(resize_mf);
 						temp = gsl_vector_subvector(pulseToCalculateEnergy,0,resize_mf);
@@ -8768,7 +8767,7 @@ void th_runEnergy(TesRecord* record,
 						pulseToCalculateEnergy = gsl_vector_alloc(resize_mf);
 						gsl_vector_memcpy(pulseToCalculateEnergy,pulse_aux);
 						gsl_vector_free(pulse_aux); pulse_aux = 0;
-					}
+					//}
 					
 					// Find the appropriate values of the PRECALWN HDU ('PRCLx' columns)
 					PRCLWN = gsl_matrix_alloc(2,resize_mf);
@@ -10465,11 +10464,10 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
         int LIMITED = gsl_matrix_get(reconstruct_init->grading->gradeData,2,1);	// 'gradelim_post' if 'value'(grading num) = 3
 	int M1 = gsl_matrix_get(reconstruct_init->grading->gradeData,1,1);	// 'gradelim_post' if 'value'(grading num) = 2
 	int H1 = gsl_matrix_get(reconstruct_init->grading->gradeData,0,1);	// 'gradelim_post' if 'value'(grading num) = 1
-        /*cout<<"H1: "<<H1<<endl;
-        cout<<"M1: "<<M1<<endl;
-        cout<<"LIMITED: "<<LIMITED<<endl;
-        cout<<"L2: "<<L2<<endl;
-        cout<<"grade1: "<<grade1<<" grade2: "<<grade2<<endl;*/
+        log_debug("H1: %i",H1);
+        log_debug("M1: %i",M1);
+        log_debug("LIMITED: %i",LIMITED);
+        log_debug("L2: %i",L2);
 	gsl_vector *gradelim;
 	if ((gradelim = gsl_vector_alloc(reconstruct_init->grading->ngrades)) == 0)
 	{
@@ -10490,18 +10488,19 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 	int gradelim_pre = gsl_vector_max(gradelim);
 	gsl_vector_free(gradelim);
 	
+        log_debug("Pulse duration: %i",grade1);
 	// pulseGrade and OF length
         if (OFlength_strategy == 0)		*OFlength = grade1;
-        else if (OFlength_strategy == 1) 	
+        /*else if (OFlength_strategy == 1) 	
         {
             *OFlength = pow(2,floor(log2(grade1)));
-            //cout<<"OFlength0: "<<*OFlength<<endl;
+            log_debug("OFlength0 %i",*OFlength);
             if (*OFlength <= 64) 
             {
                 *OFlength = 4;
-                //cout<<"OFlength1: "<<*OFlength<<endl;
+                log_debug("OFlength1 %i",*OFlength);
             }
-        }
+        }*/
         else if (OFlength_strategy == 3)
         {
                 *OFlength = min(reconstruct_init->OFLength,grade1);
@@ -10510,6 +10509,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
                         message = "OFLength provided as input parameter > Pulse duration (there can be a pulse in its tail) => OFLength=Pulse duration";
                         EP_PRINT_ERROR(message,-999);	// Only a warning
                 }
+                
         }
         
 	if (grade1 >= H1)	// High res
@@ -10672,11 +10672,12 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 ****************************************************************************/
 int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes, int productSize, int tooshortPulse_NoLags)
 {
-        //cout<<"calculateEnergy0"<<endl;
+        log_trace("calculateEnergy...");    
         ////cout<<"LowRes: "<<LowRes<<endl;
-        //cout<<"filter->size: "<<filter->size<<endl;
+        log_debug("filter->size: %i",filter->size);
+        log_debug("vector->size: %i",vector->size);    
+        log_debug("productSize: %i",productSize);    
         ////cout<<"filterFFT->size: "<<filterFFT->size<<endl;
-        //cout<<"vector->size: "<<vector->size<<endl;
         /*int minimo;
         if (vector->size < filter->size) minimo = vector->size;
         else                             minimo = filter->size;*/                          
@@ -10687,7 +10688,6 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
             //cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
             //cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<GSL_REAL(gsl_vector_complex_get(filterFFT,i))<<"+i"<<GSL_IMAG(gsl_vector_complex_get(filterFFT,i))<<endl;
         }*/
-        //cout<<"productSize: "<<productSize<<endl;
         
         string message = "";
 	char valERROR[256];
