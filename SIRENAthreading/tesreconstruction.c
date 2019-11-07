@@ -40,64 +40,6 @@ int tesreconstruction_main() {
     status=getpar(&par);
     CHECK_STATUS_BREAK(status);
     
-    
-    
-    /*fitsfile* outputfile = NULL;
-    fits_open_file(&outputfile, par.RecordFile, READONLY, &status);
-    printf("%s %p %s","outputfile: ",outputfile,"\n");
-    printf("%s %d %s","outputfile: ",*outputfile,"\n");
-    if (status != 0)    printf("%s","File given in RecordFile does not exist\n");
-    fits_movnam_hdu(outputfile, ANY_HDU,"EVENTS", 0, &status);
-    if (status != 0)    printf("%s","Error moving to HDU EVENTS in output file\n");
-    
-    // Get number of detected photons (rows)
-    long nphotons;
-    fits_get_num_rows(outputfile,&nphotons, &status);
-    if (status != 0)    printf("%s","Cannot get number of rows in output file\n");
-    printf("%s %ld %s","nphotons: ",nphotons,"\n");
-      
-    struct IOData obj;
-    obj.inObject = outputfile;
-    //char obj.nameTable;
-    strcpy(obj.nameTable,"EVENTS");
-    obj.iniCol = 0;
-    //char obj.nameCol;
-    //char obj.unit;
-    strcpy(obj.nameCol,"TIME");
-    obj.type = TDOUBLE;
-    obj.iniRow = 1;
-    obj.endRow = nphotons;
-    gsl_vector *tstarts = gsl_vector_alloc(nphotons);
-    printf("%s","Paso1\n");
-    readFitsSimple (obj,&tstarts);
-    if (status != 0)    printf("%s","Cannot run readFitsSimple in output file\n");
-    printf("%s","Paso2\n");
-  
-    strcpy(obj.nameCol,"PIXID");
-    printf("%s","Paso3\n");
-    obj.type = TINT;
-    printf("%s","Paso4\n");
-    gsl_vector *pixids = gsl_vector_alloc(nphotons);
-    readFitsSimple (obj,&pixids);
-    if (status != 0)    printf("%s","Cannot run readFitsSimple in output file\n");
-    printf("%s","Paso5\n");
-  
-  
-  
-  
-    gsl_vector_free(tstarts); tstarts = 0;
-    gsl_vector_free(pixids); pixids = 0;
-  
-    fclose(outputfile);*/
-    
-    
-    
-    
-    
-    
-    
-    
-    
     // Read XML info
     //--------------
     AdvDet *det = newAdvDet(&status);
@@ -498,6 +440,9 @@ int tesreconstruction_main() {
             
             }   // for every FITS file
             
+    
+    
+    
             fclose(filetxt);
     }
     else
@@ -579,6 +524,9 @@ int tesreconstruction_main() {
                     }
                     else
                     {
+    
+    
+    
                             nrecord = nrecord + 1;
                             if(nrecord == record_file->nrows) lastRecord=1;
                             //if(nrecord < 10) 
@@ -602,12 +550,12 @@ int tesreconstruction_main() {
                             }
                         
                             //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
+                            //printf("%s %d %s","status0 = ",status,"\n");
+                            //log_debug("**TESRECONSTRUCTION nrecord = %i",nrecord);
                             reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
                                                     lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
-                            /*printf("%s %f %s","record_time= ",record->time,"\n");
-                            printf("%s %d %s","record_pixid= ",record->pixid,"\n");
-                            printf("%s %d %s","numpulsesrecord= ",events_list->energies_>size,"\n");
-                            printf("%s %f %s","event_list->energies= ",events_list->energies[0],"\n");*/
+                            //printf("%s %d %s","**Acaba reconstructRecordSIRENA \n");
+                            //printf("%s %d %s","status1 = ",status,"\n");
                     }
                     CHECK_STATUS_BREAK(status);
 
@@ -619,7 +567,11 @@ int tesreconstruction_main() {
                                     //printf("\n %p - %f", outfile, record_file->delta_t);
                                     //printf("\nRecord single");
                                     //printf("\n%f - %ld", record->time, record->pixid);
+                                    //printf("%s %d %s","**Antes de saveEventListToFile \n");
+                                    //printf("%s %d %s","status2 = ",status,"\n");
                                     saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
+                                    //printf("%s %d %s","**Despues de saveEventListToFile \n");
+                                    //printf("%s %d %s","status3 = ",status,"\n");
                                     CHECK_STATUS_BREAK(status);
                                     //Reinitialize event list
                                     event_list->index=0;

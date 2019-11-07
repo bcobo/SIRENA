@@ -628,7 +628,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 		// Filter pulses and calculates energy
 		runEnergy(record, &reconstruct_init, &pulsesInRecord, optimalFilter,*pulsesAll);
 	}
-	//log_trace("After runEnergy");
+	log_trace("After runEnergy");
         //cout<<"After runEnergy"<<endl;
 	
 	if (nRecord == 1)
@@ -654,6 +654,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	}
 	else
 	{
+                //cout<<"PasoA"<<endl;
 		if (event_list->energies != NULL) 	delete [] event_list->energies;
                 if (event_list->avgs_4samplesDerivative != NULL) 	delete [] event_list->avgs_4samplesDerivative;
                 if (event_list->Es_lowres != NULL) 	delete [] event_list->Es_lowres;
@@ -781,18 +782,18 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                         gsl_vector_free(numLagsUsed_vector);
                         //cout<<"After runEnergyD"<<endl;
                         
-                        // Sort the tstart of all the detected photons
-                        /*gsl_vector *allTimes = gsl_vector_alloc((*pulsesAll)->ndetpulses);
-                        gsl_vector *allEnergies = gsl_vector_alloc((*pulsesAll)->ndetpulses);
-                        gsl_vector *allavg4 = gsl_vector_alloc((*pulsesAll)->ndetpulses);
-                        gsl_vector *allEs_lowres = gsl_vector_alloc((*pulsesAll)->ndetpulses);
-                        gsl_vector *allphis = gsl_vector_alloc((*pulsesAll)->ndetpulses);
-                        gsl_vector *alllagsShifts = gsl_vector_alloc((*pulsesAll)->ndetpulses);
-                        gsl_vector *allgrading = gsl_vector_alloc((*pulsesAll)->ndetpulses);
-                        gsl_vector *allgrades1 = gsl_vector_alloc((*pulsesAll)->ndetpulses);
-                        gsl_vector *allpulse_heights = gsl_vector_alloc((*pulsesAll)->ndetpulses);
-                        gsl_vector *allph_ids = gsl_vector_alloc((*pulsesAll)->ndetpulses);
-                        gsl_vector *allpix_ids = gsl_vector_alloc((*pulsesAll)->ndetpulses);*/
+                        /*// Sort the tstart of all the detected photons
+                        //gsl_vector *allTimes = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        //gsl_vector *allEnergies = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        //gsl_vector *allavg4 = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        //gsl_vector *allEs_lowres = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        //gsl_vector *allphis = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        //gsl_vector *alllagsShifts = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        //gsl_vector *allgrading = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        //gsl_vector *allgrades1 = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        //gsl_vector *allpulse_heights = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        //gsl_vector *allph_ids = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+                        //gsl_vector *allpix_ids = gsl_vector_alloc((*pulsesAll)->ndetpulses);
                         gsl_vector *allTstarts = gsl_vector_alloc((*pulsesAll)->ndetpulses);
                         gsl_vector *allTends = gsl_vector_alloc((*pulsesAll)->ndetpulses);
                         gsl_vector *allpulse_duration = gsl_vector_alloc((*pulsesAll)->ndetpulses);
@@ -904,73 +905,73 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                         
                         gsl_permutation_free(perm); perm = 0;
                         
-                        /*gsl_vector *allPulses = gsl_vector_alloc(10);
-                        gsl_vector *allPulses2 = gsl_vector_alloc(10);
-                        gsl_permutation *perm = gsl_permutation_alloc(10);
-                        gsl_vector_set(allPulses,0,2);
-                        gsl_vector_set(allPulses,1,1);
-                        gsl_vector_set(allPulses,2,5);
-                        gsl_vector_set(allPulses,3,9);
-                        gsl_vector_set(allPulses,4,7);
-                        gsl_vector_set(allPulses,5,6);
-                        gsl_vector_set(allPulses,6,10);
-                        gsl_vector_set(allPulses,7,3);
-                        gsl_vector_set(allPulses,8,8);
-                        gsl_vector_set(allPulses,9,4);
-                        gsl_vector_set(allPulses2,0,20);
-                        gsl_vector_set(allPulses2,1,10);
-                        gsl_vector_set(allPulses2,2,50);
-                        gsl_vector_set(allPulses2,3,90);
-                        gsl_vector_set(allPulses2,4,70);
-                        gsl_vector_set(allPulses2,5,60);
-                        gsl_vector_set(allPulses2,6,100);
-                        gsl_vector_set(allPulses2,7,30);
-                        gsl_vector_set(allPulses2,8,80);
-                        gsl_vector_set(allPulses2,9,40);
-                        gsl_sort_vector_index(perm,allPulses); 
-                        for (int i = 0; i < allPulses->size; i++)
-                        {
-                            double vpi = gsl_vector_get (allPulses, perm->data[i]);
-                            printf ("order = %d, value = %g\n", i, vpi);
-                            double vpi2 = gsl_vector_get (allPulses2, perm->data[i]);
-                            printf ("order = %d, value = %g\n", i, vpi2);
-                        }*/
+                        //gsl_vector *allPulses = gsl_vector_alloc(10);
+                        //gsl_vector *allPulses2 = gsl_vector_alloc(10);
+                        //gsl_permutation *perm = gsl_permutation_alloc(10);
+                        //gsl_vector_set(allPulses,0,2);
+                        //gsl_vector_set(allPulses,1,1);
+                        //gsl_vector_set(allPulses,2,5);
+                        //gsl_vector_set(allPulses,3,9);
+                        //gsl_vector_set(allPulses,4,7);
+                        //gsl_vector_set(allPulses,5,6);
+                        //gsl_vector_set(allPulses,6,10);
+                        //gsl_vector_set(allPulses,7,3);
+                        //gsl_vector_set(allPulses,8,8);
+                        //gsl_vector_set(allPulses,9,4);
+                        //gsl_vector_set(allPulses2,0,20);
+                        //gsl_vector_set(allPulses2,1,10);
+                        //gsl_vector_set(allPulses2,2,50);
+                        //gsl_vector_set(allPulses2,3,90);
+                        //gsl_vector_set(allPulses2,4,70);
+                        //gsl_vector_set(allPulses2,5,60);
+                        //gsl_vector_set(allPulses2,6,100);
+                        //gsl_vector_set(allPulses2,7,30);
+                        //gsl_vector_set(allPulses2,8,80);
+                        //gsl_vector_set(allPulses2,9,40);
+                        //gsl_sort_vector_index(perm,allPulses); 
+                        //for (int i = 0; i < allPulses->size; i++)
+                        //{
+                        //   double vpi = gsl_vector_get (allPulses, perm->data[i]);
+                        //    printf ("order = %d, value = %g\n", i, vpi);
+                        //    double vpi2 = gsl_vector_get (allPulses2, perm->data[i]);
+                        //    printf ("order = %d, value = %g\n", i, vpi2);
+                        //}
                         
                        
                        
                         
                         
-                        /*int arr[] = { 2, 5, 3, 7, 1 };
-                        int arr2[] = { 20, 50, 30, 70, 10 };
-                        int arr32[] = { }; 
-                        int n = sizeof(arr) / sizeof(arr[0]); 
-                        vector<pair<int, int> > vp;
-                        vector<pair<int, int> > vpout; 
+                        //int arr[] = { 2, 5, 3, 7, 1 };
+                        //int arr2[] = { 20, 50, 30, 70, 10 };
+                        //int arr32[] = { }; 
+                        //int n = sizeof(arr) / sizeof(arr[0]); 
+                        //vector<pair<int, int> > vp;
+                        //vector<pair<int, int> > vpout; 
   
                         // Inserting element in pair vector 
                         // to keep track of previous indexes 
-                        for (int i = 0; i < n; ++i) { 
-                            vp.push_back(make_pair(arr[i], i)); 
-                        } 
+                        //for (int i = 0; i < n; ++i) { 
+                        //    vp.push_back(make_pair(arr[i], i)); 
+                        //} 
                     
-                        // Sorting pair vector 
-                        sort(vp.begin(), vp.end()); 
+                        //// Sorting pair vector 
+                        //sort(vp.begin(), vp.end()); 
                     
-                        // Displaying sorted element 
-                        // with previous indexes 
-                        // corresponding to each element 
-                        cout << "Element\t"
-                            << "index" << endl; 
-                        for (int i = 0; i < vp.size(); i++) { 
-                            cout << vp[i].first << "\t"
-                                << vp[i].second << endl; 
-                                    }
-                        for (int i = 0; i < vp.size(); i++)
-                        {
-                            vpout[i].first = vp[0].first;
-                            cout << vpout[i].first << "\t"
-                                << vpout[i].second << endl; 
-                        }*/
+                        //// Displaying sorted element 
+                        //// with previous indexes 
+                        //// corresponding to each element 
+                        //cout << "Element\t"
+                        //    << "index" << endl; 
+                        //for (int i = 0; i < vp.size(); i++) { 
+                        //    cout << vp[i].first << "\t"
+                        //        << vp[i].second << endl; 
+                        //            }
+                        //for (int i = 0; i < vp.size(); i++)
+                       // {
+                        //    vpout[i].first = vp[0].first;
+                        //    cout << vpout[i].first << "\t"
+                        //        << vpout[i].second << endl; 
+                        //}*/
                 }                   
                                     
                 //cout<<"After runEnergyE"<<endl;
