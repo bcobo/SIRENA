@@ -2315,7 +2315,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	{
                 if ((*reconstruct_init)->opmode == 1)    gsl_vector_set(tstartgsl,i,gsl_vector_get(tstartgsl,i) + (*reconstruct_init)->errorT);
                 
-                if  ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength)
+                if  (((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"BYGRADE") == 0))
                 {
                     gsl_vector_set(tendgsl,i,(recordDERIVATIVE->size)-1);
                 }
