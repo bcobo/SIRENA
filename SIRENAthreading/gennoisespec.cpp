@@ -446,7 +446,7 @@ int main (int argc, char **argv)
         samprate = 156250.; //default xifusim value
         int hdunum; // Number of the current HDU (RECORDS or TESRECORDS)
         fits_get_num_hdus(infileObject, &hdunum,&status);
-        if (hdunum == 8)    // Input files simulated with xifusim
+        if ((hdunum == 8) || (hdunum == 9))    // Input files simulated with xifusim
         {    
                 fits_movabs_hdu(infileObject, 1, NULL, &status); // Move to "Primary" HDU
                 int numberkeywords;

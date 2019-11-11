@@ -98,7 +98,7 @@ int tesreconstruction_main() {
                     
                     fits_get_num_hdus(fptr, &hdunum,&status);
     
-                    if (hdunum == 8) //xifusim simulated file (with TESRECORDS)
+                    if ((hdunum == 8) || (hdunum == 9)) //xifusim simulated file (with TESRECORDS)
                     {    
                         
                         // Move to "Primary" HDU to obtain SAMPLING_RATE
@@ -143,7 +143,7 @@ int tesreconstruction_main() {
                             
                         div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
             
-                    }//if hdunum==8 (xifusim file)
+                    }//if ((hdunum == 8) || (hdunum == 9)) (xifusim file)
                     else
                     {
                         fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
@@ -169,7 +169,7 @@ int tesreconstruction_main() {
             
             fits_get_num_hdus(fptr, &hdunum,&status);
     
-            if (hdunum == 8) //xifusim simulated file (with TESRECORDS)
+            if ((hdunum == 8) || (hdunum == 9)) //xifusim simulated file (with TESRECORDS)
             {    
                 // Move to "Primary" HDU to obtain SAMPLING_RATE
                 fits_movabs_hdu(fptr, 1, NULL, &status); 

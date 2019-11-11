@@ -199,7 +199,7 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
 	fits_get_colnum(file->fptr, CASEINSEN,"PH_ID", &(file->ph_idCol), status);
 	CHECK_STATUS_RET(*status, NULL);
         
-        if (hdunum != 8)
+        if ((hdunum != 8) && (hdunum != 9))
         {
                 //Get trigger_size
                 fits_read_key(file->fptr, TULONG, "TRIGGSZ", &(file->trigger_size), comment, status);

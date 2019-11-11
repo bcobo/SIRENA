@@ -4052,7 +4052,7 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 		// It is not necessary to check the allocation because 'pulsetemplate' size must already be > 0
 		gsl_vector *baselinegsl = gsl_vector_alloc(pulsetemplate->size);
 		gsl_vector_set_all(baselinegsl,-1.0*(*reconstruct_init)->noise_spectrum->baseline);
-                gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
+                //gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
 		gsl_vector_add(pulsetemplate,baselinegsl);
 		gsl_vector_free(baselinegsl); baselinegsl = 0;
 		gsl_matrix_set_row(pulsetemplatesb0_matrix,0,pulsetemplate);
@@ -4607,7 +4607,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 			} 
 			gsl_vector *baselinegsl = gsl_vector_alloc(PULSENORMshort->size);
 			gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
-                        gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
+                        //gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
 			gsl_vector_add(PULSENORMshort,baselinegsl);
 			gsl_vector_free(baselinegsl); baselinegsl = 0;
 			gsl_vector_scale(PULSENORMshort,1.0/reconstruct_init->monoenergy);
@@ -5161,7 +5161,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 	// It is not necessary to check the allocation because 'pulsetemplate' size must be > 0
 	gsl_vector *baselinegsl = gsl_vector_alloc(pulsetemplate->size);
 	gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
-        gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
+        //gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
 	gsl_vector_add(pulsetemplate,baselinegsl);
 	gsl_matrix_set_row(modelsb0aux,eventcntLib,pulsetemplate);
         gsl_vector_free(baselinegsl); baselinegsl = 0;
@@ -5245,7 +5245,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 			}  
                         baselinegsl = gsl_vector_alloc(PULSENORMshort->size);
                         gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
-                        gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
+                        //gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
 			gsl_vector_add(PULSENORMshort,baselinegsl);
                         gsl_vector_free(baselinegsl); baselinegsl = 0;
 			gsl_vector_scale(PULSENORMshort,1.0/reconstruct_init->monoenergy);
@@ -6360,7 +6360,7 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
 	gsl_matrix_get_row(vectoraux1,modelsaux,indexa);
 	gsl_vector_add(Pab,vectoraux1);
 	gsl_vector_add_constant(Pab,-1*reconstruct_init->noise_spectrum->baseline);
-        gsl_vector_add_constant(Pab,-1.0*1800.08687767577);
+        //gsl_vector_add_constant(Pab,-1.0*1800.08687767577);
 	gsl_matrix_set_row(*Pabaux,indexa,Pab);
 	
         gsl_matrix_get_row(vectorMaxLengthFixedFilteraux1,modelsMaxLengthFixedFilteraux,indexb);
@@ -6371,7 +6371,7 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
 	gsl_matrix_get_row(vectorMaxLengthFixedFilteraux1,modelsMaxLengthFixedFilteraux,indexa);
 	gsl_vector_add(PabMaxLengthFixedFilter,vectorMaxLengthFixedFilteraux1);
 	gsl_vector_add_constant(PabMaxLengthFixedFilter,-1*reconstruct_init->noise_spectrum->baseline);
-        gsl_vector_add_constant(PabMaxLengthFixedFilter,-1*1800.08687767577);
+        //gsl_vector_add_constant(PabMaxLengthFixedFilter,-1*1800.08687767577);
 	gsl_matrix_set_row(*PabMaxLengthFixedFilteraux,indexa,PabMaxLengthFixedFilter);
 	
         gsl_matrix_get_row(vectorMaxLengthFixedFilteraux1,modelsMaxLengthFixedFilteraux,indexb);
@@ -7258,7 +7258,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 		// It is not necessary to check the allocation because the allocation of 'recordAux' has been checked previously
 		gsl_vector *baselinegsl = gsl_vector_alloc(recordAux->size);
 		gsl_vector_set_all(baselinegsl,-1.0*(*reconstruct_init)->noise_spectrum->baseline);
-                gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
+                //gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
 		gsl_vector_add(recordAux,baselinegsl);
 		gsl_vector_free(baselinegsl); baselinegsl = 0;
 	}
@@ -8303,7 +8303,7 @@ void th_runEnergy(TesRecord* record,
 		// It is not necessary to check the allocation because the allocation of 'recordAux' has been checked previously
 		gsl_vector *baselinegsl = gsl_vector_alloc(recordAux->size);
 		gsl_vector_set_all(baselinegsl,-1.0*(*reconstruct_init)->noise_spectrum->baseline);
-                gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
+                //gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
 		gsl_vector_add(recordAux,baselinegsl);
 		gsl_vector_free(baselinegsl); baselinegsl = 0;
 	}
