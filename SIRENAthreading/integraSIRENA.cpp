@@ -429,8 +429,6 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	{
 		EP_EXIT_ERROR("Record size is <= 0",EPFAIL);
 	}
-	//cout<<"Pulse length: "<<reconstruct_init->pulse_length<<endl;
-        //cout<<"Record size: "<<record->trigger_size<<endl;
         //log_debug("Pulse length: %d",reconstruct_init->pulse_length);
         //log_debug("Record size: %d",record->trigger_size);
 	if(reconstruct_init->pulse_length > record->trigger_size)
@@ -614,7 +612,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
         }
         //cout<<"Before runDetect"<<endl;
 	runDetect(record, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
-        //log_trace("After runDetect");
+        log_trace("After runDetect");
         //cout<<"After runDetect"<<endl;
         
 	if(pulsesInRecord->ndetpulses == 0) // No pulses found in record

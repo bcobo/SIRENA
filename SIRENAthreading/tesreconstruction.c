@@ -39,6 +39,7 @@ int tesreconstruction_main() {
     // Get program parameters.
     status=getpar(&par);
     CHECK_STATUS_BREAK(status);
+    //printf("%s","After getpar\n");
     
     // Read XML info
     //--------------
@@ -46,6 +47,7 @@ int tesreconstruction_main() {
     CHECK_STATUS_BREAK(status);
     det = loadAdvDet(par.XMLFile, &status);
     CHECK_STATUS_BREAK(status);
+    //printf("%s","After loadAdvDet\n");
     // Read the sampling rate from XML file
     double sf = -999.; 
     double div = 1;
@@ -163,16 +165,22 @@ int tesreconstruction_main() {
     }
     else
     {
+            //printf("%s ","Step-1\n");
             numfits = 1;
             fits_open_file(&fptr, par.RecordFile, READONLY, &status);
+            //printf("%s ","Step0\n");
             if (status != 0)    printf("%s","File given in RecordFile does not exist\n");
             
             fits_get_num_hdus(fptr, &hdunum,&status);
+            //printf("%s ","Step1\n");
+            //printf("%s %d %s","hdunum = ",hdunum,"\n");
     
             if ((hdunum == 8) || (hdunum == 9)) //xifusim simulated file (with TESRECORDS)
             {    
+                //printf("%s ","Step2\n");
                 // Move to "Primary" HDU to obtain SAMPLING_RATE
                 fits_movabs_hdu(fptr, 1, NULL, &status); 
+                //printf("%s ","Step3\n");
                 CHECK_STATUS_BREAK(status);
                 // and read full Primary HDU and store it in 'headerPrimary'
                 int numberkeywords;
@@ -246,6 +254,7 @@ int tesreconstruction_main() {
                                                  par.clobber,
                                                  &status);
     CHECK_STATUS_BREAK(status);
+    //printf("%s","After opennewTesEventFile\n");
     
     // Initialize PP data structures needed for pulse filtering
     //---------------------------------------------------------
@@ -451,6 +460,7 @@ int tesreconstruction_main() {
             // ----------------
             //TesTriggerFile* record_file = openexistingTesTriggerFile(par.RecordFile,keywords,&status);
             record_file = openexistingTesTriggerFile(par.RecordFile,keywords,&status);
+            //printf("%s","After opennewTesEventFile\n");
             CHECK_STATUS_BREAK(status);
 
             if(!strcmp(par.Rcmethod,"PP")){
@@ -468,6 +478,7 @@ int tesreconstruction_main() {
                         par.filterFile, par.errorT, par.Sum0Filt, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
                         par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
             }  
+            //printf("%s","After initializeReconstructionSIRENA\n");
             CHECK_STATUS_BREAK(status);
             
             // Build up TesRecord to read the file
@@ -551,7 +562,6 @@ int tesreconstruction_main() {
                         
                             //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
                             //printf("%s %d %s","status0 = ",status,"\n");
-                            //log_debug("**TESRECONSTRUCTION nrecord = %i",nrecord);
                             reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
                                                     lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
                             //printf("%s %d %s","**Acaba reconstructRecordSIRENA \n");

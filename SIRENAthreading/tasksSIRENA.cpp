@@ -9552,7 +9552,7 @@ int find_matchedfilter(int runF0orB0val, double maxDER, gsl_vector *maxDERs, Rec
 	}
 	else
 	{
-		for (int i=0;i<nummodels-1;i++)
+		for (int i=0;i<nummodels;i++)
 		{
                         if (maxDER == gsl_vector_get(maxDERs_LIB1row,i))
 			{
@@ -9692,7 +9692,7 @@ int find_matchedfilterDAB(double maxDER, gsl_vector *maxDERs, ReconstructInitSIR
 	}
 	else
 	{
-		for (int i=0;i<nummodels-1;i++)
+		for (int i=0;i<nummodels;i++)
 		{
 			if (maxDER == gsl_vector_get(maxDERs,i))
 			{
@@ -9828,7 +9828,7 @@ int find_optimalfilter(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA
 	}
 	else
 	{
-		for (int i=0;i<nummodels-1;i++)
+		for (int i=0;i<nummodels;i++)
 		{
 			if (maxDER == gsl_vector_get(maxDERs,i))
 			{
@@ -11051,6 +11051,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     
                                                 if (maxParabolaFound == true)
                                                 {
+                                                    
                                                     *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
                                                     *tstartNewDev = xmax;
                                                 }
