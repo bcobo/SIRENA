@@ -2350,6 +2350,13 @@ int FindSecondaries
         cout<<"999 "<<gsl_vector_get(adjustedDerivative,999)<<endl;
         cout<<"1000 "<<gsl_vector_get(adjustedDerivative,1000)<<endl;
         cout<<"1001 "<<gsl_vector_get(adjustedDerivative,1001)<<endl;*/
+        
+        cout<<"Umbral:  "<<adaptativethreshold<<endl;
+        cout<<"0 "<<gsl_vector_get(adjustedDerivative,0)<<endl;
+        cout<<"1 "<<gsl_vector_get(adjustedDerivative,1)<<endl;
+        cout<<"2 "<<gsl_vector_get(adjustedDerivative,2)<<endl;
+        cout<<"3 "<<gsl_vector_get(adjustedDerivative,3)<<endl;
+        cout<<"4 "<<gsl_vector_get(adjustedDerivative,4)<<endl;
       
         gsl_vector_view temp;
         
@@ -2390,17 +2397,11 @@ int FindSecondaries
                         if (i == 0)	gsl_vector_set(*flagTruncated,*numberPulses,1);
                         *numberPulses = *numberPulses +1;
                         foundPulse = true;
+                        //cout<<"Supera el umbral en "<<i<<" numberPulses="<<*numberPulses<<endl;
                         //cout<<"Supera el umbral en "<<i<<" "<<gsl_vector_get(adjustedDerivative,i-1)<<" "<<gsl_vector_get(adjustedDerivative,i)<<" "<<adaptativethreshold<<endl;
                         if (i == 0) 
                             EP_PRINT_ERROR("FIRST sample is being above the threshold",-999);
-                        /*if (i == 1998)
-                         { *
-                         cout<<1997<<" "<<gsl_vector_get(adjustedDerivative,1997)<<endl;
-                         cout<<1998<<" "<<gsl_vector_get(adjustedDerivative,1998)<<endl;
-                         cout<<1999<<" "<<gsl_vector_get(adjustedDerivative,1999)<<endl;
-                         cout<<2000<<" "<<gsl_vector_get(adjustedDerivative,2000)<<endl;
-                         cout<<2001<<" "<<gsl_vector_get(adjustedDerivative,2001)<<endl;
-                    }*/
+                        
                         indexM = 0;
                         indexMin = gsl_vector_alloc(10);
                         indexMax = gsl_vector_alloc(10);
@@ -2844,6 +2845,7 @@ int FindSecondaries
                             (angleStart1<criteriaDER_value))
                             //(angleStart1<criteriaDER_value) || (gsl_vector_get(convolutionLags,1) < 0))    
                         {
+                            //cout<<"angleStart1<criteriaDER_value"<<endl;
                             previouslyFalsePulse = gsl_vector_get(*tstartgsl,*numberPulses-1);
                             *numberPulses = *numberPulses-1;
                             gsl_vector_set(*flagTruncated,*numberPulses,0);
