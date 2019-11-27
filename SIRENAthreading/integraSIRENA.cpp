@@ -419,6 +419,7 @@ void initializeCreationMode()
 ******************************************************************************/
 extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_list, ReconstructInitSIRENA* reconstruct_init,  int lastRecord, int nRecord, PulsesCollection **pulsesAll, OptimalFilterSIRENA **optimalFilter, int* const status)
 {
+        log_trace("reconstructRecordSIRENA: INICIO");
 	// Inititalize PulsesCollection structure
 	PulsesCollection* pulsesInRecord = new PulsesCollection;
 	
@@ -441,11 +442,13 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
   if (scheduler::get()->is_threading() 
       && reconstruct_init->opmode == 1
       && (strcmp(reconstruct_init->EnergyMethod, "PCA") != 0)){
-    //log_trace("Threading mode...");
+    log_trace("reconstructRecordSIRENA:  Threading mode...");
     ReconstructInitSIRENA* rec = reconstruct_init->get_threading_object(nRecord);
+    log_trace("reconstructRecordSIRENA:  Threading mode...1");
     scheduler::get()->push_detection(record, nRecord, lastRecord, 
                                      *pulsesAll, &rec, &pulsesInRecord,
                                      optimalFilter, event_list);
+    log_trace("reconstructRecordSIRENA:  Threading mode...2");
     return;  // Ya no corre el resto de 'reconstructRecordSIRENA': 'runDetect', 'runEnergy'...
   }
 	
@@ -757,6 +760,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                         event_list->pix_ids[ip]  = pulsesInRecord->pulses_detected[ip].pixid;
                         event_list->tstarts[ip]  = pulsesInRecord->pulses_detected[ip].Tstart;
                         event_list->tends[ip]  = pulsesInRecord->pulses_detected[ip].Tend;
+                        //cout<<"pulsesInRecord->pulses_detected[ip].pixid: "<<pulsesInRecord->pulses_detected[ip].pixid<<endl;
                         //cout<<"Tstart: "<<event_list->tstarts[ip]<<endl;
                         //cout<<"Tend: "<<event_list->tends[ip]<<endl;
 		}

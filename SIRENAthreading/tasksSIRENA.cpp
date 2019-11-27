@@ -755,6 +755,7 @@ std::mutex fits_file_mut;
 
 void th_runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
 {
+  log_trace("th_runDetect: INICIO");
   scheduler* sc = scheduler::get();
   
   int inputPulseLength = (*reconstruct_init)->pulse_length;
@@ -7021,6 +7022,7 @@ int filterByWavelets (ReconstructInitSIRENA* reconstruct_init, gsl_vector **inve
 	fclose(temporalFileRecord);
 	fclose(temporalFiled13);
 	
+        log_trace("th_runDetect: FIN");
 	return(EPOK);
 }
 /*xxxx end of SECTION A21 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
@@ -7611,8 +7613,10 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 					/*if ((strcmp((*reconstruct_init)->OFStrategy,"BASE2") != 0) 
 					    && ((((*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration != -999) && (resize_mf != (*reconstruct_init)->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration))
                                             && (resize_mf != (*reconstruct_init)->library_collection->pulse_templates[0].template_duration)) && (preBuffer == 0))*/
-					//{         
-                                                if ((*reconstruct_init)->pulse_length >= (*reconstruct_init)->OFLength) //No 0-padding
+					//{       
+                                                //if ((*reconstruct_init)->pulse_length >= (*reconstruct_init)->OFLength) //No 0-padding
+                                                if (((*reconstruct_init)->pulse_length >= (*reconstruct_init)->OFLength) //No 0-padding
+                                                    || (((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) && (preBuffer != 0)))
                                                 {
                                                     log_debug("Entra (no 0-padding)",resize_mf);
                                                     log_debug("resize_mf2: %i",resize_mf);
@@ -8165,6 +8169,7 @@ void th_runEnergy(TesRecord* record,
                   PulsesCollection** pulsesInRecord, 
                   OptimalFilterSIRENA **optimalFilter, PulsesCollection *pulsesAll)
 {
+        log_trace("th_runEnergy: INICIO");
 	// Declare variables
 	string message="";
 	int status = EPOK;
@@ -8358,6 +8363,8 @@ void th_runEnergy(TesRecord* record,
         int extraSizeDueToLags = 0;
 	for (int i=0; i<(*pulsesInRecord)->ndetpulses ;i++)
 	{
+            if ((*pulsesInRecord)->pulses_detected[i].quality != 1)
+            {
                 tooshortPulse_NoLags = 0;
                 
 		// Establish the pulse grade (HighRes=1, MidRes=2, LimRes=3, LowRes=4, Rejected=-1, Pileup=-2) and the optimal filter length
@@ -9058,6 +9065,16 @@ void th_runEnergy(TesRecord* record,
                   gsl_matrix_free(PRCLWN); PRCLWN = 0;
                   gsl_matrix_free(PRCLOFWM); PRCLOFWM = 0;
 		}
+            }
+            else if  ((*pulsesInRecord)->pulses_detected[i].quality == 1)
+            // Truncated pulse at the beginning
+            {
+                (*pulsesInRecord)->pulses_detected[i].energy = -999.0;
+                (*pulsesInRecord)->pulses_detected[i].E_lowres = -999.0;
+                (*pulsesInRecord)->pulses_detected[i].grading = -999.0;
+                (*pulsesInRecord)->pulses_detected[i].phi = -999.0;
+                (*pulsesInRecord)->pulses_detected[i].lagsShift = -999.0;
+            }
 	} // End for
 	
 	gsl_vector_free(recordAux); recordAux = 0;
@@ -9070,6 +9087,7 @@ void th_runEnergy(TesRecord* record,
         gsl_vector_free(optimalfilter_lowres); optimalfilter_lowres = 0;
         if (optimalfilter_FFT_complex_lowres != NULL) gsl_vector_complex_free(optimalfilter_FFT_complex_lowres); optimalfilter_FFT_complex_lowres = 0;
 
+        log_trace("th_runEnergy: FIN");
 	return;
 }
 
@@ -10730,13 +10748,13 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
         log_debug("vector->size: %i",vector->size);    
         log_debug("productSize: %i",productSize);    
         ////cout<<"filterFFT->size: "<<filterFFT->size<<endl;
-        /*int minimo;
+        int minimo;
         if (vector->size < filter->size) minimo = vector->size;
-        else                             minimo = filter->size;*/                          
-        //for (int i=0;i<minimo;i++)
+        else                             minimo = filter->size;
         /*if (LowRes== 0)
         {
-            for (int i=0;i<15;i++)
+            //for (int i=0;i<15;i++)
+            for (int i=0;i<minimo;i++)
             {
                 //cout<<i<<" "<<gsl_vector_get(vector,i)<<endl;
                 cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
