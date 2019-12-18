@@ -8023,7 +8023,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         
                         //cout<<"pulseToCalculateEnergyBEFORE: "<<gsl_vector_get(pulseToCalculateEnergy,0)<<" "<<gsl_vector_get(pulseToCalculateEnergy,1)<<endl;
                         // 0-padding => Subtract the baseline (mean of nsamples before the pulse)
-                        if ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) // 0-padding 
+                        if (((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) && ((*reconstruct_init)->LbT != 0)) // 0-padding 
                         {
                                 gsl_vector *baselinePulse = gsl_vector_alloc(pulseToCalculateEnergy->size);
                                 //cout<<"(*pulsesInRecord)->pulses_detected[i].baseline: "<<(*pulsesInRecord)->pulses_detected[i].baseline<<endl;
@@ -8967,6 +8967,17 @@ void th_runEnergy(TesRecord* record,
                                 }
 			}
 			
+			// 0-padding => Subtract the baseline (mean of nsamples before the pulse)
+                        if (((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) && ((*reconstruct_init)->LbT != 0)) // 0-padding 
+                        {
+                                gsl_vector *baselinePulse = gsl_vector_alloc(pulseToCalculateEnergy->size);
+                                //cout<<"(*pulsesInRecord)->pulses_detected[i].baseline: "<<(*pulsesInRecord)->pulses_detected[i].baseline<<endl;
+                                gsl_vector_set_all(baselinePulse,-1.0*(*pulsesInRecord)->pulses_detected[i].baseline);
+                                //gsl_vector_set_all(baselinePulse,-1.0*1799.62441328334);
+                                gsl_vector_add(pulseToCalculateEnergy,baselinePulse);
+                                gsl_vector_free(baselinePulse); baselinePulse = 0;
+                        }
+                        
 			// Calculate the energy of each pulse
 			if (calculateEnergy(pulseToCalculateEnergy,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
 			{
