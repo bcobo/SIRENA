@@ -760,6 +760,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                         event_list->pix_ids[ip]  = pulsesInRecord->pulses_detected[ip].pixid;
                         event_list->tstarts[ip]  = pulsesInRecord->pulses_detected[ip].Tstart;
                         event_list->tends[ip]  = pulsesInRecord->pulses_detected[ip].Tend;
+                        //event_list->baseline[ip] = pulsesInRecord->pulses_detected[ip].baseline;
                         //cout<<"pulsesInRecord->pulses_detected[ip].pixid: "<<pulsesInRecord->pulses_detected[ip].pixid<<endl;
                         //cout<<"Tstart: "<<event_list->tstarts[ip]<<endl;
                         //cout<<"Tend: "<<event_list->tends[ip]<<endl;
@@ -1020,6 +1021,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 				event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
 				event_list->ph_ids[ip]   = 0;		    
                                 event_list->pix_ids[ip]  = (*pulsesAll)->pulses_detected[ip].pixid;
+                                //event_list->baseline[ip] = pulsesInRecord->pulses_detected[ip].baseline;
 			}
 		}
 	}
@@ -2844,7 +2846,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 * - hduPRCLOFWM: Add or not the PRCLOFWM HDU in the library file (1/0) 
 * - energy_method: Energy calculation Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED or PCA
 * - ofnoise: Noise to use with Optimal Filtering: NSD or WEIGHTM
-* - filter_method: Filtering Method: F0 (deleting the zero frequency bin) or F0 (deleting the baseline)
+* - filter_method: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)
 * - status: Input/output status
 ******************************************************************************/
 NoiseSpec* getNoiseSpec(const char* const filename, int opmode, int hduPRCLOFWM, char *energy_method, char *ofnoise, char *filter_method, int* const status)
@@ -4115,6 +4117,7 @@ PulseDetected::PulseDetected():
   grading(0),
   avg_4samplesDerivative(0.0f),
   E_lowres(0.0f),
+  baseline(0.0f),
   phi(0.0f),
   lagsShift(0),//
   quality(0.0f),
@@ -4143,6 +4146,7 @@ PulseDetected::PulseDetected(const PulseDetected& other):
   grading(other.grading),
   avg_4samplesDerivative(other.avg_4samplesDerivative),
   E_lowres(other.E_lowres),
+  baseline(other.baseline),
   phi(other.phi),
   lagsShift(other.lagsShift),
   quality(other.quality),
@@ -4193,6 +4197,7 @@ PulseDetected& PulseDetected::operator=(const PulseDetected& other)
     grading = other.grading;
     avg_4samplesDerivative = other.avg_4samplesDerivative;
     E_lowres = other.E_lowres;
+    baseline = other.baseline;
     phi = other.phi;
     lagsShift = other.lagsShift;
     quality = other.quality;

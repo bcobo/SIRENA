@@ -649,6 +649,8 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                         message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
                                         EP_PRINT_ERROR(message,EPFAIL);
                                 }
+                                //for (int kkk=0;kkk<gsl_vector_get(*lb,0);kkk++)
+                                //    cout<<"input_i:"<<kkk<<" "<<gsl_vector_get(input,kkk)<<endl;
 
                                 // Sum all the elements of 'input'
                                 if (gsl_vector_Sumsubvector(input,0,input->size,&Baux))
@@ -656,6 +658,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                         message = "Cannot run gsl_vector_Sumsubvector routine when tstart>=lb";
                                         EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                 }
+                                //cout<<"Baux: "<<Baux<<endl;
                                 gsl_vector_free(input); input = 0;
                         }
                         else if ((gsl_vector_get(tstart,0)<gsl_vector_get(*lb,0)) && (gsl_vector_get(tstart,0)>1))

@@ -370,6 +370,9 @@ typedef struct PulseDetected
         
         /**Number of lags used in detection*/
         int numLagsUsed;
+        
+        /** Baseline calculated, in general, by using the previous Lb samples to the pulse */
+        double baseline;
 #ifdef __cplusplus
   PulseDetected();
   PulseDetected(const PulseDetected& other);

@@ -1425,8 +1425,8 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 			gsl_vector_memcpy(EventSamples,&temp.vector);
 			
 			// Baseline subtraction
-			gsl_vector_set_all(baselinegsl,-1.0*baselineIntervalFreeOfPulses);
-			gsl_vector_add(EventSamples,baselinegsl);
+			//gsl_vector_set_all(baselinegsl,-1.0*baselineIntervalFreeOfPulses);
+			//gsl_vector_add(EventSamples,baselinegsl);
 						
 			if (NumMeanSamples < nintervals)
 			{
