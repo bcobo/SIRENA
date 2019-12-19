@@ -2359,10 +2359,18 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
         gsl_vector_set_all(Lbgsl,Lb); 
         gsl_vector *Bgsl;
         //for (int i=0;i<numPulses;i++) cout<<i<<" "<<gsl_vector_get(tstartgsl,i)<<endl;
-        if (getB(recordNOTFILTERED, tstartgsl, numPulses, &Lbgsl, (*reconstruct_init)->pulse_length, &Bgsl))
+        if (Lb != 0.0)
         {
-                message = "Cannot run getB";
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+            if (getB(recordNOTFILTERED, tstartgsl, numPulses, &Lbgsl, (*reconstruct_init)->pulse_length, &Bgsl))
+            {
+                    message = "Cannot run getB";
+                    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+            }
+        }
+        else
+        {
+            Bgsl = gsl_vector_alloc(numPulses);
+            gsl_vector_set_all(Bgsl,-999.0);
         }
         /*for (int i=0;i<100;i++)
         {
@@ -2469,7 +2477,10 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 		foundPulses->pulses_detected[i].quality = gsl_vector_get(qualitygsl,i);
                 foundPulses->pulses_detected[i].numLagsUsed = gsl_vector_get(lagsgsl,i);
                 foundPulses->pulses_detected[i].pixid = pixid;
-                foundPulses->pulses_detected[i].baseline = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
+                if (Lb != 0.0)
+                    foundPulses->pulses_detected[i].baseline = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
+                else
+                    foundPulses->pulses_detected[i].baseline = gsl_vector_get(Bgsl,i);
 		//cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<" , Tstart="<<foundPulses->pulses_detected[i].Tstart<<" , Tend="<<foundPulses->pulses_detected[i].Tend<<endl;
                 //log_debug("Pulse %d", i," tstart=%f",gsl_vector_get(tstartgsl,i), " maxDER=%f",foundPulses->pulses_detected[i].maxDER, " samp1DER=%f",gsl_vector_get(samp1DERgsl,i), " pulse_duration=%d",foundPulses->pulses_detected[i].pulse_duration," quality=%d",foundPulses->pulses_detected[i].quality," lags=%f",gsl_vector_get(lagsgsl,i)," Tstart=%f",foundPulses->pulses_detected[i].Tstart," Tend=%f",foundPulses->pulses_detected[i].Tend);
                 //log_debug("Pulse %i tstart=%f maxDER=%f samp1DER=%f pulse_duration=%i quality=%f lags=%f",i,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].maxDER,gsl_vector_get(samp1DERgsl,i),foundPulses->pulses_detected[i].pulse_duration,foundPulses->pulses_detected[i].quality,gsl_vector_get(lagsgsl,i));
