@@ -506,6 +506,9 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                                         EP_EXIT_ERROR("Cannot read keyword in convertI2R",EPFAIL);
                                 }
                                 
+                                double V0 = 0;
+                                double RL;
+                                
                                 IOData obj;
                                 obj.inObject = reconstruct_init->record_file_fptr;
                                 obj.nameTable = new char [255];
@@ -520,9 +523,15 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                                 gsl_vector *vector = gsl_vector_alloc(1);
                                 if (readFitsSimple (obj,&vector))
                                 {
-                                        EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                                        //EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                                        strcpy(obj.nameCol,"V0");
+                                        if (readFitsSimple (obj,&vector))
+                                        {
+                                                EP_EXIT_ERROR("Neither R0 nor V0 in TESPARAM",EPFAIL);
+                                        }
+                                        V0 = gsl_vector_get(vector,0);
                                 }
-                                reconstruct_init->i2rdata->R0 = gsl_vector_get(vector,0);
+                                if (V0 == 0)    reconstruct_init->i2rdata->R0 = gsl_vector_get(vector,0);
                                 strcpy(obj.nameCol,"I0_START");
                                 if (readFitsSimple (obj,&vector))
                                 {
@@ -548,6 +557,16 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                                 }
                                 reconstruct_init->i2rdata->LFILTER = gsl_vector_get(vector,0);
                                 
+                                if (V0 != 0)
+                                {
+                                        strcpy(obj.nameCol,"RL");
+                                        if (readFitsSimple (obj,&vector))
+                                        {
+                                                EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                                        }
+                                        RL = gsl_vector_get(vector,0);
+                                        reconstruct_init->i2rdata->R0 = V0/reconstruct_init->i2rdata->I0_START-RL;
+                                }
                                 
                                 if (fits_movabs_hdu(reconstruct_init->record_file_fptr, hdunum, &hdutype, status))
                                 {
