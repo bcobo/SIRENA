@@ -44,6 +44,9 @@
 	
 	#include <time.h>
 
+	//int flag=0;
+        //gsl_vector *fila1;
+	
 // CFITSIO helpers
 
 	int  colnum=0, felem=0;
@@ -85,10 +88,12 @@
 	double Imin;
         double Imax;
         double R0;
+        double V0;
         double Ibias;
         double RPARA;
         double TTR;
         double LFILTER;
+        double RL;
 
 // INPUT VECTORS
 

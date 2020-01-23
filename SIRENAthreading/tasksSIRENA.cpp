@@ -317,6 +317,7 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 		
 		(*reconstruct_init)->pulse_length = inputPulseLength;
                 
+                log_trace("Writing the library...");
 		if (writeLibrary(reconstruct_init, 1/record->delta_t, pulseheighttemplate, pulsetemplate, covariance, weight, appendToLibrary, &inLibObject, pulsetemplateMaxLengthFixedFilter))
 		{
 			message = "Cannot run routine writeLibrary in CALIBRATION mode";
@@ -2485,11 +2486,15 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                 //log_debug("Pulse %d", i," tstart=%f",gsl_vector_get(tstartgsl,i), " maxDER=%f",foundPulses->pulses_detected[i].maxDER, " samp1DER=%f",gsl_vector_get(samp1DERgsl,i), " pulse_duration=%d",foundPulses->pulses_detected[i].pulse_duration," quality=%d",foundPulses->pulses_detected[i].quality," lags=%f",gsl_vector_get(lagsgsl,i)," Tstart=%f",foundPulses->pulses_detected[i].Tstart," Tend=%f",foundPulses->pulses_detected[i].Tend);
                 //log_debug("Pulse %i tstart=%f maxDER=%f samp1DER=%f pulse_duration=%i quality=%f lags=%f",i,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].maxDER,gsl_vector_get(samp1DERgsl,i),foundPulses->pulses_detected[i].pulse_duration,foundPulses->pulses_detected[i].quality,gsl_vector_get(lagsgsl,i));
                 log_debug("Pulse %d", i);
+                //for (int kkk=0;kkk<foundPulses->pulses_detected[i].pulse_adc->size;kkk++) cout<<kkk<<" "<<gsl_vector_get(foundPulses->pulses_detected[i].pulse_adc_preBuffer,kkk)<<endl;
+                //log_debug("**pulse: %f %f %f",gsl_vector_get(foundPulses->pulses_detected[i].pulse_adc,0),gsl_vector_get(foundPulses->pulses_detected[i].pulse_adc,1),gsl_vector_get(foundPulses->pulses_detected[i].pulse_adc,2));
+                log_debug("**max_pulse: %f",gsl_vector_max(foundPulses->pulses_detected[i].pulse_adc_preBuffer));
                 log_debug("tstart= %f", gsl_vector_get(tstartgsl,i));
                 log_debug("tend= %f", gsl_vector_get(tendgsl,i));
                 log_debug("pulse duration %d", foundPulses->pulses_detected[i].pulse_duration);
                 log_debug("Previous baseline (Lb=%f): %f", gsl_vector_get(Lbgsl,i), gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i));
                 //cout<<"Previous baseline: "<<gsl_vector_get(Bgsl,i)<<" "<<gsl_vector_get(Lbgsl,i)<<" "<<gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i)<<endl;
+                //cout<<gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i)<<endl;
                 //log_debug("Previous baseline %f", foundPulses->pulses_detected[i].baseline);
                 
 	}
@@ -2928,13 +2933,14 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 	{
 		if (i == totalPulses-1)		tstartnext = gsl_vector_get(tstart,i)+2*reconstruct_init->pulse_length;
 		else 				tstartnext = gsl_vector_get(tstart,i+1);
-
+                
 		// Check if the pulse is piled-up or not
-		if ((gsl_vector_get(pulseheight,i) < maximumpulseheight-0.1*maximumpulseheight) || (gsl_vector_get(pulseheight,i) > maximumpulseheight+0.1*maximumpulseheight)
-			|| (tstartnext-gsl_vector_get(tstart,i) <= reconstruct_init->pulse_length) || ((gsl_vector_get(quality,i) != 0) && (gsl_vector_get(quality,i) != 10)))
+		if ((gsl_vector_get(pulseheight,i) < maximumpulseheight-0.1*maximumpulseheight) || (gsl_vector_get(pulseheight,i) > maximumpulseheight+0.1*maximumpulseheight) || (tstartnext-gsl_vector_get(tstart,i) <= reconstruct_init->pulse_length) || ((gsl_vector_get(quality,i) != 0) && (gsl_vector_get(quality,i) != 10)))
 		{
  			gsl_vector_set(nonpileup,i,0);
 			nonpileupPulses --;
+                        
+                        //cout<<"Pulso "<<i+1<<" not taken into account"<<endl;
 		}
 		else
 		{
@@ -2957,6 +2963,7 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
                                 temp = gsl_vector_subvector(pulsesInRecord->pulses_detected[i-pulsesAll->ndetpulses].pulse_adc_preBuffer,0,inputPulseLength);
                                 gsl_vector_memcpy(pulse,&temp.vector);
 			}
+			
 
 			// Non piled-up pulses => Align and average them
 			if (firstnonpileupPulse == true)
@@ -2965,16 +2972,39 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 			}
 			else
 			{
-				/*if (align(samprate, pulseaverage,&pulse))
-				{
-					message = "Cannot run align for pulse " + boost::lexical_cast<std::string>(i) + " when 1st pulse is piled-up";
-					EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-				}*/
+				//if (align(samprate, pulseaverage,&pulse))
+				//{
+				//	message = "Cannot run align for pulse " + boost::lexical_cast<std::string>(i) + " when 1st pulse is piled-up";
+				//	EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+				//}
 				gsl_vector_add(*pulseaverage,pulse);
 			}
 			*pulseaverageHeight = *pulseaverageHeight + gsl_vector_get(pulseheight,i);
 			if (firstnonpileupPulse == true)	firstnonpileupPulse = false;
+                        
+                        /*if (gsl_vector_max(pulse) < 150000)
+                        {
+                            nonpileupPulses --;
+                            //cout<<"Pulse "<<i<<" not taken into account to build the template because is too small"<<endl;
+                        }
+                        else
+                        {   
+                            if (firstnonpileupPulse == true)
+                            {
+                                    gsl_vector_memcpy(*pulseaverage,pulse);
+                            }
+                            else
+                            {
+                                    gsl_vector_add(*pulseaverage,pulse);
+                            }
+                            *pulseaverageHeight = *pulseaverageHeight + gsl_vector_get(pulseheight,i);
+                            if (firstnonpileupPulse == true)	firstnonpileupPulse = false;
+                        }
+                        cout<<"Amplitude pulse "<<i+1<<"="<<gsl_vector_max(pulse)<<endl;
+                        if (gsl_vector_max(pulse) < 150000)
+                        cout<<"Pulse "<<i<<" <150000"<<endl;*/
 		}
+		
 	}
 	
 	gsl_vector_scale(*pulseaverage,1.0/(nonpileupPulses));
@@ -4072,6 +4102,12 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 			message = "Cannot write keyword EVENTSZ in library";
 			EP_PRINT_ERROR(message,status);return(EPFAIL);
 		}
+		
+		if (fits_write_key(*inLibObject,TDOUBLE,"BASELINE",&(*reconstruct_init)->noise_spectrum->baseline,NULL,&status))
+		{
+			message = "Cannot write keyword BASELINE in library";
+			EP_PRINT_ERROR(message,status);return(EPFAIL);
+		}
 
 		gsl_vector_set (energyoutgsl,0,(*reconstruct_init)->monoenergy);
 		gsl_vector_set (estenergyoutgsl,0,estenergy);
@@ -5034,8 +5070,8 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 	gsl_vector_memcpy(vectoraux1,pulsetemplate);
         //
         gsl_vector *baselinegslaux = gsl_vector_alloc(pulsetemplate->size);
-	gsl_vector_set_all(baselinegslaux,-1.0*reconstruct_init->noise_spectrum->baseline);
-        //gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
+	//gsl_vector_set_all(baselinegslaux,-1.0*reconstruct_init->noise_spectrum->baseline);
+        gsl_vector_set_all(baselinegslaux,-1.0*reconstruct_init->library_collection->baseline);
 	gsl_vector_add(vectoraux1,baselinegslaux);
         gsl_vector_free(baselinegslaux); baselinegslaux = 0;
         //
@@ -5203,8 +5239,8 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
         
 	// It is not necessary to check the allocation because 'pulsetemplate' size must be > 0
 	gsl_vector *baselinegsl = gsl_vector_alloc(pulsetemplate->size);
-	gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
-        //gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
+	//gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
+        gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->library_collection->baseline);
 	gsl_vector_add(pulsetemplate,baselinegsl);
 	gsl_matrix_set_row(modelsb0aux,eventcntLib,pulsetemplate);
         gsl_vector_free(baselinegsl); baselinegsl = 0;
@@ -5287,8 +5323,8 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
                                 } 
 			}  
                         baselinegsl = gsl_vector_alloc(PULSENORMshort->size);
-                        gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
-                        //gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
+                        //gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
+                        gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->library_collection->baseline);
 			gsl_vector_add(PULSENORMshort,baselinegsl);
                         gsl_vector_free(baselinegsl); baselinegsl = 0;
 			gsl_vector_scale(PULSENORMshort,1.0/reconstruct_init->monoenergy);
@@ -6402,8 +6438,8 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
 	gsl_vector_scale(Pab,-Ea/(Eb-Ea));
 	gsl_matrix_get_row(vectoraux1,modelsaux,indexa);
 	gsl_vector_add(Pab,vectoraux1);
-	gsl_vector_add_constant(Pab,-1*reconstruct_init->noise_spectrum->baseline);
-        //gsl_vector_add_constant(Pab,-1.0*1800.08687767577);
+	//gsl_vector_add_constant(Pab,-1*reconstruct_init->noise_spectrum->baseline);
+        gsl_vector_add_constant(Pab,-1*reconstruct_init->library_collection->baseline);
 	gsl_matrix_set_row(*Pabaux,indexa,Pab);
 	
         gsl_matrix_get_row(vectorMaxLengthFixedFilteraux1,modelsMaxLengthFixedFilteraux,indexb);
@@ -6413,8 +6449,8 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
 	gsl_vector_scale(PabMaxLengthFixedFilter,-Ea/(Eb-Ea));
 	gsl_matrix_get_row(vectorMaxLengthFixedFilteraux1,modelsMaxLengthFixedFilteraux,indexa);
 	gsl_vector_add(PabMaxLengthFixedFilter,vectorMaxLengthFixedFilteraux1);
-	gsl_vector_add_constant(PabMaxLengthFixedFilter,-1*reconstruct_init->noise_spectrum->baseline);
-        //gsl_vector_add_constant(PabMaxLengthFixedFilter,-1*1800.08687767577);
+	//gsl_vector_add_constant(PabMaxLengthFixedFilter,-1*reconstruct_init->noise_spectrum->baseline);
+        gsl_vector_add_constant(PabMaxLengthFixedFilter,-1*reconstruct_init->library_collection->baseline);
 	gsl_matrix_set_row(*PabMaxLengthFixedFilteraux,indexa,PabMaxLengthFixedFilter);
 	
         gsl_matrix_get_row(vectorMaxLengthFixedFilteraux1,modelsMaxLengthFixedFilteraux,indexb);
@@ -7301,8 +7337,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 	{
 		// It is not necessary to check the allocation because the allocation of 'recordAux' has been checked previously
 		gsl_vector *baselinegsl = gsl_vector_alloc(recordAux->size);
-		gsl_vector_set_all(baselinegsl,-1.0*(*reconstruct_init)->noise_spectrum->baseline);
-                //gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
+                if ((*reconstruct_init)->OFLib == 0)    gsl_vector_set_all(baselinegsl,-1.0*(*reconstruct_init)->noise_spectrum->baseline);
+                else if ((*reconstruct_init)->OFLib == 1)    gsl_vector_set_all(baselinegsl,-1.0*(*reconstruct_init)->library_collection->baseline);
 		gsl_vector_add(recordAux,baselinegsl);
 		gsl_vector_free(baselinegsl); baselinegsl = 0;
 	}
@@ -7334,6 +7370,10 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
         int extraSizeDueToLags = 0;
 	for (int i=0; i<(*pulsesInRecord)->ndetpulses ;i++)
 	{      
+            /*tstartSamplesRecord = (*pulsesInRecord)->pulses_detected[i].TstartSamples;
+            tstartSamplesRecordStartDOUBLE = tstartSamplesRecord-numlags2;   
+            if (tstartSamplesRecordStartDOUBLE < numlags/2)   (*pulsesInRecord)->pulses_detected[i].quality = 1;*/
+            
             if ((*pulsesInRecord)->pulses_detected[i].quality != 1)
             {
                 tooshortPulse_NoLags = 0;
@@ -7521,6 +7561,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         */
                         if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
                         {
+                            //resize_mf =8192;
                             if ((*reconstruct_init)->pulse_length <= (*reconstruct_init)->OFLength)  // 0-padding
                             {
                                 if (tstartSamplesRecordStartDOUBLE+resize_mf+numlags -1 <= recordAux->size)
@@ -7691,7 +7732,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                                         
                                                 if ((*reconstruct_init)->pulse_length <= (*reconstruct_init)->OFLength) // 0-padding 
                                                 {
-                                                        filtergsl = gsl_vector_alloc(8192);
+                                                        filtergsl = gsl_vector_alloc((*reconstruct_init)->library_collection->pulse_templates[0].template_duration);
                                                 }
                                     
                                                 Pab = gsl_vector_alloc(resize_mf);
@@ -8042,8 +8083,9 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         {
                                 gsl_vector *baselinePulse = gsl_vector_alloc(pulseToCalculateEnergy->size);
                                 //cout<<"(*pulsesInRecord)->pulses_detected[i].baseline: "<<(*pulsesInRecord)->pulses_detected[i].baseline<<endl;
-                                gsl_vector_set_all(baselinePulse,-1.0*(*pulsesInRecord)->pulses_detected[i].baseline);
-                                //gsl_vector_set_all(baselinePulse,-1.0*1799.62441328334);
+                                //gsl_vector_set_all(baselinePulse,-1.0*(*pulsesInRecord)->pulses_detected[i].baseline);
+                                gsl_vector_set_all(baselinePulse,-1.0*5000);
+                                cout<<"baseline: "<<(*pulsesInRecord)->pulses_detected[i].baseline<<endl;
                                 gsl_vector_add(pulseToCalculateEnergy,baselinePulse);
                                 gsl_vector_free(baselinePulse); baselinePulse = 0;
                         }
@@ -8391,8 +8433,8 @@ void th_runEnergy(TesRecord* record,
 	{
 		// It is not necessary to check the allocation because the allocation of 'recordAux' has been checked previously
 		gsl_vector *baselinegsl = gsl_vector_alloc(recordAux->size);
-		gsl_vector_set_all(baselinegsl,-1.0*(*reconstruct_init)->noise_spectrum->baseline);
-                //gsl_vector_set_all(baselinegsl,-1.0*1800.08687767577);
+		if ((*reconstruct_init)->OFLib == 0)    gsl_vector_set_all(baselinegsl,-1.0*(*reconstruct_init)->noise_spectrum->baseline);
+                else if ((*reconstruct_init)->OFLib == 1)    gsl_vector_set_all(baselinegsl,-1.0*(*reconstruct_init)->library_collection->baseline);
 		gsl_vector_add(recordAux,baselinegsl);
 		gsl_vector_free(baselinegsl); baselinegsl = 0;
 	}
@@ -9927,6 +9969,7 @@ int find_optimalfilter(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA
         }
         //cout<<"optimalfilterFound_Aux->size: "<<optimalfilterFound_Aux->size<<endl;
         //cout<<"reconstruct_init->library_collection->optimal_filters[it].ofilter: "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,0)<<" "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,1)<<" "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,2)<<"..."<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,8191)<<"  "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,8192)<<" "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,8193)<<"..."<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,13287)<<" "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,13287)<<" "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,13289)<<endl;
+        /*cout<<"reconstruct_init->library_collection->optimal_filters[it].ofilter: "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,0)<<" "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,1)<<" "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,2)<<"..."<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,4095)<<"  "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,4096)<<" "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,4097)<<"..."<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,6143)<<" "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,6144)<<" "<<gsl_vector_get(reconstruct_init->library_collection->optimal_filters[0].ofilter,6145)<<endl;*/
 
 	if (maxDER < gsl_vector_get(maxDERs_LIB1row,0))
 	{  
@@ -10841,12 +10884,11 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
         else                             minimo = filter->size;
         /*if (LowRes== 0)
         {
-            //for (int i=0;i<15;i++)
             for (int i=0;i<minimo;i++)
+            //for (int i=0;i<10;i++)
             {
-                //cout<<i<<" "<<gsl_vector_get(vector,i)<<endl;
                 cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
-                //cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<GSL_REAL(gsl_vector_complex_get(filterFFT,i))<<"+i"<<GSL_IMAG(gsl_vector_complex_get(filterFFT,i))<<endl;
+                //log_debug("%i %d %d",i,gsl_vector_get(vector,i),gsl_vector_get(filter,i));
             }
         }*/
         
@@ -10968,19 +11010,36 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                 int newLag = 0;
                                                 bool exitLags = false;
                                                 double newEnergy;
+                                                
+                                                //int P = 600;
                                                                                         
                                                 if ((reconstruct_init->Fitting35) == 3)   // Parabola by using 3 points
                                                 {   
                                                     //cout<<"Parabola"<<endl;
                                                     for (int j=0;j<numlags;j++)
                                                     {
-                                                            //for (int i=0;i<filter->size;i++)
+                                                            //cout<<"J="<<j<<endl;
                                                             for (int i=0;i<productSize;i++)
                                                             {
                                                                     gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)*gsl_vector_get(filter,i));
+                                                                    //cout<<"vectorindex="<<i+(reconstruct_init->nLags)/2+j-1<<" "<<gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)<<" filterindex="<<i<<" "<<gsl_vector_get(filter,i)<<endl;
                                                                     //if (j<3) cout<<"j="<<j<<" i="<<i<<" "<<gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)<<" "<<gsl_vector_get(filter,i)<<endl;
                                                                     //if (j == 0) cout<<i<<" "<<gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)*gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,0)<<endl;
                                                             }
+                                                            
+                                                            /*//resize_mf = 8192 antes de cortar el pulso en runEnergy!!!!
+                                                            for (int i=0;i<P;i++)
+                                                            {
+                                                                    gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)*gsl_vector_get(filter,i));
+                                                                    //cout<<"0 vectorindex="<<i+(reconstruct_init->nLags)/2+j-1<<" "<<gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)<<" filterindex="<<i<<" "<<gsl_vector_get(filter,i)<<endl;
+                                                            }
+                                                            for (int i=filter->size-reconstruct_init->pulse_length+P;i<filter->size;i++)
+                                                            {
+                                                                    gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)*gsl_vector_get(filter,i));
+                                                                    
+                                                                    //cout<<"1 vectorindex="<<i+(reconstruct_init->nLags)/2+j-1<<" "<<gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)<<" filterindex="<<i<<" "<<gsl_vector_get(filter,i)<<endl;
+                                                            }*/
+                                                            
                                                             //cout<<"gsl_vector_get(calculatedEnergy_vector,j): "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
                                                             gsl_vector_set(calculatedEnergy_vector,j,fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size);
                                                             
@@ -11032,12 +11091,19 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                             //cout<<"newLag= "<<newLag<<endl;
                                                             
                                                             newEnergy = 0.0;
-                                                            //for (int k=0;k<filter->size;k++)
                                                             for (int k=0;k<productSize;k++)
                                                             {
                                                                 newEnergy = newEnergy + gsl_vector_get(vector,(reconstruct_init->nLags)/2+newLag+k)*gsl_vector_get(filter,k);
-                                                                //cout<<k<<" "<<gsl_vector_get(vector,k+5)<<" "<<gsl_vector_get(filter,k)<<" "<<newEnergy<<endl;
                                                             }
+                                                            /*for (int k=0;k<P;k++)
+                                                            {
+                                                                    newEnergy = newEnergy + gsl_vector_get(vector,(reconstruct_init->nLags)/2+newLag+k)*gsl_vector_get(filter,k);
+                                                            }
+                                                            for (int k=filter->size-productSize+P;k<filter->size;k++)
+                                                            {
+                                                                    newEnergy = newEnergy + gsl_vector_get(vector,(reconstruct_init->nLags)/2+newLag+k)*gsl_vector_get(filter,k);
+                                                            }*/
+                                                            
                                                             newEnergy = fabs(newEnergy/filter->size);
                                                             //cout<<"newEnergy: "<<newEnergy<<endl;
                                                             

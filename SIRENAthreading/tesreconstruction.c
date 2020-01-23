@@ -570,15 +570,15 @@ int tesreconstruction_main() {
     
                             nrecord = nrecord + 1;
                             if(nrecord == record_file->nrows) lastRecord=1;
-                            //if(nrecord < 10) 
-                            //{
-                            //  continue;
-                            //}
-                            //else if(nrecord > 10)
-                            //{
-                            //  status=1;
-                            //  CHECK_STATUS_BREAK(status);
-                            //}
+                            /*if(nrecord < 7905) 
+                            {
+                              continue;
+                            }
+                            else if(nrecord > 7905)
+                            {
+                              status=1;
+                              CHECK_STATUS_BREAK(status);
+                            }*/
                             /*if(nrecord > 1)
                             {
                             	status=1;
@@ -992,11 +992,11 @@ int getpar(struct Parameters* const par)
 	
 	MyAssert((par->OFIter ==0) || (par->OFIter ==1), "OFIter must be 0 or 1");
 	
-	if ((par->OFLib == 1) && (strcmp(par->FilterMethod,"F0") != 0))
+	/*if ((par->OFLib == 1) && (strcmp(par->FilterMethod,"F0") != 0))
 	{
 		SIXT_ERROR("parameter error: If OFLib=yes => FilterMethod must be F0");
 		return(EXIT_FAILURE);
-	}
+	}*/
 	if ((strcmp(par->EnergyMethod,"WEIGHT") == 0) && (par->OFLib == 1))
 	{
 		SIXT_ERROR("parameter error: EnergyMethod=WEIGHT => OFLib should be 'no'");

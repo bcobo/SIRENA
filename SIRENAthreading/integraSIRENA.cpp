@@ -205,10 +205,9 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	// Load NoiseSpec structure
 	reconstruct_init->noise_spectrum = NULL;
 	if ((opmode == 0) || 
+                //(((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) 
+		//|| (strcmp(energy_method,"I2RFITTED") == 0)) && (opmode == 1) && (oflib == 1) && (strcmp(filter_method,"B0") == 0)) ||
                 (((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) 
-		|| (strcmp(energy_method,"I2RFITTED") == 0)) && (opmode == 1) && (oflib == 1) && (strcmp(filter_method,"B0") == 0))
-                
-                || (((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) 
 		|| (strcmp(energy_method,"I2RFITTED") == 0)) && (opmode == 1) && (oflib == 0))
                 //|| ((opmode == 1) && (strcmp(energy_method,"WEIGHT") == 0))
 		//|| ((opmode == 1) && (strcmp(energy_method,"WEIGHTN") == 0))) 
@@ -708,7 +707,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 		}
 	}
 	//cout<<"After runEnergy1"<<endl;
-		
+	
+	log_debug("pulsesAll: %i",(*pulsesAll)->ndetpulses);
 	//cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
 	//cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
 	
@@ -1209,6 +1209,12 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 	if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
 	{
 		EP_PRINT_ERROR("Error moving to HDU LIBRARY in library file",*status);
+		return(library_collection);
+	}
+	
+	if (fits_read_key(fptr,TDOUBLE,"BASELINE", &library_collection->baseline,NULL,status))
+	{
+		EP_PRINT_ERROR("Cannot read keyword BASELINE from HDU LIBRARY in library file",*status);
 		return(library_collection);
 	}
 

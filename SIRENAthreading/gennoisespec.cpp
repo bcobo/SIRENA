@@ -261,107 +261,121 @@ int main (int argc, char **argv)
                         status = 0;
                         strcpy(extname,"TESRECORDS");
                         fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
-                }
-                if (status != 0)
-                {
-                        status = 0;
-                        /*//cout<<"en TESRECORDS structure"<<endl;
-                        strcpy(extname,"ADCPARAM");
-                        if (fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status))
+                        if (status == 0)
                         {
-                                message = "Cannot move to HDU " + string(extname) + " in " + string(infileName);
-                                EP_EXIT_ERROR(message,status);
-                        }
-                        strcpy(keyname,"IMIN");
-                        if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
-                        {
-                                message = "Cannot read keyword " + string(keyname) + " in input file";
-                                EP_PRINT_ERROR(message,status); return(EPFAIL);
-                        }
-                        strcpy(keyname,"IMAX");
-                        if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
-                        {
-                                message = "Cannot read keyword " + string(keyname) + " in input file";
-                                EP_PRINT_ERROR(message,status); return(EPFAIL);
-                        }*/
-                        
-                        IOData obj;
-                        obj.inObject = infileObject;
-                        obj.nameTable = new char [255];
-                        strcpy(obj.nameTable,"TESPARAM");
-                        obj.iniCol = 0;
-                        obj.nameCol = new char [255];
-                        obj.unit = new char [255];
-                        obj.type = TDOUBLE;
-                        obj.iniRow = 1;
-                        obj.endRow = 1;
-                        gsl_vector *vector = gsl_vector_alloc(1);
-                        strcpy(obj.nameCol,"R0");
-                        char colName[20];
-                        strcpy(colName,"R0");
-                        if (readFitsSimple (obj,&vector))
-                        {
-                                message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
-                                EP_PRINT_ERROR(message,status); return(EPFAIL);
-                        }
-                        R0 = gsl_vector_get(vector,0);
-                        strcpy(obj.nameCol,"I0_START");
-                        if (readFitsSimple (obj,&vector))
-                        {
-                                message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
-                                EP_PRINT_ERROR(message,status); return(EPFAIL);
-                        }
-                        Ibias = gsl_vector_get(vector,0);
-                        strcpy(obj.nameCol,"RPARA");
-                        if (readFitsSimple (obj,&vector))
-                        {
-                                message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
-                                EP_PRINT_ERROR(message,status); return(EPFAIL);
-                        }
-                        RPARA = gsl_vector_get(vector,0);
-                        strcpy(obj.nameCol,"TTR");
-                        if (readFitsSimple (obj,&vector))
-                        {
-                                message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
-                                EP_PRINT_ERROR(message,status); return(EPFAIL);
-                        }
-                        TTR = gsl_vector_get(vector,0);
-                        strcpy(obj.nameCol,"LFILTER");
-                        if (readFitsSimple (obj,&vector))
-                        {
-                                message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
-                                EP_PRINT_ERROR(message,status); return(EPFAIL);
-                        }
-                        LFILTER = gsl_vector_get(vector,0);
-                        /*cout<<"Imin: "<<Imin<<endl;
-                        cout<<"Imax: "<<Imax<<endl;
-                        cout<<"R0: "<<R0<<endl;
-                        cout<<"Ibias: "<<Ibias<<endl;
-                        cout<<"RPARA: "<<RPARA<<endl;
-                        cout<<"TTR: "<<TTR<<endl;
-                        cout<<"LFILTER: "<<LFILTER<<endl;*/
-                        
-                        strcpy(extname,"TESRECORDS");
-                        if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
-                        {
-                                message = "Cannot move to HDU " + string(extname) + " in " + string(infileName);
-                                EP_EXIT_ERROR(message,status);
-                        }
+                                status = 0;
+                                /*//cout<<"en TESRECORDS structure"<<endl;
+                                strcpy(extname,"ADCPARAM");
+                                if (fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status))
+                                {
+                                        message = "Cannot move to HDU " + string(extname) + " in " + string(infileName);
+                                        EP_EXIT_ERROR(message,status);
+                                }
+                                strcpy(keyname,"IMIN");
+                                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
+                                {
+                                        message = "Cannot read keyword " + string(keyname) + " in input file";
+                                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                }
+                                strcpy(keyname,"IMAX");
+                                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
+                                {
+                                        message = "Cannot read keyword " + string(keyname) + " in input file";
+                                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                }*/
                                 
-                        gsl_vector_free(vector);
-                        delete [] obj.nameTable;
-                        delete [] obj.nameCol;
-                        delete [] obj.unit;
-			//cout<<"fuera TESRECORDS"<<endl;
+                                V0 = 0;
+                                R0 = 0;
+                                IOData obj;
+                                obj.inObject = infileObject;
+                                obj.nameTable = new char [255];
+                                strcpy(obj.nameTable,"TESPARAM");
+                                obj.iniCol = 0;
+                                obj.nameCol = new char [255];
+                                obj.unit = new char [255];
+                                obj.type = TDOUBLE;
+                                obj.iniRow = 1;
+                                obj.endRow = 1;
+                                gsl_vector *vector = gsl_vector_alloc(1);
+                                strcpy(obj.nameCol,"R0");
+                                if (readFitsSimple (obj,&vector))
+                                {
+                                        strcpy(obj.nameCol,"V0");
+                                        if (readFitsSimple (obj,&vector))
+                                        {
+                                            message = "Cannot read neither R0 nor V0 in " + string(extname) + " HDU in " + string(infileName);
+                                            EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                        }
+                                        V0 = gsl_vector_get(vector,0);
+                                }
+                                if (V0 == 0)    R0 = gsl_vector_get(vector,0);
+                                strcpy(obj.nameCol,"I0_START");
+                                if (readFitsSimple (obj,&vector))
+                                {
+                                        message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
+                                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                }
+                                Ibias = gsl_vector_get(vector,0);
+                                strcpy(obj.nameCol,"RPARA");
+                                if (readFitsSimple (obj,&vector))
+                                {
+                                        message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
+                                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                }
+                                RPARA = gsl_vector_get(vector,0);
+                                strcpy(obj.nameCol,"TTR");
+                                if (readFitsSimple (obj,&vector))
+                                {
+                                        message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
+                                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                }
+                                TTR = gsl_vector_get(vector,0);
+                                strcpy(obj.nameCol,"LFILTER");
+                                if (readFitsSimple (obj,&vector))
+                                {
+                                        message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
+                                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                }
+                                LFILTER = gsl_vector_get(vector,0);
+                                strcpy(obj.nameCol,"RL");
+                                if (readFitsSimple (obj,&vector))
+                                {
+                                        message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
+                                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                }
+                                RL = gsl_vector_get(vector,0);
+                                
+                                if (V0 != 0)    R0 = V0/Ibias-RL;
+                                
+                                /*cout<<"Imin: "<<Imin<<endl;
+                                cout<<"Imax: "<<Imax<<endl;
+                                cout<<"R0: "<<R0<<endl;
+                                cout<<"Ibias: "<<Ibias<<endl;
+                                cout<<"RPARA: "<<RPARA<<endl;
+                                cout<<"TTR: "<<TTR<<endl;
+                                cout<<"LFILTER: "<<LFILTER<<endl;*/
+                                
+                                strcpy(extname,"TESRECORDS");
+                                if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
+                                {
+                                        message = "Cannot move to HDU " + string(extname) + " in " + string(infileName);
+                                        EP_EXIT_ERROR(message,status);
+                                }
+                                        
+                                gsl_vector_free(vector);
+                                delete [] obj.nameTable;
+                                delete [] obj.nameCol;
+                                delete [] obj.unit;
+                                //cout<<"fuera TESRECORDS"<<endl;
+                        }
                 }
-                else
+                /*else
                 {
-                
-                        /*double R0;
-                        double I0_START;
-                        double RPARA;
-                        double TTR;
-                        double LFILTER;*/
+                        //double R0;
+                        //double I0_START;
+                        //double RPARA;
+                        //double TTR;
+                        //double LFILTER;
                                 
                         strcpy(keyname,"R0");
                         fits_read_key(infileObject,TDOUBLE,keyname, &R0,NULL,&status);
@@ -369,11 +383,11 @@ int main (int argc, char **argv)
                         strcpy(keyname,"I0_START");
                         fits_read_key(infileObject,TDOUBLE,keyname, &Ibias,NULL,&status);
                         //cout<<"I0_START: "<<Ibias<<endl;
-                        /*strcpy(keyname,"IMIN");
-                        fits_read_key(infileObject,TDOUBLE,keyname, &Imin,NULL,&status);
+                        //strcpy(keyname,"IMIN");
+                        //fits_read_key(infileObject,TDOUBLE,keyname, &Imin,NULL,&status);
                         //cout<<"IMIN: "<<Imin<<endl;
-                        strcpy(keyname,"IMAX");
-                        fits_read_key(infileObject,TDOUBLE,keyname, &Imax,NULL,&status);*/
+                        //strcpy(keyname,"IMAX");
+                        //fits_read_key(infileObject,TDOUBLE,keyname, &Imax,NULL,&status);
                         //cout<<"IMAX: "<<Imax<<endl;
                         strcpy(keyname,"RPARA");
                         fits_read_key(infileObject,TDOUBLE,keyname, &RPARA,NULL,&status);
@@ -385,22 +399,22 @@ int main (int argc, char **argv)
                         fits_read_key(infileObject,TDOUBLE,keyname, &LFILTER,NULL,&status);
                         //cout<<"LFILTER: "<<LFILTER<<endl;
                         
-                        /*R0 = 0.00711552;
-                        Ibias = 1.3555e-05;
-                        Imin = 1.35523e-06;
-                        Imax = 1.39e-05;
-                        RPARA = 0.001;
-                        TTR = 0.9144;
-                        LFILTER = 2e-06;
+                        //R0 = 0.00711552;
+                        //Ibias = 1.3555e-05;
+                        //Imin = 1.35523e-06;
+                        //Imax = 1.39e-05;
+                        //RPARA = 0.001;
+                        //TTR = 0.9144;
+                        //LFILTER = 2e-06;
                         
-                        cout<<"Imin: "<<Imin<<endl;
-                        cout<<"Imax: "<<Imax<<endl;
-                        cout<<"R0: "<<R0<<endl;
-                        cout<<"Ibias: "<<Ibias<<endl;
-                        cout<<"RPARA: "<<RPARA<<endl;
-                        cout<<"TTR: "<<TTR<<endl;
-                        cout<<"LFILTER: "<<LFILTER<<endl;*/
-                }
+                        //cout<<"Imin: "<<Imin<<endl;
+                        //cout<<"Imax: "<<Imax<<endl;
+                        //cout<<"R0: "<<R0<<endl;
+                        //cout<<"Ibias: "<<Ibias<<endl;
+                        //cout<<"RPARA: "<<RPARA<<endl;
+                        //cout<<"TTR: "<<TTR<<endl;
+                        //cout<<"LFILTER: "<<LFILTER<<endl;
+                }*/
         }
         else
         {
@@ -1296,7 +1310,7 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 	
 	// Pulse-free segments are divided into pulse-free intervals with intervalMinBins size
         SelectedTimeDuration = intervalMinBins/((double)samprate);
-	
+        
 	// Processing each record
 	for (int i=0; i< nrows; i++)
 	{      
@@ -1312,7 +1326,8 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 		message += " of " + string(straux) + " <------------------ ";
 		writeLog(fileRef,"Log", verbosity,message);
 		sprintf(val,"-------------> Record: %d of %ld <------------------ ",ntotalrows,eventcnt);
-
+                
+                
 		// Information has been read by blocks (with nrows per block)
 		// Now, information is going to be used by rows
 		gsl_vector_memcpy(timegsl,timegsl_block);
@@ -1403,25 +1418,34 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
                 }
 		
 		gsl_vector *intervalsWithoutPulsesTogether = gsl_vector_alloc(nIntervals*intervalMinBins);
-		for (int i=0; i<nIntervals; i++)
+		//for (int i=0; i<nIntervals; i++)
+                for (int k=0; k<nIntervals; k++)
 		{
 			for (int j=0; j<intervalMinBins; j++)
 			{
-				gsl_vector_set(intervalsWithoutPulsesTogether,intervalMinBins*i+j,gsl_vector_get(ioutgsl,j+gsl_vector_get(startIntervalgsl,i)));
+				gsl_vector_set(intervalsWithoutPulsesTogether,intervalMinBins*k+j,gsl_vector_get(ioutgsl,j+gsl_vector_get(startIntervalgsl,k)));
 			}
 		}
 
-		findMeanSigma (intervalsWithoutPulsesTogether, &baselineIntervalFreeOfPulses, &sigmaIntervalFreeOfPulses);
-		gsl_vector_set(baseline,indexBaseline,baselineIntervalFreeOfPulses);
-		gsl_vector_set(sigma,indexBaseline,sigmaIntervalFreeOfPulses);
-		indexBaseline++;
+                if (nIntervals != 0)
+                {
+                    findMeanSigma (intervalsWithoutPulsesTogether, &baselineIntervalFreeOfPulses, &sigmaIntervalFreeOfPulses);
+                    gsl_vector_set(baseline,indexBaseline,baselineIntervalFreeOfPulses);
+                    gsl_vector_set(sigma,indexBaseline,sigmaIntervalFreeOfPulses);
+                    indexBaseline++;
+                }
+                //findMeanSigma (intervalsWithoutPulsesTogether, &baselineIntervalFreeOfPulses, &sigmaIntervalFreeOfPulses);
+		//gsl_vector_set(baseline,indexBaseline,baselineIntervalFreeOfPulses);
+		//gsl_vector_set(sigma,indexBaseline,sigmaIntervalFreeOfPulses);
+		//indexBaseline++;
 		gsl_vector_free(intervalsWithoutPulsesTogether); intervalsWithoutPulsesTogether = 0;
 
-		for (int i=0; i<nIntervals;i++)
+		//for (int i=0; i<nIntervals;i++)
+                for (int k=0; k<nIntervals;k++)
 		{
 			if  (NumMeanSamples >= nintervals)	break;
 			  
-			temp = gsl_vector_subvector(ioutgsl,gsl_vector_get(startIntervalgsl,i), intervalMinBins);
+			temp = gsl_vector_subvector(ioutgsl,gsl_vector_get(startIntervalgsl,k), intervalMinBins);
 			gsl_vector_memcpy(EventSamples,&temp.vector);
 			
 			// Baseline subtraction
@@ -1974,10 +1998,16 @@ int writeTPSreprExten ()
 	}
 	gsl_vector_free(sigmacsdgslnew); sigmacsdgslnew = 0;
 		
-	strcpy(keyname,"BASELINE");
+	strcpy(keyname,"BSLN0");       // Real calculated baseline
 	double sumBaseline;
 	gsl_vector_Sumsubvector(baseline, 0, indexBaseline, &sumBaseline);
 	double keyvaldouble = (sumBaseline/indexBaseline)/aducnv;
+	if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
+	{
+		message = "Cannot write keyword " + string(keyname) + " in file " + string(gnoiseName);
+		EP_PRINT_ERROR(message,status); return(EPFAIL);
+	}
+        strcpy(keyname,"BASELINE");     // In order to be changed with test purposes
 	if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
 	{
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(gnoiseName);
@@ -2375,6 +2405,7 @@ int findTstartNoise
 						foundPulse = false; 
 						cntDown = 0;
 					}
+					
 				}
 				else if (gsl_vector_get(der,i) > adaptativethreshold)
 				{
