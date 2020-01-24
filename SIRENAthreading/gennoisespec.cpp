@@ -1898,6 +1898,19 @@ int createTPSreprFile ()
 		message = "Cannot write keyword " + string(keyname) + " in noise file " + string(gnoiseName);
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
 	}
+	
+	strcpy(keyname,"CREADATE");
+        time_t rawtime;
+        struct tm * timeinfo;
+        time ( &rawtime );
+        timeinfo = localtime ( &rawtime );
+	const char * chardate = asctime (timeinfo);  
+        strcpy(keyvalstr,chardate);
+	if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+	{
+		message = "Cannot write keyword " + string(keyname) + " in noise file " + string(gnoiseName);
+		EP_PRINT_ERROR(message,status); return(EPFAIL);
+	}
 
 	return EPOK;
 }

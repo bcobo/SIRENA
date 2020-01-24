@@ -3805,6 +3805,8 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 	
 	char keyname[10];
 	char extname[20];
+        
+        char keyvalstr[1000];
 	
 	int runF0orB0val;
 	if (strcmp((*reconstruct_init)->FilterMethod,"F0") == 0)		// Deleting the frequency-zero bin
@@ -3875,8 +3877,6 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
                         message = "Cannot move to HDU " + string(extname) + " in library file " + string(inLibName);
                         EP_PRINT_ERROR(message,status); return(EPFAIL);
                 }
-
-                char keyvalstr[1000];
 
                 char str_procnumber[125];               snprintf(str_procnumber,125,"%ld",eventcntLib);
                 string strprocname (string("PROC") + string(str_procnumber));
@@ -4067,6 +4067,19 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
                 strprocval = string("PROC") + string(str_procnumber) + string(" Ending parameter list");
                 strcpy(keyvalstr,strprocval.c_str());
                 fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
+                
+                strcpy(keyname,"CREADATE");
+                time_t rawtime;
+                struct tm * timeinfo;
+                time ( &rawtime );
+                timeinfo = localtime ( &rawtime );
+                const char * chardate = asctime (timeinfo);  
+                strcpy(keyvalstr,chardate);
+                if (fits_update_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status))
+                {
+                        message = "Cannot update keyword " + string(keyname);
+                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
                
                 if (status != 0)
                 {
@@ -4090,6 +4103,19 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 		gsl_matrix *matchedfilters_matrix = gsl_matrix_alloc(1,(*reconstruct_init)->pulse_length+preBuffer);
 		gsl_matrix *matchedfiltersb0_matrix = gsl_matrix_alloc(1,(*reconstruct_init)->pulse_length+preBuffer);*/
 	
+                strcpy(keyname,"CREADATE");
+                time_t rawtime;
+                struct tm * timeinfo;
+                time ( &rawtime );
+                timeinfo = localtime ( &rawtime );
+                const char * chardate = asctime (timeinfo);  
+                strcpy(keyvalstr,chardate);
+                if (fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status))
+                {
+                        message = "Cannot write keyword " + string(keyname);
+                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
+                
 		strcpy(extname,"LIBRARY");
 		if (fits_movnam_hdu(*inLibObject, ANY_HDU,extname, 0, &status))
 		{

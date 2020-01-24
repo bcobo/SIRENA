@@ -315,6 +315,16 @@ TesEventFile* opennewTesEventFile(const char* const filename,
 	sixt_add_fits_stdkeywords(file->fptr,1,keywords,status);
 	CHECK_STATUS_RET(*status,file);
 
+        time_t rawtime;
+        struct tm * timeinfo;
+        time ( &rawtime );
+        timeinfo = localtime ( &rawtime );
+	const char * chardate = asctime (timeinfo);  
+	char keyvalstr[1000];
+        strcpy(keyvalstr,chardate);
+	fits_write_key(file->fptr,TSTRING,"CREADATE",keyvalstr,NULL,status);
+	CHECK_STATUS_RET(*status,file);
+
 	//Write XML into header
 	//char comment[MAXMSG];
 	//sprintf(comment, "XMLFILE: %s", xmlfile);
@@ -493,6 +503,9 @@ void saveEventListToFile(TesEventFile* file,TesEventList * event_list,
 						file->row, 1, event_list->index, event_list->ph_ids, status);
 		CHECK_STATUS_VOID(*status);
 	}
+	//printf("%s %d %s","event_list->ph_ids:", event_list->ph_ids[0],"\n");
+	//printf("%s %d %s","event_list->pix_ids:", event_list->pix_ids[0],"\n");
+	//printf("%s %e %s","event_list->energies:", event_list->energies[0],"\n");
 
 	//Save pix_ids column
 	fits_write_col(file->fptr, TINT, file->pixIDCol,
