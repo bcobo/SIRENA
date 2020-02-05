@@ -37,6 +37,8 @@
 #define TOOLSUB tesreconstruction_main
 #include "headas_main.c"
 
+#include "versionSIRENA.h"
+
 /*struct IOData
 {
     fitsfile *inObject;

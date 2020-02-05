@@ -3222,7 +3222,7 @@ ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other)
     library_collection = new LibraryCollection();
     *library_collection = (*other.library_collection);
   }
-
+  
   strcpy(library_file,other.library_file);
   strcpy(record_file,other.record_file);
     

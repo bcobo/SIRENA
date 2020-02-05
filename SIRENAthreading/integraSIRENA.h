@@ -412,6 +412,9 @@ typedef struct ReconstructInitSIRENA
   /**                   **/
   /** SIRENA parameters **/
   /**                   **/
+  /** SIRENA Version **/
+  char sirenaVersion[10];
+  
   /** LibraryCollection structure (pulse templates and matched filters)*/
   LibraryCollection* library_collection;
   

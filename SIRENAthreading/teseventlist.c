@@ -358,6 +358,89 @@ TesEventFile* opennewTesEventFile(const char* const filename,
 
 }
 
+TesEventFile* opennewTesEventFileSIRENA(const char* const filename,
+				  SixtStdKeywords* keywords,
+				  const char* const sirenaVersion,
+				  const char clobber,
+				  int* const status){
+	TesEventFile* file = newTesEventFile(status);
+	CHECK_STATUS_RET(*status, file);
+
+	int exists;
+	char buffer[MAXFILENAME];
+	sprintf(buffer,"%s",filename);
+	fits_file_exists(buffer, &exists, status);
+	CHECK_STATUS_RET(*status,file);
+	if (0!=exists) {
+		if (0!=clobber) {
+			// Delete the file.
+			remove(buffer);
+		} else {
+			// Throw an error.
+			char msg[MAXMSG];
+			sprintf(msg, "file '%s' already exists", buffer);
+			SIXT_ERROR(msg);
+			*status=EXIT_FAILURE;
+			CHECK_STATUS_RET(*status,file);
+		}
+	}
+	fits_create_file(&file->fptr,buffer, status);
+	CHECK_STATUS_RET(*status,file);
+	int logic=(int)'T';
+	int bitpix=8;
+	int naxis=0;
+	fits_update_key(file->fptr, TLOGICAL, "SIMPLE", &(logic), NULL, status);
+	fits_update_key(file->fptr, TINT, "BITPIX", &(bitpix), NULL, status);
+	fits_update_key(file->fptr, TINT, "NAXIS", &(naxis), NULL, status);
+	sixt_add_fits_stdkeywords(file->fptr,1,keywords,status);
+	CHECK_STATUS_RET(*status,file);
+
+        time_t rawtime;
+        struct tm * timeinfo;
+        time ( &rawtime );
+        timeinfo = localtime ( &rawtime );
+	const char * chardate = asctime (timeinfo);  
+	char keyvalstr[1000];
+        strcpy(keyvalstr,chardate);
+	fits_write_key(file->fptr,TSTRING,"CREADATE",keyvalstr,NULL,status);
+	CHECK_STATUS_RET(*status,file);
+
+	fits_write_key(file->fptr,TSTRING,"SIRENAV",sirenaVersion,NULL,status);
+	CHECK_STATUS_RET(*status,file);
+
+	//Write XML into header
+	//char comment[MAXMSG];
+	//sprintf(comment, "XMLFILE: %s", xmlfile);
+	//fits_write_comment(file->fptr, comment, status);
+	//CHECK_STATUS_RET(*status,file);
+
+	// Create table
+
+	//first column TIME
+	char   *ttype[]={"TIME","SIGNAL","AVG4SD","ELOWRES","GRADE1","GRADE2","PHI","LAGS","PIXID","PH_ID","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"}; //BEA
+	char *tform[]={"1D",  "1D",    "1D",    "1D",    "1J",    "1J", "1D", "1J" ,  "1J",   "1J",   "1D","1D","1E","1E", "1I","1J","1I","1D"};
+	char *tunit[]={"s",   "keV",   "",   "keV",      "",      "",      "",      "",       "",     "",     "deg","deg","m","m","","","","keV"};
+
+	fits_create_tbl(file->fptr, BINARY_TBL, 0, 18,		// BEA (18 instead of 14)
+			ttype, tform, tunit,"EVENTS", status);
+	sixt_add_fits_stdkeywords(file->fptr,2,keywords,status);
+	CHECK_STATUS_RET(*status,file);
+
+	int firstpix=0,lastpix=0,numberpix=0;
+	float monoen=-1.;
+	long nes_tot=0,net_tot=0;
+	fits_update_key(file->fptr, TINT, "FIRSTPIX", &firstpix, "First pixel in record file", status);
+	fits_update_key(file->fptr, TINT, "LASTPIX", &lastpix, "Last pixel in record file", status);
+	fits_update_key(file->fptr, TINT, "NPIX", &numberpix, "Number of pixels in record file", status);
+	fits_update_key(file->fptr, TFLOAT, "MONOEN", &monoen, "Monochromatic energy of photons [keV]", status);
+	fits_update_key(file->fptr, TLONG, "NESTOT", &nes_tot, "Total number of events simulated", status);
+	fits_update_key(file->fptr, TLONG, "NETTOT", &net_tot, "Total number of events actually triggered", status);
+	CHECK_STATUS_RET(*status,file);
+
+	return(file);
+
+}
+
 /** Opens a TES event file with the given mode */
 TesEventFile* openTesEventFile(const char* const filename,const int mode, int* const status){
 	TesEventFile * file = newTesEventFile(status);

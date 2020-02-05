@@ -134,6 +134,12 @@ TesEventFile* opennewTesEventFile(const char* const filename,
 				  const char clobber,
 				  int* const status);
 
+TesEventFile* opennewTesEventFileSIRENA(const char* const filename,
+				  SixtStdKeywords* keywords,
+			          const char* const sirenaVersion,
+				  const char clobber,
+				  int* const status);
+
 /** Opens a TES event file with the given mode */
 TesEventFile* openTesEventFile(const char* const filename,const int mode, int* const status);
 

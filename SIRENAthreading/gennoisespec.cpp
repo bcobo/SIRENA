@@ -57,6 +57,8 @@ MAP OF SECTIONS IN THIS FILE:
 #include <gennoisespec.h>
 #include <tasksSIRENA.h>
 
+#include "versionSIRENA.h"
+
 /***** SECTION 1 ************************************
 * MAIN function: This function calculates the current noise spectral density.
 *                If there are pulses in a record, the pulses are rejected and it is going to look for pulse-free intervals of a given size (intervalMin).
@@ -1336,8 +1338,20 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 		
 		// Just in case the last record has been filled out with 0's => Last record discarded
 		if ((gsl_vector_get(ioutgsl,ioutgsl->size-1) == 0) && (gsl_vector_get(ioutgsl,ioutgsl->size-2) == 0))		break;
+                
+                //cout<<"ioutgsl0: "<<gsl_vector_get(ioutgsl,0)<<" "<<gsl_vector_get(ioutgsl,1)<<" "<<gsl_vector_get(ioutgsl,2)<<endl;
+                if (strcmp(I2R,"I") != 0)
+                {
+                    if (convertI2R(I2R,R0,Ibias,Imin,Imax,TTR,LFILTER,RPARA,samprate,&ioutgsl))
+                    {
+                            message = "Cannot run routine convertI2R";
+                            EP_EXIT_ERROR(message,EPFAIL);
+                    }
+                }
+                //cout<<"ioutgsl1: "<<gsl_vector_get(ioutgsl,0)<<" "<<gsl_vector_get(ioutgsl,1)<<" "<<gsl_vector_get(ioutgsl,2)<<endl;
 		
 		gsl_vector_scale(ioutgsl,aducnv);
+                //cout<<"ioutgsl2: "<<gsl_vector_get(ioutgsl,0)<<" "<<gsl_vector_get(ioutgsl,1)<<" "<<gsl_vector_get(ioutgsl,2)<<endl;
 
 		// Assigning positive polarity (by using ASQUID and PLSPOLAR)
 		gsl_vector_memcpy(ioutgsl_aux,ioutgsl);
@@ -1408,6 +1422,7 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 			}
 		}
 		
+		/*cout<<"ioutgsl0: "<<gsl_vector_get(ioutgsl,0)<<" "<<gsl_vector_get(ioutgsl,1)<<" "<<gsl_vector_get(ioutgsl,2)<<endl;
 		if (strcmp(I2R,"I") != 0)
                 {
                     if (convertI2R(I2R,R0,Ibias,Imin,Imax,TTR,LFILTER,RPARA,samprate,&ioutgsl))
@@ -1416,6 +1431,7 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
                             EP_EXIT_ERROR(message,EPFAIL);
                     }
                 }
+                cout<<"ioutgsl1: "<<gsl_vector_get(ioutgsl,0)<<" "<<gsl_vector_get(ioutgsl,1)<<" "<<gsl_vector_get(ioutgsl,2)<<endl;*/
 		
 		gsl_vector *intervalsWithoutPulsesTogether = gsl_vector_alloc(nIntervals*intervalMinBins);
 		//for (int i=0; i<nIntervals; i++)
@@ -1430,6 +1446,7 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
                 if (nIntervals != 0)
                 {
                     findMeanSigma (intervalsWithoutPulsesTogether, &baselineIntervalFreeOfPulses, &sigmaIntervalFreeOfPulses);
+                    cout<<indexBaseline<<" "<<baselineIntervalFreeOfPulses<<" "<<sigmaIntervalFreeOfPulses<<endl;
                     gsl_vector_set(baseline,indexBaseline,baselineIntervalFreeOfPulses);
                     gsl_vector_set(sigma,indexBaseline,sigmaIntervalFreeOfPulses);
                     indexBaseline++;
@@ -1911,6 +1928,13 @@ int createTPSreprFile ()
 		message = "Cannot write keyword " + string(keyname) + " in noise file " + string(gnoiseName);
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
 	}
+	
+	strcpy(keyvalstr,SIRENA_VERSION);
+        if (fits_write_key(gnoiseObject,TSTRING,"SIRENAV",keyvalstr,comment,&status))
+        {
+                message = "Cannot write keyword SIRENAV in noise file " + string(gnoiseName);
+                EP_PRINT_ERROR(message,status); return(EPFAIL);
+        }
 
 	return EPOK;
 }
@@ -2013,8 +2037,14 @@ int writeTPSreprExten ()
 		
 	strcpy(keyname,"BSLN0");       // Real calculated baseline
 	double sumBaseline;
+        cout<<gsl_vector_get(baseline,0)<<" "<<gsl_vector_get(baseline,1)<<" "<<gsl_vector_get(baseline,2)<<endl;
+        //cout<<"indexBaseline: "<<indexBaseline<<endl;
 	gsl_vector_Sumsubvector(baseline, 0, indexBaseline, &sumBaseline);
-	double keyvaldouble = (sumBaseline/indexBaseline)/aducnv;
+        //cout<<"sumBaseline: "<<sumBaseline<<endl;
+	double keyvaldouble;
+        //cout<<"I2R: "<<I2R<<endl;
+        keyvaldouble = (sumBaseline/indexBaseline)/aducnv;
+        //cout<<"keyvaldouble: "<<keyvaldouble<<endl;
 	if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
 	{
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(gnoiseName);
@@ -2029,8 +2059,11 @@ int writeTPSreprExten ()
 	
 	strcpy(keyname,"NOISESTD");
 	double sumSigma;
+        //cout<<gsl_vector_get(sigma,0)<<" "<<gsl_vector_get(sigma,1)<<" "<<gsl_vector_get(sigma,2)<<endl;
 	gsl_vector_Sumsubvector(sigma, 0, indexBaseline, &sumSigma);
-	keyvaldouble = (sumSigma/indexBaseline)/aducnv;
+        //cout<<"sumSigma: "<<sumSigma<<endl;
+        keyvaldouble = (sumSigma/indexBaseline)/aducnv;
+        //cout<<"keyvaldouble: "<<keyvaldouble<<endl;
 	if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
 	{
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(gnoiseName);

@@ -40,6 +40,8 @@
 #include "pulseprocess.h"
 #include <iomanip>      // std::setprecision
 
+#include "versionSIRENA.h"
+
 void runDetect(TesRecord* record, 
                int lastRecord, 
                PulsesCollection *pulsesAll, 
