@@ -93,7 +93,7 @@
         double RPARA;
         double TTR;
         double LFILTER;
-        double RL;
+        //double RL;
 
 // INPUT VECTORS
 

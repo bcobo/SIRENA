@@ -339,15 +339,16 @@ int main (int argc, char **argv)
                                         EP_PRINT_ERROR(message,status); return(EPFAIL);
                                 }
                                 LFILTER = gsl_vector_get(vector,0);
-                                strcpy(obj.nameCol,"RL");
+                                /*strcpy(obj.nameCol,"RL");
                                 if (readFitsSimple (obj,&vector))
                                 {
                                         message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
                                         EP_PRINT_ERROR(message,status); return(EPFAIL);
                                 }
-                                RL = gsl_vector_get(vector,0);
+                                RL = gsl_vector_get(vector,0);*/
                                 
-                                if (V0 != 0)    R0 = V0/Ibias-RL;
+                                // V0=Ibias*(R0+RPARA/TTR²)*TTR
+                                if (V0 != 0)    R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
                                 
                                 /*cout<<"Imin: "<<Imin<<endl;
                                 cout<<"Imax: "<<Imax<<endl;

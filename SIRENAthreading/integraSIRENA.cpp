@@ -507,7 +507,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                                 }
                                 
                                 double V0 = 0;
-                                double RL;
+                                //double RL;
                                 
                                 IOData obj;
                                 obj.inObject = reconstruct_init->record_file_fptr;
@@ -559,13 +559,13 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                                 
                                 if (V0 != 0)
                                 {
-                                        strcpy(obj.nameCol,"RL");
+                                        /*strcpy(obj.nameCol,"RL");
                                         if (readFitsSimple (obj,&vector))
                                         {
                                                 EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
                                         }
-                                        RL = gsl_vector_get(vector,0);
-                                        reconstruct_init->i2rdata->R0 = V0/reconstruct_init->i2rdata->I0_START-RL;
+                                        RL = gsl_vector_get(vector,0);*/
+                                        reconstruct_init->i2rdata->R0 = V0/(reconstruct_init->i2rdata->I0_START*reconstruct_init->i2rdata->TTR)-reconstruct_init->i2rdata->RPARA/pow(reconstruct_init->i2rdata->TTR,2.0);
                                 }
                                 
                                 if (fits_movabs_hdu(reconstruct_init->record_file_fptr, hdunum, &hdutype, status))

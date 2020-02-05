@@ -6969,7 +6969,7 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
                 gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
                
                 RL = RPARA/(pow(TTR,2));                                // RL = RPARA/(TTR)^2
-                V0 = Ibias*(R0+RL);                                     // V0 = I0(R0+RL)
+                V0 = Ibias*(R0+RL)*TTR;                                 // V0 = I0(R0+RL)TTR
                 L = LFILTER/(pow(TTR,2));                               // L = LFILTER/(TTR)^2
 
                 // I
@@ -7013,7 +7013,7 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
                 gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
                
                 RL = RPARA/(pow(TTR,2));                        // RL = RPARA/(TTR)^2
-                V0 = Ibias*(R0+RL);                             // V0 = I0(R0+RL)
+                V0 = Ibias*(R0+RL)*TTR;                         // V0 = I0(R0+RL)TTR
 
                 // I
                 gsl_vector_memcpy(invector_modified,*invector);
@@ -7044,7 +7044,7 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
                 gsl_vector *IfitIgsl = gsl_vector_alloc((*invector)->size);
                
                 RL = RPARA/(pow(TTR,2));                        // RL = RPARA/(TTR)^2
-                V0 = Ibias*(R0+RL);                             // V0 = I0(R0+RL)
+                V0 = Ibias*(R0+RL)*TTR;                         // V0 = I0(R0+RL)TTR
                 /*cout<<"Imax: "<<Imax<<endl;
                 cout<<"Imin: "<<Imin<<endl;
                 cout<<"aducnv: "<<aducnv<<endl;
