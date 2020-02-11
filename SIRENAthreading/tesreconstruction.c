@@ -26,8 +26,6 @@ int tesreconstruction_main() {
   // Containing all programm parameters read by PIL.
   struct Parameters par;
   
-  //printf("%s %s %s","Printing SIRENA_VERSION = ",SIRENA_VERSION, "\n");
-  
   // Error status.
   int status=EXIT_SUCCESS;
 
@@ -41,7 +39,6 @@ int tesreconstruction_main() {
     // Get program parameters.
     status=getpar(&par);
     CHECK_STATUS_BREAK(status);
-    //printf("%s","After getpar\n");
     
     // Read XML info
     //--------------
@@ -49,12 +46,10 @@ int tesreconstruction_main() {
     CHECK_STATUS_BREAK(status);
     det = loadAdvDet(par.XMLFile, &status);
     CHECK_STATUS_BREAK(status);
-    //printf("%s","After loadAdvDet\n");
     // Read the sampling rate from XML file
     double sf = -999.; 
     double div = 1;
     sf = det->SampleFreq;
-    //printf("%s %f %s","sf: ",sf,"\n");
     
     double sampling_rate;
     
@@ -62,7 +57,7 @@ int tesreconstruction_main() {
     char firstchar2[2];
     strcpy(firstchar2,firstchar);
         
-    //printf("%s %s %s","Fichero: ",par.RecordFile,"\n");
+    //printf("%s %s %s","File: ",par.RecordFile,"\n");
     // Check input file header is complete to work with xifusim/tessim simulated files
     // -------------------------------------------------------------------------------
     fitsfile* fptr = NULL;
@@ -70,7 +65,7 @@ int tesreconstruction_main() {
     int hdunum; // Number of HDUs (RECORDS-file or TESRECORDS-file)
     if (strcmp(firstchar2,"@") == 0)
     {
-            //printf("%s %s %s","Fichero: ",strndup(par.RecordFile+1, strlen(par.RecordFile)-1),"\n");
+            //printf("%s %s %s","File: ",strndup(par.RecordFile+1, strlen(par.RecordFile)-1),"\n");
             FILE *filetxt = fopen(strndup(par.RecordFile+1, strlen(par.RecordFile)-1), "r");
             if (filetxt == NULL)    
             {
@@ -85,7 +80,6 @@ int tesreconstruction_main() {
             {
                 numfits++;
             }
-            //printf("%s %d %s","numfits: ",numfits,"\n");
             fclose(filetxt);
             
             filetxt = fopen(strndup(par.RecordFile+1, strlen(par.RecordFile)-1), "r");
@@ -94,7 +88,6 @@ int tesreconstruction_main() {
             {
                     fgets(filefits, 256, filetxt);
                     strtok(filefits, "\n");     // To delete '/n' from filefits (if not, 'fits_open_file' can not open the file)
-                    //printf("%s %s %s","FITS file i: ",filefits,"\n");
             
                     fits_open_file(&fptr, filefits, READONLY, &status);
                     if (status != 0)    printf("%s","FITS file read from ASCII file does not exist\n");
@@ -141,9 +134,7 @@ int tesreconstruction_main() {
                             }
                                 
                             sampling_rate = atof(characters_after_srate);
-                            //printf("%s %s %s","characters_after_srate: ",characters_after_srate,"\n");
                         }
-                        //printf("%s %f %s","sampling_rate: ",sampling_rate,"\n");
                             
                         div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
             
@@ -155,9 +146,7 @@ int tesreconstruction_main() {
                         double keyvalue_double;
                         fits_read_key(fptr,TDOUBLE,"DELTAT",&keyvalue_double,NULL,&status);
                         sampling_rate = 1/keyvalue_double;
-                        //printf("%s %2.10f %s","sampling_rate(2nd run): ",sampling_rate,"\n");
                         div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
-                        //printf("%s %2.10f %s","div(2nd run): ",div,"\n");
                     }//(tessim)
                     fits_close_file(fptr,&status);
                     CHECK_STATUS_BREAK(status);
@@ -167,22 +156,16 @@ int tesreconstruction_main() {
     }
     else
     {
-            //printf("%s ","Step-1\n");
             numfits = 1;
             fits_open_file(&fptr, par.RecordFile, READONLY, &status);
-            //printf("%s ","Step0\n");
             if (status != 0)    printf("%s","File given in RecordFile does not exist\n");
             
             fits_get_num_hdus(fptr, &hdunum,&status);
-            //printf("%s ","Step1\n");
-            //printf("%s %d %s","hdunum = ",hdunum,"\n");
     
             if ((hdunum == 8) || (hdunum == 9)) //xifusim simulated file (with TESRECORDS)
             {    
-                //printf("%s ","Step2\n");
                 // Move to "Primary" HDU to obtain SAMPLING_RATE
                 fits_movabs_hdu(fptr, 1, NULL, &status); 
-                //printf("%s ","Step3\n");
                 CHECK_STATUS_BREAK(status);
                 // and read full Primary HDU and store it in 'headerPrimary'
                 int numberkeywords;
@@ -217,9 +200,7 @@ int tesreconstruction_main() {
                     }
                        
                     sampling_rate = atof(characters_after_srate);
-                    //printf("%s %s %s","characters_after_srate: ",characters_after_srate,"\n");
                 }
-                //printf("%s %f %s","sampling_rate0: ",sampling_rate,"\n");
                 
                 div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
             }//if hdunum==8 (xifusim file)
@@ -235,15 +216,12 @@ int tesreconstruction_main() {
                 double keyvalue_double;
                 fits_read_key(fptr,TDOUBLE,"DELTAT",&keyvalue_double,NULL,&status);
                 sampling_rate = 1./keyvalue_double;
-                //printf("%s %2.10f %s","sampling_rate(2nd run): ",sampling_rate,"\n");
                 div = sf/sampling_rate;  // Grading info is unique in XML file -> adjust for different sf
-                //printf("%s %2.10f %s","div(2nd run): ",div,"\n");
             } // (tessim file)
             fits_close_file(fptr,&status);
             CHECK_STATUS_BREAK(status);
     }
-    //printf("%s %f %s","sampling_rate: ",sampling_rate,"\n");
-    
+
     // Sixt standard keywords structure
     //----------------------------------
     SixtStdKeywords* keywords = newSixtStdKeywords(&status);
@@ -257,7 +235,6 @@ int tesreconstruction_main() {
                                                  par.clobber,
                                                  &status);
     CHECK_STATUS_BREAK(status);
-    //printf("%s","After opennewTesEventFile\n");
     
     // Initialize PP data structures needed for pulse filtering
     //---------------------------------------------------------
@@ -286,19 +263,12 @@ int tesreconstruction_main() {
         SIXT_ERROR("The provided XMLFile does not have the grading info");
         return(EXIT_FAILURE);
     }
-    //printf("%s %f %s","div: ",div,"\n");
     reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
-    //reconstruct_init_sirena->grading->value = gsl_vector_alloc(det->pix->ngrades);
     reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->pix->ngrades,2);
     for (int i=0;i<det->pix->ngrades;i++)
     {
-        //gsl_vector_set(reconstruct_init_sirena->grading->value,i,det->pix->(int) (grades[i].value/div));
-        //printf("%s %d %s","grades[i].gradelimpre: ",det->pix->grades[i].gradelim_pre,"\n");
         gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->pix->grades[i].gradelim_pre)/div);
-        //printf("%s %f %s","grades[i].gradelimpre",gsl_matrix_get(reconstruct_init_sirena->grading->gradeData,i,0),"\n");
-        //printf("%s %d %s","grades[i].gradelimpost: ",det->pix->grades[i].gradelim_post,"\n");
         gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post)/div);
-        //printf("%s %f %s","grades[i].gradelimpost",gsl_matrix_get(reconstruct_init_sirena->grading->gradeData,i,1),"\n");
     }
     destroyAdvDet(&det);
     
@@ -327,7 +297,6 @@ int tesreconstruction_main() {
             
                     // Open record file
                     // ----------------
-                    //TesTriggerFile* record_file = openexistingTesTriggerFile(filefits,keywords,&status);
                     record_file = openexistingTesTriggerFile(filefits,keywords,&status);
                     CHECK_STATUS_BREAK(status);
                     
@@ -353,11 +322,8 @@ int tesreconstruction_main() {
                     CHECK_STATUS_BREAK(status);
                     
                     // Build up TesRecord to read the file
-                    //TesRecord* record = newTesRecord(&status);
                     record = newTesRecord(&status);
-                    //printf("%s %f %s","sampling_rate00= ",sampling_rate,"\n");
                     if (record_file->delta_t == -999) record_file->delta_t = 1./sampling_rate;
-                    //printf("%s %f %s","record_file->delta_t= ",record_file->delta_t,"\n");
                     allocateTesRecord(record,record_file->trigger_size,record_file->delta_t,0,&status);
                     CHECK_STATUS_BREAK(status);
                     
@@ -375,7 +341,6 @@ int tesreconstruction_main() {
                                     nrecord = nrecord + 1;
                                     nrecord_filei = nrecord_filei + 1;
                                     if ((nrecord_filei == record_file->nrows) && (j == numfits-1)) lastRecord=1;  // lastRecord of all the FITS files
-                                    //if(nrecord == record_file->nrows) lastRecord=1;
                                    
                                     if ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2RALL") == 0) 
                                         || (strcmp(par.EnergyMethod,"I2RNOL") == 0) || (strcmp(par.EnergyMethod,"I2RFITTED") == 0))
@@ -386,7 +351,6 @@ int tesreconstruction_main() {
                                     //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
                                     reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
                                                             lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
-                                    //printf("%s","**Sale de reconstructRecordSIRENA \n");
                             }
                             CHECK_STATUS_BREAK(status);
 
@@ -409,7 +373,7 @@ int tesreconstruction_main() {
                     } // while getNextRecord
                     if(is_threading()) 
                     {
-                            //printf("%s","**Threading...esperando \n");
+                            //printf("%s","**Threading...waiting \n");
                             th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
                             //printf("%s %d %s","**Threading...after th_end: pulsesAll->ndetpulses", pulsesAll->ndetpulses,"\n");
                             //printf("%s %d %s","**Threading...after th_end: pulsesAll->size", pulsesAll->size,"\n");
@@ -423,12 +387,11 @@ int tesreconstruction_main() {
                                     //printf("%s %e %s","**Threading...event_list->energies[1]: ", event_list->energies[1],"\n"); Not error but non relevant value
                                     //printf("%s %e %s","**Threading...event_list->energies[100000]: ", event_list->energies[100000],"\n"); Not error but non relevant value
                                     saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-                                    //printf("%s","**Threading...despues de saveEventListToFile \n");
+                                    //printf("%s","**Threading...after de saveEventListToFile \n");
                                     CHECK_STATUS_BREAK(status);
                                     ++i;
                             }
                     }
-                    //printf("%s %d %s","Pasa1",status,"\n");
                     
                     if ((!strcmp(par.Rcmethod,"SIRENA")) && (pulsesAll->ndetpulses == 0)) 
                             printf("%s %s %s","WARNING: no pulses have been detected in the current FITS file: ", filefits,"\n");
@@ -440,10 +403,8 @@ int tesreconstruction_main() {
                             CHECK_STATUS_BREAK(status);
                             
                             // Messages providing info of some columns
-                            //char keyword[9];
                             char keywordvalue[9];
                             char comment[MAXMSG];
-                            //int keywordvalueint;
                             
                             fits_movnam_hdu(outfile->fptr, ANY_HDU,"EVENTS", 0, &status);
                             CHECK_STATUS_BREAK(status);
@@ -468,28 +429,20 @@ int tesreconstruction_main() {
                             strcpy(comment, "Starting time-starting time previous event");
                             fits_update_key(outfile->fptr, TSTRING, "TTYPE5", keywordvalue, comment, &status);
                     }
-                    //printf("%s %d %s","Pasa2",status,"\n");
-                    
                     
                     freeTesTriggerFile(&record_file,&status);   // The record_file (every FITS file) is closed
                     
-                    //printf("%s %d %s","Pasa3",status,"\n");
                     CHECK_STATUS_BREAK(status);
             
             }   // for every FITS file
             
-    
-    
-    
             fclose(filetxt);
     }
     else
     {
             // Open record file
             // ----------------
-            //TesTriggerFile* record_file = openexistingTesTriggerFile(par.RecordFile,keywords,&status);
             record_file = openexistingTesTriggerFile(par.RecordFile,keywords,&status);
-            //printf("%s","After opennewTesEventFile\n");
             CHECK_STATUS_BREAK(status);
 
             if(!strcmp(par.Rcmethod,"PP")){
@@ -506,53 +459,14 @@ int tesreconstruction_main() {
                         par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, 
                         par.filterFile, par.errorT, par.Sum0Filt, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
                         par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
-            }  
-            //printf("%s","After initializeReconstructionSIRENA\n");
+            }
             CHECK_STATUS_BREAK(status);
             
             // Build up TesRecord to read the file
-            //TesRecord* record = newTesRecord(&status);
             record = newTesRecord(&status);
             if (record_file->delta_t == -999) record_file->delta_t = 1./sampling_rate;
             allocateTesRecord(record,record_file->trigger_size,record_file->delta_t,0,&status);
             CHECK_STATUS_BREAK(status);
-
-            /*// Build up TesEventList to recover the results of the reconstruction
-            TesEventList* event_list = newTesEventList(&status);
-            allocateTesEventListTrigger(event_list,par.EventListSize,&status);
-            CHECK_STATUS_BREAK(status);*/
-
-            // Iterate of records and do the averageRecord
-            //printf("%s %s", "averageRecord:","\n");
-            //int lastRecord = 0, nrecord = 0;
-            /*int nrecordOK = 0;
-            TesTriggerFile* record_fileAux1 = openexistingTesTriggerFile(par.RecordFile,keywords,&status);
-            gsl_vector * averageRecord = gsl_vector_alloc(record_fileAux1->trigger_size);
-            printf("%s %d %s","record_fileAux1->trigger_size: ",record_fileAux1->trigger_size,"\n");
-            gsl_vector_set_zero(averageRecord);
-            CHECK_STATUS_BREAK(status);
-            while(getNextRecord(record_fileAux1,record,&status))
-            {
-                nrecord = nrecord + 1;
-                if(nrecord == record_file->nrows) lastRecord=1;
-                
-                //calculateAverageRecord(record,lastRecord,nrecord,&averageRecord,&status);
-                calculateAverageRecord(record,lastRecord,&nrecordOK,&averageRecord,&status);
-            }
-            CHECK_STATUS_BREAK(status);
-            freeTesTriggerFile(&record_fileAux1,&status);
-            //printf("%s %d %s","recordsOK = ",nrecordOK,"\n");
-            
-            TesTriggerFile* record_fileAux2 = openexistingTesTriggerFile(par.RecordFile,keywords,&status);
-            CHECK_STATUS_BREAK(status);
-            nrecord = 0;
-            while(getNextRecord(record_fileAux2,record,&status))
-            {
-                nrecord = nrecord + 1;
-                calculateRecordsError(record,nrecord,averageRecord,&status);
-            }
-            CHECK_STATUS_BREAK(status);
-            freeTesTriggerFile(&record_fileAux2,&status);*/
             
             // Iterate of records and do the reconstruction
             lastRecord = 0, nrecord = 0;    //last record required for SIRENA library creation
@@ -564,9 +478,6 @@ int tesreconstruction_main() {
                     }
                     else
                     {
-    
-    
-    
                             nrecord = nrecord + 1;
                             if(nrecord == record_file->nrows) lastRecord=1;
                             /*if(nrecord < 7905) 
@@ -590,11 +501,9 @@ int tesreconstruction_main() {
                             }
                         
                             //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
-                            //printf("%s %d %s","status0 = ",status,"\n");
+                            //printf("\n%f - %ld", record->time, record->pixid);
                             reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
                                                     lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
-                            //printf("%s","**Acaba el record (reconstructRecordSIRENA) \n");
-                            //printf("%s %d %s","status1 = ",status,"\n");
                     }
                     CHECK_STATUS_BREAK(status);
 
@@ -606,10 +515,10 @@ int tesreconstruction_main() {
                                     //printf("\n %p - %f", outfile, record_file->delta_t);
                                     //printf("\nRecord single");
                                     //printf("\n%f - %ld", record->time, record->pixid);
-                                    //printf("%s %d %s","**Antes de saveEventListToFile \n");
+                                    //printf("%s %d %s","**Before saveEventListToFile \n");
                                     //printf("%s %d %s","status2 = ",status,"\n");
                                     saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-                                    //printf("%s %d %s","**Despues de saveEventListToFile \n");
+                                    //printf("%s %d %s","**After saveEventListToFile \n");
                                     //printf("%s %d %s","status3 = ",status,"\n");
                                     CHECK_STATUS_BREAK(status);
                                     //Reinitialize event list
@@ -620,7 +529,7 @@ int tesreconstruction_main() {
             
             if(is_threading()) 
             {
-                    //printf("%s","**Threading...esperando \n");
+                    //printf("%s","**Threading...waiting \n");
                     th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
                     //printf("%s %d %s","**Threading...after th_end: pulsesAll->ndetpulses", pulsesAll->ndetpulses,"\n");
                     //printf("%s %d %s","**Threading...after th_end: pulsesAll->size", pulsesAll->size,"\n");
@@ -633,7 +542,7 @@ int tesreconstruction_main() {
                             //printf("%s %e %s","**Threading...event_list->energies[1]: ", event_list->energies[1],"\n"); Not error but non relevant value
                             //printf("%s %e %s","**Threading...event_list->energies[100000]: ", event_list->energies[100000],"\n"); Not error but non relevant value
                             saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-                            //printf("%s","**Threading...despues de saveEventListToFile \n");
+                            //printf("%s","**Threading...after saveEventListToFile \n");
                             CHECK_STATUS_BREAK(status);
                             ++i;
                     }
@@ -647,10 +556,8 @@ int tesreconstruction_main() {
             CHECK_STATUS_BREAK(status);
             
             // Messages providing info of some columns
-            //char keyword[9];
             char keywordvalue[9];
             char comment[MAXMSG];
-            //int keywordvalueint;
             
             fits_movnam_hdu(outfile->fptr, ANY_HDU,"EVENTS", 0, &status);
             CHECK_STATUS_BREAK(status);
@@ -678,11 +585,9 @@ int tesreconstruction_main() {
             freeTesTriggerFile(&record_file,&status);
     }
     
-    //printf("%s %d %s","Pasa4",status,"\n");
     // Save GTI extension to event file
     GTI* gti=getGTIFromFileOrContinuous("none",keywords->tstart, keywords->tstop,keywords->mjdref, &status);
     saveGTIExt(outfile->fptr, "STDGTI", gti, &status);    
-    //printf("%s %d %s","Pasa5",status,"\n");
     CHECK_STATUS_BREAK(status);
     
     //Free memory
@@ -690,12 +595,10 @@ int tesreconstruction_main() {
     freeReconstructInitSIRENA(reconstruct_init_sirena);
     freePulsesCollection(pulsesAll);
     freeOptimalFilterSIRENA(optimalFilter);
-    //freeTesTriggerFile(&record_file,&status);
     freeTesEventFile(outfile,&status);
     freeTesEventList(event_list);
     freeTesRecord(&record);
     freeSixtStdKeywords(keywords);
-    //printf("%s %d %s","Pasa6",status,"\n");
     CHECK_STATUS_BREAK(status);
  
   } while(0); // END of the error handling loop.
@@ -982,7 +885,6 @@ int getpar(struct Parameters* const par)
         
         MyAssert((par->Sum0Filt ==0) || (par->Sum0Filt ==1), "Sum0Filt must be 0 or 1");
 
-	//if (((strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0)) && (par->LagsOrNot == 1))
         if ((strcmp(par->EnergyMethod,"WEIGHT") == 0) && (par->LagsOrNot == 1))
 	{
 		SIXT_ERROR("parameter error: EnergyMethod=WEIGHT and Lags not implemented yet");

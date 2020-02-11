@@ -86,18 +86,23 @@ MAP OF SECTIONS IN THIS FILE:
 * - pulse_length: Pulse length (samples)
 * - LrsT: Running sum length in seconds (only in notcreationlib mode)
 * - LbT: Baseline averaging length in seconds (only in notcreationlib mode)
+* - weightMS: Calculate and write the weight matrixes if weightMS=yes
+* - I2R: Transform to resistance space (I2R, I2RALL, I2RNOL, I2RFITTED) or not (I)
 * - namelog: Output log file name
 * - verbosity: Verbosity level of the output log file
+* - clobber: Re-write output files if clobber=yes
+* - matrixSize: Size of noise matrix if only one to be created
 * 
 * Steps:
 * 
 * - Read input parameters
 * - Open input FITS file
+* - Read IMIN/IMAX to calculate ADUCNV
+* - Read keywords to transform to resistance space
 * - Read and check input keywords
 * - Get structure of input FITS file columns
 * - Initialize variables and transform from seconds to samples
 * - Pulse-free segments are divided into pulse-free intervals with intervalMinBins size
-* - Every single spectrum of each pulse-free interval is stored in a row of the EventSamplesFFT array
 * - Create structure to run Iteration: inDataIterator
 * 	- Read columns (TIME and ADC)
 * - Called iteration function: inDataIterator
@@ -202,57 +207,6 @@ int main (int argc, char **argv)
                         }
                 }
         }
-	/*strcpy(extname,"RECORDS");
-        fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
-        cout<<"status0: "<<status<<endl;
-        if (status != 0)
-        {
-                status = 0;
-                strcpy(extname,"TESRECORDS");
-                fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status);
-                cout<<"status1: "<<status<<endl;
-        }
-        if (status != 0)
-        {
-                cout<<"status!=0"<<endl;
-                status = 0;
-                strcpy(extname,"ADCPARAM");
-                if (fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status))
-                {
-                    message = "Cannot move to HDU " + string(extname) + " in " + string(infileName);
-                    EP_EXIT_ERROR(message,status);
-                }
-                strcpy(keyname,"IMIN");
-                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
-                {
-                    message = "Cannot read keyword " + string(keyname) + " in input file";
-                    EP_PRINT_ERROR(message,status); return(EPFAIL);
-                }
-                strcpy(keyname,"IMAX");
-                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
-                {
-                    message = "Cannot read keyword " + string(keyname) + " in input file";
-                    EP_PRINT_ERROR(message,status); return(EPFAIL);
-                }
-        }
-        else
-        {
-                cout<<"status=0"<<endl;
-                strcpy(keyname,"IMIN");
-                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,NULL,&status))
-                {
-                    message = "Cannot read keyword " + string(keyname) + " in input file";
-                    EP_PRINT_ERROR(message,status); return(EPFAIL);
-                }
-                strcpy(keyname,"IMAX");
-                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,NULL,&status))
-                {
-                    message = "Cannot read keyword " + string(keyname) + " in input file";
-                    EP_PRINT_ERROR(message,status); return(EPFAIL);
-                }
-        }*/
-        //cout<<"IMIN: "<<Imin<<endl;
-        //cout<<"IMAX: "<<Imax<<endl;
 	
 	if (strcmp(I2R,"I") != 0)  // Transform to resistance space
         {
@@ -266,25 +220,6 @@ int main (int argc, char **argv)
                         if (status == 0)
                         {
                                 status = 0;
-                                /*//cout<<"en TESRECORDS structure"<<endl;
-                                strcpy(extname,"ADCPARAM");
-                                if (fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status))
-                                {
-                                        message = "Cannot move to HDU " + string(extname) + " in " + string(infileName);
-                                        EP_EXIT_ERROR(message,status);
-                                }
-                                strcpy(keyname,"IMIN");
-                                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
-                                {
-                                        message = "Cannot read keyword " + string(keyname) + " in input file";
-                                        EP_PRINT_ERROR(message,status); return(EPFAIL);
-                                }
-                                strcpy(keyname,"IMAX");
-                                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
-                                {
-                                        message = "Cannot read keyword " + string(keyname) + " in input file";
-                                        EP_PRINT_ERROR(message,status); return(EPFAIL);
-                                }*/
                                 
                                 V0 = 0;
                                 R0 = 0;
@@ -339,15 +274,8 @@ int main (int argc, char **argv)
                                         EP_PRINT_ERROR(message,status); return(EPFAIL);
                                 }
                                 LFILTER = gsl_vector_get(vector,0);
-                                /*strcpy(obj.nameCol,"RL");
-                                if (readFitsSimple (obj,&vector))
-                                {
-                                        message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(infileName);
-                                        EP_PRINT_ERROR(message,status); return(EPFAIL);
-                                }
-                                RL = gsl_vector_get(vector,0);*/
                                 
-                                // V0=Ibias*(R0+RPARA/TTR²)*TTR
+                                // V0=Ibias*(R0+RPARA/TTRÂ²)*TTR
                                 if (V0 != 0)    R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
                                 
                                 /*cout<<"Imin: "<<Imin<<endl;
@@ -369,55 +297,8 @@ int main (int argc, char **argv)
                                 delete [] obj.nameTable;
                                 delete [] obj.nameCol;
                                 delete [] obj.unit;
-                                //cout<<"fuera TESRECORDS"<<endl;
                         }
                 }
-                /*else
-                {
-                        //double R0;
-                        //double I0_START;
-                        //double RPARA;
-                        //double TTR;
-                        //double LFILTER;
-                                
-                        strcpy(keyname,"R0");
-                        fits_read_key(infileObject,TDOUBLE,keyname, &R0,NULL,&status);
-                        //cout<<"R0: "<<R0<<endl;
-                        strcpy(keyname,"I0_START");
-                        fits_read_key(infileObject,TDOUBLE,keyname, &Ibias,NULL,&status);
-                        //cout<<"I0_START: "<<Ibias<<endl;
-                        //strcpy(keyname,"IMIN");
-                        //fits_read_key(infileObject,TDOUBLE,keyname, &Imin,NULL,&status);
-                        //cout<<"IMIN: "<<Imin<<endl;
-                        //strcpy(keyname,"IMAX");
-                        //fits_read_key(infileObject,TDOUBLE,keyname, &Imax,NULL,&status);
-                        //cout<<"IMAX: "<<Imax<<endl;
-                        strcpy(keyname,"RPARA");
-                        fits_read_key(infileObject,TDOUBLE,keyname, &RPARA,NULL,&status);
-                        //cout<<"RPARA: "<<RPARA<<endl;
-                        strcpy(keyname,"TTR");
-                        fits_read_key(infileObject,TDOUBLE,keyname, &TTR,NULL,&status);
-                        //cout<<"TTR: "<<TTR<<endl;
-                        strcpy(keyname,"LFILTER");
-                        fits_read_key(infileObject,TDOUBLE,keyname, &LFILTER,NULL,&status);
-                        //cout<<"LFILTER: "<<LFILTER<<endl;
-                        
-                        //R0 = 0.00711552;
-                        //Ibias = 1.3555e-05;
-                        //Imin = 1.35523e-06;
-                        //Imax = 1.39e-05;
-                        //RPARA = 0.001;
-                        //TTR = 0.9144;
-                        //LFILTER = 2e-06;
-                        
-                        //cout<<"Imin: "<<Imin<<endl;
-                        //cout<<"Imax: "<<Imax<<endl;
-                        //cout<<"R0: "<<R0<<endl;
-                        //cout<<"Ibias: "<<Ibias<<endl;
-                        //cout<<"RPARA: "<<RPARA<<endl;
-                        //cout<<"TTR: "<<TTR<<endl;
-                        //cout<<"LFILTER: "<<LFILTER<<endl;
-                }*/
         }
         else
         {
@@ -434,19 +315,6 @@ int main (int argc, char **argv)
                     }
                 }
         }
-	
-	/*strcpy(extname,"RECORDS");
-	fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
-	if (status != 0)
-        {
-            status = 0;
-            strcpy(extname,"TESRECORDS");
-            if (fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status))
-            {
-		message = "Cannot move to HDU " + string(extname) + " in " + string(infileName);
-		EP_EXIT_ERROR(message,status);
-            }
-        }*/
 
 	// Read and check input keywords
 	if (fits_get_num_rows(infileObject,&eventcnt, &status))
@@ -526,13 +394,6 @@ int main (int argc, char **argv)
 	ivcal=1.0;
         aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534  // If this calculus changes => Change it also in TASKSSIRENA
 	asquid = 1.0;
-	/*strcpy(keyname,"MONOEN");
-	if (fits_read_key(infileObject,TDOUBLE,keyname, &energy,comment,&status))
-	{
-		message = "Cannot read keyword " + string(keyname) + " in input file";
-		EP_PRINT_ERROR(message,status); return(EPFAIL);
-	}
-	energy = energy*1e3;*/
 	plspolar = 1.0;
 
 	// Get structure of input FITS file columns
@@ -690,7 +551,6 @@ int main (int argc, char **argv)
                                 
                                 tempm = gsl_matrix_submatrix(noiseIntervals,0,0,nintervals,gsl_vector_get(weightpoints,i));
                                 gsl_matrix_memcpy(noiseIntervals_weightPoints,&tempm.matrix);
-                                //weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
 
 				if (matrixSize == 0){ //do all sizes
 				    weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
@@ -843,6 +703,7 @@ int main (int argc, char **argv)
 		EP_EXIT_ERROR(message,status);
 	}	
         gnoiseObject = 0;
+        
 	// Free memory
 	delete [] obj.nameTable; obj.nameTable = 0;
 	delete [] obj.nameCol; obj.nameCol = 0;
@@ -929,7 +790,6 @@ int initModule(int argc, char **argv)
 	gennoisespecPars[5].description = "Scale factor to apply to make possible a varying cut-off frequency of the low-pass filter";
 	gennoisespecPars[5].defValReal = 0.0;
 	gennoisespecPars[5].type = "double";
-	//gennoisespecPars[5].minValReal = 1.E-50;
 	gennoisespecPars[5].minValReal = 0.0;
 	gennoisespecPars[5].maxValReal = 1.E+50;
 	gennoisespecPars[5].ValReal = gennoisespecPars[5].defValReal;
@@ -1221,21 +1081,19 @@ int initModule(int argc, char **argv)
 * 	- To avoid taking into account the pulse tails at the beginning of a record as part of a pulse-free interval
 * 	- Low-pass filtering
 *   	- Differentiate after filtering
-*   	- Finding the pulses: Pulses tstart are found (call findPulses)
-* - Finding the pulse-free intervals in each record
-*  	- If there are pulses => Call findInterval
-*	- No pulses => The whole event is going to be used (DIVIDING into intervals of intervalMinBins size) => Call findIntervalN
-* - CSD calculus (not filtered data):
-* 	- Baseline subtraction
-* 	- FFT calculus (each pulse-free interval)
-* 	- Every single spectrum of each pulse-free interval is stored in a row of the EventSamplesFFT array
-* 	- Add to mean FFT samples
+*   	- Finding the pulses: Pulses tstart are found (call findPulsesNoise)
+*       - Finding the pulse-free intervals in each record
+*  	    - If there are pulses => Call findInterval
+*	    - No pulses => The whole event is going to be used (DIVIDING into intervals of intervalMinBins size) => Call findIntervalN
+*       - CSD calculus (not filtered data):
+* 	    - FFT calculus (each pulse-free interval)
+*           - Add to mean FFT samples
 * - Free allocated GSL vectors
 ****************************************************************************/
 int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int ncols, iteratorCol *cols, void *user_strct)
 {
 	char val[256];
-
+        
 	string message = "";
 	int status = EPOK;
 	int extver=0;
@@ -1340,7 +1198,6 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 		// Just in case the last record has been filled out with 0's => Last record discarded
 		if ((gsl_vector_get(ioutgsl,ioutgsl->size-1) == 0) && (gsl_vector_get(ioutgsl,ioutgsl->size-2) == 0))		break;
                 
-                //cout<<"ioutgsl0: "<<gsl_vector_get(ioutgsl,0)<<" "<<gsl_vector_get(ioutgsl,1)<<" "<<gsl_vector_get(ioutgsl,2)<<endl;
                 if (strcmp(I2R,"I") != 0)
                 {
                     if (convertI2R(I2R,R0,Ibias,Imin,Imax,TTR,LFILTER,RPARA,samprate,&ioutgsl))
@@ -1349,10 +1206,8 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
                             EP_EXIT_ERROR(message,EPFAIL);
                     }
                 }
-                //cout<<"ioutgsl1: "<<gsl_vector_get(ioutgsl,0)<<" "<<gsl_vector_get(ioutgsl,1)<<" "<<gsl_vector_get(ioutgsl,2)<<endl;
 		
 		gsl_vector_scale(ioutgsl,aducnv);
-                //cout<<"ioutgsl2: "<<gsl_vector_get(ioutgsl,0)<<" "<<gsl_vector_get(ioutgsl,1)<<" "<<gsl_vector_get(ioutgsl,2)<<endl;
 
 		// Assigning positive polarity (by using ASQUID and PLSPOLAR)
 		gsl_vector_memcpy(ioutgsl_aux,ioutgsl);
@@ -1423,19 +1278,7 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 			}
 		}
 		
-		/*cout<<"ioutgsl0: "<<gsl_vector_get(ioutgsl,0)<<" "<<gsl_vector_get(ioutgsl,1)<<" "<<gsl_vector_get(ioutgsl,2)<<endl;
-		if (strcmp(I2R,"I") != 0)
-                {
-                    if (convertI2R(I2R,R0,Ibias,Imin,Imax,TTR,LFILTER,RPARA,samprate,&ioutgsl))
-                    {
-                            message = "Cannot run routine convertI2R";
-                            EP_EXIT_ERROR(message,EPFAIL);
-                    }
-                }
-                cout<<"ioutgsl1: "<<gsl_vector_get(ioutgsl,0)<<" "<<gsl_vector_get(ioutgsl,1)<<" "<<gsl_vector_get(ioutgsl,2)<<endl;*/
-		
 		gsl_vector *intervalsWithoutPulsesTogether = gsl_vector_alloc(nIntervals*intervalMinBins);
-		//for (int i=0; i<nIntervals; i++)
                 for (int k=0; k<nIntervals; k++)
 		{
 			for (int j=0; j<intervalMinBins; j++)
@@ -1447,18 +1290,12 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
                 if (nIntervals != 0)
                 {
                     findMeanSigma (intervalsWithoutPulsesTogether, &baselineIntervalFreeOfPulses, &sigmaIntervalFreeOfPulses);
-                    cout<<indexBaseline<<" "<<baselineIntervalFreeOfPulses<<" "<<sigmaIntervalFreeOfPulses<<endl;
                     gsl_vector_set(baseline,indexBaseline,baselineIntervalFreeOfPulses);
                     gsl_vector_set(sigma,indexBaseline,sigmaIntervalFreeOfPulses);
                     indexBaseline++;
                 }
-                //findMeanSigma (intervalsWithoutPulsesTogether, &baselineIntervalFreeOfPulses, &sigmaIntervalFreeOfPulses);
-		//gsl_vector_set(baseline,indexBaseline,baselineIntervalFreeOfPulses);
-		//gsl_vector_set(sigma,indexBaseline,sigmaIntervalFreeOfPulses);
-		//indexBaseline++;
 		gsl_vector_free(intervalsWithoutPulsesTogether); intervalsWithoutPulsesTogether = 0;
 
-		//for (int i=0; i<nIntervals;i++)
                 for (int k=0; k<nIntervals;k++)
 		{
 			if  (NumMeanSamples >= nintervals)	break;
@@ -1732,9 +1569,6 @@ int createTPSreprFile ()
 		message = "Cannot move to HDU " + string(extname) + " in noise file " + string(gnoiseName);
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
 	}
-	 
-        //HDpar_stamp(gnoiseObject, 1, &status);  // Write the whole list of input parameters in HISTORY
-        //cout<<"status: "<<status<<endl;
 
 	strcpy(keyname,"HISTORY");
 	const char * charhistory= "HISTORY Starting parameter list";
@@ -1949,6 +1783,7 @@ int createTPSreprFile ()
 * - Write the data in the output FITS file (print only half of FFT to prevent aliasing)
 * - NOISE HDU only contains positive frequencies (=>Multiply by 2 the amplitude)
 * - NOISEALL HDU contains negative and positive frequencies => It is the HDU read to build the optimal filters
+* - WEIGHTMS HDU
 *****************************************************************************/
 int writeTPSreprExten ()
 {	string message = "";
@@ -2038,14 +1873,9 @@ int writeTPSreprExten ()
 		
 	strcpy(keyname,"BSLN0");       // Real calculated baseline
 	double sumBaseline;
-        cout<<gsl_vector_get(baseline,0)<<" "<<gsl_vector_get(baseline,1)<<" "<<gsl_vector_get(baseline,2)<<endl;
-        //cout<<"indexBaseline: "<<indexBaseline<<endl;
 	gsl_vector_Sumsubvector(baseline, 0, indexBaseline, &sumBaseline);
-        //cout<<"sumBaseline: "<<sumBaseline<<endl;
 	double keyvaldouble;
-        //cout<<"I2R: "<<I2R<<endl;
         keyvaldouble = (sumBaseline/indexBaseline)/aducnv;
-        //cout<<"keyvaldouble: "<<keyvaldouble<<endl;
 	if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
 	{
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(gnoiseName);
@@ -2060,11 +1890,8 @@ int writeTPSreprExten ()
 	
 	strcpy(keyname,"NOISESTD");
 	double sumSigma;
-        //cout<<gsl_vector_get(sigma,0)<<" "<<gsl_vector_get(sigma,1)<<" "<<gsl_vector_get(sigma,2)<<endl;
 	gsl_vector_Sumsubvector(sigma, 0, indexBaseline, &sumSigma);
-        //cout<<"sumSigma: "<<sumSigma<<endl;
         keyvaldouble = (sumSigma/indexBaseline)/aducnv;
-        //cout<<"keyvaldouble: "<<keyvaldouble<<endl;
 	if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
 	{
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(gnoiseName);
@@ -2282,7 +2109,6 @@ int findPulsesNoise
 	}
 	*threshold = thresholdmediankappa;
 
-	//if (findTstartNoise (100,vectorinDER, thresholdmediankappa, samplesup, 1, samplingRate, nPulses, &pulseFound, tstart, quality, &maxDERgsl, &index_maxDERgsl))
 	if (findTstartNoise (10000,vectorinDER, thresholdmediankappa, samplesup, nPulses, tstart, quality, &maxDERgsl))
 	{
 		message = "Cannot run findTstartNoise with two rows in models";
@@ -2351,8 +2177,6 @@ int findPulsesNoise
 * - der: First derivative of the (low-pass filtered) record
 * - adaptativethreshold: Threshold
 * - nSamplesUp: Number of consecutive samples over the threshold to 'find' a pulse
-* - reconstruct_init: Structure containing all the pointers and values to run the reconstruction stage
-*                     This function uses 'pulse_length', 'tstartPulse1', 'tstartPulse2' and 'tstartPulse3'
 * - numberPulses: Number of found pulses
 * - tstartgsl: Pulses tstart (in samples)
 * - flagTruncated: Flag indicating if the pulse is truncated (inside this function only initial truncated pulses are classified)
@@ -2530,9 +2354,9 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
 		elementValue1 = 0.0;
 		elementValue2 = 0.0;
 	}
-	/*cout<<"Final de la diagonal de la matriz "<<covariance->size1<<"x"<<covariance->size1<<endl;
+	/*cout<<"Matrix diagonal ended "<<covariance->size1<<"x"<<covariance->size1<<endl;
         t = clock() - t;
-        cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;*/
+        cout<<"Consumed "<<((float)t)/CLOCKS_PER_SEC<<" sec"<<endl;*/
 
         //t = clock();
 	// Other elements
@@ -2562,20 +2386,19 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
 		}
 	}
 	
-	/*cout<<"Final de los elementos FUERA de la diagonal de la matriz "<<covariance->size1<<"x"<<covariance->size1<<endl;
+	/*cout<<"Elements out of the matrix diagonal ended "<<covariance->size1<<"x"<<covariance->size1<<endl;
         t = clock() - t;
-        cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;*/
+        cout<<"Consumed "<<((float)t)/CLOCKS_PER_SEC<<" sec"<<endl;*/
 	
         //t = clock();
 	// Calculate the weight matrix
 	// It is not necessary to check the allocation because 'covarianze' size must already be > 0
 	gsl_matrix *covarianceaux = gsl_matrix_alloc(covariance->size1,covariance->size2);
 	gsl_matrix_memcpy(covarianceaux,covariance);
-        /*cout<<"Final de la preparacion de la inversion "<<covariance->size1<<"x"<<covariance->size1<<endl;
+        /*cout<<"Preparation to the inversion ended "<<covariance->size1<<"x"<<covariance->size1<<endl;
         t = clock() - t;
-        cout<<"Consumidos "<<((float)t)/CLOCKS_PER_SEC<<" segundos"<<endl;
+        cout<<"Consumed "<<((float)t)/CLOCKS_PER_SEC<<" sec"<<endl;
         t = clock();*/
-        //gsl_matrix_memcpy(*weight,covarianceaux);
 	gsl_linalg_LU_decomp(covarianceaux, perm, &s);
 	if (gsl_linalg_LU_invert(covarianceaux, perm, *weight) != 0) 
 	{
@@ -2591,4 +2414,4 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
 	
 	return (EPOK);
 }
-/*xxxx end of SECTION A11 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+/*xxxx end of SECTION 11 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/

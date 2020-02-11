@@ -93,7 +93,6 @@
         double RPARA;
         double TTR;
         double LFILTER;
-        //double RL;
 
 // INPUT VECTORS
 
@@ -211,10 +210,6 @@
 		double stopcriteriamkc,
 		double kappamkc,
 		double levelprvpulse);
-
-	/*int findTstartNoise (int maxPulsesPerRecord, gsl_vector *der, double adaptativethreshold, int nSamplesUp,
-		int allPulsesMode, double sampling, int *numberPulses, int *thereIsPulse,
-		gsl_vector **tstartgsl, gsl_vector **flagTruncated, gsl_vector **maxDERgsl, gsl_vector **index_maxDERgsl);*/
 	
 	int findTstartNoise (int maxPulsesPerRecord, gsl_vector *der, double adaptativethreshold, int nSamplesUp,
 		int *numberPulses, gsl_vector **tstartgsl, gsl_vector **flagTruncated, gsl_vector **maxDERgsl);

@@ -39,13 +39,10 @@
 #include <stdio.h>
 
 #include "tesrecord.h"
-//#include "testriggerfile.h"
 #include "teseventlist.h"
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
-
-//typedef struct TesTriggerFile TesTriggerFile;
 
 typedef struct MatrixStruct
 {
@@ -576,7 +573,6 @@ typedef struct ReconstructInitSIRENA
   ~ReconstructInitSIRENA();
   ReconstructInitSIRENA& operator=(const ReconstructInitSIRENA& other);
   ReconstructInitSIRENA* get_threading_object(int n_record);
-  //ReconstructInitSIRENA& operator=(ReconstructInitSIRENA& other);
 #endif
 
 } ReconstructInitSIRENA;
@@ -639,17 +635,6 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     double energyPCA2, char * const XMLFile, 
                                     int* const status);
 
-/*
-#ifdef __cplusplus
-extern "C"
-#endif
-void initializeCreationMode(){}
-
-#ifdef __cplusplus
-extern "C"
-#endif
-void initializeProductionMode(){}
-*/
 #ifdef __cplusplus
 extern "C"
 #endif
@@ -679,11 +664,6 @@ void reconstructRecordSIRENA(TesRecord* record,TesEventList* event_list, Reconst
 LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char *filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int preBuffer, int* const status);
 
 NoiseSpec* getNoiseSpec(const char* const filename,int opmode,int hduPRCLOFWM,char *energy_method,char *ofnoise,char *filter_method,int* const status);
-
-/*#ifdef __cplusplus
-extern "C"
-#endif
-void calculateAverageRecord(TesRecord* record, int lastRecord, int nrecord, gsl_vector **averageRecord, int* const status);*/
 
 #ifdef __cplusplus
 extern "C"
