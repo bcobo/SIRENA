@@ -735,6 +735,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			event_list->pulse_heights[ip]  = pulsesInRecord->pulses_detected[ip].pulse_height;
 			event_list->ph_ids[ip]   = 0;
                         event_list->pix_ids[ip]  = pulsesInRecord->pulses_detected[ip].pixid;
+                        event_list->ph_ids[ip]  = pulsesInRecord->pulses_detected[ip].phid;
                         event_list->tstarts[ip]  = pulsesInRecord->pulses_detected[ip].Tstart;
                         event_list->tends[ip]  = pulsesInRecord->pulses_detected[ip].Tend;
 		}
@@ -797,7 +798,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 				event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
 				event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
 				event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
-				event_list->ph_ids[ip]   = 0;		    
+				event_list->ph_ids[ip]   = (*pulsesAll)->pulses_detected[ip].phid;		    
                                 event_list->pix_ids[ip]  = (*pulsesAll)->pulses_detected[ip].pixid;
 			}
 		}
@@ -3819,6 +3820,7 @@ PulseDetected::PulseDetected():
   grade2(0),
   grade2_1(0),
   pixid(0),
+  phid(0),
   pulse_adc(0),
   pulse_adc_preBuffer(0),
   Tstart(0.0f),
@@ -3848,6 +3850,7 @@ PulseDetected::PulseDetected(const PulseDetected& other):
   grade2(other.grade2),
   grade2_1(other.grade2_1),
   pixid(other.pixid),
+  phid(other.phid),
   pulse_adc(0),
   pulse_adc_preBuffer(0),
   Tstart(other.Tstart),
@@ -3887,6 +3890,7 @@ PulseDetected& PulseDetected::operator=(const PulseDetected& other)
     grade2 = other.grade2;
     grade2_1 = other.grade2_1;
     pixid = other.pixid;
+    phid = other.phid;
     if(pulse_adc) {
       gsl_vector_free(pulse_adc); pulse_adc = 0;
     }

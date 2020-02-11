@@ -287,6 +287,10 @@ int getNextRecord(TesTriggerFile* const file,TesRecord* record,int* const status
       record->adc_double[i]= (double) (record->adc_array[i]);
     }
     */
+
+    fits_read_col(file->fptr, TLONG, file->ph_idCol,
+		  file->row,1,1,0,&(record->phid_list->phid_array[0]), &anynul,status);
+    CHECK_STATUS_RET(*status,0);
     
     file->row++;
     return(1);

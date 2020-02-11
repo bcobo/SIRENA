@@ -234,7 +234,7 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 	
 	log_trace("Detecting...");
 	// Process each record
-	if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid))
+	if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid,record->phid_list->phid_array[0]))
 	{
 		message = "Cannot run routine procRecord for record processing";
 		EP_EXIT_ERROR(message,EPFAIL);
@@ -838,7 +838,7 @@ void th_runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll
   // Process each record
   // thread safe
   if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, 
-                 invector, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid))
+                 invector, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid,record->phid_list->phid_array[0]))
     {
       message = "Cannot run routine procRecord for record processing";
       EP_EXIT_ERROR(message,EPFAIL);
@@ -2053,7 +2053,7 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
 * - foundPulses: Input/output structure where the found pulses info is stored 
 * - num_previousDetectedPulses: Number of previous detected pulses (to know the index to get the proper element from tstartPulse1_i in case tstartPulse1=nameFile)
 ****************************************************************************/
-int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid)
+int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, int phid)
 {
 	int status = EPOK;
 	string message = "";
@@ -2426,6 +2426,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 		foundPulses->pulses_detected[i].quality = gsl_vector_get(qualitygsl,i);
                 foundPulses->pulses_detected[i].numLagsUsed = gsl_vector_get(lagsgsl,i);
                 foundPulses->pulses_detected[i].pixid = pixid;
+                foundPulses->pulses_detected[i].phid = phid;
                 if (Lb != 0.0)
                     foundPulses->pulses_detected[i].baseline = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
                 else

@@ -501,7 +501,8 @@ int tesreconstruction_main() {
                             }
                         
                             //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
-                            //printf("\n%f - %ld", record->time, record->pixid);
+                            //printf("%s %d %s", "pixid: ",record->pixid,"\n");
+                            //printf("%s %d %s","ph_id: ",record->phid_list->phid_array[0],"\n");
                             reconstructRecordSIRENA(record,event_list,reconstruct_init_sirena,
                                                     lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
                     }

@@ -316,6 +316,9 @@ typedef struct PulseDetected
 
 	/** PIX_ID of the detected pulse*/
 	int pixid;
+        
+        /** PH_ID of the detected pulse*/
+	int phid;
 	
 	/** Vector containing the pulse adc values */
 	gsl_vector *pulse_adc;
