@@ -733,7 +733,6 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 			event_list->grades1[ip]  = pulsesInRecord->pulses_detected[ip].grade1;
 			event_list->grades2[ip]  = pulsesInRecord->pulses_detected[ip].grade2;
 			event_list->pulse_heights[ip]  = pulsesInRecord->pulses_detected[ip].pulse_height;
-			event_list->ph_ids[ip]   = 0;
                         event_list->pix_ids[ip]  = pulsesInRecord->pulses_detected[ip].pixid;
                         event_list->ph_ids[ip]  = pulsesInRecord->pulses_detected[ip].phid;
                         event_list->tstarts[ip]  = pulsesInRecord->pulses_detected[ip].Tstart;
