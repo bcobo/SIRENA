@@ -206,14 +206,21 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
                 (((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) || (strcmp(energy_method,"I2RNOL") == 0) 
 		|| (strcmp(energy_method,"I2RFITTED") == 0)) && (opmode == 1) && (oflib == 0))
 		|| ((opmode == 1) && (strcmp(energy_method,"WEIGHT") == 0) && (oflib == 0))
-		|| ((opmode == 1) && (strcmp(energy_method,"WEIGHTN") == 0) && (oflib == 0))) 
+		|| ((opmode == 1) && (strcmp(energy_method,"WEIGHTN") == 0) && (oflib == 0))
+                // If BASELINE is not in the library file, it is necessary to read its value from the noise file 
+                || (((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RALL") == 0) ||    (strcmp(energy_method,"I2RNOL") == 0) 
+		|| (strcmp(energy_method,"I2RFITTED") == 0)) && (opmode == 1) && (oflib == 1) && (reconstruct_init->library_collection->baseline == -999.0))) 
 	{
 		exists=0;
 		if(fits_file_exists(noise_file, &exists, status))
 		{
 			EP_EXIT_ERROR("Error checking if noise file exists",*status);
 		}
-		if (exists != 1)
+		if ((exists != 1) && (reconstruct_init->library_collection->baseline == -999.0))
+		{
+			EP_EXIT_ERROR("B0 chosen and BASELINE keyword not in the library file => Noise file is necessary but it does not exist",EPFAIL);
+		}
+		if ((exists != 1) && (reconstruct_init->library_collection->baseline != -999.0))
 		{
 			EP_EXIT_ERROR("The necessary noise file does not exist",EPFAIL);
 		}
@@ -222,6 +229,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 		{
 			EP_EXIT_ERROR((char*)"Error in getNoiseSpec",EPFAIL);
 		}
+		reconstruct_init->library_collection->baseline = reconstruct_init->noise_spectrum->baseline;
 		
 		if ((opmode == 1) && (strcmp(energy_method,"OPTFILT") == 0) && (strcmp(ofnoise,"WEIGHTM") == 0) 
 			&& (largeFilter > pow(2,reconstruct_init->noise_spectrum->weightMatrixes->size1)))
@@ -974,10 +982,12 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 		return(library_collection);
 	}
 	
+	library_collection->baseline = -999.0;
 	if (fits_read_key(fptr,TDOUBLE,"BASELINE", &library_collection->baseline,NULL,status))
 	{
-		EP_PRINT_ERROR("Cannot read keyword BASELINE from HDU LIBRARY in library file",*status);
-		return(library_collection);
+		EP_PRINT_ERROR("Cannot read keyword BASELINE from HDU LIBRARY in library file => Check the noise file",-999);
+                *status = 0;
+		//return(library_collection);
 	}
 
 	// Get number of templates (rows)

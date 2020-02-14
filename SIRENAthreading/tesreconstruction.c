@@ -894,6 +894,7 @@ int getpar(struct Parameters* const par)
 	
 	MyAssert((par->OFIter ==0) || (par->OFIter ==1), "OFIter must be 0 or 1");
 	
+        // It was in order to not ask for the noise file if OFLib=1
 	/*if ((par->OFLib == 1) && (strcmp(par->FilterMethod,"F0") != 0))
 	{
 		SIXT_ERROR("parameter error: If OFLib=yes => FilterMethod must be F0");

@@ -269,7 +269,6 @@ int getNextRecord(TesTriggerFile* const file,TesRecord* record,int* const status
 		  file->row,1,record->trigger_size,0,record->adc_double, &anynul,status);
     CHECK_STATUS_RET(*status,0);
 
-
 //		fits_read_col(file->fptr, TLONG, file->ph_idCol,
 //					  file->row,1,MAXIMPACTNUMBER,0,record->phid_array, &anynul,status);
 //		CHECK_STATUS_RET(*status,0);
@@ -290,6 +289,11 @@ int getNextRecord(TesTriggerFile* const file,TesRecord* record,int* const status
 
     fits_read_col(file->fptr, TLONG, file->ph_idCol,
 		  file->row,1,1,0,&(record->phid_list->phid_array[0]), &anynul,status);
+    if (*status != 0)	// Simulated files have the PH_ID column but empty
+    {
+    	record->phid_list->phid_array[0] = 0;
+	*status = 0;
+    }
     CHECK_STATUS_RET(*status,0);
     
     file->row++;

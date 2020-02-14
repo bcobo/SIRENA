@@ -2067,7 +2067,6 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	double stopCriteriaMKC = 1.0;	// Used in medianKappaClipping
 	                               	// Given in %
 	double kappaMKC = 3.0;		// Used in medianKappaClipping
-	double levelPrvPulse = 100.0;  	// Secondary pulses must be 1/levelPrvPulse times larger than the preceding pulse
 
 	gsl_vector_view temp;
 
@@ -10512,7 +10511,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
         /*if (LowRes== 0)
         {
             //for (int i=0;i<minimo;i++)
-            for (int i=0;i<105;i++)
+            for (int i=0;i<10;i++)
             {
                 cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
             }
@@ -10624,7 +10623,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                             for (int i=0;i<productSize;i++)
                                                             {
                                                                     gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)*gsl_vector_get(filter,i));
-                                                                    //cout<<"vectorindex="<<i+(reconstruct_init->nLags)/2+j-1<<" "<<gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)<<" filterindex="<<i<<" "<<gsl_vector_get(filter,i)<<endl;
+                                                                    if (j==1) cout<<"vectorindex="<<i+(reconstruct_init->nLags)/2+j-1<<" "<<gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)<<" filterindex="<<i<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
                                                             }
                                                             
                                                             // Because of the FFT and FFTinverse normalization factors
