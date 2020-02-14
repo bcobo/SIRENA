@@ -10623,7 +10623,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                             for (int i=0;i<productSize;i++)
                                                             {
                                                                     gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)*gsl_vector_get(filter,i));
-                                                                    if (j==1) cout<<"vectorindex="<<i+(reconstruct_init->nLags)/2+j-1<<" "<<gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)<<" filterindex="<<i<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
+                                                                    //if (j==1) cout<<"vectorindex="<<i+(reconstruct_init->nLags)/2+j-1<<" "<<gsl_vector_get(vector,i+(reconstruct_init->nLags)/2+j-1)<<" filterindex="<<i<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
                                                             }
                                                             
                                                             // Because of the FFT and FFTinverse normalization factors
@@ -10873,6 +10873,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                             for (int i=0; i<filterFFT->size; i++)
                                                             {
                                                                     gsl_vector_complex_set(calculatedEnergy_vectorcomplex,j,gsl_complex_add(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j),gsl_complex_mul(gsl_vector_complex_get(vectorFFT,i),gsl_vector_complex_get(filterFFT,i))));
+                                                                    //if (j == 1) cout<<i<<" "<<GSL_REAL(gsl_vector_complex_get(vectorFFT,i))<<","<<GSL_IMAG(gsl_vector_complex_get(vectorFFT,i))<<" "<<GSL_REAL(gsl_vector_complex_get(filterFFT,i))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,i))<<" "<<GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j))<<","<<GSL_IMAG(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j))<<endl;
                                                             }
                                                             gsl_vector_set(calculatedEnergy_vector,j,fabs(GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j))));
                                                             //cout<<gsl_vector_get(lags_vector,j)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;

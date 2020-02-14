@@ -900,6 +900,19 @@ int getpar(struct Parameters* const par)
 		SIXT_ERROR("parameter error: If OFLib=yes => FilterMethod must be F0");
 		return(EXIT_FAILURE);
 	}*/
+        
+        if ((par->PulseLength < par->OFLength) && (strcmp(par->FilterDomain,"F") == 0))
+        {
+            SIXT_ERROR("Code is not prepared to run 0-padding in Frequency domain");
+            // To run 0-padding in Frequency domain the steps should be:
+            //1. Take the 8192-samples-length filter in Time domain
+            //2. Cut the 0-padding length first samples (the first 4096 samples, or the first 2048 samples...) => 0-padding filter
+            //3. FFT of the 0-padding filter
+            //4. FFT of the 0-padding pulse (pulse cut according the 0-padding)
+            //5. Scalar product in Frequency domain
+            return(EXIT_FAILURE);
+        }
+        
 	if ((strcmp(par->EnergyMethod,"WEIGHT") == 0) && (par->OFLib == 1))
 	{
 		SIXT_ERROR("parameter error: EnergyMethod=WEIGHT => OFLib should be 'no'");
