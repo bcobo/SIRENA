@@ -39,6 +39,8 @@
 
 #include "versionSIRENA.h"
 
+#include <time.h>
+
 /*struct IOData
 {
     fitsfile *inObject;

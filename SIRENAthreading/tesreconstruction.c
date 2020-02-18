@@ -23,6 +23,9 @@
 ////////////////////////////////////
 /** Main procedure. */
 int tesreconstruction_main() {
+  clock_t t;
+  t = clock();
+  
   // Containing all programm parameters read by PIL.
   struct Parameters par;
   
@@ -538,9 +541,9 @@ int tesreconstruction_main() {
                     int aux = 1;
                     while((aux = th_get_event_list(&event_list, &record)) == 1)
                     {
-                            //printf("%s %d %s","**Threading...event_list->size_energy: ", event_list->size_energy,"\n"); Always 0
-                            //printf("%s %e %s","**Threading...event_list->energies[0]: ", event_list->energies[0],"\n"); Energy value
-                            //printf("%s %e %s","**Threading...event_list->energies[1]: ", event_list->energies[1],"\n"); Not error but non relevant value
+                            //printf("%s %d %s","**Threading...event_list->size_energy: ", event_list->size_energy,"\n"); //Always 0
+                            //printf("%s %e %s","**Threading...event_list->energies[0]: ", event_list->energies[0],"\n"); //Energy value
+                            //printf("%s %e %s","**Threading...event_list->energies[1]: ", event_list->energies[1],"\n"); //Not error but non relevant value
                             //printf("%s %e %s","**Threading...event_list->energies[100000]: ", event_list->energies[100000],"\n"); Not error but non relevant value
                             saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
                             //printf("%s","**Threading...after saveEventListToFile \n");
@@ -607,10 +610,14 @@ int tesreconstruction_main() {
   if (EXIT_SUCCESS==status) 
   {
 	headas_chat(3, "finished successfully!\n\n");
+        t = clock() - t;
+        //printf("%s %f %s","Consumed ",((float)t)/CLOCKS_PER_SEC,"sec \n");
 	return(EXIT_SUCCESS);
   } 
   else 
   {
+        t = clock() - t;
+        //printf("%s %f %s","Consumed ",((float)t)/CLOCKS_PER_SEC,"sec \n");
 	return(status);
   }
 }
