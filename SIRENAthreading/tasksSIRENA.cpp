@@ -2103,7 +2103,6 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	dtcName[255]='\0';
 	
 	gsl_vector_memcpy(recordNOTFILTERED,record);
-	
 	// Filtering by using wavelets
 	/*int onlyOnce = 0;
 	//if (onlyOnce == 0)
@@ -2377,7 +2376,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                         {
                                 sprintf(valERROR,"%d",__LINE__+5);
                                 string str(valERROR);
-                                message = "tstart - preBuffer < 0 in line " + str + " (" + __FILE__ + ")";
+                                message = "tstart < 0 in line " + str + " (" + __FILE__ + ")";
                                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                         }
                         temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].pulse_duration);
@@ -2396,14 +2395,37 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                                 message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
                                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                         }
-                        if (gsl_vector_get(tstartgsl,i) - preBuffer < 0)
+                        /*if (gsl_vector_get(tstartgsl,i) - preBuffer < 0)
                         {
                                 sprintf(valERROR,"%d",__LINE__+5);
                                 string str(valERROR);
                                 message = "tstart - preBuffer < 0 in line " + str + " (" + __FILE__ + ")";
                                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                         }
-                        temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i) - preBuffer,foundPulses->pulses_detected[i].pulse_duration);
+                        temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i) - preBuffer,foundPulses->pulses_detected[i].pulse_duration);*/
+                        if (preBuffer == 0) 
+                        {
+                            if (gsl_vector_get(tstartgsl,i)< 0)
+                            {
+                                    sprintf(valERROR,"%d",__LINE__+5);
+                                    string str(valERROR);
+                                    message = "tstart - preBuffer < 0 in line " + str + " (" + __FILE__ + ")";
+                                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                            }
+                            temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i) - preBuffer,foundPulses->pulses_detected[i].pulse_duration);
+                        }
+                        else if (preBuffer != 0)
+                        {
+                            if (gsl_vector_get(tstartgsl,i)-preBuffer >= 0)
+                            {
+                                    temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i) - preBuffer,foundPulses->pulses_detected[i].pulse_duration);
+                            }
+                            else if (gsl_vector_get(tstartgsl,i)-preBuffer < 0)
+                            {
+                                    temp = gsl_vector_subvector(recordNOTFILTERED,0,foundPulses->pulses_detected[i].pulse_duration);
+                            }
+                        }
+                        
                         if (gsl_vector_memcpy(foundPulses->pulses_detected[i].pulse_adc_preBuffer,&temp.vector) != 0)
                         {
                                 sprintf(valERROR,"%d",__LINE__-2);
@@ -2423,6 +2445,10 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 		foundPulses->pulses_detected[i].samp1DER = gsl_vector_get(samp1DERgsl,i);
 		// 'energy' will be known after running 'runEnergy'
 		foundPulses->pulses_detected[i].quality = gsl_vector_get(qualitygsl,i);
+                if ((preBuffer != 0) && (gsl_vector_get(tstartgsl,i)-preBuffer < 0))
+                {
+                        foundPulses->pulses_detected[i].quality = 1;
+                }
                 foundPulses->pulses_detected[i].numLagsUsed = gsl_vector_get(lagsgsl,i);
                 foundPulses->pulses_detected[i].pixid = pixid;
                 //cout<<"procRecord: "<<foundPulses->pulses_detected[i].pixid<<endl;
@@ -2431,17 +2457,18 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                     foundPulses->pulses_detected[i].baseline = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
                 else
                     foundPulses->pulses_detected[i].baseline = gsl_vector_get(Bgsl,i);
+                //cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<endl;
 		//cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<" , Tstart="<<foundPulses->pulses_detected[i].Tstart<<" , Tend="<<foundPulses->pulses_detected[i].Tend<<endl;
                 //log_debug("Pulse %d", i," tstart=%f",gsl_vector_get(tstartgsl,i), " maxDER=%f",foundPulses->pulses_detected[i].maxDER, " samp1DER=%f",gsl_vector_get(samp1DERgsl,i), " pulse_duration=%d",foundPulses->pulses_detected[i].pulse_duration," quality=%d",foundPulses->pulses_detected[i].quality," lags=%f",gsl_vector_get(lagsgsl,i)," Tstart=%f",foundPulses->pulses_detected[i].Tstart," Tend=%f",foundPulses->pulses_detected[i].Tend);
                 //log_debug("Pulse %i tstart=%f maxDER=%f samp1DER=%f pulse_duration=%i quality=%f lags=%f",i,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].maxDER,gsl_vector_get(samp1DERgsl,i),foundPulses->pulses_detected[i].pulse_duration,foundPulses->pulses_detected[i].quality,gsl_vector_get(lagsgsl,i));
                 log_debug("Pulse %d", i);
                 //for (int kkk=0;kkk<foundPulses->pulses_detected[i].pulse_adc->size;kkk++) cout<<kkk<<" "<<gsl_vector_get(foundPulses->pulses_detected[i].pulse_adc_preBuffer,kkk)<<endl;
                 //log_debug("**pulse: %f %f %f",gsl_vector_get(foundPulses->pulses_detected[i].pulse_adc,0),gsl_vector_get(foundPulses->pulses_detected[i].pulse_adc,1),gsl_vector_get(foundPulses->pulses_detected[i].pulse_adc,2));
-                log_debug("**max_pulse: %f",gsl_vector_max(foundPulses->pulses_detected[i].pulse_adc_preBuffer));
+                //log_debug("**max_pulse: %f",gsl_vector_max(foundPulses->pulses_detected[i].pulse_adc_preBuffer));
                 log_debug("tstart= %f", gsl_vector_get(tstartgsl,i));
                 log_debug("tend= %f", gsl_vector_get(tendgsl,i));
                 log_debug("pulse duration %d", foundPulses->pulses_detected[i].pulse_duration);
-                log_debug("Previous baseline (Lb=%f): %f", gsl_vector_get(Lbgsl,i), gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i));
+                //log_debug("Previous baseline (Lb=%f): %f", gsl_vector_get(Lbgsl,i), gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i));
                 //cout<<"Previous baseline: "<<gsl_vector_get(Bgsl,i)<<" "<<gsl_vector_get(Lbgsl,i)<<" "<<gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i)<<endl;
                 //cout<<gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i)<<endl;
                 //log_debug("Previous baseline %f", foundPulses->pulses_detected[i].baseline);
@@ -10642,6 +10669,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     xmax = -b/(2*a);
                                                     calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
                                                     //cout<<"xmax0: "<<xmax<<endl;
+                                                    //cout<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<" "<<xmax<<" "<<calculatedEnergy_Nolags<<endl;
                                                     
                                                     if ((xmax >= -1) && (xmax <= 1)) maxParabolaFound = true;
                                                     

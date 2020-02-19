@@ -653,6 +653,7 @@ scheduler::scheduler():
   data_array(0)
 {
   this->init_v2();
+    //this->init();
 }
 
 scheduler::~scheduler()

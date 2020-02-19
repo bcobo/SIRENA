@@ -2340,23 +2340,6 @@ int FindSecondaries
         
         double sum_samp1DER;
         int limitMin, limitMax;
-        
-        /*cout<<"Umbral:  "<<adaptativethreshold<<endl;
-        cout<<"994 "<<gsl_vector_get(adjustedDerivative,994)<<endl;
-        cout<<"995 "<<gsl_vector_get(adjustedDerivative,995)<<endl;
-        cout<<"996 "<<gsl_vector_get(adjustedDerivative,996)<<endl;
-        cout<<"997 "<<gsl_vector_get(adjustedDerivative,997)<<endl;
-        cout<<"998 "<<gsl_vector_get(adjustedDerivative,998)<<endl;
-        cout<<"999 "<<gsl_vector_get(adjustedDerivative,999)<<endl;
-        cout<<"1000 "<<gsl_vector_get(adjustedDerivative,1000)<<endl;
-        cout<<"1001 "<<gsl_vector_get(adjustedDerivative,1001)<<endl;*/
-        
-        cout<<"Umbral:  "<<adaptativethreshold<<endl;
-        cout<<"0 "<<gsl_vector_get(adjustedDerivative,0)<<endl;
-        cout<<"1 "<<gsl_vector_get(adjustedDerivative,1)<<endl;
-        cout<<"2 "<<gsl_vector_get(adjustedDerivative,2)<<endl;
-        cout<<"3 "<<gsl_vector_get(adjustedDerivative,3)<<endl;
-        cout<<"4 "<<gsl_vector_get(adjustedDerivative,4)<<endl;
       
         gsl_vector_view temp;
         
@@ -3158,28 +3141,6 @@ int FindSecondariesSTC
         
         double sum_samp1DER;
         int limitMin, limitMax;
-        
-        /*cout<<"Umbral:  "<<adaptativethreshold<<endl;
-        cout<<"996 "<<gsl_vector_get(der,996)<<endl;
-        cout<<"997 "<<gsl_vector_get(der,997)<<endl;
-        cout<<"998 "<<gsl_vector_get(der,998)<<endl;
-        cout<<"999 "<<gsl_vector_get(der,999)<<endl;
-        cout<<"1000 "<<gsl_vector_get(der,1000)<<endl;
-        cout<<"1001 "<<gsl_vector_get(der,1001)<<endl;
-        cout<<"1002 "<<gsl_vector_get(der,1002)<<endl;
-        cout<<"1003 "<<gsl_vector_get(der,1003)<<endl;
-        cout<<"1004 "<<gsl_vector_get(der,1004)<<endl;
-        cout<<"1005 "<<gsl_vector_get(der,1005)<<endl;
-        cout<<"...................................... "<<endl;
-        cout<<"3835 "<<gsl_vector_get(der,3835)<<endl;
-        cout<<"3836 "<<gsl_vector_get(der,3836)<<endl;
-        cout<<"3837 "<<gsl_vector_get(der,3837)<<endl;
-        cout<<"3838 "<<gsl_vector_get(der,3838)<<endl;
-        cout<<"3839 "<<gsl_vector_get(der,3839)<<endl;
-        cout<<"3840 "<<gsl_vector_get(der,3840)<<endl;
-        cout<<"3841 "<<gsl_vector_get(der,3841)<<endl;
-        cout<<"3842 "<<gsl_vector_get(der,3842)<<endl;
-        cout<<"3843 "<<gsl_vector_get(der,3843)<<endl;*/
         
         int nodetectSecondaries = 1;
         	

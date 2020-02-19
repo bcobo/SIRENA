@@ -23,8 +23,12 @@
 ////////////////////////////////////
 /** Main procedure. */
 int tesreconstruction_main() {
-  clock_t t;
-  t = clock();
+  clock_t tinst,tstart,Atstart,tacum;
+  tinst = clock();
+  tstart = tinst;
+  tacum = 0;
+  Atstart = 0;
+  //printf("%s %f %s","Initial time ",((float)tinst)/CLOCKS_PER_SEC,"\n");
   
   // Containing all programm parameters read by PIL.
   struct Parameters par;
@@ -530,11 +534,19 @@ int tesreconstruction_main() {
                             }
                     }
             }
+            tinst = clock();
+            tacum = tinst-tstart-Atstart;
+            Atstart = tinst-tstart;
+            //printf("%f %s %f %f %s",((float)tinst)/CLOCKS_PER_SEC, " Consumed time (after getNextRecord) ",((float)tacum)/CLOCKS_PER_SEC,((float)Atstart)/CLOCKS_PER_SEC,"sec \n");
             
             if(is_threading()) 
             {
                     //printf("%s","**Threading...waiting \n");
                     th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
+                    tinst = clock();
+                    tacum = tinst-tstart-Atstart;
+                    Atstart = tinst-tstart;
+                    //printf("%f %s %f %f %s",((float)tinst)/CLOCKS_PER_SEC, " Consumed time (th_end in threading) ",((float)tacum)/CLOCKS_PER_SEC,((float)Atstart)/CLOCKS_PER_SEC,"sec \n");
                     //printf("%s %d %s","**Threading...after th_end: pulsesAll->ndetpulses", pulsesAll->ndetpulses,"\n");
                     //printf("%s %d %s","**Threading...after th_end: pulsesAll->size", pulsesAll->size,"\n");
                     int i = 1;
@@ -550,6 +562,10 @@ int tesreconstruction_main() {
                             CHECK_STATUS_BREAK(status);
                             ++i;
                     }
+                    tinst = clock();
+                    tacum = tinst-tstart-Atstart;
+                    Atstart = tinst-tstart;
+                    //printf("%f %s %f %f %s",((float)tinst)/CLOCKS_PER_SEC, " Consumed time (saveEventListToFile in threading) ",((float)tacum)/CLOCKS_PER_SEC,((float)Atstart)/CLOCKS_PER_SEC,"sec \n");
             }
             
             if ((!strcmp(par.Rcmethod,"SIRENA")) && (pulsesAll->ndetpulses == 0)) 
@@ -610,14 +626,18 @@ int tesreconstruction_main() {
   if (EXIT_SUCCESS==status) 
   {
 	headas_chat(3, "finished successfully!\n\n");
-        t = clock() - t;
-        //printf("%s %f %s","Consumed ",((float)t)/CLOCKS_PER_SEC,"sec \n");
+        tinst = clock();
+        tacum = tinst-tstart-Atstart;
+        Atstart = tinst-tstart;
+        //printf("%f %s %f %f %s",((float)tinst)/CLOCKS_PER_SEC, " Consumed time (end) ",((float)tacum)/CLOCKS_PER_SEC,((float)Atstart)/CLOCKS_PER_SEC,"sec \n");
 	return(EXIT_SUCCESS);
   } 
   else 
   {
-        t = clock() - t;
-        //printf("%s %f %s","Consumed ",((float)t)/CLOCKS_PER_SEC,"sec \n");
+        tinst = clock();
+        tacum = tinst-tstart-Atstart;
+        Atstart = tinst-tstart;
+        //printf("%f %s %f %f %s",((float)tinst)/CLOCKS_PER_SEC, " Consumed time (end) ",((float)tacum)/CLOCKS_PER_SEC,((float)Atstart)/CLOCKS_PER_SEC,"sec \n");
 	return(status);
   }
 }
