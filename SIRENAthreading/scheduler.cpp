@@ -157,7 +157,9 @@ void scheduler::push_detection(TesRecord* record,
   input->event_list->grading = new int[event_list->size];
   input->event_list->phis = new double[event_list->size];
   input->event_list->lagsShifts = new int[event_list->size];
+  input->event_list->bsln = new double[event_list->size];
   input->event_list->pix_ids = new long[event_list->size];
+  input->event_list->ph_ids = new long[event_list->size];
   log_trace("push_detection 3");
   detection_queue.push(input);
   log_trace("push_detection 4");
@@ -315,7 +317,9 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
         event_list->ph_ids[ip]   = 0;
         event_list->phis[ip] = record_pulses->pulses_detected[ip].phi;
         event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
+        event_list->bsln[ip] = record_pulses->pulses_detected[ip].bsln;
         event_list->pix_ids[ip] = record_pulses->pulses_detected[ip].pixid;
+        event_list->ph_ids[ip] = record_pulses->pulses_detected[ip].phid;
       }
       if (data_array[i]->last_record == 1) {
         //log_debug("eventlist last record");
@@ -359,7 +363,9 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
           event_list->ph_ids[ip]   = 0;    
           event_list->phis[ip] = record_pulses->pulses_detected[ip].phi;
           event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
+          event_list->bsln[ip] = record_pulses->pulses_detected[ip].bsln;
           event_list->pix_ids[ip] = record_pulses->pulses_detected[ip].pixid;
+          event_list->ph_ids[ip] = record_pulses->pulses_detected[ip].phid;
         }
       }
     }
@@ -542,7 +548,9 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
         event_list->ph_ids[ip]   = 0;
         event_list->phis[ip] = record_pulses->pulses_detected[ip].phi;
         event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
+        event_list->bsln[ip] = record_pulses->pulses_detected[ip].bsln;
         event_list->pix_ids[ip] = record_pulses->pulses_detected[ip].pixid;
+        event_list->ph_ids[ip] = record_pulses->pulses_detected[ip].phid;
       }
       if (data_array[i]->last_record == 1) {
         //log_debug("eventlist last record");
@@ -586,7 +594,9 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
           event_list->ph_ids[ip]   = 0;    
           event_list->phis[ip] = record_pulses->pulses_detected[ip].phi;
           event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
+          event_list->bsln[ip] = record_pulses->pulses_detected[ip].bsln;
           event_list->pix_ids[ip] = record_pulses->pulses_detected[ip].pixid;
+          event_list->ph_ids[ip] = record_pulses->pulses_detected[ip].phid;
         }
       }
     }
@@ -659,7 +669,7 @@ void scheduler::init_v2()
 }
 
 scheduler::scheduler():
-  threading(false),      // true: Activate THREADING, false: No THREADING
+  threading(true),      // true: Activate THREADING, false: No THREADING
   num_cores(0),
   max_detection_workers(0),
   max_energy_workers(0),

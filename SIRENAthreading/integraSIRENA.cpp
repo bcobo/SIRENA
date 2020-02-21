@@ -707,7 +707,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	}
 	
 	log_debug("pulsesAll: %i",(*pulsesAll)->ndetpulses);
-	//cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
+	cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
 	//cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
 	
 	// Free & Fill TesEventList structure
