@@ -452,6 +452,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
     log_trace("reconstructRecordSIRENA:  Threading mode...2");
     return;  // The rest of 'reconstructRecordSIRENA' is not going to run: 'runDetect', 'runEnergy'...
   }
+  //cout<<"The rest of 'reconstructRecordSIRENA' is not going to run: 'runDetect', 'runEnergy'..."<<endl;
 	
 	// Detect pulses in record
         if (nRecord == 1)
@@ -655,8 +656,9 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 		if (event_list->energies != NULL) 	delete [] event_list->energies;
                 if (event_list->avgs_4samplesDerivative != NULL) 	delete [] event_list->avgs_4samplesDerivative;
                 if (event_list->Es_lowres != NULL) 	delete [] event_list->Es_lowres;
-                if (event_list->phis != NULL) 	delete [] event_list->phis;
+                if (event_list->phis != NULL) 	        delete [] event_list->phis;
                 if (event_list->lagsShifts != NULL) 	delete [] event_list->lagsShifts;
+                if (event_list->bsln != NULL) 	        delete [] event_list->bsln;
                 if (event_list->grading != NULL) 	delete [] event_list->grading;
                 if (event_list->grades1 != NULL) 	delete [] event_list->grades1;
 		if (event_list->grades2 != NULL) 	delete [] event_list->grades2;
@@ -715,6 +717,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
         event_list->Es_lowres = new double[event_list->index];
         event_list->phis = new double[event_list->index];
         event_list->lagsShifts = new int[event_list->index];
+        event_list->bsln = new double[event_list->index];
         event_list->grading  = new int[event_list->index];
 	event_list->grades1  = new int[event_list->index];
 	event_list->grades2  = new int[event_list->index];
@@ -745,6 +748,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                         event_list->Es_lowres[ip] = pulsesInRecord->pulses_detected[ip].E_lowres;
                         event_list->phis[ip] = pulsesInRecord->pulses_detected[ip].phi;
                         event_list->lagsShifts[ip] = pulsesInRecord->pulses_detected[ip].lagsShift;
+                        event_list->bsln[ip] = pulsesInRecord->pulses_detected[ip].bsln;
                         event_list->grading[ip]  = pulsesInRecord->pulses_detected[ip].grading;
 			event_list->grades1[ip]  = pulsesInRecord->pulses_detected[ip].grade1;
 			event_list->grades2[ip]  = pulsesInRecord->pulses_detected[ip].grade2;
@@ -785,6 +789,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                         event_list->Es_lowres = new double[event_list->index];
                         event_list->phis = new double[event_list->index];
                         event_list->lagsShifts = new int[event_list->index];
+                        event_list->bsln = new double[event_list->index];
                         event_list->grading  = new int[event_list->index];
                         event_list->grades1  = new int[event_list->index];
 			event_list->grades2  = new int[event_list->index];
@@ -809,6 +814,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                                 event_list->Es_lowres[ip]  = (*pulsesAll)->pulses_detected[ip].E_lowres;
                                 event_list->phis[ip] = (*pulsesAll)->pulses_detected[ip].phi;
                                 event_list->lagsShifts[ip] = (*pulsesAll)->pulses_detected[ip].lagsShift;
+                                event_list->bsln[ip] = (*pulsesAll)->pulses_detected[ip].bsln;
                                 event_list->grading[ip]  = (*pulsesAll)->pulses_detected[ip].grading;
 				event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
 				event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
@@ -2817,16 +2823,32 @@ void th_end(ReconstructInitSIRENA* reconstruct_init,
             PulsesCollection** pulsesAll, 
             OptimalFilterSIRENA** optimalFilter)
 {
+  clock_t tinst;
+  tinst = clock();
+  printf("%s %f %s","th_end1 ",((float)tinst)/CLOCKS_PER_SEC,"\n");  
+  
   //log_trace("Ending the reconstruction...");
   if (!scheduler::get()->is_threading()) { 
+    tinst = clock();
+    printf("%s %f %s","th_end2 ",((float)tinst)/CLOCKS_PER_SEC,"\n");    
     delete scheduler::get();
     return;
   }
+  tinst = clock();
+  printf("%s %f %s","th_end3 ",((float)tinst)/CLOCKS_PER_SEC,"\n");  
   if(strcmp(reconstruct_init->EnergyMethod,"PCA") != 0){
+    tinst = clock();
+    printf("%s %f %s","th_end4 ",((float)tinst)/CLOCKS_PER_SEC,"\n");    
     scheduler::get()->set_is_running_energy(true);
   }
+  tinst = clock();
+  printf("%s %f %s","th_end5 ",((float)tinst)/CLOCKS_PER_SEC,"\n");  
   scheduler::get()->finish_reconstruction_v2(reconstruct_init, 
                                           pulsesAll, optimalFilter);
+  //scheduler::get()->finish_reconstruction(reconstruct_init, 
+  //                                        pulsesAll, optimalFilter);
+  tinst = clock();
+  printf("%s %f %s","th_end6 ",((float)tinst)/CLOCKS_PER_SEC,"\n");  
 }
 
 // It returns the current 'event_list'
@@ -3855,7 +3877,7 @@ PulseDetected::PulseDetected():
   grading(0),
   avg_4samplesDerivative(0.0f),
   E_lowres(0.0f),
-  baseline(0.0f),
+  bsln(0.0f),
   phi(0.0f),
   lagsShift(0),
   quality(0.0f),
@@ -3885,7 +3907,7 @@ PulseDetected::PulseDetected(const PulseDetected& other):
   grading(other.grading),
   avg_4samplesDerivative(other.avg_4samplesDerivative),
   E_lowres(other.E_lowres),
-  baseline(other.baseline),
+  bsln(other.bsln),
   phi(other.phi),
   lagsShift(other.lagsShift),
   quality(other.quality),
@@ -3937,7 +3959,7 @@ PulseDetected& PulseDetected::operator=(const PulseDetected& other)
     grading = other.grading;
     avg_4samplesDerivative = other.avg_4samplesDerivative;
     E_lowres = other.E_lowres;
-    baseline = other.baseline;
+    bsln = other.bsln;
     phi = other.phi;
     lagsShift = other.lagsShift;
     quality = other.quality;

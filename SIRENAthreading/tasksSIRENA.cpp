@@ -139,6 +139,8 @@ MAP OF SECTIONS IN THIS FILE:
 ******************************************************************************/
 void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
 {       
+        clock_t tinst;
+        //cout<<((float)tinst)/CLOCKS_PER_SEC<<" runDetect"<<endl;
 	int inputPulseLength = (*reconstruct_init)->pulse_length;
 	if ((*reconstruct_init)->opmode == 0)	(*reconstruct_init)->pulse_length = (*reconstruct_init)->largeFilter;
 	  
@@ -733,6 +735,8 @@ std::mutex fits_file_mut;
 
 void th_runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
 {
+  clock_t tinst;
+  cout<<((float)tinst)/CLOCKS_PER_SEC<<" th_runDetect"<<endl;  
   //log_trace("th_runDetect: START");
   scheduler* sc = scheduler::get();
   
@@ -2055,6 +2059,7 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
 ****************************************************************************/
 int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, int phid)
 {
+        clock_t tinst;
 	int status = EPOK;
 	string message = "";
 	char valERROR[256];
@@ -2313,19 +2318,6 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                 }
             }
         }
-        /*if (Lb != 0.0)
-        {
-            if (getB(recordNOTFILTERED, tstartgsl, numPulses, &Lbgsl, (*reconstruct_init)->pulse_length, &Bgsl))
-            {
-                    message = "Cannot run getB";
-                    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-            }
-        }
-        else
-        {
-            Bgsl = gsl_vector_alloc(numPulses);
-            gsl_vector_set_all(Bgsl,-999.0);
-        }*/
         
 	// Load the found pulses data in the input/output 'foundPulses' structure
 	foundPulses->ndetpulses = numPulses;
@@ -2454,10 +2446,11 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                 //cout<<"procRecord: "<<foundPulses->pulses_detected[i].pixid<<endl;
                 foundPulses->pulses_detected[i].phid = phid;
                 if (Lb != 0.0)
-                    foundPulses->pulses_detected[i].baseline = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
+                    foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
                 else
-                    foundPulses->pulses_detected[i].baseline = gsl_vector_get(Bgsl,i);
-                //cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<endl;
+                    foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i);
+                tinst = clock();
+                //cout<<((float)tinst)/CLOCKS_PER_SEC<<" Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<endl;
 		//cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<" , Tstart="<<foundPulses->pulses_detected[i].Tstart<<" , Tend="<<foundPulses->pulses_detected[i].Tend<<endl;
                 //log_debug("Pulse %d", i," tstart=%f",gsl_vector_get(tstartgsl,i), " maxDER=%f",foundPulses->pulses_detected[i].maxDER, " samp1DER=%f",gsl_vector_get(samp1DERgsl,i), " pulse_duration=%d",foundPulses->pulses_detected[i].pulse_duration," quality=%d",foundPulses->pulses_detected[i].quality," lags=%f",gsl_vector_get(lagsgsl,i)," Tstart=%f",foundPulses->pulses_detected[i].Tstart," Tend=%f",foundPulses->pulses_detected[i].Tend);
                 //log_debug("Pulse %i tstart=%f maxDER=%f samp1DER=%f pulse_duration=%i quality=%f lags=%f",i,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].maxDER,gsl_vector_get(samp1DERgsl,i),foundPulses->pulses_detected[i].pulse_duration,foundPulses->pulses_detected[i].quality,gsl_vector_get(lagsgsl,i));
@@ -7864,7 +7857,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         if (((*reconstruct_init)->pulse_length <= (*reconstruct_init)->OFLength) && ((*reconstruct_init)->LbT != 0)) // 0-padding 
                         {
                                 gsl_vector *baselinePulse = gsl_vector_alloc(pulseToCalculateEnergy->size);
-                                gsl_vector_set_all(baselinePulse,-1.0*(*pulsesInRecord)->pulses_detected[i].baseline);
+                                gsl_vector_set_all(baselinePulse,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
                                 gsl_vector_add(pulseToCalculateEnergy,baselinePulse);
                                 gsl_vector_free(baselinePulse); baselinePulse = 0;
                         }
@@ -8749,7 +8742,7 @@ void th_runEnergy(TesRecord* record,
                         if (((*reconstruct_init)->pulse_length <= (*reconstruct_init)->OFLength) && ((*reconstruct_init)->LbT != 0)) // 0-padding 
                         {
                                 gsl_vector *baselinePulse = gsl_vector_alloc(pulseToCalculateEnergy->size);
-                                gsl_vector_set_all(baselinePulse,-1.0*(*pulsesInRecord)->pulses_detected[i].baseline);
+                                gsl_vector_set_all(baselinePulse,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
                                 gsl_vector_add(pulseToCalculateEnergy,baselinePulse);
                                 gsl_vector_free(baselinePulse); baselinePulse = 0;
                         }
@@ -10527,6 +10520,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 ****************************************************************************/
 int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes, int productSize, int tooshortPulse_NoLags)
 {
+        clock_t tinst;
         log_trace("calculateEnergy...");    
         log_debug("filter->size: %i",filter->size);
         log_debug("filterFFT->size: %i",filterFFT->size);
@@ -11102,6 +11096,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                     *lagsShift = 0;
                                                 }
                                                 
+                                                tinst = clock();
+                                                //cout<<((float)tinst)/CLOCKS_PER_SEC<<" calculatedEnergyFREQ="<<*calculatedEnergy<<endl;
                                                 /*cout<<"*calculatedEnergyFREQ: "<<*calculatedEnergy<<endl;
                                                 cout<<"*tstartNewDevFREQ= "<<*tstartNewDev<<endl;
                                                 cout<<"lagsShiftFREQ= "<<*lagsShift<<endl;*/

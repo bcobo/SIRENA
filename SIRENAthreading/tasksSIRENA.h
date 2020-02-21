@@ -42,6 +42,8 @@
 
 #include "versionSIRENA.h"
 
+#include <time.h>
+
 void runDetect(TesRecord* record, 
                int lastRecord, 
                PulsesCollection *pulsesAll, 

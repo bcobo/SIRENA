@@ -28,7 +28,7 @@ int tesreconstruction_main() {
   tstart = tinst;
   tacum = 0;
   Atstart = 0;
-  //printf("%s %f %s","Initial time ",((float)tinst)/CLOCKS_PER_SEC,"\n");
+  printf("%s %f %s","Initial time ",((float)tinst)/CLOCKS_PER_SEC,"\n");
   
   // Containing all programm parameters read by PIL.
   struct Parameters par;
@@ -541,7 +541,7 @@ int tesreconstruction_main() {
             
             if(is_threading()) 
             {
-                    //printf("%s","**Threading...waiting \n");
+                    printf("%s","**Threading...waiting \n");
                     th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
                     tinst = clock();
                     tacum = tinst-tstart-Atstart;

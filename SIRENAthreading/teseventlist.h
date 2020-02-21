@@ -58,6 +58,9 @@ typedef struct {
 	/** Number of samples shifted to find the maximum of the parabola */
 	int * lagsShifts;  //BEA
 
+	/** Baseline calculated just previously to the pulse (in general)(see 'getB') */
+	double * bsln;  //BEA
+
 	/** Pulse grade */
 	int * grading;  //BEA
 
@@ -97,7 +100,7 @@ typedef struct {
 	long nrows;
 
 	/** Column numbers for time, energy, grade1, grade2, pixID, RA and DEC columns */
-	int timeCol,energyCol,avg_4samplesDerivativeCol,E_lowresCol,grade1Col,grade2Col,phiCol,lagsShiftCol,pixIDCol,phIDCol,raCol,decCol,detxCol,detyCol,gradingCol,srcIDCol,nxtCol,extCol; //BEA
+	int timeCol,energyCol,avg_4samplesDerivativeCol,E_lowresCol,grade1Col,grade2Col,phiCol,lagsShiftCol,bslnCol,pixIDCol,phIDCol,raCol,decCol,detxCol,detyCol,gradingCol,srcIDCol,nxtCol,extCol; //BEA
 
 } TesEventFile;
 

@@ -37,6 +37,7 @@ TesEventList* newTesEventList(int* const status){
 	event_list->grading=NULL; //BEA
 	event_list->phis=NULL; //BEA
 	event_list->lagsShifts=NULL; //BEA
+	event_list->bsln=NULL; //BEA
 	event_list->energies=NULL;
 	event_list->grades1=NULL;
 	event_list->grades2=NULL;
@@ -62,6 +63,7 @@ void freeTesEventList(TesEventList* event_list){
 		free(event_list->grading); //BEA
 		free(event_list->phis); //BEA
 		free(event_list->lagsShifts); //BEA
+		free(event_list->bsln); //BEA
 		free(event_list->grades1);
 		free(event_list->grades2);
 		free(event_list->ph_ids);
@@ -110,6 +112,7 @@ void allocateWholeTesEventList(TesEventList* event_list,unsigned char allocate_p
 			free(event_list->grading);
 			free(event_list->phis);
 			free(event_list->lagsShifts);
+			free(event_list->bsln);
 			free(event_list->grades2);
 			if(NULL!= event_list->ph_ids){
 				free(event_list->ph_ids);
@@ -153,6 +156,13 @@ void allocateWholeTesEventList(TesEventList* event_list,unsigned char allocate_p
 
 		event_list->lagsShifts = malloc(event_list->size*sizeof*(event_list->lagsShifts)); //BEA
 		if (NULL == event_list->lagsShifts){
+			*status=EXIT_FAILURE;
+			SIXT_ERROR("memory allocation for energy array in TesEventList failed");
+			CHECK_STATUS_VOID(*status);
+		}
+
+		event_list->bsln = malloc(event_list->size*sizeof*(event_list->bsln)); //BEA
+		if (NULL == event_list->bsln){
 			*status=EXIT_FAILURE;
 			SIXT_ERROR("memory allocation for energy array in TesEventList failed");
 			CHECK_STATUS_VOID(*status);
@@ -251,16 +261,17 @@ TesEventFile* newTesEventFile(int* const status){
 	file->grade2Col =6;
 	file->phiCol =7; //BEA
 	file->lagsShiftCol =8; //BEA
-	file->pixIDCol  =9;
-	file->phIDCol   =10;
-	file->raCol     =11;
-	file->decCol    =12;
-	file->detxCol   =13;
-	file->detyCol   =14;
-	file->gradingCol=15;
-	file->srcIDCol  =16;
-	file->nxtCol    =17;
-	file->extCol    =18;
+	file->bslnCol =9; //BEA
+	file->pixIDCol  =10;
+	file->phIDCol   =11;
+	file->raCol     =12;
+	file->decCol    =13;
+	file->detxCol   =14;
+	file->detyCol   =15;
+	file->gradingCol=16;
+	file->srcIDCol  =17;
+	file->nxtCol    =18;
+	file->extCol    =19;
 
 	return(file);
 }
@@ -334,11 +345,11 @@ TesEventFile* opennewTesEventFile(const char* const filename,
 	// Create table
 
 	//first column TIME
-	char   *ttype[]={"TIME","SIGNAL","AVG4SD","ELOWRES","GRADE1","GRADE2","PHI","LAGS","PIXID","PH_ID","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"}; //BEA
+	char   *ttype[]={"TIME","SIGNAL","AVG4SD","ELOWRES","GRADE1","GRADE2","PHI","LAGS","BSLN","PIXID","PH_ID","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"}; //BEA
 	char *tform[]={"1D",  "1D",    "1D",    "1D",    "1J",    "1J", "1D", "1J" ,  "1J",   "1J",   "1D","1D","1E","1E", "1I","1J","1I","1D"};
 	char *tunit[]={"s",   "keV",   "",   "keV",      "",      "",      "",      "",       "",     "",     "deg","deg","m","m","","","","keV"};
 
-	fits_create_tbl(file->fptr, BINARY_TBL, 0, 18,		// BEA (18 instead of 14)
+	fits_create_tbl(file->fptr, BINARY_TBL, 0, 19,		// BEA (19 instead of 14)
 			ttype, tform, tunit,"EVENTS", status);
 	sixt_add_fits_stdkeywords(file->fptr,2,keywords,status);
 	CHECK_STATUS_RET(*status,file);
@@ -417,11 +428,11 @@ TesEventFile* opennewTesEventFileSIRENA(const char* const filename,
 	// Create table
 
 	//first column TIME
-	char   *ttype[]={"TIME","SIGNAL","AVG4SD","ELOWRES","GRADE1","GRADE2","PHI","LAGS","PIXID","PH_ID","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"}; //BEA
+	char   *ttype[]={"TIME","SIGNAL","AVG4SD","ELOWRES","GRADE1","GRADE2","PHI","LAGS","BSLN","PIXID","PH_ID","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"}; //BEA
 	char *tform[]={"1D",  "1D",    "1D",    "1D",    "1J",    "1J", "1D", "1J" ,  "1J",   "1J",   "1D","1D","1E","1E", "1I","1J","1I","1D"};
 	char *tunit[]={"s",   "keV",   "",   "keV",      "",      "",      "",      "",       "",     "",     "deg","deg","m","m","","","","keV"};
 
-	fits_create_tbl(file->fptr, BINARY_TBL, 0, 18,		// BEA (18 instead of 14)
+	fits_create_tbl(file->fptr, BINARY_TBL, 0, 19,		// BEA (19 instead of 14)
 			ttype, tform, tunit,"EVENTS", status);
 	sixt_add_fits_stdkeywords(file->fptr,2,keywords,status);
 	CHECK_STATUS_RET(*status,file);
@@ -470,6 +481,7 @@ TesEventFile* openTesEventFile(const char* const filename,const int mode, int* c
 
 	fits_get_colnum(file->fptr, CASEINSEN, "PHI", &file->phiCol, status);  //BEA
 	fits_get_colnum(file->fptr, CASEINSEN, "LAGS", &file->lagsShiftCol, status);  //BEA
+	fits_get_colnum(file->fptr, CASEINSEN, "BSLN", &file->bslnCol, status);  //BEA
 
 	fits_get_colnum(file->fptr, CASEINSEN, "PIXID", &file->pixIDCol, status);
 	if (*status==COL_NOT_FOUND) {
@@ -563,6 +575,11 @@ void saveEventListToFile(TesEventFile* file,TesEventList * event_list,
 	//Save lagsShifts (LAGS) column   //BEA
  	fits_write_col(file->fptr, TINT, file->lagsShiftCol,
 					file->row, 1, event_list->index, event_list->lagsShifts, status);
+	CHECK_STATUS_VOID(*status);
+
+	//Save bsln (BSLN) column   //BEA
+ 	fits_write_col(file->fptr, TDOUBLE, file->bslnCol,
+					file->row, 1, event_list->index, event_list->bsln, status);
 	CHECK_STATUS_VOID(*status);
 
 	//Save grading (GRADING) column   //BEA

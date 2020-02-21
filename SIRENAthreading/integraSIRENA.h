@@ -44,6 +44,8 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
+#include <time.h>
+
 typedef struct MatrixStruct
 {
   /** Number of rows */
@@ -375,7 +377,7 @@ typedef struct PulseDetected
         int numLagsUsed;
         
         /** Baseline calculated, in general, by using the previous Lb samples to the pulse */
-        double baseline;
+        double bsln;
 #ifdef __cplusplus
   PulseDetected();
   PulseDetected(const PulseDetected& other);
