@@ -2304,7 +2304,8 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
         gsl_vector *Bgsl;
         if (numPulses != 0)
         {
-            if ((Lb == 0.0) || ((*reconstruct_init)->opmode == 0))
+            //if ((Lb == 0.0) || ((*reconstruct_init)->opmode == 0))
+            if ((*reconstruct_init)->opmode == 0)
             {
                 Bgsl = gsl_vector_alloc(numPulses);
                 gsl_vector_set_all(Bgsl,-999.0);
@@ -2445,7 +2446,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                 foundPulses->pulses_detected[i].pixid = pixid;
                 //cout<<"procRecord: "<<foundPulses->pulses_detected[i].pixid<<endl;
                 foundPulses->pulses_detected[i].phid = phid;
-                if (Lb != 0.0)
+                if (gsl_vector_get(Bgsl,i) != -999.0)
                     foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
                 else
                     foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i);
@@ -7853,14 +7854,6 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                                 cout<<"sumfilt1="<<sumfilt<<endl;*/
                         }
 			
-                        // 0-padding => Subtract the baseline (mean of nsamples before the pulse)
-                        if (((*reconstruct_init)->pulse_length <= (*reconstruct_init)->OFLength) && ((*reconstruct_init)->LbT != 0)) // 0-padding 
-                        {
-                                gsl_vector *baselinePulse = gsl_vector_alloc(pulseToCalculateEnergy->size);
-                                gsl_vector_set_all(baselinePulse,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
-                                gsl_vector_add(pulseToCalculateEnergy,baselinePulse);
-                                gsl_vector_free(baselinePulse); baselinePulse = 0;
-                        }
 			// Calculate the energy of each pulse
 			if (calculateEnergy(pulseToCalculateEnergy,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
 			{
@@ -8738,15 +8731,6 @@ void th_runEnergy(TesRecord* record,
                                 }
 			}
 			
-			// 0-padding => Subtract the baseline (mean of nsamples before the pulse)
-                        if (((*reconstruct_init)->pulse_length <= (*reconstruct_init)->OFLength) && ((*reconstruct_init)->LbT != 0)) // 0-padding 
-                        {
-                                gsl_vector *baselinePulse = gsl_vector_alloc(pulseToCalculateEnergy->size);
-                                gsl_vector_set_all(baselinePulse,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
-                                gsl_vector_add(pulseToCalculateEnergy,baselinePulse);
-                                gsl_vector_free(baselinePulse); baselinePulse = 0;
-                        }
-                        
 			// Calculate the energy of each pulse
 			if (calculateEnergy(pulseToCalculateEnergy,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
 			{

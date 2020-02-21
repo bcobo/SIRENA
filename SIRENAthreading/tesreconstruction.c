@@ -961,6 +961,8 @@ int getpar(struct Parameters* const par)
 	
 	MyAssert(par->energyPCA1 > 0, "energyPCA1 must be greater than 0");
         MyAssert(par->energyPCA2 > 0, "energyPCA2 must be greater than 0");
+        
+        MyAssert(par->LbT > 0, "LbT must be greater than 0");
 	
   } else {
 	SIXT_ERROR("failed reading the Rcmethod parameter");
