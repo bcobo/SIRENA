@@ -369,7 +369,7 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
         }
       }
     }
-
+#if 0
     //log_debug("Eventlist from record %i", (i + 1) );
     //log_debug("%i, %i, %i",event_list->size, event_list->size_energy, event_list->index);
     for (int j = 0; j < event_list->index; ++j){
@@ -381,6 +381,7 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
                 event_list->grades2[j],
                 event_list->ph_ids[j]);*/
     }
+#endif
   }// for event_list
 }
 
@@ -388,9 +389,9 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
                                          PulsesCollection** pulsesAll, 
                                          OptimalFilterSIRENA** optimalFilter)
 {
-    clock_t tinst;
-    tinst = clock();
-    printf("%s %f %s","finish_reconstruction1 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
+    //clock_t tinst;
+    //tinst = clock();
+    //printf("%s %f %s","finish_reconstruction1 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
   // Waits until all the records are detected
   // this works because this function should only be called
   // after all the records are queue
@@ -404,16 +405,16 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
     lk.unlock();
   }
 
-  tinst = clock();
-  printf("%s %f %s","finish_reconstruction2 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
+  //tinst = clock();
+  //printf("%s %f %s","finish_reconstruction2 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
   std::unique_lock<std::mutex> lk(end_workers_mut);
   end_workers = true;
   lk.unlock();
   for(unsigned int i = 0; i < this->max_detection_workers; ++i){
     this->detection_workers[i].join();
   }
-  tinst = clock();
-  printf("%s %f %s","finish_reconstruction3 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
+  //tinst = clock();
+  //printf("%s %f %s","finish_reconstruction3 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
 
   // Waits until all the energies are calculated
   //log_trace("Waiting until the energy workers end...");
@@ -432,18 +433,19 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
   for(unsigned int i = 0; i < this->max_energy_workers; ++i){
     this->energy_workers[i].join();
   }
-  tinst = clock();
-  printf("%s %f %s","finish_reconstruction4 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
+  //tinst = clock();
+  //printf("%s %f %s","finish_reconstruction4 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
 
   // Sorting the arrays by record number
   //log_trace("Sorting the arrays by record number");
   if ((*pulsesAll)->pulses_detected){
     delete [] (*pulsesAll)->pulses_detected;
   }
-  
-  (*pulsesAll)->size = this->num_records;
+  log_debug("%d", this->num_records * 2);
+  (*pulsesAll)->size = this->num_records * 2;
+  //log_debug("%d", this->num_records);
   (*pulsesAll)->ndetpulses = 0;
-  (*pulsesAll)->pulses_detected = new PulseDetected[this->num_records];
+  (*pulsesAll)->pulses_detected = new PulseDetected[this->num_records * 2];
 
   //log_debug("Number of records %i", this->num_records);
   this->data_array = new sirena_data*[this->num_records];//+1];
@@ -453,8 +455,8 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
       data_array[data->n_record-1] = data;
     }
   }
-  tinst = clock();
-  printf("%s %f %s","finish_reconstruction5 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
+  //tinst = clock();
+  //printf("%s %f %s","finish_reconstruction5 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
   //
   // Reconstruction of the pulses array
   //
@@ -465,6 +467,7 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
     PulsesCollection aux;
     if ((*pulsesAll)->size < 
         ((*pulsesAll)->ndetpulses + in_record->ndetpulses)){
+      log_debug("%d - %d - %d",(*pulsesAll)->size, (*pulsesAll)->ndetpulses, in_record->ndetpulses);
       aux = *(*pulsesAll);
       delete *pulsesAll;
       *pulsesAll = new PulsesCollection;
@@ -483,8 +486,9 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
   }// End reconstruction of the pulses array
 
   //log_debug("pulsesAll");
+  /*
   for (int i = 0; i < (*pulsesAll)->ndetpulses; ++i){
-    /*log_debug("data - %i, %i, %i, %i, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %i",
+    log_debug("data - %i, %i, %i, %i, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %i",
               (*pulsesAll)->pulses_detected[i].pulse_duration,
               (*pulsesAll)->pulses_detected[i].grade1,
               (*pulsesAll)->pulses_detected[i].grade2,
@@ -498,13 +502,13 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
               (*pulsesAll)->pulses_detected[i].samp1DER,
               (*pulsesAll)->pulses_detected[i].avg_4samplesDerivative,
               (*pulsesAll)->pulses_detected[i].quality,
-              (*pulsesAll)->pulses_detected[i].numLagsUsed);*/
+              (*pulsesAll)->pulses_detected[i].numLagsUsed);
     for (int j = 0; j < (*pulsesAll)->pulses_detected[i].pulse_adc->size; ++j){
       //log_debug("%d, ",*((*pulsesAll)->pulses_detected[i].pulse_adc->data));
     }
-  }
-  tinst = clock();
-  printf("%s %f %s","finish_reconstruction6 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
+  }*/
+  //tinst = clock();
+  //printf("%s %f %s","finish_reconstruction6 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
 
   //log_trace("Filling eventlist...");
   for(unsigned int i = 0; i < this->num_records; ++i){
@@ -603,6 +607,7 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
 
     //log_debug("Eventlist from record %i", (i + 1) );
     //log_debug("%i, %i, %i",event_list->size, event_list->size_energy, event_list->index);
+#if 0
     for (int j = 0; j < event_list->index; ++j){
       /*log_debug("%f, %f, %f, %f, %i %i, %ld", event_list->event_indexes[j],
                 event_list->pulse_heights[j],
@@ -612,9 +617,12 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
                 event_list->grades2[j],
                 event_list->ph_ids[j]);*/
     }
+#endif
   }// for event_list
-  tinst = clock();
-  printf("%s %f %s","finish_reconstruction7 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
+  //tinst = clock();
+  //printf("%s %f %s","finish_reconstruction7 ",((float)tinst)/CLOCKS_PER_SEC,"\n");
+  //log_fatal("End"); 
+  log_test("End");
 }
 
 void scheduler::get_test_event(TesEventList** test_event, TesRecord** record)
@@ -975,7 +983,7 @@ data::data(const data& other):
 
 data& data::operator=(const data& other)
 {
-  printf("operator = date\n");
+  //printf("operator = date\n");
   if(this != &other){
     n_record = other.n_record;
     last_record = other.last_record;

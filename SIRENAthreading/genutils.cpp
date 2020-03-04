@@ -61,7 +61,7 @@ MAP OF SECTIONS IN THIS FILE::
 #include "genutils.h"
 
 /***** SECTION 1 ************************************************************
-* polyFit: This function makes a polynomial fitting: ax² + bx + c using the regression quadratic analysis
+* polyFit: This function makes a polynomial fitting: axï¿½ + bx + c using the regression quadratic analysis
 *          To measure how well the model agrees with the data, the chi-square merit function is used
 * 
 * Parameters:
@@ -201,7 +201,7 @@ int FFT(gsl_vector *invector,gsl_vector_complex *outvector,double STD)
  	}
  	// To return a correct FFT amplitude, it is necessary to normalize FFTs by the number of sample points to calculate the FFT
  	// Normalization factor = 1/n
-	// With this normalization, if the input signal is a sin signal with amplitude A, A·sin(2·pi·fo·t) =>
+	// With this normalization, if the input signal is a sin signal with amplitude A, Aï¿½sin(2ï¿½piï¿½foï¿½t) =>
 	// The amplitude of the 2 tones (fo,-fo) in frequency domain is A/2 
  	gsl_vector_complex_scaleIFCA(outvector,gsl_complex_rect(1.0/(invector->size),0.0));
         // PP

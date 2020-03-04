@@ -707,7 +707,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	}
 	
 	log_debug("pulsesAll: %i",(*pulsesAll)->ndetpulses);
-	cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
+	//cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
 	//cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
 	
 	// Free & Fill TesEventList structure
@@ -2823,32 +2823,33 @@ void th_end(ReconstructInitSIRENA* reconstruct_init,
             PulsesCollection** pulsesAll, 
             OptimalFilterSIRENA** optimalFilter)
 {
-  clock_t tinst;
-  tinst = clock();
-  printf("%s %f %s","th_end1 ",((float)tinst)/CLOCKS_PER_SEC,"\n");  
+  //clock_t tinst;
+  //tinst = clock();
+  //printf("%s %f %s","th_end1 ",((float)tinst)/CLOCKS_PER_SEC,"\n");  
   
   //log_trace("Ending the reconstruction...");
   if (!scheduler::get()->is_threading()) { 
-    tinst = clock();
-    printf("%s %f %s","th_end2 ",((float)tinst)/CLOCKS_PER_SEC,"\n");    
+    //tinst = clock();
+    //printf("%s %f %s","th_end2 ",((float)tinst)/CLOCKS_PER_SEC,"\n");    
     delete scheduler::get();
     return;
   }
-  tinst = clock();
-  printf("%s %f %s","th_end3 ",((float)tinst)/CLOCKS_PER_SEC,"\n");  
+  //tinst = clock();
+  //printf("%s %f %s","th_end3 ",((float)tinst)/CLOCKS_PER_SEC,"\n");  
   if(strcmp(reconstruct_init->EnergyMethod,"PCA") != 0){
-    tinst = clock();
-    printf("%s %f %s","th_end4 ",((float)tinst)/CLOCKS_PER_SEC,"\n");    
+    //tinst = clock();
+    //printf("%s %f %s","th_end4 ",((float)tinst)/CLOCKS_PER_SEC,"\n");    
     scheduler::get()->set_is_running_energy(true);
   }
-  tinst = clock();
-  printf("%s %f %s","th_end5 ",((float)tinst)/CLOCKS_PER_SEC,"\n");  
+  //tinst = clock();
+  //printf("%s %f %s","th_end5 ",((float)tinst)/CLOCKS_PER_SEC,"\n");  
   scheduler::get()->finish_reconstruction_v2(reconstruct_init, 
                                           pulsesAll, optimalFilter);
   //scheduler::get()->finish_reconstruction(reconstruct_init, 
   //                                        pulsesAll, optimalFilter);
-  tinst = clock();
-  printf("%s %f %s","th_end6 ",((float)tinst)/CLOCKS_PER_SEC,"\n");  
+  //tinst = clock();
+  //printf("%s %f %s","th_end6 ",((float)tinst)/CLOCKS_PER_SEC,"\n");
+  //log_test("End");
 }
 
 // It returns the current 'event_list'
