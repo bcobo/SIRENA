@@ -389,9 +389,6 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
                                          PulsesCollection** pulsesAll, 
                                          OptimalFilterSIRENA** optimalFilter)
 {
-    //clock_t tinst;
-    //tinst = clock();
-    //printf("%s %f %s","finish_reconstruction1 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
   // Waits until all the records are detected
   // this works because this function should only be called
   // after all the records are queue
@@ -405,16 +402,12 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
     lk.unlock();
   }
 
-  //tinst = clock();
-  //printf("%s %f %s","finish_reconstruction2 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
   std::unique_lock<std::mutex> lk(end_workers_mut);
   end_workers = true;
   lk.unlock();
   for(unsigned int i = 0; i < this->max_detection_workers; ++i){
     this->detection_workers[i].join();
   }
-  //tinst = clock();
-  //printf("%s %f %s","finish_reconstruction3 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
 
   // Waits until all the energies are calculated
   //log_trace("Waiting until the energy workers end...");
@@ -433,8 +426,6 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
   for(unsigned int i = 0; i < this->max_energy_workers; ++i){
     this->energy_workers[i].join();
   }
-  //tinst = clock();
-  //printf("%s %f %s","finish_reconstruction4 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
 
   // Sorting the arrays by record number
   //log_trace("Sorting the arrays by record number");
@@ -455,8 +446,6 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
       data_array[data->n_record-1] = data;
     }
   }
-  //tinst = clock();
-  //printf("%s %f %s","finish_reconstruction5 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
   //
   // Reconstruction of the pulses array
   //
@@ -507,8 +496,6 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
       //log_debug("%d, ",*((*pulsesAll)->pulses_detected[i].pulse_adc->data));
     }
   }*/
-  //tinst = clock();
-  //printf("%s %f %s","finish_reconstruction6 ",((float)tinst)/CLOCKS_PER_SEC,"\n"); 
 
   //log_trace("Filling eventlist...");
   for(unsigned int i = 0; i < this->num_records; ++i){
@@ -619,8 +606,6 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
     }
 #endif
   }// for event_list
-  //tinst = clock();
-  //printf("%s %f %s","finish_reconstruction7 ",((float)tinst)/CLOCKS_PER_SEC,"\n");
   //log_fatal("End"); 
   log_test("End");
 }
@@ -677,7 +662,7 @@ void scheduler::init_v2()
 }
 
 scheduler::scheduler():
-  threading(true),      // true: Activate THREADING, false: No THREADING
+  threading(false),      // true: Activate THREADING, false: No THREADING
   num_cores(0),
   max_detection_workers(0),
   max_energy_workers(0),
