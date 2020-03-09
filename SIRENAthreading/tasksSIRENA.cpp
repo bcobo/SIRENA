@@ -10946,13 +10946,23 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                             }
                                                             gsl_vector_free(vectorSHORT);
                                                     
+                                                            gsl_vector *vectorFFTabs = gsl_vector_alloc(vectorFFT->size);
+                                                            gsl_vector *filterFFTabs = gsl_vector_alloc(filterFFT->size);
+                                                            gsl_vector_complex_absIFCA(vectorFFTabs,vectorFFT);
+                                                            gsl_vector_complex_absIFCA(filterFFTabs,filterFFT);
                                                             for (int i=0; i<filterFFT->size; i++)
+                                                            {
+                                                                     gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vectorFFTabs,i)*gsl_vector_get(filterFFTabs,i));
+                                                            }
+                                                            gsl_vector_free(vectorFFTabs); 
+                                                            gsl_vector_free(filterFFTabs);
+                                                            /*for (int i=0; i<filterFFT->size; i++)
                                                             {
                                                                     gsl_vector_complex_set(calculatedEnergy_vectorcomplex,j,gsl_complex_add(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j),gsl_complex_mul(gsl_vector_complex_get(vectorFFT,i),gsl_vector_complex_get(filterFFT,i))));
                                                                     //if (j == 1) cout<<i<<" "<<GSL_REAL(gsl_vector_complex_get(vectorFFT,i))<<","<<GSL_IMAG(gsl_vector_complex_get(vectorFFT,i))<<" "<<GSL_REAL(gsl_vector_complex_get(filterFFT,i))<<","<<GSL_IMAG(gsl_vector_complex_get(filterFFT,i))<<" "<<GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j))<<","<<GSL_IMAG(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j))<<endl;
                                                             }
                                                             gsl_vector_set(calculatedEnergy_vector,j,fabs(GSL_REAL(gsl_vector_complex_get(calculatedEnergy_vectorcomplex,j))));
-                                                            //cout<<gsl_vector_get(lags_vector,j)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
+                                                            //cout<<gsl_vector_get(lags_vector,j)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;*/
                                                     }
                                                     indexmax = gsl_vector_max_index(calculatedEnergy_vector);
                                                     
