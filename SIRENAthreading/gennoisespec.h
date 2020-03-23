@@ -155,6 +155,9 @@
 	gsl_matrix *noiseIntervals;
 	gsl_vector *weightpoints;
 	gsl_matrix *weightMatrixes;
+        
+        gsl_vector *baselineInterval;   // Baseline of each interval of a record
+        gsl_vector *sigmaInterval;      // Sigma of each interval of a record
 
 // OUTPUT FILE
 
@@ -217,6 +220,8 @@
 	int find_baseline(gsl_vector *invector, double kappa, double stopCriteria, int boxLPF, double *mean, double *sigma, double *baseline);
 	
 	int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight);
+        
+        int medianKappaClipping_noiseSigma (gsl_vector *invector, double kappa, double stopCriteria, double nSigmas, double *mean, double *sigma);
 
 	using namespace std;
 
