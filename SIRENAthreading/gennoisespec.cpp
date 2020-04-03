@@ -275,7 +275,7 @@ int main (int argc, char **argv)
                                 }
                                 LFILTER = gsl_vector_get(vector,0);
                                 
-                                // V0=Ibias*(R0+RPARA/TTRÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ²)*TTR
+                                // V0=Ibias*(R0+RPARA/TTRÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ²)*TTR
                                 if (V0 != 0)    R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
                                 
                                 /*cout<<"Imin: "<<Imin<<endl;
@@ -605,7 +605,8 @@ int main (int argc, char **argv)
         gsl_vector_free(interval); interval = 0;
         gsl_vector_free(vector_aux); vector_aux = 0;
 	gsl_vector_complex_free(vector_aux1); vector_aux1 = 0;*/
-                
+           
+        //cout<<"NumMeanSamples0: "<<NumMeanSamples<<endl;
         // Applying medianKappaClipping in order to remove the noise intervals with a high sigma
         gsl_vector *interval = gsl_vector_alloc(noiseIntervals->size2);
         double bsln, sgm;
@@ -721,8 +722,10 @@ int main (int argc, char **argv)
                 gsl_matrix *noiseIntervals_weightPoints;
                 gsl_matrix *weightMatrix;
                
+                //cout<<"NumMeanSamples: "<<NumMeanSamples<<endl;
                 if (NumMeanSamples >= nintervals)
                 {
+                        //cout<<"matrixSizeA: "<<matrixSize<<endl;
                         for (int i=0;i<weightpoints->size;i++)
                         {	
                                 weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,i),gsl_vector_get(weightpoints,i));
@@ -733,6 +736,8 @@ int main (int argc, char **argv)
                                 gsl_matrix_memcpy(noiseIntervals_weightPoints,&tempm.matrix);
                                 
 				if (matrixSize == 0){ //do all sizes
+                                    
+                                    //cout<<"matrixSize=0"<<endl;
 				    weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
 				    for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
 				    {
@@ -745,6 +750,7 @@ int main (int argc, char **argv)
 				    gsl_matrix_free(weightMatrix);
 
 				}else if (gsl_vector_get(weightpoints,i) == matrixSize){ // do only input param size
+                                    //cout<<"matrixSize!=0"<<endl;
 				    weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
 				    for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
 				    {
@@ -761,7 +767,90 @@ int main (int argc, char **argv)
                 }
                 else
                 {
-                        weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,0),gsl_vector_get(weightpoints,0));
+                        //cout<<"matrixSizeB: "<<matrixSize<<endl;
+                        for (int i=0;i<weightpoints->size;i++)
+                        {	
+                                weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,i),gsl_vector_get(weightpoints,i));
+                                noiseIntervals_weightPoints = gsl_matrix_alloc(NumMeanSamples,gsl_vector_get(weightpoints,i));
+                                
+                                tempm = gsl_matrix_submatrix(noiseIntervals,0,0,NumMeanSamples,gsl_vector_get(weightpoints,i));
+                                gsl_matrix_memcpy(noiseIntervals_weightPoints,&tempm.matrix);
+                                
+				if (matrixSize == 0){ //do all sizes
+                                    
+                                    //cout<<"matrixSize=0"<<endl;
+				    weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
+				    for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
+				    {
+                                        for (int k=0;k<gsl_vector_get(weightpoints,i);k++)
+					{
+					    gsl_matrix_set(weightMatrixes,i,j*gsl_vector_get(weightpoints,i)+k,gsl_matrix_get(weightMatrix,j,k));
+					}
+				    }
+				    gsl_matrix_free(noiseIntervals_weightPoints);
+				    gsl_matrix_free(weightMatrix);
+
+				}else if (gsl_vector_get(weightpoints,i) == matrixSize){ // do only input param size
+                                    //cout<<"matrixSize!=0"<<endl;
+                                    
+                                    int NumMeanSamplesNew;
+                                    gsl_matrix *matrixi;
+                                    gsl_matrix *noiseIntervalsAux;
+                                    	
+                                    weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,i),gsl_vector_get(weightpoints,i));
+                                    if (NumMeanSamples*pow(2,i) >= nintervals)	NumMeanSamplesNew = nintervals;
+                                    else 						NumMeanSamplesNew = NumMeanSamples*pow(2,i);
+                                    noiseIntervals_weightPoints = gsl_matrix_alloc(NumMeanSamplesNew,gsl_vector_get(weightpoints,i));
+                                        
+                                    noiseIntervalsAux = gsl_matrix_alloc(NumMeanSamples*pow(2,i),gsl_vector_get(weightpoints,i));
+                                    for (int ii=0;ii<pow(2,i);ii++)
+                                    {	
+                                        matrixi = gsl_matrix_alloc(NumMeanSamples,gsl_vector_get(weightpoints,i));
+                                        tempm = gsl_matrix_submatrix(noiseIntervals,0,ii*gsl_vector_get(weightpoints,i),NumMeanSamples,gsl_vector_get(weightpoints,i));
+                                        gsl_matrix_memcpy(matrixi,&tempm.matrix);
+                                        for (int j=0;j<matrixi->size1;j++)
+                                        {
+                                            for (int k=0;k<matrixi->size2;k++)
+                                            {
+                                                gsl_matrix_set(noiseIntervalsAux,j+ii*NumMeanSamples,k,gsl_matrix_get(matrixi,j,k));
+                                            }
+                                        }
+                                        gsl_matrix_free(matrixi);
+                                        
+                                        if (NumMeanSamples+NumMeanSamples*ii >= nintervals)	
+                                        {
+                                            tempm = gsl_matrix_submatrix(noiseIntervalsAux,0,0,nintervals,gsl_vector_get(weightpoints,i));
+                                            gsl_matrix_memcpy(noiseIntervals_weightPoints,&tempm.matrix);
+                                            
+                                            break;
+                                        }
+                                    }
+                                    gsl_matrix_free(noiseIntervalsAux);
+                                    
+                                    sprintf(str_stat,"%ld",noiseIntervals_weightPoints->size1);
+                                    sprintf(str_stat1,"%d",(int) gsl_vector_get(weightpoints,i));
+                                    message = "W" + string(str_stat1) + " matrix calculated with " + string(str_stat);
+                                    writeLog(fileRef,"Log", verbosity,message);
+                                    
+                                    weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
+                                    
+                                    for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
+                                    {
+                                        for (int k=0;k<gsl_vector_get(weightpoints,i);k++)
+                                        {
+                                            gsl_matrix_set(weightMatrixes,i,j*gsl_vector_get(weightpoints,i)+k,gsl_matrix_get(weightMatrix,j,k));
+                                        }
+                                    }
+                                    
+                                    gsl_matrix_free(noiseIntervals_weightPoints);
+                                    gsl_matrix_free(weightMatrix);
+                                    
+                                    break;
+                                    
+				} // different matrix sizes ?
+                        } // foreach matrix size
+                        
+                        /*weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,0),gsl_vector_get(weightpoints,0));
                         noiseIntervals_weightPoints = gsl_matrix_alloc(NumMeanSamples,gsl_vector_get(weightpoints,0));
                         
                         tempm = gsl_matrix_submatrix(noiseIntervals,0,0,NumMeanSamples,gsl_vector_get(weightpoints,0));
@@ -835,10 +924,10 @@ int main (int argc, char **argv)
                                     gsl_matrix_free(noiseIntervals_weightPoints);
                                     gsl_matrix_free(weightMatrix);
                             }
-                        }
+                        }*/
                 }
         }
-        //gsl_vector_free(intervalsgmOK); intervalsgmOK = 0;
+        gsl_vector_free(intervalsgmOK); intervalsgmOK = 0;
 	
 	// Create output FITS File: GENNOISESPEC representation file (*_noisespec.fits)
 	if(createTPSreprFile())
@@ -1317,13 +1406,13 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 	gsl_vector_view temp;	// In order to handle with gsl_vector_view (subvectors)
 
 	// To calculate the FFT
-	//double SelectedTimeDuration;
-        gsl_vector *EventSamples = gsl_vector_alloc(intervalMinBins);
         //gsl_vector *baselinegsl = gsl_vector_alloc(EventSamples->size);
-	//gsl_vector *vector_aux;
-	//gsl_vector_complex *vector_aux1;
-	//vector_aux = gsl_vector_alloc(intervalMinBins);
-	//vector_aux1 = gsl_vector_complex_alloc(intervalMinBins);
+        gsl_vector *EventSamples = gsl_vector_alloc(intervalMinBins);
+        /*double SelectedTimeDuration;
+	gsl_vector *vector_aux;
+	gsl_vector_complex *vector_aux1;
+	vector_aux = gsl_vector_alloc(intervalMinBins);
+	vector_aux1 = gsl_vector_complex_alloc(intervalMinBins);*/
 
 	// Allocate input GSL vectors
 	timegsl_block = gsl_vector_alloc(nrows);
@@ -2076,12 +2165,12 @@ int writeTPSreprExten ()
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(gnoiseName);
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
 	}
-        strcpy(keyname,"BASELINE");     // In order to be changed with test purposes
+        /*strcpy(keyname,"BASELINE");     // In order to be changed with test purposes
 	if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
 	{
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(gnoiseName);
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
-	}
+	}*/
 	
 	strcpy(keyname,"NOISESTD");
 	double sumSigma;
@@ -2132,24 +2221,77 @@ int writeTPSreprExten ()
                 char str_length[125];
                 gsl_vector *weightMatrixesrow= gsl_vector_alloc(weightMatrixes->size2);
                 gsl_vector_view(temp);
+                
+                // With this 'for' (instead the following 'if (matrixSize == 0)'+'else') all the Wx (being x 'intervalMinSamples') columns appear in the WEIGHTMS HDU. 
+                // The Wx columns different from WmatrixSize will be filled in with 0's 
                 for (int i=0; i<weightpoints->size;i++)
                 {
-                        snprintf(str_length,125,"%d",(int) gsl_vector_get(weightpoints,i));
-                        strcpy(obj.nameCol,(string("W")+string(str_length)).c_str());
-                        obj.type = TDOUBLE;
-                        obj.unit = new char [255];
-                        strcpy(obj.unit," ");
-                        gsl_matrix_get_row(weightMatrixesrow,weightMatrixes,i);
-                        gsl_matrix *weightMatrixes_matrix = gsl_matrix_alloc(1,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
-                        temp = gsl_vector_subvector(weightMatrixesrow,0,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
-                        gsl_matrix_set_row(weightMatrixes_matrix,0,&temp.vector);
-                        if (writeFitsComplex(obj,weightMatrixes_matrix))
-                        {
-                                message = "Cannot run routine writeFitsSimple for weightMatrixes_matrix";
-                                EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-                        }
-                        gsl_matrix_free(weightMatrixes_matrix); 
+                    snprintf(str_length,125,"%d",(int) gsl_vector_get(weightpoints,i));
+                    strcpy(obj.nameCol,(string("W")+string(str_length)).c_str());
+                    obj.type = TDOUBLE;
+                    obj.unit = new char [255];
+                    strcpy(obj.unit," ");
+                    gsl_matrix_get_row(weightMatrixesrow,weightMatrixes,i);
+                    gsl_matrix *weightMatrixes_matrix = gsl_matrix_alloc(1,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
+                    temp = gsl_vector_subvector(weightMatrixesrow,0,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
+                    gsl_matrix_set_row(weightMatrixes_matrix,0,&temp.vector);
+                    if (writeFitsComplex(obj,weightMatrixes_matrix))
+                    {
+                        message = "Cannot run routine writeFitsSimple for weightMatrixes_matrix";
+                        EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                    }
+                    gsl_matrix_free(weightMatrixes_matrix); 
                 }
+                    
+                // If the next 'if (matrixSize == 0)'+'else' (instead the previous 'for') only the WmatrixSize will be written in the noise spectrum FITS file.
+                // But it couldn't be read by getNoisespec
+                /*if (matrixSize == 0)
+                {
+                    for (int i=0; i<weightpoints->size;i++)
+                    {
+                            snprintf(str_length,125,"%d",(int) gsl_vector_get(weightpoints,i));
+                            strcpy(obj.nameCol,(string("W")+string(str_length)).c_str());
+                            obj.type = TDOUBLE;
+                            obj.unit = new char [255];
+                            strcpy(obj.unit," ");
+                            gsl_matrix_get_row(weightMatrixesrow,weightMatrixes,i);
+                            gsl_matrix *weightMatrixes_matrix = gsl_matrix_alloc(1,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
+                            temp = gsl_vector_subvector(weightMatrixesrow,0,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
+                            gsl_matrix_set_row(weightMatrixes_matrix,0,&temp.vector);
+                            if (writeFitsComplex(obj,weightMatrixes_matrix))
+                            {
+                                    message = "Cannot run routine writeFitsSimple for weightMatrixes_matrix";
+                                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                            }
+                            gsl_matrix_free(weightMatrixes_matrix); 
+                    }
+                }
+                else
+                {
+                    for (int i=0; i<weightpoints->size;i++)
+                    {
+                        if (gsl_vector_get(weightpoints,i) == matrixSize)
+                        {
+                            snprintf(str_length,125,"%d",(int) gsl_vector_get(weightpoints,i));
+                            strcpy(obj.nameCol,(string("W")+string(str_length)).c_str());
+                            obj.type = TDOUBLE;
+                            obj.unit = new char [255];
+                            strcpy(obj.unit," ");
+                            gsl_matrix_get_row(weightMatrixesrow,weightMatrixes,i);
+                            gsl_matrix *weightMatrixes_matrix = gsl_matrix_alloc(1,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
+                            temp = gsl_vector_subvector(weightMatrixesrow,0,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
+                            gsl_matrix_set_row(weightMatrixes_matrix,0,&temp.vector);
+                            if (writeFitsComplex(obj,weightMatrixes_matrix))
+                            {
+                                    message = "Cannot run routine writeFitsSimple for weightMatrixes_matrix";
+                                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                            }
+                            gsl_matrix_free(weightMatrixes_matrix); 
+                            
+                            break;
+                        }    
+                    }
+                }*/
                 gsl_vector_free(weightMatrixesrow);
         }
 

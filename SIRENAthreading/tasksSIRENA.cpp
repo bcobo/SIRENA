@@ -90,7 +90,7 @@ MAP OF SECTIONS IN THIS FILE:
 /***** SECTION A ************************************************************
 * runDetect: This function is responsible for the detection in SIRENA, record by record.
 *            It is used both for library creation ('opmode'=0) and energy reconstruction ('opmode'=1) runnings.
-*            In CALIBRATION mode the purpose is the library creation
+*            In CALIBRATION mode the purpose is the library creation.
 *
 * Conditions:
 * 
@@ -103,11 +103,11 @@ MAP OF SECTIONS IN THIS FILE:
 * - Declare variables
 * - Create library if it is necessary, CALIBRATION ('opmode=0') and 'lastRecord'=1 ('createLibrary')
 * - Create intermediate output FITS file if required ('createDetectFile')
-* - Filter and differentiate the 'models' of the library (only for the first record in PRODUCTION 'opmode=1') ('filderLibrary')
+* - (Filter and) differentiate the 'models' of the library (only for the first record in PRODUCTION 'opmode=1') ('filderLibrary')
 * - Store the input record in 'invector' ('loadRecord')
 * - Convert I into R if 'EnergyMethod' = I2R or I2RALL or I2RNOL or I2RFITTED ('convertI2R')
 * - Process each record ('proceRecord')
-* 	- Low-pass filter and differentiate
+* 	- (Low-pass filter and) differentiate
 * 	- Find pulses
 * 	- Load the found pulses data in the input/output 'foundPulses' structure
 * 	- Write test info in intermediate output FITS file if 'reconstruct_init->intermediate'=1 ('writeTestInfo')
@@ -139,6 +139,7 @@ MAP OF SECTIONS IN THIS FILE:
 ******************************************************************************/
 void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
 {       
+        // Declare variables
 	int inputPulseLength = (*reconstruct_init)->pulse_length;
 	if ((*reconstruct_init)->opmode == 0)	(*reconstruct_init)->pulse_length = (*reconstruct_init)->largeFilter;
 	  
@@ -146,7 +147,6 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 	char valERROR[256];
 	int status=EPOK;  
 			
-	// Declare variables
 	fitsfile *inLibObject = NULL;	// Object which contains information of the library FITS file
 	bool appendToLibrary = false;	// Calibration library FITS file new (appendToLibrary=false) or not (appendToLibrary=true)
 
@@ -159,8 +159,6 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 	double tstartRecord;
 	// It is not necessary to check the allocation because 'record->trigger_size'='eventsz' has been checked previously
 	gsl_vector *invector = gsl_vector_alloc(eventsz);	// Record
-        
-        gsl_vector *averageRecord = gsl_vector_alloc(eventsz);
         
         if (isNumber((*reconstruct_init)->tstartPulse1))
         {
@@ -197,7 +195,7 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 		}
 	}
 
-	// (Filter and) differentiate the 'models' of the library (only for the first record)
+	//(Filter and) differentiate the 'models' of the library (only for the first record in PRODUCTION 'opmode=1') ('filderLibrary')
 	if ((*reconstruct_init)->opmode == 1)
 	{
 		if (filderLibrary(reconstruct_init,1/record->delta_t))
@@ -214,6 +212,8 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 		EP_EXIT_ERROR(message,EPFAIL);
 	}
 	eventsz = invector->size;	// Just in case the last record has been filled in with 0's => Re-allocate invector
+	gsl_vector *invectorOriginal = gsl_vector_alloc(invector->size);
+        gsl_vector_memcpy(invectorOriginal,invector);
 	
 	// Convert I into R if 'EnergyMethod' = I2R or I2RALL or I2RNOL or I2RFITTED
 	// It is not necessary to check the allocation because 'invector' size must be > 0
@@ -226,7 +226,7 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 			EP_EXIT_ERROR(message,EPFAIL);
 		}
 		
-		for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+		for (int i=0;i<invector->size;i++)	// Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
                 {
                         record->adc_double[i] = gsl_vector_get(invector,i);
                 }
@@ -234,12 +234,14 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 	
 	log_trace("Detecting...");
 	// Process each record
-	if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid,record->phid_list->phid_array[0]))
+	if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, invectorOriginal,*pulsesInRecord, pulsesAll->ndetpulses, record->pixid,record->phid_list->phid_array[0]))
 	{
 		message = "Cannot run routine procRecord for record processing";
 		EP_EXIT_ERROR(message,EPFAIL);
 	}
+	gsl_vector_free(invectorOriginal); invectorOriginal = 0;
     
+        // From this point forward, I2R, I2RALL, I2RNOL and I2RFITTED are completely equivalent to OPTFILT
 	if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
 		|| (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
 	{
@@ -282,7 +284,8 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 		}
 	}
 
-	if ((lastRecord == 1) && (*reconstruct_init)->opmode == 0 && (pulsesAll->ndetpulses + (*pulsesInRecord)->ndetpulses >0))	// CALIBRATION mode => Calculate the pulse template by averaging some found pulses
+	// CALIBRATION mode => Calculate the pulse template by averaging some found pulses
+	if ((lastRecord == 1) && (*reconstruct_init)->opmode == 0 && (pulsesAll->ndetpulses + (*pulsesInRecord)->ndetpulses >0))	
 	{	
                 log_trace("Building the library...");
 		// Calculate an average record 
@@ -791,6 +794,8 @@ void th_runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll
     }
   eventsz = invector->size;// Just in case the last record has been filled 
                            //in with 0's => Re-allocate invector
+  gsl_vector *invectorOriginal = gsl_vector_alloc(invector->size);
+  gsl_vector_memcpy(invectorOriginal,invector);
   
   // Convert I into R if 'EnergyMethod' = I2R or I2RALL or I2RNOL or I2RFITTED
   // It is not necessary to check the allocation because 'invector' 
@@ -838,11 +843,12 @@ void th_runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll
   // Process each record
   // thread safe
   if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, 
-                 invector, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid,record->phid_list->phid_array[0]))
+                 invector, invectorOriginal, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid,record->phid_list->phid_array[0]))
     {
       message = "Cannot run routine procRecord for record processing";
       EP_EXIT_ERROR(message,EPFAIL);
     }
+    gsl_vector_free(invectorOriginal); invectorOriginal = 0;
   
   if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) 
       || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) 
@@ -1300,7 +1306,7 @@ void th_runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll
 * - If it exists => Open it and set 'appendToLibrary' = true
 * - If it does not exist => Create it and set 'appendToLibrary' = false
 * 	- Write keyword 'EVENTCNT'=1 in the LIBRARY HDU
-* 	- Write the whole list of input parameters in "HISTORY" in the Primary HDU
+* 	- Write the whole list of input parameters in "HISTORY" in the Primary HDU (by usin 'HDpar_stamp')
 * 
 * Parameters:
 * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
@@ -1489,7 +1495,7 @@ int createLibrary(ReconstructInitSIRENA* reconstruct_init, bool *appendToLibrary
 * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
 *                     In particular, this function uses some of its values to call the intermediate file ('detectFile'), to write input parameters
 *                     info in the Primary HDU of the intermediate file and also 'clobber'
-* - samprate: Sampling rate (calculated from input FITS keyword 'DELTAT')
+* - samprate: Sampling rate 
 * - dtcObject: Object which contains information of the intermediate FITS file (used also by 'writeTestInfo' and 'writePulses') 
 * - inputPulseLength: PulseLength input parameter
 ***************************************************************************/
@@ -2028,14 +2034,21 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
 
 
 /***** SECTION A5 ************************************************************
-* procRecord function:  This function processes the input record.
+* procRecord function:  This function processes the input record (detecting the pulses).
 *
 * - Declare and initialize variables
 * - Allocate GSL vectors
 * - (Low-pass filtering and) differentiation
 * - Find the events (pulses) in the record
+*       - Production mode:
+*           - No detect: 'noDetect' if tStartPulse1!=0
+*           - Detect: 
+*               - 'InitialTriggering'
+*               - 'FindSecondaries' or 'FindSecondariesSTC'
+*       - Calibration mode: 'findPulsesCAL'
 * - Calculate the tend of the found pulses and check if the pulse is saturated
 * - Obtain the approximate rise and fall times of each pulse (to be done)
+* - Calculate the baseline before a pulse (in general 'before') => To be written in BSLN keyword in the output FITS file
 * - Load the found pulses data in the input/output 'foundPulses' structure
 * - Write test info (if 'reconstruct_init->intermediate'=1)
 * - Write pulses info in intermediate output FITS file (if 'reconstruct_init->intermediate'=1)
@@ -2050,10 +2063,13 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
 * - samprate: Sampling rate (in order to low-pass filter)
 * - dtcObject: Object which contains information of the intermediate FITS file (to be written if 'intermediate'=1)
 * - record: GSL vector with signal values of input record
+* - recordWithoutConvert2R: GSL vector with original signal values of input record (without being converted to R space)
 * - foundPulses: Input/output structure where the found pulses info is stored 
 * - num_previousDetectedPulses: Number of previous detected pulses (to know the index to get the proper element from tstartPulse1_i in case tstartPulse1=nameFile)
+* - pixid: Pixel ID (from the input file) to be propagated 
+* - phid: Photon ID (from the input file) to be propagated
 ****************************************************************************/
-int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, int phid)
+int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, gsl_vector *recordWithoutConvert2R, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, int phid)
 {
 	int status = EPOK;
 	string message = "";
@@ -2169,7 +2185,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	gsl_vector_memcpy(recordDERIVATIVE,record);*/
         
 	//It is not necessary to check the allocation because the allocation of 'recordDERIVATIVE' has been checked previously
-	gsl_vector *recordDERIVATIVEOriginal = gsl_vector_alloc(recordDERIVATIVE->size);
+	gsl_vector *recordDERIVATIVEOriginal = gsl_vector_alloc(recordDERIVATIVE->size);   // To be used in 'writeTestInfo'
 	gsl_vector_memcpy(recordDERIVATIVEOriginal,recordDERIVATIVE);
         
 	// Find the events (pulses) in the record
@@ -2251,17 +2267,23 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	gsl_vector_free(recordDERIVATIVEOriginal); recordDERIVATIVEOriginal = 0;
 
 	// Calculate the tend of the found pulses and check if the pulse is saturated
+        // 0 => Standard (good) pulses
+        // 1 => Truncated pulses at the beginning  (when detecting: 'findTstartCAL', 'InitialTriggering', 'FindSecondaries' and 'FindSecondaries')     
+        // 2 => Truncated pulses at the end ('procRecord')       
+        // 10 => Saturated pulses ('procRecord')
+        // 11 => Truncated at the beginning and saturated pulses ('procRecord')
+        // 12 => Truncated at the end and saturated pulses ('procRecord')
 	for (int i=0;i<numPulses;i++)
 	{
                 if ((*reconstruct_init)->opmode == 1)    gsl_vector_set(tstartgsl,i,gsl_vector_get(tstartgsl,i) + (*reconstruct_init)->errorT);
                 
                 if  (((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"BYGRADE") == 0))
                 {
-                    gsl_vector_set(tendgsl,i,(recordDERIVATIVE->size)-1);
+                        gsl_vector_set(tendgsl,i,(recordDERIVATIVE->size)-1);
                 }
                 else
                 {
-                    gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
+                        gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
                 }
 
 		if (gsl_vector_get(tendgsl,i) >= recordDERIVATIVE->size)		// Truncated pulses at the end of the record
@@ -2277,6 +2299,27 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 				gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i+1));
 			}
 		}
+		
+		// Check if the pulse is saturated 
+		/*if ((gsl_vector_get(tstartgsl,i) < 0) || (gsl_vector_get(tstartgsl,i) > recordWithoutConvert2R->size-2)
+			|| (gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i) < 1) || (gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i) > recordWithoutConvert2R->size-gsl_vector_get(tstartgsl,i)))
+		{
+			sprintf(valERROR,"%d",__LINE__+5);
+			string str(valERROR);
+			message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
+			EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+		}
+		temp = gsl_vector_subvector(recordWithoutConvert2R,gsl_vector_get(tstartgsl,i),gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i));
+                double maxPulse = gsl_vector_max(&temp.vector);
+		//if (gsl_vector_max(&temp.vector) > (*reconstruct_init)->SaturationValue)	gsl_vector_set(qualitygsl,i,gsl_vector_get(qualitygsl,i)+10);
+                for (int j=1;j<(&temp.vector)->size;j++)
+                {
+                        if (gsl_vector_get(&temp.vector,j-1) == gsl_vector_get(&temp.vector,j) && (gsl_vector_get(&temp.vector,j) == maxPulse))
+                        {
+                                gsl_vector_set(qualitygsl,i,gsl_vector_get(qualitygsl,i)+10);
+                                break;
+                        }
+                }*/
 	}
 	
 	// Obtain the approximate rise and fall times of each pulse
@@ -2293,7 +2336,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 
         int preBuffer = (*reconstruct_init)-> preBuffer;
         
-        // Calculate the mean before a pulse (in general)
+        // Calculate the baseline before a pulse (in general 'before') => To be written in BSLN keyword in the output FITS file
         gsl_vector *Lbgsl = gsl_vector_alloc((*reconstruct_init)->maxPulsesPerRecord);	// If there is no free-pulses segments longer than Lb=>
         gsl_vector_set_all(Lbgsl,Lb); 
         gsl_vector *Bgsl;
@@ -2383,24 +2426,17 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                                 message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
                                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                         }
-                        /*if (gsl_vector_get(tstartgsl,i) - preBuffer < 0)
-                        {
-                                sprintf(valERROR,"%d",__LINE__+5);
-                                string str(valERROR);
-                                message = "tstart - preBuffer < 0 in line " + str + " (" + __FILE__ + ")";
-                                EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-                        }
-                        temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i) - preBuffer,foundPulses->pulses_detected[i].pulse_duration);*/
+                        
                         if (preBuffer == 0) 
                         {
                             if (gsl_vector_get(tstartgsl,i)< 0)
                             {
                                     sprintf(valERROR,"%d",__LINE__+5);
                                     string str(valERROR);
-                                    message = "tstart - preBuffer < 0 in line " + str + " (" + __FILE__ + ")";
+                                    message = "tstart < 0 in line " + str + " (" + __FILE__ + ")";
                                     EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                             }
-                            temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i) - preBuffer,foundPulses->pulses_detected[i].pulse_duration);
+                            temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].pulse_duration);
                         }
                         else if (preBuffer != 0)
                         {
@@ -2439,7 +2475,6 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                 }
                 foundPulses->pulses_detected[i].numLagsUsed = gsl_vector_get(lagsgsl,i);
                 foundPulses->pulses_detected[i].pixid = pixid;
-                //cout<<"procRecord: "<<foundPulses->pulses_detected[i].pixid<<endl;
                 foundPulses->pulses_detected[i].phid = phid;
                 if (gsl_vector_get(Bgsl,i) != -999.0)
                     foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
@@ -2448,18 +2483,11 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 		//cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<" , Tstart="<<foundPulses->pulses_detected[i].Tstart<<" , Tend="<<foundPulses->pulses_detected[i].Tend<<endl;
                 //log_debug("Pulse %d", i," tstart=%f",gsl_vector_get(tstartgsl,i), " maxDER=%f",foundPulses->pulses_detected[i].maxDER, " samp1DER=%f",gsl_vector_get(samp1DERgsl,i), " pulse_duration=%d",foundPulses->pulses_detected[i].pulse_duration," quality=%d",foundPulses->pulses_detected[i].quality," lags=%f",gsl_vector_get(lagsgsl,i)," Tstart=%f",foundPulses->pulses_detected[i].Tstart," Tend=%f",foundPulses->pulses_detected[i].Tend);
                 //log_debug("Pulse %i tstart=%f maxDER=%f samp1DER=%f pulse_duration=%i quality=%f lags=%f",i,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].maxDER,gsl_vector_get(samp1DERgsl,i),foundPulses->pulses_detected[i].pulse_duration,foundPulses->pulses_detected[i].quality,gsl_vector_get(lagsgsl,i));
+                //cout<<"pixid = "<<foundPulses->pulses_detected[i].pixid<<endl;
                 log_debug("Pulse %d", i);
-                //for (int kkk=0;kkk<foundPulses->pulses_detected[i].pulse_adc->size;kkk++) cout<<kkk<<" "<<gsl_vector_get(foundPulses->pulses_detected[i].pulse_adc_preBuffer,kkk)<<endl;
-                //log_debug("**pulse: %f %f %f",gsl_vector_get(foundPulses->pulses_detected[i].pulse_adc,0),gsl_vector_get(foundPulses->pulses_detected[i].pulse_adc,1),gsl_vector_get(foundPulses->pulses_detected[i].pulse_adc,2));
-                //log_debug("**max_pulse: %f",gsl_vector_max(foundPulses->pulses_detected[i].pulse_adc_preBuffer));
                 log_debug("tstart= %f", gsl_vector_get(tstartgsl,i));
                 log_debug("tend= %f", gsl_vector_get(tendgsl,i));
                 log_debug("pulse duration %d", foundPulses->pulses_detected[i].pulse_duration);
-                //log_debug("Previous baseline (Lb=%f): %f", gsl_vector_get(Lbgsl,i), gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i));
-                //cout<<"Previous baseline: "<<gsl_vector_get(Bgsl,i)<<" "<<gsl_vector_get(Lbgsl,i)<<" "<<gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i)<<endl;
-                //cout<<gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i)<<endl;
-                //log_debug("Previous baseline %f", foundPulses->pulses_detected[i].baseline);
-                //cout<<i<<" maxfoundpulse: "<<gsl_vector_max(foundPulses->pulses_detected[i].pulse_adc_preBuffer)<<endl;
 	}
 
 	// Write pulses info in intermediate output FITS file
@@ -2512,6 +2540,12 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 * - tstart: GSL vector with the start times of the found pulses
 * - tend: GSL vector with the end times of the found pulses
 * - quality:  GSL vector with the quality of the found pulses
+*       0 => Standard (good) pulses
+*       1 => Truncated pulses at the beginning       
+*       2 => Truncated pulses at the end        
+*       10 => Saturated pulses
+*       11 => Truncated at the beginning and saturated pulses
+*       12 => Truncated at the end and saturated pulses
 * - taurise: GSL vector with the rise time constants of the found pulses (to be done)
 * - taufall: GSL vector with the fall time constants of the found pulses (to be done)
 * - dtcObject: Object which contains information of the intermediate FITS file 
@@ -2764,10 +2798,10 @@ int writeTestInfo(ReconstructInitSIRENA* reconstruct_init, gsl_vector *recordDER
 /***** SECTION  A8 ************************************************************
 * calculateTemplate function: This function calculates the template (PULSE column in the library) of non piled-up pulses.
 *                             Just in case in the detection process some piled-up pulses have not been distinguished as different pulses, a pulseheights histogram is built.
-*                             It uses the pulseheights histogram (built by using the PHEIGGHT column of the library), 'Tstart' and 'quality' to select the non piled-up pulses.
+*                             This function uses the pulseheights histogram (built by using the PHEIGHT column of the library), 'Tstart' and 'quality' to select the non piled-up pulses.
 *
 * - Declare and initialize variables
-* - Before building the histogram, select the pulseheihts of the pulseswell separated from other pulses and with 'quality'=0
+* - Before building the histogram, select the pulseheihts of the pulseswell separated from other pulses whose 'quality'=0
 * - Create the pulseheights histogram
 * - Calculate the pulseaverage only taking into account the valid pulses
 * 	- Check if the pulse is piled-up or not
@@ -2790,51 +2824,29 @@ int writeTestInfo(ReconstructInitSIRENA* reconstruct_init, gsl_vector *recordDER
 ******************************************************************************/
 int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection *pulsesAll, PulsesCollection *pulsesInRecord, double samprate, gsl_vector **pulseaverage, double *pulseaverageHeight, gsl_matrix **covariance, gsl_matrix **weight, int inputPulseLength, gsl_vector **pulseaverageMaxLengthFixedFilter)
 {
+        // Declare and initialize variables
 	string message = "";
 	char valERROR[256];
         
         int preBuffer = reconstruct_init-> preBuffer;
 
-	// Declare and initialize variables
-        //cout<<"pulsesAll->ndetpulses: "<<pulsesAll->ndetpulses<<endl;
-        //cout<<"pulsesInRecord->ndetpulses: "<<pulsesInRecord->ndetpulses;
 	int totalPulses = pulsesAll->ndetpulses + pulsesInRecord->ndetpulses;
-        
-        /*string line;
-        ifstream myfile ("file2_flagE.txt");
-        gsl_vector *flagE = gsl_vector_alloc(totalPulses);
-        gsl_vector_set_zero(flagE);
-        int index_flagE = 0;
-        if (myfile.is_open())
-        {
-            while ( getline (myfile,line) )
-            {
-                //cout<<"line: "<<line<<endl;
-                if (atoi(line.c_str()) == 1) gsl_vector_set(flagE,index_flagE,1);
-                index_flagE++;
-            }
-            myfile.close();
-        }
-        for (int i=0;i<10;i++)  cout<<"flagE "<<i<<" "<<gsl_vector_get(flagE,i)<<endl;*/
-        
+                
 	// It is not necessary because 'totalPulses'='pulsesAll->ndetpulses + pulsesInRecord->ndetpulses' has been checked previously
 	gsl_vector *tstart = gsl_vector_alloc(totalPulses);
 	gsl_vector *pulseheight = gsl_vector_alloc(totalPulses);
-        //gsl_vector *maximums = gsl_vector_alloc(totalPulses);
 	gsl_vector *quality = gsl_vector_alloc(totalPulses);
 	for (int i=0;i<pulsesAll->ndetpulses;i++)
 	{
 		gsl_vector_set(tstart,i,pulsesAll->pulses_detected[i].Tstart);
 		gsl_vector_set(pulseheight,i,pulsesAll->pulses_detected[i].pulse_height);
 		gsl_vector_set(quality,i,pulsesAll->pulses_detected[i].quality);
-                //gsl_vector_set(maximums,i,gsl_vector_max(pulsesAll->pulses_detected[i].pulse_adc_preBuffer));
 	}
 	for (int i=0;i<pulsesInRecord->ndetpulses;i++)
 	{
 		gsl_vector_set(tstart,i+pulsesAll->ndetpulses,pulsesInRecord->pulses_detected[i].Tstart);
 		gsl_vector_set(pulseheight,i+pulsesAll->ndetpulses,pulsesInRecord->pulses_detected[i].pulse_height);
 		gsl_vector_set(quality,i+pulsesAll->ndetpulses,pulsesInRecord->pulses_detected[i].quality);
-                //gsl_vector_set(maximums,i+pulsesAll->ndetpulses,gsl_vector_max(pulsesInRecord->pulses_detected[i].pulse_adc_preBuffer));
 	}
         
 	// It is not necessary because 'pulsesAll->ndetpulses + pulsesInRecord->ndetpulses' has been checked previously
@@ -2858,29 +2870,22 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 
 	gsl_vector_scale(tstart,samprate); 			//tstarts not in seconds but in samples
 
-	// Before building the histogram, select the pulseheihts of the pulses which are enough separated from others and whose 'quality' is 0
+	// Before building the histogram, select the pulseheihts of the pulses which are enough separated from others whose 'quality' is 0
 	// It is not necessary because 'totalPulses'='pulsesAll->ndetpulses + pulsesInRecord->ndetpulses' has been checked previously
 	gsl_vector *pulseheightAUX = gsl_vector_alloc(totalPulses);
 	int cnt = 0;
-        //cout<<"totalPulses: "<<totalPulses<<endl;
 	for (int i=0;i<totalPulses;i++)
 	{
 		if (i == totalPulses-1)		tstartnext = gsl_vector_get(tstart,i)+2*reconstruct_init->pulse_length;
 		else				tstartnext = gsl_vector_get(tstart,i+1);
 
 		if ((tstartnext-gsl_vector_get(tstart,i) > reconstruct_init->pulse_length) && ((gsl_vector_get(quality,i) == 0) || (gsl_vector_get(quality,i) == 10)))
-                //if ((tstartnext-gsl_vector_get(tstart,i) > reconstruct_init->pulse_length) && ((gsl_vector_get(quality,i) == 0) || (gsl_vector_get(quality,i) == 10)) && ((gsl_vector_get(maximums,i) > 159000) && (gsl_vector_get(maximums,i) < 160000)) && (gsl_vector_get(flagE,i) == 1))
 		{
                         gsl_vector_set(pulseheightAUX,cnt,gsl_vector_get(pulseheight,i));
                         cnt = cnt +1;
-                        //cout<<"HISTPulsoSI "<<i+1<<" pulseheight="<<gsl_vector_get(pulseheight,i)<<" max="<<gsl_vector_get(maximums,i)<<" "<<gsl_vector_get(quality,i)<<" "<<tstartnext-gsl_vector_get(tstart,i)<<endl;
                 }
-                /*else    
-                {   
-                        cout<<"HISTPulsoNO "<<i+1<<" pulseheight="<<gsl_vector_get(pulseheight,i)<<" max="<<gsl_vector_get(maximums,i)<<" "<<gsl_vector_get(quality,i)<<" "<<tstartnext-gsl_vector_get(tstart,i)<<endl;
-                }*/
 	}
-	//cout<<"Number of pulses to build the histogram: "<<cnt<<endl;
+	
 	if (cnt == 0)
 	{
 		message = "No valid pulses to calculate the template (check as a possibility if PulseLength or largeFilter > Record size)";
@@ -2924,9 +2929,6 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 
 	index_maximumpulseheight = gsl_vector_max_index(yhisto);
 	maximumpulseheight = gsl_vector_get(xhisto,index_maximumpulseheight);
-        /*cout<<"maximumpulseheight: "<<maximumpulseheight<<endl;
-        cout<<"maximumpulseheight-0.1*maximumpulseheight: "<<maximumpulseheight-0.1*maximumpulseheight<<endl;
-        cout<<"maximumpulseheight+0.1*maximumpulseheight: "<<maximumpulseheight+0.1*maximumpulseheight<<endl;*/
 
 	// Calculate the pulseaverage only taking into account the valid pulses
 	gsl_vector_set_all(*pulseaverage,0.0);
@@ -2937,18 +2939,9 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
                 
 		// Check if the pulse is piled-up or not
 		if ((gsl_vector_get(pulseheight,i) < maximumpulseheight-0.1*maximumpulseheight) || (gsl_vector_get(pulseheight,i) > maximumpulseheight+0.1*maximumpulseheight) || (tstartnext-gsl_vector_get(tstart,i) <= reconstruct_init->pulse_length) || ((gsl_vector_get(quality,i) != 0) && (gsl_vector_get(quality,i) != 10)))
-                /*if ((gsl_vector_get(maximums,i) < 159000) 
-                    || (gsl_vector_get(maximums,i) > 160000) 
-                    || (gsl_vector_get(pulseheight,i) < maximumpulseheight-0.1*maximumpulseheight) 
-                    || (gsl_vector_get(pulseheight,i) > maximumpulseheight+0.1*maximumpulseheight) 
-                    || (tstartnext-gsl_vector_get(tstart,i) <= reconstruct_init->pulse_length) 
-                    || ((gsl_vector_get(quality,i) != 0) && (gsl_vector_get(quality,i) != 10))
-                    || (gsl_vector_get(flagE,i) == 0))*/
 		{
  			gsl_vector_set(nonpileup,i,0);
 			nonpileupPulses --;
-                        //cout<<"PulsoNO "<<i+1<<" pulseheight="<<gsl_vector_get(pulseheight,i)<<" "<<gsl_vector_get(maximums,i)<<" "<<gsl_vector_get(flag,i)<<endl;
-                        //cout<<"PulsoNO "<<i+1<<endl;
 		}
 		else
 		{
@@ -3111,13 +3104,12 @@ int createHisto (gsl_vector *invector, int nbins, gsl_vector **xhistogsl, gsl_ve
 		{
 			if (invectormax < gsl_vector_get(invectoraux2,i))	invectormax = gsl_vector_get(invectoraux2,i);
 		}
-		cout<<"H-invectormax: "<<invectormax<<endl;
+		
 		// Obtain 'invector_min'
 		for (int i=0; i<size; i++)
 		{
 			if (invectormin > gsl_vector_get(invectoraux2,i))	invectormin = gsl_vector_get(invectoraux2,i);
 		}
-		cout<<"H-invectormin: "<<invectormin<<endl;
 
 		if (invectormax == invectormin)
 		{
@@ -3129,7 +3121,6 @@ int createHisto (gsl_vector *invector, int nbins, gsl_vector **xhistogsl, gsl_ve
 		{
 			// Obtain binSize
 			binSize = (invectormax - invectormin) / nbins;        // Size of each bin of the histogram
-			cout<<"H-binsize: "<<binSize<<endl;
 
 			// Create histogram x-axis
 			for (int i=0; i<nbins; i++)	{gsl_vector_set (*xhistogsl,i,binSize*i+invectormin+binSize/2);}
@@ -3394,15 +3385,12 @@ int shift_m(gsl_vector *vectorin, gsl_vector *vectorout, int m)
 * - pulsesInRecord: Found pulses in the current record
 * - nonpileupPulses: Number of non piled-up pulses
 * - nonpileup: GSL vector containing info about all the pulses informing if they are piled-up or not
-* - pulseaverage: GSL vector with the pulseaverage (= template = model) of the non piled-up pulses
+* - pulseaverage: GSL vector with the pulseaverage (= template or = model) of the non piled-up pulses
 * - covariance: GSL matrix with covariance matrix
 * - weight: GSL matrix with weight matrix
 ******************************************************************************/
 int weightMatrix (ReconstructInitSIRENA *reconstruct_init, bool saturatedPulses, PulsesCollection *pulsesAll, PulsesCollection *pulsesInRecord, long nonpileupPulses, gsl_vector *nonpileup, gsl_vector *pulseaverage, gsl_matrix **covariance, gsl_matrix **weight)
 {
-        //cout<<"saturatedPulses: "<<saturatedPulses<<endl;
-        //cout<<"covariance->size: "<<(*covariance)->size1<<" "<<(*covariance)->size2<<endl;
-        
 	string message = "";
 	char valERROR[256];
 	
@@ -3432,9 +3420,7 @@ int weightMatrix (ReconstructInitSIRENA *reconstruct_init, bool saturatedPulses,
 			}
 		}
 		elementValue = elementValue/nonpileupPulses;
-                //cout<<"Diagonal "<<i<<" "<<elementValue<<endl;
-                //if (fabs(elementValue) < 1e-24) cout<<i<<" elemento de la diagonal = 0 "<<elementValue<<endl;
-		
+            
 		gsl_matrix_set(*covariance,i,i,elementValue);
 
 		elementValue = 0.0;
@@ -3464,8 +3450,6 @@ int weightMatrix (ReconstructInitSIRENA *reconstruct_init, bool saturatedPulses,
 				}
 			}
 			elementValue = elementValue/nonpileupPulses;
-                        //cout<<"OUT Diagonal "<<i<<" "<<j<<" "<<elementValue<<endl;
-                        //if (fabs(elementValue) < 1e-24) cout<<i<<" "<<j<<" elemento de FUERA la diagonal = 0 "<<elementValue<<endl;
 
 			gsl_matrix_set(*covariance,i,j,elementValue);
 			gsl_matrix_set(*covariance,j,i,elementValue);
@@ -3473,12 +3457,6 @@ int weightMatrix (ReconstructInitSIRENA *reconstruct_init, bool saturatedPulses,
 			elementValue = 0.0;
 		}
 	}
-	
-	/*double maximum;
-        cout<<gsl_matrix_get(*covariance,0,0)<<endl;
-        maximum = gsl_matrix_max(*covariance);
-        gsl_matrix_scale(*covariance,1/maximum);
-        cout<<gsl_matrix_get(*covariance,0,0)<<endl;*/
 	
 	if (strcmp(reconstruct_init->EnergyMethod,"PCA") != 0)	// Different from PCA
 	{
@@ -3771,8 +3749,10 @@ int eigenVV (gsl_matrix *matrixin, gsl_matrix **eigenvectors, gsl_vector **eigen
 /***** SECTION A14 ************************************************************
 * writeLibrary function: This function writes the library (reordering if it is necessary and calculating some intermediate parameters)
 *
-* - Adding a new row to the library
-* - Write the first row of the library
+* - Adding a new row to the library if appendToLibrary =='true' ('readAddSortParams')
+* - Write the first row of the library if appendToLibrary == 'false' ('addFirstRow')
+* 
+* - In both cases, the keywords 'CREADATE' and 'SIRENAV' with the date and SIRENA version are written
 * 
 * Parameters:
 * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
@@ -4203,7 +4183,13 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 
 
 /***** SECTION A15 ************************************************************
-* addFirstRow function: This function writes the first row of the library (without intermediate AB-related values, because it would be necessary to have at least two rows=energies in the library). It also writes the FIXFILTT and FIXFILTF HDUs with the optimal filters in the time and frequency domain (real and imag parts) with fixed legnth and the PRCLOFWM HDU with the precalculated values for optimal filtering and modeWEIGHTM.
+* addFirstRow function: This function writes the first row of the library (without intermediate AB-related values, because it would be necessary to have at least two rows=energies in the library). *                       It also writes the FIXFILTT and FIXFILTF HDUs with the optimal filters in the time and frequency domain (real and imag parts) with fixed legnth and the PRCLOFWM HDU with 
+*                       the precalculated values for optimal filtering and mode WEIGHTM.
+* 
+* - Declare variables
+* - Write in the first row of the library FITS file some columns with the info provided by the input GSL vectors E, PHEIGHT, PULSE, PULSEB0, MF and MFB0 (and COVAR and WEIGHT if hduPRCLOFWM ==1)
+* - Writing HDUs with fixed filters in time (FIXFILTT) and frequency (FIXFILTF) (calculating the optial filters, 'calculus_optimalFilter')
+* - Calculate and write the pre-calculated values by using the noise weight matrix from noise intervals (M'WM)^{-1}M'W for different lengths, OFWx
 * 
 * Parameters: 
 * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
@@ -4281,6 +4267,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 	objPRCLOFWM.iniCol = 0;
 	objPRCLOFWM.nameCol = new char [255];
 	
+        // Write in the first row of the library FITS file some columns with the info provided by the input GSL vectors E, PHEIGHT, PULSE, PULSEB0, MF and MFB0
 	// Creating ENERGY Column
 	strcpy(obj.nameCol,"ENERGY");
 	obj.type = TDOUBLE;
@@ -4594,6 +4581,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 	gsl_vector_free(optimalfilter_FFT); optimalfilter_FFT = 0;
 	gsl_vector_free(matchedfilters_row); matchedfilters_row = 0;
 	
+        // Calculate and write the pre-calculated values by using the noise weight matrix from noise intervals (M'WM)^{-1}M'W for different lengths, OFWx
 	if (reconstruct_init->hduPRCLOFWM == 1)
 	{
 		strcpy(extname,"PRCLOFWM");
@@ -4740,7 +4728,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
                                                 EP_PRINT_ERROR(message,EPFAIL);	return(EPFAIL);
                                         }
 					gsl_permutation_free(perm1); perm1 = 0;
-					gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,inv,R_transW,0.0,matrixaux1);      // matrixaux1 = [(R'WR)^(-1)]\B7R'W       matrixaux1=(2xfixedlengths_j)
+					gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,inv,R_transW,0.0,matrixaux1);      // matrixaux1 = [(R'WR)^(-1)]R'W       matrixaux1=(2xfixedlengths_j)
 					vectoraux1_2 = gsl_vector_alloc(gsl_vector_get(fixedlengths,j)*2);
 					for (int ii=0;ii<2;ii++)
 					{
@@ -7340,7 +7328,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 		shift = tstartJITTER - tstartSamplesRecord;
                 
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                //////////// In order to get the low resolution energy estimator by filtering with a 4-samples-long filter ///////////////////
+                //////////// In order to get the low resolution energy estimator by filtering with a 4-samples-length filter ///////////////////
                 log_trace("Calculating the low energy estimator...");
                 energy_lowres = -999;
                 // Pulse 
@@ -8282,7 +8270,7 @@ void th_runEnergy(TesRecord* record,
 		shift = tstartJITTER - tstartSamplesRecord;
                 
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                //////////// In order to get the low resolution energy estimator by filtering with a 4-samples-long filter ///////////////////
+                //////////// In order to get the low resolution energy estimator by filtering with a 4-samples-length filter ///////////////////
                 energy_lowres = -999;
                 // Pulse 
                 if (resize_mf_lowres <= recordAux->size-tstartSamplesRecord)
@@ -10368,7 +10356,7 @@ int find_Esboundary(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *r
 
 /***** SECTION B10 ************************************************************
 * pulseGrading: This function provides the pulse grade (Pileup=-2, Rejected=-1, HighRes=1, MidRes=2, Limres= 3, LowRes=4) and the optimal filter length
-*               by taking into account the info read from the XML file and the 'OFStrategy' (FREE, BASE2, BYGRADE or FIXED).
+*               by taking into account the info read from the XML file and the 'OFStrategy' (FREE, BYGRADE or FIXED).
 *
 * Parameters:
 * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values).

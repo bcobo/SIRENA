@@ -346,8 +346,8 @@ TesEventFile* opennewTesEventFile(const char* const filename,
 
 	//first column TIME
 	char   *ttype[]={"TIME","SIGNAL","AVG4SD","ELOWRES","GRADE1","GRADE2","PHI","LAGS","BSLN","PIXID","PH_ID","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"}; //BEA
-	char *tform[]={"1D",  "1D",    "1D",    "1D",    "1J",    "1J", "1D", "1J" ,  "1J",   "1J",   "1D","1D","1E","1E", "1I","1J","1I","1D"};
-	char *tunit[]={"s",   "keV",   "",   "keV",      "",      "",      "",      "",       "",     "",     "deg","deg","m","m","","","","keV"};
+	char *tform[]={"1D",  "1D",    "1D",    "1D",    "1J",    "1J", "1D", "1J", "1D" , "1J",   "1J",   "1D","1D","1E","1E", "1I","1J","1I","1D"};
+	char *tunit[]={"s",   "keV",   "",   "keV",      "",      "",      "",      "",     "",       "",     "",     "deg","deg","m","m","","","","keV"};
 
 	fits_create_tbl(file->fptr, BINARY_TBL, 0, 19,		// BEA (19 instead of 14)
 			ttype, tform, tunit,"EVENTS", status);
@@ -429,8 +429,8 @@ TesEventFile* opennewTesEventFileSIRENA(const char* const filename,
 
 	//first column TIME
 	char   *ttype[]={"TIME","SIGNAL","AVG4SD","ELOWRES","GRADE1","GRADE2","PHI","LAGS","BSLN","PIXID","PH_ID","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"}; //BEA
-	char *tform[]={"1D",  "1D",    "1D",    "1D",    "1J",    "1J", "1D", "1J" ,  "1J",   "1J",   "1D","1D","1E","1E", "1I","1J","1I","1D"};
-	char *tunit[]={"s",   "keV",   "",   "keV",      "",      "",      "",      "",       "",     "",     "deg","deg","m","m","","","","keV"};
+	char *tform[]={"1D",  "1D",    "1D",    "1D",    "1J",    "1J", "1D", "1J" , "1D", "1J",   "1J",   "1D","1D","1E","1E", "1I","1J","1I","1D"};
+	char *tunit[]={"s",   "keV",   "",   "keV",      "",      "",      "",      "",      "",       "",     "", "deg","deg","m","m","","","","keV"};
 
 	fits_create_tbl(file->fptr, BINARY_TBL, 0, 19,		// BEA (19 instead of 14)
 			ttype, tform, tunit,"EVENTS", status);
@@ -542,8 +542,10 @@ void saveEventListToFile(TesEventFile* file,TesEventList * event_list,
 		time = start_time + delta_t*event_list->event_indexes[i];
 		fits_write_col(file->fptr, TDOUBLE, file->timeCol,
 					   file->row, 1, 1, &time, status);
-		fits_write_col(file->fptr, TLONG, file->pixIDCol,
-					   file->row, 1, 1, &pixID, status);
+		//fits_write_col(file->fptr, TLONG, file->pixIDCol,
+		//			   file->row, 1, 1, &pixID, status);
+		fits_write_col(file->fptr, TINT, file->pixIDCol,
+					file->row, 1, 1, &event_list->pix_ids[i], status);
 		fits_write_col(file->fptr, TINT, file->gradingCol,
 				file->row, 1, 1, &dummy_grading, status);
 		CHECK_STATUS_VOID(*status);
@@ -604,13 +606,17 @@ void saveEventListToFile(TesEventFile* file,TesEventList * event_list,
 		CHECK_STATUS_VOID(*status);
 	}
 	//printf("%s %d %s","event_list->ph_ids:", event_list->ph_ids[0],"\n");
-	//printf("%s %d %s","event_list->pix_ids:", event_list->pix_ids[0],"\n");
-	//printf("%s %e %s","event_list->energies:", event_list->energies[0],"\n");
+	/*for (int i = 0 ; i<event_list->index ; i++){
+		printf("%s %d %s","event_list->pix_ids:", event_list->pix_ids[i],"\n");
+		printf("%s %e %s","event_list->energies:", event_list->energies[i],"\n");
+	}*/
 
+	//printf("%s %d %s","event_list->index:", event_list->index,"\n");
+	//printf("%s %d %s","file->row:", file->row,"\n");
 	//Save pix_ids column
-	fits_write_col(file->fptr, TINT, file->pixIDCol,
-					file->row, 1, event_list->index, event_list->pix_ids, status);
-	CHECK_STATUS_VOID(*status);
+	//fits_write_col(file->fptr, TINT, file->pixIDCol,
+	//				file->row, 1, event_list->index, event_list->pix_ids, status);
+	//CHECK_STATUS_VOID(*status);
 
 	file->row = file->row + event_list->index;
 	file->nrows+= event_list->index;
