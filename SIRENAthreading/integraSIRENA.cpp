@@ -503,6 +503,17 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                                 
                                 double V0 = 0;
                                 
+                                strcpy(extname,"TESPARAM");
+                                if (fits_movnam_hdu(reconstruct_init->record_file_fptr, ANY_HDU,extname, 0, status))
+                                {
+                                        EP_EXIT_ERROR("Cannot move to HDU ",EPFAIL);
+                                }
+                                int numberkeywords;
+                                char *headerTESPARAM;
+                                fits_hdr2str(reconstruct_init->record_file_fptr, 0, NULL, 0,&headerTESPARAM, &numberkeywords, status);   // Reading thee whole "TESPARAM" HDU and store it in 'headerTESPARAM'
+                                char * R0_pointer;
+                                R0_pointer = strstr (headerTESPARAM,"R0");    // Pointer to where the text "RO" is
+                                                                              // R0_pointer is 0 if R0 is not in TESPARAM
                                 IOData obj;
                                 obj.inObject = reconstruct_init->record_file_fptr;
                                 obj.nameTable = new char [255];
@@ -515,9 +526,9 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                                 obj.iniRow = 1;
                                 obj.endRow = 1;
                                 gsl_vector *vector = gsl_vector_alloc(1);
-                                if (readFitsSimple (obj,&vector))
+                                if (R0_pointer == 0)    // R0_pointer is 0 if R0 is not in TESPARAM
                                 {
-                                        //EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                                        *status == 0;
                                         strcpy(obj.nameCol,"V0");
                                         if (readFitsSimple (obj,&vector))
                                         {
@@ -574,6 +585,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                         }
                         else
                         {
+                                cout<<"TESRECORDS"<<endl;
                                 double R0;
                                 double I0_START;
                                 double RPARA;

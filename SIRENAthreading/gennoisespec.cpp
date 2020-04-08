@@ -275,7 +275,7 @@ int main (int argc, char **argv)
                                 }
                                 LFILTER = gsl_vector_get(vector,0);
                                 
-                                // V0=Ibias*(R0+RPARA/TTRÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ²)*TTR
+                                // V0=Ibias*(R0+RPARA/TTRÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ²)*TTR
                                 if (V0 != 0)    R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
                                 
                                 /*cout<<"Imin: "<<Imin<<endl;
@@ -2165,12 +2165,12 @@ int writeTPSreprExten ()
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(gnoiseName);
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
 	}
-        /*strcpy(keyname,"BASELINE");     // In order to be changed with test purposes
+        strcpy(keyname,"BASELINE");     // In order to be changed with test purposes
 	if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
 	{
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(gnoiseName);
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
-	}*/
+	}
 	
 	strcpy(keyname,"NOISESTD");
 	double sumSigma;

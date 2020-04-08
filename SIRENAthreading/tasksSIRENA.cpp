@@ -156,6 +156,7 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 	dtcName[255]='\0';
 
 	int eventsz = record->trigger_size;
+        //cout<<"eventsz: "<<eventsz<<endl;
 	double tstartRecord;
 	// It is not necessary to check the allocation because 'record->trigger_size'='eventsz' has been checked previously
 	gsl_vector *invector = gsl_vector_alloc(eventsz);	// Record
@@ -7958,12 +7959,15 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                 }
                 gsl_vector_memcpy(model,modelToSubtract);
                 gsl_vector_free(modelToSubtract);
+                cout<<"runEnergyB"<<endl;
+                cout<<"record->trigger_size: "<<record->trigger_size<<endl;
 
                 for (int j=tstartSamplesRecord;j<min((double) tstartSamplesRecord+(model->size),(double) record->trigger_size);j++)
 		{
 			gsl_vector_set(recordAux,j,gsl_vector_get(recordAux,j)-gsl_vector_get(model,j-tstartSamplesRecord));
                 }
 
+                cout<<"runEnergyB1"<<endl;
 		// Write info of the pulse in the output intemediate file if 'intermediate'=1
 		if ((*reconstruct_init)->intermediate == 1)
 		{
@@ -8005,6 +8009,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                 (*pulsesInRecord)->pulses_detected[i].lagsShift = -999.0;
             }
 	} // End for
+	cout<<"runEnergyD"<<endl;
 	
 	gsl_vector_free(recordAux); recordAux = 0;
 	gsl_vector_free(model); model = 0;
@@ -8015,6 +8020,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
         if (PRCLOFWM_lowres != NULL) gsl_matrix_free(PRCLOFWM_lowres); PRCLOFWM_lowres = 0;
         gsl_vector_free(optimalfilter_lowres); optimalfilter_lowres = 0;
         if (optimalfilter_FFT_complex_lowres != NULL) gsl_vector_complex_free(optimalfilter_FFT_complex_lowres); optimalfilter_FFT_complex_lowres = 0;
+        cout<<"runEnergyE"<<endl;
 
 	return;
 }
