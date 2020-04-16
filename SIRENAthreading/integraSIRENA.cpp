@@ -418,7 +418,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 * - optimalFilter: Optimal filters used in reconstruction
 * - status:Input/output status
 ******************************************************************************/
-extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_list, ReconstructInitSIRENA* reconstruct_init,  int lastRecord, int nRecord, PulsesCollection **pulsesAll, OptimalFilterSIRENA **optimalFilter, int* const status)
+extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, TesEventList* event_list, ReconstructInitSIRENA* reconstruct_init,  int lastRecord, int nRecord, PulsesCollection **pulsesAll, OptimalFilterSIRENA **optimalFilter, int* const status)
 {
         log_trace("reconstructRecordSIRENA: START");
 	// Inititalize PulsesCollection structure
@@ -447,7 +447,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
     log_trace("reconstructRecordSIRENA:  Threading mode...");
     ReconstructInitSIRENA* rec = reconstruct_init->get_threading_object(nRecord);
     log_trace("reconstructRecordSIRENA:  Threading mode...1");
-    scheduler::get()->push_detection(record, nRecord, lastRecord, 
+    scheduler::get()->push_detection(record, trig_reclength, nRecord, lastRecord, 
                                      *pulsesAll, &rec, &pulsesInRecord,
                                      optimalFilter, event_list);
     log_trace("reconstructRecordSIRENA:  Threading mode...2");
@@ -625,7 +625,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
                 }
         }
         //log_trace("Before runDetect");
-	runDetect(record, lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
+	runDetect(record, trig_reclength,lastRecord, *pulsesAll, &reconstruct_init, &pulsesInRecord);
         log_trace("After runDetect");
 	
 	if(pulsesInRecord->ndetpulses == 0) // No pulses found in record
@@ -637,7 +637,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, TesEventList* event_l
 	if ((reconstruct_init->opmode == 1) && (strcmp(reconstruct_init->EnergyMethod,"PCA") != 0))
 	{
 		// Filter pulses and calculates energy
-		runEnergy(record, &reconstruct_init, &pulsesInRecord, optimalFilter,*pulsesAll);
+		runEnergy(record, trig_reclength, &reconstruct_init, &pulsesInRecord, optimalFilter,*pulsesAll);
 	}
 	log_trace("After runEnergy");
 	

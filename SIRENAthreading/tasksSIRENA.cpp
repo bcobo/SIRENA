@@ -137,7 +137,7 @@ MAP OF SECTIONS IN THIS FILE:
 * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
 * - pulsesInRecord: Member of 'PulsesCollection' structure to store all the pulses found in the input record
 ******************************************************************************/
-void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
+void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
 {       
         // Declare variables
 	int inputPulseLength = (*reconstruct_init)->pulse_length;
@@ -156,7 +156,7 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 	dtcName[255]='\0';
 
 	int eventsz = record->trigger_size;
-        //cout<<"eventsz: "<<eventsz<<endl;
+        
 	double tstartRecord;
 	// It is not necessary to check the allocation because 'record->trigger_size'='eventsz' has been checked previously
 	gsl_vector *invector = gsl_vector_alloc(eventsz);	// Record
@@ -212,6 +212,17 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 		message = "Cannot run routine loadRecord";
 		EP_EXIT_ERROR(message,EPFAIL);
 	}
+	gsl_vector_view temp;
+	if (record->trigger_size > trig_reclength)
+        {
+                gsl_vector *invectorAUX = gsl_vector_alloc(trig_reclength);
+                temp = gsl_vector_subvector(invector,0,trig_reclength);
+                gsl_vector_memcpy(invectorAUX,&temp.vector);
+                gsl_vector_free(invector);
+                invector = gsl_vector_alloc(trig_reclength);
+                gsl_vector_memcpy(invector,invectorAUX);
+                gsl_vector_free(invectorAUX); invectorAUX = 0;
+        }
 	eventsz = invector->size;	// Just in case the last record has been filled in with 0's => Re-allocate invector
 	gsl_vector *invectorOriginal = gsl_vector_alloc(invector->size);
         gsl_vector_memcpy(invectorOriginal,invector);
@@ -563,7 +574,7 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 			EP_EXIT_ERROR(message,EPFAIL);
 		}
 		
-		gsl_vector_view temp;
+		//gsl_vector_view temp;
 		if ((num1 < 1) || (num1 > pointsTranslatedRotated1aux->size))
 		{
 			sprintf(valERROR,"%d",__LINE__+5);
@@ -735,7 +746,7 @@ void runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, R
 std::mutex library_mut;
 std::mutex fits_file_mut;
 
-void th_runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
+void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
 {
   //log_trace("th_runDetect: START");
   scheduler* sc = scheduler::get();
@@ -781,18 +792,29 @@ void th_runDetect(TesRecord* record, int lastRecord, PulsesCollection *pulsesAll
   // Not treadsafe for the library
   // lock here
   if (filderLibrary(reconstruct_init, 1/record->delta_t))
-    {
+  {
       message = "Cannot run routine filderLibrary to filter "
-        + string("& differentiate library if the 1st record");
+      + string("& differentiate library if the 1st record");
       EP_EXIT_ERROR(message,EPFAIL);
-    }
+  }
   
   // Store the input record in 'invector'
   if (loadRecord(record, &tstartRecord, &invector))
-    {
+  {
       message = "Cannot run routine loadRecord";
       EP_EXIT_ERROR(message,EPFAIL);
-    }
+  }
+  gsl_vector_view temp;
+  if (record->trigger_size > trig_reclength)
+  {
+      gsl_vector *invectorAUX = gsl_vector_alloc(trig_reclength);
+      temp = gsl_vector_subvector(invector,0,trig_reclength);
+      gsl_vector_memcpy(invectorAUX,&temp.vector);
+      gsl_vector_free(invector);
+      invector = gsl_vector_alloc(trig_reclength);
+      gsl_vector_memcpy(invector,invectorAUX);
+      gsl_vector_free(invectorAUX); invectorAUX = 0;
+  }
   eventsz = invector->size;// Just in case the last record has been filled 
                            //in with 0's => Re-allocate invector
   gsl_vector *invectorOriginal = gsl_vector_alloc(invector->size);
@@ -2120,6 +2142,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	dtcName[255]='\0';
 	
 	gsl_vector_memcpy(recordNOTFILTERED,record);
+
 	// Filtering by using wavelets
 	/*int onlyOnce = 0;
 	//if (onlyOnce == 0)
@@ -2490,6 +2513,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                 log_debug("tend= %f", gsl_vector_get(tendgsl,i));
                 log_debug("pulse duration %d", foundPulses->pulses_detected[i].pulse_duration);
 	}
+	
 
 	// Write pulses info in intermediate output FITS file
 	if ((*reconstruct_init)->intermediate == 1)
@@ -3159,9 +3183,9 @@ int createHisto (gsl_vector *invector, int nbins, gsl_vector **xhistogsl, gsl_ve
 * From the discrete function x[n] (n=0,...,N-1 => Length = N) and according to the time shifting property of the Fourier transform:
 *
 *  x[n]   <------> X[f]
-*  x[n-m] <------> X[f]\B7exp(-j2\B7pi\B7m/N)
+*  x[n-m] <------> X[f]·exp(-j2·pi·m/N)
 *
-*  Shift = m => Phase due to the shift = 2\B7pi\B7m/N => m = Phase due to the shift\B7N/(2\B7pi)
+*  Shift = m => Phase due to the shift = 2·pi·m/N => m = Phase due to the shift·N/(2·pi)
 *
 * - Declare variables
 * - FFT of 'vector1'
@@ -7087,7 +7111,7 @@ int filterByWavelets (ReconstructInitSIRENA* reconstruct_init, gsl_vector **inve
 * - optimalFilter: Optimal filters used in reconstruction
 * - pulsesAll: To know the index of the pulse (to be used with tstartPulse1=nameFile)
 ******************************************************************************/
-void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord, OptimalFilterSIRENA **optimalFilter, PulsesCollection *pulsesAll)
+void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord, OptimalFilterSIRENA **optimalFilter, PulsesCollection *pulsesAll)
 {
 	// Declare variables
 	string message="";
@@ -7204,6 +7228,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 	long resize_mf;
         
         int preBuffer = (*reconstruct_init)-> preBuffer;
+        
+        double minimum;
         
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         int length_lowres = 4;
@@ -7862,6 +7888,8 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 			/*if ((energy >= 5914) && (energy <= 5918))    cout<<"1"<<endl;
                         else cout<<"0"<<endl;*/
 			gsl_vector_free(pulseToCalculateEnergy); pulseToCalculateEnergy = 0;
+                        log_debug("After calculateEnergy");
+                        
                         
 			// If using lags, it is necessary to modify the tstart of the pulse and the length of the filter used
 			if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && tstartNewDev != -999.0)
@@ -7960,10 +7988,14 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                 gsl_vector_memcpy(model,modelToSubtract);
                 gsl_vector_free(modelToSubtract);
 
-                for (int j=tstartSamplesRecord;j<min((double) tstartSamplesRecord+(model->size),(double) record->trigger_size);j++)
+                minimum = min((double) trig_reclength,(double) record->trigger_size);
+                minimum = min((double) tstartSamplesRecord+(model->size),minimum);
+                //for (int j=tstartSamplesRecord;j<min((double) tstartSamplesRecord+(model->size),(double) record->trigger_size);j++)
+                for (int j=tstartSamplesRecord;j<minimum;j++)
 		{
 			gsl_vector_set(recordAux,j,gsl_vector_get(recordAux,j)-gsl_vector_get(model,j-tstartSamplesRecord));
                 }
+                log_debug("After subtracting the pulse model from the record");
 
 		// Write info of the pulse in the output intemediate file if 'intermediate'=1
 		if ((*reconstruct_init)->intermediate == 1)
@@ -7995,6 +8027,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                         gsl_matrix_free(PRCLWN); PRCLWN = 0;
                         gsl_matrix_free(PRCLOFWM); PRCLOFWM = 0;
 		}
+		log_debug("After storing data in (*pulsesInRecord)->pulses_detected[i]");
             }
             else if  ((*pulsesInRecord)->pulses_detected[i].quality == 1)
             // Truncated pulse at the beginning
@@ -8006,6 +8039,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
                 (*pulsesInRecord)->pulses_detected[i].lagsShift = -999.0;
             }
 	} // End for
+	log_debug("After FOR");
 	
 	gsl_vector_free(recordAux); recordAux = 0;
 	gsl_vector_free(model); model = 0;
@@ -8017,6 +8051,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
         gsl_vector_free(optimalfilter_lowres); optimalfilter_lowres = 0;
         if (optimalfilter_FFT_complex_lowres != NULL) gsl_vector_complex_free(optimalfilter_FFT_complex_lowres); optimalfilter_FFT_complex_lowres = 0;
 
+        log_debug("Before RETURN");
 	return;
 }
 /*xxxx end of SECTION B xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
@@ -8025,7 +8060,7 @@ void runEnergy(TesRecord* record,ReconstructInitSIRENA** reconstruct_init, Pulse
 /***** SECTION BB ************************************************************
 * th_runEenergy: Run energy calculation only in multithread mode
 *****************************************************************************/
-void th_runEnergy(TesRecord* record, 
+void th_runEnergy(TesRecord* record, int trig_reclength,
                   ReconstructInitSIRENA** reconstruct_init, 
                   PulsesCollection** pulsesInRecord, 
                   OptimalFilterSIRENA **optimalFilter, PulsesCollection *pulsesAll)
@@ -8145,6 +8180,8 @@ void th_runEnergy(TesRecord* record,
 	long resize_mf;
         
         int preBuffer = (*reconstruct_init)-> preBuffer;
+        
+        double minimum;
         
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         int length_lowres = 4;
@@ -8901,7 +8938,10 @@ void th_runEnergy(TesRecord* record,
                 gsl_vector_memcpy(model,modelToSubtract);
                 gsl_vector_free(modelToSubtract);
 
-                for (int j=tstartSamplesRecord;j<min((double) tstartSamplesRecord+(model->size),(double) record->trigger_size);j++)
+                minimum = min((double) trig_reclength,(double) record->trigger_size);
+                minimum = min((double) tstartSamplesRecord+(model->size),minimum);
+                //for (int j=tstartSamplesRecord;j<min((double) tstartSamplesRecord+(model->size),(double) record->trigger_size);j++)
+                for (int j=tstartSamplesRecord;j<minimum;j++)
 		{
 			gsl_vector_set(recordAux,j,gsl_vector_get(recordAux,j)-gsl_vector_get(model,j-tstartSamplesRecord));
 		}
@@ -8969,20 +9009,20 @@ void th_runEnergy(TesRecord* record,
 *                         An optimal filter is just a matched filter that has been adjusted based on the noise spectrum of the system.
 *
 * It is assumed that all pulses are scaled versions of a template. In the frequency domain (as noise can be frequency dependent), the raw data
-* can be expressed as P(f)=E\B7S(f)+N(f), where S(f) is the normalized model pulse shape in the frequency domain, N(f) is the power spectrum of the noise and
+* can be expressed as P(f)=E·S(f)+N(f), where S(f) is the normalized model pulse shape in the frequency domain, N(f) is the power spectrum of the noise and
 * E is the scalar amplitude for the photon energy.
 *
 * The second assumption is that the noise is stationary, i.e. it does not vary with time. The amplitude of each pulse can then be estimated by 
 * minimizing (weighted least-squares sense) the difference between the noisy data and the model pulse shape, being the X^2 condition 
 * to be minimized:
 * 
-*            (P(f)-E\B7S(f))^2
+*            (P(f)-E·S(f))^2
 *  X^2 = SUM ---------------- 
 *                N(f)^2
 *
 * In the time domain, the amplitude is the best weighted (optimally filtered) sum of the values in the pulse
 * 
-* E = k\B7SUM p(t)*op(t)
+* E = k·SUM p(t)*op(t)
 * 
 * where of(t) is the time domain expression of optimal filter in frequency domain
 *                          
@@ -10456,9 +10496,9 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 *   Once the filter template has been created ('filter' or 'filterFFT'), pulse height analysis is performed by aligning the template
 *   with a pulse and multiplying each point in the template by the corresponding point in the pulse. The sum of these products is the energy.
 *
-* 	Time domain: E = SUM p(t)\B7of(t)
+* 	Time domain: E = SUM p(t)·of(t)
 *
-* 	Frequency domain: E = SUM P(f)\B7OF(f)
+* 	Frequency domain: E = SUM P(f)·OF(f)
 *
 * 	In practice, the alignment of the pulse relative to the trigger is not completely accurate, so a number of n lags could be used in
 * 	order to find the peak value of the energy. The n peak values are fitted to a parabola to find the most accurate energy and a corrected starting time.
@@ -10468,7 +10508,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 *
 * 	(*) IXO Onboard processing Trade-Off
 * 
-* 	If 'OFInterp'=DAB, E = SUM {(p(t)-PAB(t))\B7of(t)} or E = SUM {(P(f)-PAB(f))\B7OF(f)}
+* 	If 'OFInterp'=DAB, E = SUM {(p(t)-PAB(t))·of(t)} or E = SUM {(P(f)-PAB(f))·OF(f)}
 * 
 * OPTFILT and WEIGHTM: 
 * 
@@ -10512,7 +10552,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 *       bm -> Baseline of the measured data
 *       b0 -> Baseline in the calibration
 *
-*   => P(E) - Pab = E . Dab + (bm-b0) => Datos = E \B7 Modelo + Baseline => y = E\B7x + B (condition equation)
+*   => P(E) - Pab = E . Dab + (bm-b0) => Datos = E · Modelo + Baseline => y = E·x + B (condition equation)
 *
 *   where Pab = P(Ea) - Ea/(Eb-Ea) * (P(Eb)-P(Ea))  and Dab = (P(Eb) - P(Ea))/(Eb - Ea) can be pre-calculated. That way, you see that if you subtract Pab
 *   to your data, you end up again in an optimal filter like situation with your data modeled by something that is proportional to a template
@@ -10522,10 +10562,10 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 * 
 *   Anyway, this is now a linear chi^2 problem which has an exact solution:
 *
-*   y = E\B7X + B => y0 = E\B7x0 + B => SUM{xiyi} = E\B7SUM{xi^2} + mB => Matricial expression => chi^2 taking into account the errors
-*                  y1 = E\B7x1 + B                                   X'Y = |E|\B7X'X           chi^2 = SUM{(data-model)^2}/sigma^2
+*   y = E·X + B => y0 = E·x0 + B => SUM{xiyi} = E·SUM{xi^2} + mB => Matricial expression => chi^2 taking into account the errors
+*                  y1 = E·x1 + B                                   X'Y = |E|·X'X           chi^2 = SUM{(data-model)^2}/sigma^2
 *                  ...                                                   |B|
-*                  yN = E\B7xN + B                                   |E| = (1/(X'X))X'Y      y/sigma = E\B7x/sigma
+*                  yN = E·xN + B                                   |E| = (1/(X'X))X'Y      y/sigma = E·x/sigma
 *                                                                  |B|
 *                                                            
 *                                                                  |E| = (1/(X'WX))X'WY
