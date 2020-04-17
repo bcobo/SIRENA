@@ -584,8 +584,9 @@ int medianKappaClipping (gsl_vector *invector, double kappa, double stopCriteria
 * - lb: Vector containing the baseline averaging length used for each pulse
 * - sizePulse:  Size of the pulse in samples
 * - B: In general, sum of the Lb digitized data samples of a pulse-free interval immediately before the current pulse
+* - rmsB: In general, rms of the baseline related to a pulse-free interval immediately before the current pulse
 ****************************************/
-int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb, int sizepulse, gsl_vector **B)
+int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb, int sizepulse, gsl_vector **B, gsl_vector **rmsB)
 {
 	string message = "";
 	char valERROR[256];
@@ -594,12 +595,16 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
 	// It is not necessary to check the allocation because 'tstart' size must already be > 0
 	*B = gsl_vector_alloc(tstart->size);
 	gsl_vector_set_all(*B,-999);
+        *rmsB = gsl_vector_alloc(tstart->size);
+	gsl_vector_set_all(*rmsB,-999);
 	double Baux = -999;
 	double tendprev;
 
 	// Auxiliary variables
 	gsl_vector *input;
 	gsl_vector_view temp;		// In order to handle with gsl_vector_view (subvectors)
+	
+	double mean, sigma;
 
 	if (nPulses != 0)
         {
@@ -660,6 +665,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                             EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                     }
                                     //cout<<"Baux: "<<Baux<<endl;
+                                    if (findMeanSigma (input, &mean, &sigma))
+                                    {
+                                            message = "Cannot run findMeanSigma in getB";
+                                            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                    }
                                     gsl_vector_free(input); input = 0;
                             }
                             else if ((gsl_vector_get(tstart,0)<gsl_vector_get(*lb,0)) && (gsl_vector_get(tstart,0)>1))
@@ -697,6 +707,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                             EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                     }
                                     gsl_vector_set(*lb,0, gsl_vector_get(tstart,0));
+                                    if (findMeanSigma (input, &mean, &sigma))
+                                    {
+                                            message = "Cannot run findMeanSigma in getB";
+                                            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                    }
                                     gsl_vector_free(input); input = 0;
                             }
                             else	// If there is not a pulse-free interval before the pulse, it is looked for it after the current pulse
@@ -747,6 +762,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                     message = "Cannot run gsl_vector_Sumsubvector routine when no pulse free interval before the pulse";
                                                                     EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                             }
+                                                            if (findMeanSigma (input, &mean, &sigma))
+                                                            {
+                                                                    message = "Cannot run findMeanSigma in getB";
+                                                                    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                                            }
                                                             gsl_vector_free(input); input = 0;
 
                                                             break;
@@ -784,6 +804,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                             if (gsl_vector_Sumsubvector(input,0,input->size,&Baux))
                                                             {
                                                                     message = "Cannot run gsl_vector_Sumsubvector routine when no pulse free interval before the pulse";
+                                                                    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                                            }
+                                                            if (findMeanSigma (input, &mean, &sigma))
+                                                            {
+                                                                    message = "Cannot run findMeanSigma in getB";
                                                                     EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                             }
                                                             gsl_vector_free(input); input = 0;
@@ -836,6 +861,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                                             message = "Cannot run gsl_vector_Sumsubvector routine when no first pulse in row & tstart-tendprev >= lb";
                                                                                             EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                                                     }
+                                                                                    if (findMeanSigma (input, &mean, &sigma))
+                                                                                    {
+                                                                                            message = "Cannot run findMeanSigma in getB";
+                                                                                            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                                                                    }
                                                                                     gsl_vector_free(input); input = 0;
 
                                                                                     break;
@@ -881,6 +911,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                                             EP_PRINT_ERROR(message,EPFAIL);
                                                                                     }
                                                                                     gsl_vector_set(*lb,0,gsl_vector_get(tstart,j+1)-tendprev-1);
+                                                                                    if (findMeanSigma (input, &mean, &sigma))
+                                                                                    {
+                                                                                            message = "Cannot run findMeanSigma in getB";
+                                                                                            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                                                                    }
                                                                                     gsl_vector_free(input); input = 0;
 
                                                                                     break;
@@ -921,6 +956,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                                     if (gsl_vector_Sumsubvector(input,0,input->size,&Baux))
                                                                                     {
                                                                                             message = "Cannot run gsl_vector_Sumsubvector routine when no pulse-free interval before pulse & last pulse in row";
+                                                                                            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                                                                    }
+                                                                                    if (findMeanSigma (input, &mean, &sigma))
+                                                                                    {
+                                                                                            message = "Cannot run findMeanSigma in getB";
                                                                                             EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                                                     }
                                                                                     gsl_vector_free(input); input = 0;
@@ -966,6 +1006,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                                     if (gsl_vector_Sumsubvector(input,0,input->size,&Baux))
                                                                                     {
                                                                                             message = "Cannot run gsl_vector_Sumsubvector routine when no pulse-free interval before pulse & last pulse in row";
+                                                                                            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                                                                    }
+                                                                                    if (findMeanSigma (input, &mean, &sigma))
+                                                                                    {
+                                                                                            message = "Cannot run findMeanSigma in getB";
                                                                                             EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                                                     }
                                                                                     gsl_vector_free(input); input = 0;
@@ -1022,6 +1067,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                             message = "Cannot run gsl_vector_Sumsubvector routine length_(2)>=lb";
                                             EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                     }
+                                    if (findMeanSigma (input, &mean, &sigma))
+                                    {
+                                            message = "Cannot run findMeanSigma in getB";
+                                            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                    }
                                     gsl_vector_free(input); input = 0;
                             }
                             else if ((gsl_vector_get(tstart,i)-tendprev<gsl_vector_get(*lb,i)) && (gsl_vector_get(tstart,i)-tendprev>1))
@@ -1067,6 +1117,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                             EP_PRINT_ERROR(message,EPFAIL);
                                     }
                                     gsl_vector_set(*lb,i,gsl_vector_get(tstart,i)-tendprev-1);
+                                    if (findMeanSigma (input, &mean, &sigma))
+                                    {
+                                            message = "Cannot run findMeanSigma in getB";
+                                            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                    }
                                     gsl_vector_free(input); input = 0;
                             }
                             else	// If there is not a pulse-free interval before the pulse, it is looked for it after the current pulse
@@ -1115,6 +1170,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                     message = "Cannot run gsl_vector_Sumsubvector routine when no first pulse in row & tstart-tendprev >= lb";
                                                                     EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                             }
+                                                            if (findMeanSigma (input, &mean, &sigma))
+                                                            {
+                                                                    message = "Cannot run findMeanSigma in getB";
+                                                                    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                                            }
                                                             gsl_vector_free(input); input = 0;
 
                                                             break;
@@ -1160,6 +1220,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                     EP_PRINT_ERROR(message,EPFAIL);
                                                             }
                                                             gsl_vector_set(*lb,i,gsl_vector_get(tstart,j+1)-tendprev-1);
+                                                            if (findMeanSigma (input, &mean, &sigma))
+                                                            {
+                                                                    message = "Cannot run findMeanSigma in getB";
+                                                                    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                                            }
                                                             gsl_vector_free(input); input = 0;
 
                                                             break;
@@ -1200,6 +1265,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                             if (gsl_vector_Sumsubvector(input,0,input->size,&Baux))
                                                             {
                                                                     message = "Cannot run gsl_vector_Sumsubvector routine when no pulse-free interval before pulse & last pulse in row";
+                                                                    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                                            }
+                                                            if (findMeanSigma (input, &mean, &sigma))
+                                                            {
+                                                                    message = "Cannot run findMeanSigma in getB";
                                                                     EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                             }
                                                             gsl_vector_free(input); input = 0;
@@ -1247,6 +1317,11 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                                                                     message = "Cannot run gsl_vector_Sumsubvector routine when no pulse-free interval before pulse & last pulse in row";
                                                                     EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                                                             }
+                                                            if (findMeanSigma (input, &mean, &sigma))
+                                                            {
+                                                                    message = "Cannot run findMeanSigma in getB";
+                                                                    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                                            }
                                                             gsl_vector_free(input); input = 0;
 
                                                             break;
@@ -1277,6 +1352,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
                             EP_PRINT_ERROR(message,EPFAIL);
                     }
                     gsl_vector_set(*B,i,Baux);
+                    gsl_vector_set(*rmsB,i,sigma);
             }//for
         }
 
@@ -1872,8 +1948,9 @@ int findPulsesCAL
 		gsl_vector_set_all(Lbgsl,lb);                                  			// segments shorter than Lb will be used and its length (< Lb)
 		                                                               			// must be used instead Lb in RS_filter
 		gsl_vector *Bgsl;
+                gsl_vector *sigmagsl;
 
-		if (getB(vectorin, *tstart, *nPulses, &Lbgsl, reconstruct_init->pulse_length, &Bgsl))
+		if (getB(vectorin, *tstart, *nPulses, &Lbgsl, reconstruct_init->pulse_length, &Bgsl, &sigmagsl))
 		{
 			message = "Cannot run getB";
 			EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
@@ -1904,6 +1981,7 @@ int findPulsesCAL
 
 		gsl_vector_free(Lbgsl); Lbgsl = 0;
 		gsl_vector_free(Bgsl); Bgsl = 0;
+                gsl_vector_free(sigmagsl); sigmagsl = 0;
 	}
 	
 	return(EPOK);

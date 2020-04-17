@@ -275,7 +275,7 @@ int main (int argc, char **argv)
                                 }
                                 LFILTER = gsl_vector_get(vector,0);
                                 
-                                // V0=Ibias*(R0+RPARA/TTRÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ²)*TTR
+                                // V0=Ibias*(R0+RPARA/TTRÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ²)*TTR
                                 if (V0 != 0)    R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
                                 
                                 /*cout<<"Imin: "<<Imin<<endl;
@@ -2431,7 +2431,8 @@ int findPulsesNoise
 	gsl_vector_set_all(Lbgsl,lb);                                   // segments shorter than Lb will be useed and its length (< Lb)
 	                                                                // must be used instead Lb in RS_filter
 	gsl_vector *Bgsl;
-
+        gsl_vector *sigmagsl;
+        
 	gsl_vector_set_zero(*quality);
 	gsl_vector_set_zero(*energy);					// Estimated energy of the single pulses
 									// In order to choose the proper pulse template to calculate
@@ -2454,7 +2455,7 @@ int findPulsesNoise
 
 	if (*nPulses != 0)
 	{
-		if (getB(vectorin, *tstart, *nPulses, &Lbgsl, sizepulsebins, &Bgsl))
+		if (getB(vectorin, *tstart, *nPulses, &Lbgsl, sizepulsebins, &Bgsl, &sigmagsl))
 		{
 			message = "Cannot run getB routine with opmode=0 & nPulses != 0";
 			EP_PRINT_ERROR(message,EPFAIL);
@@ -2486,6 +2487,8 @@ int findPulsesNoise
 	gsl_vector_free(maxDERgsl); maxDERgsl = 0;
 	gsl_vector_free(index_maxDERgsl); index_maxDERgsl = 0;
 	gsl_vector_free(Lbgsl); Lbgsl = 0;
+        gsl_vector_free(Bgsl); Bgsl = 0;
+        gsl_vector_free(sigmagsl); sigmagsl = 0;
 
 	return(EPOK);
 }

@@ -378,6 +378,9 @@ typedef struct PulseDetected
         
         /** Baseline calculated, in general, by using the previous Lb samples to the pulse */
         double bsln;
+        
+        /** Rms of the baseline calculated, in general, by using the previous Lb samples to the pulse */
+        double rmsbsln;
 #ifdef __cplusplus
   PulseDetected();
   PulseDetected(const PulseDetected& other);

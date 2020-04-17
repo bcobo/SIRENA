@@ -2364,6 +2364,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
         gsl_vector *Lbgsl = gsl_vector_alloc((*reconstruct_init)->maxPulsesPerRecord);	// If there is no free-pulses segments longer than Lb=>
         gsl_vector_set_all(Lbgsl,Lb); 
         gsl_vector *Bgsl;
+        gsl_vector *rmsBgsl;
         if (numPulses != 0)
         {
             //if ((Lb == 0.0) || ((*reconstruct_init)->opmode == 0))
@@ -2371,10 +2372,12 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
             {
                 Bgsl = gsl_vector_alloc(numPulses);
                 gsl_vector_set_all(Bgsl,-999.0);
+                rmsBgsl = gsl_vector_alloc(numPulses);
+                gsl_vector_set_all(rmsBgsl,-999.0);
             }
             else
             {
-                if (getB(recordNOTFILTERED, tstartgsl, numPulses, &Lbgsl, (*reconstruct_init)->pulse_length, &Bgsl))
+                if (getB(recordNOTFILTERED, tstartgsl, numPulses, &Lbgsl, (*reconstruct_init)->pulse_length, &Bgsl, &rmsBgsl))
                 {
                         message = "Cannot run getB";
                         EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
@@ -2501,13 +2504,19 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                 foundPulses->pulses_detected[i].pixid = pixid;
                 foundPulses->pulses_detected[i].phid = phid;
                 if (gsl_vector_get(Bgsl,i) != -999.0)
+                {
                     foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
+                }
                 else
+                {
                     foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i);
+                }
+                foundPulses->pulses_detected[i].rmsbsln = gsl_vector_get(rmsBgsl,i);
 		//cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<" , Tstart="<<foundPulses->pulses_detected[i].Tstart<<" , Tend="<<foundPulses->pulses_detected[i].Tend<<endl;
                 //log_debug("Pulse %d", i," tstart=%f",gsl_vector_get(tstartgsl,i), " maxDER=%f",foundPulses->pulses_detected[i].maxDER, " samp1DER=%f",gsl_vector_get(samp1DERgsl,i), " pulse_duration=%d",foundPulses->pulses_detected[i].pulse_duration," quality=%d",foundPulses->pulses_detected[i].quality," lags=%f",gsl_vector_get(lagsgsl,i)," Tstart=%f",foundPulses->pulses_detected[i].Tstart," Tend=%f",foundPulses->pulses_detected[i].Tend);
                 //log_debug("Pulse %i tstart=%f maxDER=%f samp1DER=%f pulse_duration=%i quality=%f lags=%f",i,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].maxDER,gsl_vector_get(samp1DERgsl,i),foundPulses->pulses_detected[i].pulse_duration,foundPulses->pulses_detected[i].quality,gsl_vector_get(lagsgsl,i));
-                //cout<<"pixid = "<<foundPulses->pulses_detected[i].pixid<<endl;
+                //cout<<"Bgsl = "<<foundPulses->pulses_detected[i].bsln<<endl;
+                //cout<<"rmsBgsl = "<<foundPulses->pulses_detected[i].rmsbsln<<endl;
                 log_debug("Pulse %d", i);
                 log_debug("tstart= %f", gsl_vector_get(tstartgsl,i));
                 log_debug("tend= %f", gsl_vector_get(tendgsl,i));

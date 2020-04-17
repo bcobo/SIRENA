@@ -671,6 +671,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, T
                 if (event_list->phis != NULL) 	        delete [] event_list->phis;
                 if (event_list->lagsShifts != NULL) 	delete [] event_list->lagsShifts;
                 if (event_list->bsln != NULL) 	        delete [] event_list->bsln;
+                if (event_list->rmsbsln != NULL) 	delete [] event_list->rmsbsln;
                 if (event_list->grading != NULL) 	delete [] event_list->grading;
                 if (event_list->grades1 != NULL) 	delete [] event_list->grades1;
 		if (event_list->grades2 != NULL) 	delete [] event_list->grades2;
@@ -730,6 +731,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, T
         event_list->phis = new double[event_list->index];
         event_list->lagsShifts = new int[event_list->index];
         event_list->bsln = new double[event_list->index];
+        event_list->rmsbsln = new double[event_list->index];
         event_list->grading  = new int[event_list->index];
 	event_list->grades1  = new int[event_list->index];
 	event_list->grades2  = new int[event_list->index];
@@ -761,6 +763,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, T
                         event_list->phis[ip] = pulsesInRecord->pulses_detected[ip].phi;
                         event_list->lagsShifts[ip] = pulsesInRecord->pulses_detected[ip].lagsShift;
                         event_list->bsln[ip] = pulsesInRecord->pulses_detected[ip].bsln;
+                        event_list->rmsbsln[ip] = pulsesInRecord->pulses_detected[ip].rmsbsln;
                         event_list->grading[ip]  = pulsesInRecord->pulses_detected[ip].grading;
 			event_list->grades1[ip]  = pulsesInRecord->pulses_detected[ip].grade1;
 			event_list->grades2[ip]  = pulsesInRecord->pulses_detected[ip].grade2;
@@ -802,6 +805,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, T
                         event_list->phis = new double[event_list->index];
                         event_list->lagsShifts = new int[event_list->index];
                         event_list->bsln = new double[event_list->index];
+                        event_list->rmsbsln = new double[event_list->index];
                         event_list->grading  = new int[event_list->index];
                         event_list->grades1  = new int[event_list->index];
 			event_list->grades2  = new int[event_list->index];
@@ -827,6 +831,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, T
                                 event_list->phis[ip] = (*pulsesAll)->pulses_detected[ip].phi;
                                 event_list->lagsShifts[ip] = (*pulsesAll)->pulses_detected[ip].lagsShift;
                                 event_list->bsln[ip] = (*pulsesAll)->pulses_detected[ip].bsln;
+                                event_list->rmsbsln[ip] = (*pulsesAll)->pulses_detected[ip].rmsbsln;
                                 event_list->grading[ip]  = (*pulsesAll)->pulses_detected[ip].grading;
 				event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
 				event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
@@ -3878,6 +3883,7 @@ PulseDetected::PulseDetected():
   avg_4samplesDerivative(0.0f),
   E_lowres(0.0f),
   bsln(0.0f),
+  rmsbsln(0.0f),
   phi(0.0f),
   lagsShift(0),
   quality(0.0f),
@@ -3908,6 +3914,7 @@ PulseDetected::PulseDetected(const PulseDetected& other):
   avg_4samplesDerivative(other.avg_4samplesDerivative),
   E_lowres(other.E_lowres),
   bsln(other.bsln),
+  rmsbsln(other.rmsbsln),
   phi(other.phi),
   lagsShift(other.lagsShift),
   quality(other.quality),
@@ -3960,6 +3967,7 @@ PulseDetected& PulseDetected::operator=(const PulseDetected& other)
     avg_4samplesDerivative = other.avg_4samplesDerivative;
     E_lowres = other.E_lowres;
     bsln = other.bsln;
+    rmsbsln = other.rmsbsln;
     phi = other.phi;
     lagsShift = other.lagsShift;
     quality = other.quality;
