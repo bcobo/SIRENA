@@ -2360,7 +2360,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 
         int preBuffer = (*reconstruct_init)-> preBuffer;
         
-        // Calculate the baseline before a pulse (in general 'before') => To be written in BSLN keyword in the output FITS file
+        // Calculate the baseline before a pulse (in general 'before') => To be written in BSLN column in the output FITS file
         gsl_vector *Lbgsl = gsl_vector_alloc((*reconstruct_init)->maxPulsesPerRecord);	// If there is no free-pulses segments longer than Lb=>
         gsl_vector_set_all(Lbgsl,Lb); 
         gsl_vector *Bgsl;
@@ -7337,6 +7337,7 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
 		resize_mf = resize_mf + preBuffer;
 		(*pulsesInRecord)->pulses_detected[i].grade1 = resize_mf;
                 log_debug("resize_mf (after pulseGrading): %i",resize_mf);
+ 
                 
 		if ((pulse = gsl_vector_alloc(resize_mf)) == 0)
 		{
