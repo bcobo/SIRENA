@@ -132,6 +132,7 @@ MAP OF SECTIONS IN THIS FILE:
 *
 * Parameters:
 * - record: Member of TesRecord' structure that contains the input record
+* - trig_reclength: Record size (just in case threading and input files with different 'ADC' lengths but the same record size indeed)
 * - lastRecord: Integer to verify whether record is the last one (=1) to be read (and thus if library file will be created)
 * - pulsesAll: Member of 'PulsesCollection' structure to successively store all the pulses used to create the library. Re-populated after each processed record
 * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
@@ -213,6 +214,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
 		EP_EXIT_ERROR(message,EPFAIL);
 	}
 	gsl_vector_view temp;
+        // Just in case threading and input files with different 'ADC' lengths but the same record size indeed
 	if (record->trigger_size > trig_reclength)
         {
                 gsl_vector *invectorAUX = gsl_vector_alloc(trig_reclength);
@@ -1822,7 +1824,7 @@ int createDetectFile(ReconstructInitSIRENA* reconstruct_init, double samprate, f
                 if (isNumber(reconstruct_init->tstartPulse1)) // If tstartPulse1 is an intereger number
                 {
                     char str_tstartPulse1[125];	
-                    if (reconstruct_init->tstartPulse1 == 0)			  	snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1);
+                    if (reconstruct_init->tstartPulse1 == 0)			  	        snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1);
                     else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") == 0)		snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1+2);
                     else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") != 0)		snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1+1);
                     strhistory=string("tstartPulse1 = ") + string(str_tstartPulse1);
@@ -2071,7 +2073,7 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
 *       - Calibration mode: 'findPulsesCAL'
 * - Calculate the tend of the found pulses and check if the pulse is saturated
 * - Obtain the approximate rise and fall times of each pulse (to be done)
-* - Calculate the baseline before a pulse (in general 'before') => To be written in BSLN keyword in the output FITS file
+* - Calculate the baseline (mean and standard deviation) before a pulse (in general 'before') => To be written in BSLN and RMSBSLN columns in the output FITS file
 * - Load the found pulses data in the input/output 'foundPulses' structure
 * - Write test info (if 'reconstruct_init->intermediate'=1)
 * - Write pulses info in intermediate output FITS file (if 'reconstruct_init->intermediate'=1)
@@ -2081,7 +2083,7 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
 * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
 *                     This function uses parameters to filter ('scaleFactor'),
 *                     to find pulses ('pulse_length', 'samplesUp', 'nSgms', 'LrsT', 'LbT', 'maxPulsesPerRecord')
-*                     and to wrtite info ('detectFile') if 'reconstruct_init->intermediate'=1
+*                     and to write info ('detectFile') if 'reconstruct_init->intermediate'=1
 * - tstartRecord: Starting time of the record (in order to calculate absolute times)
 * - samprate: Sampling rate (in order to low-pass filter)
 * - dtcObject: Object which contains information of the intermediate FITS file (to be written if 'intermediate'=1)
@@ -3781,7 +3783,7 @@ int eigenVV (gsl_matrix *matrixin, gsl_matrix **eigenvectors, gsl_vector **eigen
 
 
 /***** SECTION A14 ************************************************************
-* writeLibrary function: This function writes the library (reordering if it is necessary and calculating some intermediate parameters)
+* writeLibrary function: This function writes the library (reordering if it is necessary and calculating some intermediate parameters).
 *
 * - Adding a new row to the library if appendToLibrary =='true' ('readAddSortParams')
 * - Write the first row of the library if appendToLibrary == 'false' ('addFirstRow')
@@ -4217,12 +4219,14 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 
 
 /***** SECTION A15 ************************************************************
-* addFirstRow function: This function writes the first row of the library (without intermediate AB-related values, because it would be necessary to have at least two rows=energies in the library). *                       It also writes the FIXFILTT and FIXFILTF HDUs with the optimal filters in the time and frequency domain (real and imag parts) with fixed legnth and the PRCLOFWM HDU with 
-*                       the precalculated values for optimal filtering and mode WEIGHTM.
+* addFirstRow function: This function writes the first row of the library (without intermediate AB-related values, because it would be necessary to have at least two rows=energies in the library). *                       It also writes the FIXFILTT and FIXFILTF HDUs with the optimal filters in the time and frequency domain with fixed legnths (base-2 values), and the PRCLOFWM HDU with the 
+*                       precalculated values for optimal filtering and mode WEIGHTM.
 * 
 * - Declare variables
-* - Write in the first row of the library FITS file some columns with the info provided by the input GSL vectors E, PHEIGHT, PULSE, PULSEB0, MF and MFB0 (and COVAR and WEIGHT if hduPRCLOFWM ==1)
-* - Writing HDUs with fixed filters in time (FIXFILTT) and frequency (FIXFILTF) (calculating the optial filters, 'calculus_optimalFilter')
+* - Write in the first row of the library FITS file some columns with the info provided by the input GSL vectors E, PHEIGHT, PULSE, PULSEB0, MF and MFB0 (and COVAR and WEIGHT if hduPRCLOFWM 
+*   ==1) (and PLSMXLFF if largeFilter > PulseLength)
+* - Writing HDUs with fixed filters in time (FIXFILTT) and frequency (FIXFILTF), Tx and Fx respectively (calculating the optimal filters, 'calculus_optimalFilter')
+*   In time domain Tx are real numbers but in frequency domain Fx are complex numbers (so real and imaginary parts are written).
 * - Calculate and write the pre-calculated values by using the noise weight matrix from noise intervals (M'WM)^{-1}M'W for different lengths, OFWx
 * 
 * Parameters: 
@@ -4841,11 +4845,11 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 
 
 /***** SECTION A16 ************************************************************
-* readAddSortParams function: This function reads the library data, add new data and sort the data according to an energy-ascending order.
+* readAddSortParams function: This function reads the library data, add new data (a new row) and sort the data according to an energy-ascending order.
 * 
 * - Declare variables
 * - Load values already in the library
-* - Add new values
+* - Add new values 
 * - Realign
 * - Add intermeadiate values
 * - Recalculate intermediate values of some new pairs
@@ -6236,7 +6240,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 
 /***** SECTION A17 ************************************************************
 * calculateIntParams function: This function calculates some intermediate scalars, vectors and matrices (WAB, TV, tE, XM, YV, ZV, rE, PAB and DAB)
-*                              for the interpolation and covariance methods.
+*                              for the interpolation and covariance methods. It is used in 'readAddSortParams'.
 *
 * - Declare variables and allocate GSL vectors and matrices
 * - Calculate intermediate scalars, vectors and matrices 
@@ -6266,7 +6270,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 * - precalWMaux: Input/output intermediate parameters 
 * - optimalfiltersabFREQaux: Input/output intermediate parameters
 * - optimalfiltersabTIMEaux: Input/output intermediate parameters
-* - modelsMaxLengthFixedFilteraux: GSL input matrix with model template whose length is largeFilter
+* - modelsMaxLengthFixedFilteraux: Input/output intermediate parameters
 * - PabMaxLengthFixedFilteraux: Input/output intermediate parameters
 ******************************************************************************/
 int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int indexb, double samprate, int runF0orB0val, 
@@ -6701,7 +6705,7 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
 
 
 /***** SECTION A18 ************************************************************
-* matrix2vector function: This function converts an input [nxn] square matrix into an output n^2 vector.
+* matrix2vector function: This function converts an input square matrix [nxn] into an output n^2 vector.
 *                         It puts the first row of the matrix (n elements) in the first n elements of the vector (from 0 to n-1),
 *                         the second row of the matrix in the elements from n to 2n-1 of the vector and so on.
 *
@@ -6743,7 +6747,7 @@ int matrix2vector (gsl_matrix *matrixin, gsl_vector **vectorout)
 
 
 /***** SECTION A19 ************************************************************
-* vector2matrix function: This function converts an input n^2 vector into an output [nxn] square matrix.
+* vector2matrix function: This function converts an input n^2 vector into an output square matrix [nxn].
 *                         It puts the first n elements of the vector in the first row of the matrix,
 *                         the second group of n elements (from n to 2n-1) of the vector in the second row and so on.
 *
@@ -6771,21 +6775,31 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
 
 /***** SECTION A20 ************************************************************
 * convertI2R: This funcion converts the current space into a quasi-resistance space. 
-*             The 'invector' filled with currents is filled in with resistances at the output.
+*             The 'invector' filled in with currents is filled in here with resistances at the output.
 * 
-* - Read R0, I0_START=Ibias, ADUCNV and IMIN from the 'RecordFile' by using the pointer '(*reconstruct_init)->record_file_fptr'
-* - Conversion according to 'EnergyMethod'=I2R
-* - Conversion according to 'EnergyMethod'=I2RALL
-* 	- Read also RL, LFILTER and TTR from the 'RecordFile'
-* - Conversion according to 'EnergyMethod'=I2RNOL
-*       - I2RALL neglecting the circuit inductance
-* - Conversion according to 'EnergyMethod'=I2RFITTED
-* - Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+* If 'invector' contains tha ADC column data and I = Ibias-(invector*ADUCNV+Imin): 
+* 
+* - Conversion according to 'EnergyMethod'=I2R: 
+*       DeltaI = I-Ibias
+*       R = R0 - R0*(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+* - Conversion according to 'EnergyMethod'=I2RALL: 
+*       R = (V0-IRL-LdI/dt)/I
+* - Conversion according to 'EnergyMethod'=I2RNOL (I2RALL neglecting the circuit inductance): 
+*       R = (V0-IRL)/I    
+* - Conversion according to 'EnergyMethod'=I2RFITTED:
+*       R = V0/(Ifit+I)
 * 
 * Parameters:
-* - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
-* - record: Structure containing the input record
-* - invector: Input current (ADC) vector & output resistance (I2R, I2RALL or I2RNOL) vector
+* - EnergyMethod: Quasi-resistance energy calculation method (I2R, I2RALL, I2RNOL or I2RFITTED)
+* - R0: Operating point resistance
+* - Ibias: Initial bias current
+* - Imin: Current corresponding to 0 ADU 
+* - Imax: Current corresponding to maximm ADU
+* - TTR: Transformer Turns Ratio
+* - LFILTER: Filter circuit inductance
+* - RPARA: Parasitic resistor value
+* - samprate: Sampling rate
+* - invector: Input current (ADC) vector & output resistance (I2R, I2RALL, I2RNOL or I2RFITTED) vector
 ******************************************************************************/
 int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double Imax, double TTR, double LFILTER, double RPARA, double samprate, gsl_vector **invector)
 {
@@ -6941,9 +6955,9 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
 * filterByWavelets: This funcion filters the input/output signal 'invector', reducing the noise level.
 * 
 * - It is only going to work with 'n' elements of 'invector'
-* - Discrete Wavelet Treansform 
+* - Discrete Wavelet Transform 
 * - Sorting coefficients
-* - Hard thresholding: 'n-nc' coefficeints are deleted (those with low energy)
+* - Hard thresholding: 'n-nc' coefficients are deleted (those with low energy)
 * - Inverse DWT
 * 
 * Parameters:
@@ -7019,10 +7033,10 @@ int filterByWavelets (ReconstructInitSIRENA* reconstruct_init, gsl_vector **inve
 	}
 	
 	// DWT (Discrete Wavelet Transform)
-	// An\E1lisis: Genera diferentes subbandas => Distintos niveles de descomposici\F3n se pueden generar de acuerdo a las necesidades de la aplicaci\F3n
-	// El an\E1lisis wavelet entrega una serie de coeficientes 'data'. Dado que es un proceso reversible, la se\F1al original puede obtenerse a partir 
-	// de los coeficientes obtenidos en el an\E1lisis.
-	// Los coeficientes se agrupan en los de baja frecuencia (aproximaciones) y los de alta frecuencia (detalles).
+	// Analysis: It generates different sub-bands => Different levels of decomposition can be generated according to the needs of the application.
+	// The wavelet analysis provides a series of 'data' coefficients. Since it is a reversible process, the original signal can be obtained from 
+        // the coefficients obtained in the analysis.
+        // The coefficients are grouped into low frequency (approximations) and high frequency (details).
 	gsl_wavelet_transform_forward (w, data, 1, n, work);
 	
 	for (i = 0; i < n; i++)
@@ -7039,9 +7053,9 @@ int filterByWavelets (ReconstructInitSIRENA* reconstruct_init, gsl_vector **inve
 	// Sorting the 'n' elements of 'abscoeff' into ascending order, storing the resulting permutation in 'p'
 	gsl_sort_index (p, abscoeff, 1, n);
 		
-	// 'Wavelet shrinkage' reduce la magnitud de cada coeficiente dependiendo del nivel de ruido que se estima de la se\F1al. Un m\E9todo com\FAn es la designaci\F3n de un umbral. 
-	// Al definir un umbral los valores de los coeficientes wavelet que se encuentren por debajo de \E9l son eliminados (hard-threshold) o bien reducidos en magnitud (soft-threshold).
-	// Hard thresholding: 'n-nc' coefficeints are deleted (those with low energy)
+	// 'Wavelet shrinkage' reduces the magnitude of each coefficient depending on the estimated signal noise level. A common method is the designation of a threshold.
+        // By defining a threshold the values of the wavelet coefficients below it are either eliminated (hard-threshold) or reduced in magnitude (soft-threshold).
+	// Hard thresholding: 'n-nc' coefficients are deleted (those with low energy)
 	for (i = 0; (i + nc) < n; i++)		// If 'n = nc' => No coefficeints are deleted => In = Out
 	{
 		data[p[i]] = 0;
@@ -7065,7 +7079,6 @@ int filterByWavelets (ReconstructInitSIRENA* reconstruct_init, gsl_vector **inve
 	fclose(temporalFileRecord);
 	fclose(temporalFiled13);
 	
-        //log_trace("th_runDetect: END");
 	return(EPOK);
 }
 /*xxxx end of SECTION A21 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
@@ -7083,29 +7096,29 @@ int filterByWavelets (ReconstructInitSIRENA* reconstruct_init, gsl_vector **inve
 * - For each pulse:
 * 	- Establish the pulse grade (HighRes=1, MidRes=2, LimRes=3, LowRes=4, Rejected=-1, Pileup=-2) and the optimal filter length
 * 	- Pulse: Load the proper piece of the record in 'pulse'
-* 	- If 'OFIter'=1, in the first iteration ('numiteration'=0) the values of 'maxDER' and 'maxDERs' are used in 'find_matchedfilter', 'find_matchedfilterDAB', 
-*         'find_optimalfilter', 'find_optimalfilterDAB' or 'find_Esboundary' getting the values of the 'energies' which straddle the 'maxDER' ('Ealpha' and 'Ebeta'). There will be more
+*       - Get the low resolution energy estimator by filtering with a 4-samples-length filter:
+*           - Load the low resolution pulse in *pulse_lowres*
+*           - Get the filter
+*           - Calculate the low resolution estimator
+* 	- If 'OFIter'=1, in the first iteration ('numiteration'=0) the values of 'maxDER' and 'maxDERs' are used in 'find_matchedfilterDAB', 
+*         'find_optimalfilterDAB' or 'find_Esboundary' getting the values of the 'energies' which straddle the 'maxDER' ('Ealpha' and 'Ebeta'). There will be more
 *         iterations if the calculated 'energy' is out of ['Ealpha','Ebeta']. If 'energy' is in ['Ealpha','Ebeta'] the iterative process stops.
 * 	  	- If OPTFILT (or I2R, I2RALL, I2RNOL, I2RFITTED) and 'OFLib'=0 and 'OFNOise=NSD':
-*	 	    - Filter (find the matched filter and load it in 'filter'):
-*		    	- If 'OFInterp'=MF => 'find_matchedfilter'
-* 			- If 'OFInterp'=DAB => 'find_matchedfilterDAB'
+*	 	    - Ffind the matched filter and load it in 'filter' ('find_matchedfilterDAB')
 * 		    - Calculate the optimal filter
 * 		- If OPTFILT (or I2R, I2RALL, I2RNOL, I2RFITTED) and 'OFLib'=1 and 'OFNOise=NSD':
-*                   - Choose the base-2 system value closest (lower than or equal) to the pulse length
-*	 	    - Filter (find the optimal filter and load it in 'optimalfilter'):
-*                       - If 'OFInterp'=MF => 'find_optimalfilter'
-* 			- If 'OFInterp'=DAB => 'find_optimalfilterDAB'
-*	 	    - If 'FilterDomain'=F => Bin0=0 and conjugate
+*                   - If it is necessary, choose the base-2 system value closest (lower than or equal) to the pulse length
+*	 	    - Find the optimal filter and load it in 'optimalfilter' ('find_optimalfilterDAB')
 *		- If 'WEIGHT' or 'WEIGHTN':
-*		    - Get the indexes of the two energies which straddle the pulse
+*		    - Get the indexes of the two energies which straddle the pulse ('find_Esboundary')
 * 		    - If 'WEIGHTN' and 'OFLib'=1:
 *                       - Choose the base-2 system value closest (lower than or equal) to the pulse length
 * 		        - 'find_prclwn' to find the appropriate values of the PRECALWN HDU ('PRCLx' columns)
 *               - If OPTFILT (or I2R, I2RALL, I2RNOL, I2RFOTTED) and 'OFLib'=1 and 'OFNOise=WEIGHTM':
 *                   - Choose the base-2 system value closest (lower than or equal) to the pulse length
 * 		    - 'find_prclofwm' to find the appropriate values of the PRCLOFWM HDU ('OFWx' columns)
-*		- Calculate the energy of each pulse
+*		- Subtract the sum of the filter if OPTFILT, NSD, T, 0-padding and Sum0Filt=1 
+*               - Calculate the energy of each pulse
 *               - If using lags, it is necessary to modify the tstart of the pulse and the length of the filter used
 *       - In order to subtract the pulse model, it has to be located in the tstart with jitter and know its values in the digitized samples
 *       - Subtract the pulse model from the record
@@ -7115,10 +7128,11 @@ int filterByWavelets (ReconstructInitSIRENA* reconstruct_init, gsl_vector **inve
 *
 * Parameters:
 * - record: Structure that contains the input ADC record
+* - trig_reclength: Record size (just in case threading and input files with different 'ADC' lengths but the same record size indeed)
 * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
 * - pulsesInRecord: Collection of pulses found in the current record
 * - optimalFilter: Optimal filters used in reconstruction
-* - pulsesAll: To know the index of the pulse (to be used with tstartPulse1=nameFile)
+* - pulsesAll: Member of *PulsesCollection* structure to store all the pulses found in the input FITS file. To know the index to get the proper element from 'tstartPulse1_i' in case `tstartPulse1` *              was a file name
 ******************************************************************************/
 void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord, OptimalFilterSIRENA **optimalFilter, PulsesCollection *pulsesAll)
 {
@@ -7193,8 +7207,7 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
 
 	double energy;
 	double tstartNewDev = -999.0;    	// Deviation of the starting of the pulses (in samples) respect to the tstart calculated
-                                                // numlags Must be odd
-	int numlags2 = floor(numlags/2);
+	int numlags2 = floor(numlags/2);        // numlags must be odd
 	int lagsShift = -999;                   // Number of samples shifted to find the maximum of the parabola
 
 	int tooshortPulse_NoLags;
@@ -7225,8 +7238,6 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
 	double tstartRecord;			// Tstart of the record in seconds
 	int tstartRecordSamples = record->time/record->delta_t;	// Tstart of the record in samples (nearest sample)
         double tstartJITTER;
-        gsl_matrix *optimalfilterMAT;
-        gsl_matrix_complex *optimalfilter_FFT_complexMAT;
         double tstartSamplesRecordStartDOUBLE;
         
         double shift;
@@ -7338,7 +7349,7 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
 		(*pulsesInRecord)->pulses_detected[i].grade1 = resize_mf;
                 log_debug("resize_mf (after pulseGrading): %i",resize_mf);
  
-                
+                // Pulse: Load the proper piece of the record in *pulse*
 		if ((pulse = gsl_vector_alloc(resize_mf)) == 0)
 		{
 			sprintf(valERROR,"%d",__LINE__-2);
@@ -7408,7 +7419,7 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
                             }
                     }
                                     
-                    // Filter
+                    // Get the filter
                     if (strcmp((*reconstruct_init)->OFInterp,"MF") == 0)
                     {
                         if (find_optimalfilter((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl_lowres, &Ealpha_lowres, &Ebeta_lowres))
@@ -7586,7 +7597,7 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
                                         //cout<<"numlags: "<<numlags<<endl;
                                         if ((*reconstruct_init)->LagsOrNot == 1) resize_mf= resize_mfNEW-numlags+1;
                                         log_debug("resize_mf1: %i",resize_mf);
-                                        // Choose the base-2 system value closest (lower than or equal) to the pulse length
+                                        // If it is necessary, choose the base-2 system value closest (lower than or equal) to the pulse length
                                         if (((*reconstruct_init)->pulse_length > (*reconstruct_init)->OFLength) //No 0-padding
                                         || (((*reconstruct_init)->pulse_length <= (*reconstruct_init)->OFLength) && (preBuffer != 0))
                                         || (resize_mf < (*reconstruct_init)->OFLength))
@@ -7821,6 +7832,7 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
 					}
 				}
 				
+				// Template correction
 				if ((!isNumber((*reconstruct_init)->tstartPulse1)) && (strcmp((*reconstruct_init)->FilterDomain,"T") == 0))
                                 {
                                         double xmax;
@@ -7831,7 +7843,7 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
                                         gsl_vector *optimalfilterAux = gsl_vector_alloc(optimalfilter->size);
                                         gsl_vector_memcpy(optimalfilterAux,optimalfilter);
                                         gsl_vector_set_all(optimalfilter,-999);
-                                        // Template correction
+                                        
                                         for (int j=0;j<optimalfilter->size;j++)
                                         {
                                             if (xmax < 0)
@@ -7863,6 +7875,7 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
                                 }
 			}
 			
+			// Subtract sumfilt if 0-padding and 'Sum0Filt' =1
                         if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
                             && (strcmp((*reconstruct_init)->FilterDomain,"T") == 0) && ((*reconstruct_init)->pulse_length <= (*reconstruct_init)->OFLength) &&
                             ((*reconstruct_init)->Sum0Filt == 1))
@@ -7895,13 +7908,11 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
 				message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
 				EP_EXIT_ERROR(message,EPFAIL);
 			}
-			/*if ((energy >= 5914) && (energy <= 5918))    cout<<"1"<<endl;
-                        else cout<<"0"<<endl;*/
 			gsl_vector_free(pulseToCalculateEnergy); pulseToCalculateEnergy = 0;
                         log_debug("After calculateEnergy");
                         
                         
-			// If using lags, it is necessary to modify the tstart of the pulse and the length of the filter used
+			// If using lags, it is necessary to modify the tstart of the pulse 
 			if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && tstartNewDev != -999.0)
 			{
 				(*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + tstartNewDev*record->delta_t; // In seconds
@@ -8178,8 +8189,6 @@ void th_runEnergy(TesRecord* record, int trig_reclength,
 	double tstartRecord;			// Tstart of the record in seconds
 	int tstartRecordSamples = record->time/record->delta_t;	// Tstart of the record in samples (nearest sample)
         double tstartJITTER;
-        gsl_matrix *optimalfilterMAT;
-        gsl_matrix_complex *optimalfilter_FFT_complexMAT;
         double tstartSamplesRecordStartDOUBLE;
         
         double shift;
@@ -9058,6 +9067,7 @@ void th_runEnergy(TesRecord* record, int trig_reclength,
 *	- 'else if (mf_size == freqgsl->size)' => It is not necessary to do anything
 * - OptimalFilter = MatchedFilter'(f)/N^2(f)
 * - Calculus of the normalization factor
+* - Apply the normalization factor
 * - Inverse FFT (to get the expression of the optimal filter in time domain)
 *	- Complex OptimalFilter(f) => Taking into account magnitude (MatchedFilter(f)/N^2(f)) and phase (given by MatchedFilter(f))
 * - Free allocated GSL vectors
@@ -9585,8 +9595,7 @@ int find_matchedfilter(int runF0orB0val, double maxDER, gsl_vector *maxDERs, Rec
 
 
 /***** SECTION B4 ************************************************************
-* find_matchedfilterDAB: This function selects the proper matched filter (normalized template) from the calibration library (from column 'DAB')
-*                        by comparing the maximum value of the pulse derivative ('maxDER') to the list of maximums in the library ('maxDERs') for the DAB interpolation method.
+* find_matchedfilterDAB: This function selects the proper matched filter (normalized template) from the calibration library from column 'DAB' (or from column 'MF' if only one energy included in                        *                        the library) by comparing the maximum value of the pulse derivative ('maxDER') to the list of maximums in the library ('maxDERs') for the DAB interpolation method.
 *                        It also selects the proper row from the column 'PAB'.
 *
 * It finds the two embracing 'maxDERs' in the calibration library
@@ -9881,8 +9890,7 @@ int find_optimalfilter(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA
 
 
 /***** SECTION B6 ************************************************************
-* find_optimalfilterDAB: This function selects the proper optimal filter from the calibration library ('Tx', 'ABTx', 'Fx' or 'ABFx')
-*                        by comparing the maximum value of the pulse derivative ('maxDER') to the list of maximums in the library ('maxDERs') for the DAB interpolation method.
+* find_optimalfilterDAB: This function selects the proper optimal filter from the calibration library columns 'ABTx' or 'ABFx'(or from 'Tx'or 'Fx'columns if only one energy included in                                                *                        the library) by comparing the maximum value of the pulse derivative ('maxDER') to the list of maximums in the library ('maxDERs') for the DAB interpolation method.
 * 			 It also selects the proper row from the column 'PAB'.
 * 
 * It finds the embracing  'maxDERs' in the calibration library
@@ -10061,7 +10069,7 @@ int find_optimalfilterDAB(double maxDER, gsl_vector *maxDERs, ReconstructInitSIR
 
 
 /***** SECTION B7 ************************************************************
-* find_prclwn: When EnergyMethod=WEIGHTN this function selects the proper precalculated values ('PRCLx') from the calibration library 
+* find_prclwn: When EnergyMethod=WEIGHTN this function selects the proper precalculated values ('PCLx') from the PRECALWN HDu of the calibration library 
 *              by comparing the maximum value of the pulse derivative ('maxDER') to the list of maximums in the library ('maxDERs') for the OFLib=yes.
 * 	       It also selects the proper row from the column 'PAB'.
 * 
@@ -10179,7 +10187,7 @@ int find_prclwn(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *recon
 
 
 /***** SECTION B8 ************************************************************
-* find_prclofwm: When EnergyMethod=OPTFILT and OFNoise=WEIGHTM this function selects the proper precalculated values ('OFWx') from the calibration library 
+* find_prclofwm: When EnergyMethod=OPTFILT and OFNoise=WEIGHTM this function selects the proper precalculated values ('OFWx') from the PRCLOFWM HDU of the calibration library 
 *              by comparing the maximum value of the pulse derivative ('maxDER') to the list of maximums in the library ('maxDERs') for the OFLib=yes.
 * 	      
 * It finds the embracing  'maxDERs' in the calibration library
@@ -10338,7 +10346,7 @@ int find_prclofwm(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *rec
 * find_Esboundary: This function provides the indexes of the two energies which straddle the pulse energy, by
 *                  comparing the maximum value of the pulse derivative ('maxDER') to the list of maximums in the library ('maxDERs').
 *
-* It finds the two embracing 'maxDERs' in the calibration library
+* It finds the two embracing 'maxDERs' in the calibration library:
 *   - If 'maxDER' is lower than the lowest 'maxDERs' in the library => `indexEalpha`=`indexEbeta`= 0
 *   - If 'maxDER' is higher than the higher 'maxDERs' in the pulse models library => `indexEalpha`=`indexEbeta`= Number of templates -1
 *
@@ -10514,7 +10522,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 * 	order to find the peak value of the energy. The n peak values are fitted to a parabola to find the most accurate energy and a corrected starting time.
 * 
 *       A normalization factor must be included in the energy calculus in the time domain, which is related to the FFT normalization:
-*       FFT normalization factor = 1/n => Normalization factor to the energy calculus (in time) = 1/n 
+*       FFT normalization factor = 1/n => Normalization factor to the energy calculus (in time) = 1/n (being n the filter length)
 *
 * 	(*) IXO Onboard processing Trade-Off
 * 
@@ -10585,7 +10593,8 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 *   |B|                                                                              |. |           |.  1|
 *                                                                                    |ym|           |xm 1|
 *   If OFLib=no, PAB, DAB and WAB columns from the library are used to calculate (X'.W.X)^(-1) .X'.W.Y. In particular, if pulse size is different from the 
-*   template length in the library, instead of wrongly cutting WAB (because of the inverse to convert V into W) it is necessary to work with COVARM column and recalculate *   WAB for the appropiate length.
+*   template length in the library, instead of wrongly cutting WAB (because of the inverse to convert V into W) it is necessary to work with COVARM column and recalculate 
+*   WAB for the appropiate length.
 *   If OFLib=yes, information in the PRECALWN HDU (PRCLx) of the library is used (=(X'.W.X)^(-1) .X'.W).
 * 
 * Parameters:
@@ -10607,13 +10616,15 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
 *           'FilterDomain' = F => 'domain' = 1
 * - samprate: Sampling rate
 * - Pab: PAB column in the library
-* - PRCLWN: Appropriate PRCLx column in the library
+* - PRCLWN: Appropriate PCLx column in the library
 * - PRCLOFWM: Appropriate OFWx column in the library
 * - calculatedEnergy: Calculated energy in eV
 *                     If 'pulseGrade'=-1 (rejected) the provided calculated energy is -1
 * - tstartNewDev: Additional deviation of the tstart (if lags)
 * - lagsShift: Number of samples shifted to find the maximum of the parabola
 * - LowRes: 1 if the low resolution energy estimator (without lags) is going to be calculated
+* - productSize: Size of the scalar product to be calculated
+* - tooshortPulse_NoLags: Pulse too short to apply lags (1) or not (0)
 ****************************************************************************/
 int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes, int productSize, int tooshortPulse_NoLags)
 {

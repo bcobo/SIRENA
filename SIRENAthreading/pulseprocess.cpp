@@ -256,74 +256,6 @@ int findMeanSigma (gsl_vector *invector, double *mean, double *sigma)
 	}
 
 	return EPOK;
-        
-        
-        /*// Declare variables
-	int size = invector->size; // Size of the input vector
-	// To calculate the mean
-	//double data[size];	// Intermediate value to use 'gsl_stats_median_from_sorted_data'
-	bool veryBig = false;
-
-	// Mean
-	for (int i=0;i<size;i++)
-	{
-		//data[i] = gsl_vector_get(invector,i);
-		//if (data[i]>1e10)
-                if (gsl_vector_get(invector,i)>1e10)
-		{
-			veryBig =true;
-			break;
-		}
-	}
-	
-	gsl_vector *vector_prueba = gsl_vector_alloc(5);
-        gsl_vector_set(vector_prueba,0,2);
-        gsl_vector_set(vector_prueba,1,20);
-        gsl_vector_set(vector_prueba,2,-2);
-        gsl_vector_set(vector_prueba,3,17);
-        gsl_vector_set(vector_prueba,4,-0.5);
-        double media = 0.0;
-        double suma =0.0;
-        double std;
-        double data_prueba[5];
-        for (int i=0;i<5;i++)
-	{
-		data_prueba[i] = gsl_vector_get(vector_prueba,i);
-        }
-	
-	if (veryBig == false)
-	{
-                
-                media = 0.0;
-                for (int i=0;i<5;i++)
-                {
-                    media = media + gsl_vector_get(vector_prueba,i);
-                }
-                media = media/5;
-		//*mean = gsl_stats_mean(data, 1, size);
-                *mean = gsl_stats_mean(data_prueba, 1, 5);
-		// Standard deviation
-                
-                for (int i=0;i<5;i++)
-                {
-                    suma = suma + pow(gsl_vector_get(vector_prueba,i)-media,2.0);
-                    cout<<"suma: "<<suma<<endl;
-                }
-                std = sqrt(suma/4);
-		//*sigma= gsl_stats_sd_m(data, 1, size, *mean);
-		*sigma= gsl_stats_sd_m(data_prueba, 1, 5, *mean);
-                cout<<"media0: "<<media<<endl;
-                cout<<"*mean: "<<*mean<<endl;
-                cout<<"std0: "<<std<<endl;
-                cout<<"*sigma: "<<*sigma<<endl;
-	}
-	else	// To avoid an inf in IO or a NAN in JUPITER
-	{
-		*mean = 1e10;
-		*sigma = 1e10;
-	}
-
-	return EPOK;*/
 }
 /*xxxx end of SECTION 3 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
@@ -366,34 +298,11 @@ int medianKappaClipping (gsl_vector *invector, double kappa, double stopCriteria
 	// It is not necessary to check the allocation because 'invector' size must already be > 0
 	gsl_vector *invectorNew = gsl_vector_alloc(size);	// Auxiliary vector
         
-        /*gsl_vector *vector_prueba = gsl_vector_alloc(6);
-        gsl_vector_set(vector_prueba,0,2);
-        gsl_vector_set(vector_prueba,1,20);
-        gsl_vector_set(vector_prueba,2,-2);
-        gsl_vector_set(vector_prueba,3,17);
-        gsl_vector_set(vector_prueba,4,-0.5);
-        gsl_vector_set(vector_prueba,5,23);
-        gsl_sort_vector(vector_prueba);
-        cout<<"median0="<<(gsl_vector_get(vector_prueba,(int) (6/2)-1)+gsl_vector_get(vector_prueba,(int) (6/2)))/2<<endl;
-        double data_prueba[6];				
-        for (int i=0;i<6;i++)
-	{
-		data_prueba[i] = gsl_vector_get(vector_prueba,i);
-	}
-	gsl_sort(data_prueba,1,6);
-	cout<<"median1: "<<gsl_stats_median_from_sorted_data(data_prueba,1,6)<<endl;*/
-        
 	// To calculate the median
 	//double data[size];					// Intermediate value to use 'gsl_stats_median_from_sorted_data'
 	double median;
 
 	// Median
-	/*for (int i=0;i<size;i++)
-	{
-		data[i] = gsl_vector_get(invector,i);
-	}
-	gsl_sort(data,1,size);
-	median = gsl_stats_median_from_sorted_data(data,1,size);*/
         gsl_vector_memcpy(invectorNew,invector);
         gsl_sort_vector(invectorNew);
         if (size%2 == 0)	//Even
@@ -466,88 +375,6 @@ int medianKappaClipping (gsl_vector *invector, double kappa, double stopCriteria
 
 	// Establish the threshold as mean+nSigmas*sigma
 	*threshold = mean2+nSigmas*sg2;	// HARDPOINT!!!!!!!!!!!!!!!!!!! (nSigmas)
-	//cout<<"threshold="<<*threshold<<endl;
-        //cout<<"mean2="<<mean2<<" sigma="<<sg2<<endl;
-        	
-	////////////////////////////////////////////////////////////////
-	/*size = 2000;
-        double dataNew[size];
-        double sg2New;
-	// Median
-	for (int i=0;i<size;i++)
-	{
-		dataNew[i] = gsl_vector_get(invector,i);
-	}
-	gsl_sort(dataNew,1,size);
-	median = gsl_stats_median_from_sorted_data (dataNew,1,size);
-
-	gsl_vector_memcpy(invectorNew,invector);
-
-	// Iterate until no points out of the maximum excursion (kappa*sigma)
-	do
-	{
-		if ((size-boxLPF-1 < 1) || (size-boxLPF-1 >invectorNew->size))
-		{
-			sprintf(valERROR,"%d",__LINE__+5);
-			string str(valERROR);
-			message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
-			EP_PRINT_ERROR(message,EPFAIL);
-		}
-		temp = gsl_vector_subvector(invectorNew,0,size);
-		if (findMeanSigma (&temp.vector, &mean1, &sg1))
-		{
-			message = "Cannot run findMeanSigma routine for kappa-sigma iteration";
-			EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-		}
-		i = 0;
-		cnt = 0;
-
-		while (i<invectorNew->size)
-		{
-			if ((gsl_vector_get(invectorNew,i) >= mean1 + kappa*sg1) || (gsl_vector_get(invectorNew,i) <= mean1 - kappa*sg1))
-			// HARDPOINT!!!!!!!!!!!!!!!!!!! (kappa)
-			{
-				if ((i < 0) || (i >(invectorNew)->size-1))
-				{
-					sprintf(valERROR,"%d",__LINE__+5);
-					string str(valERROR);
-					message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
-					EP_PRINT_ERROR(message,EPFAIL);
-				}
-				gsl_vector_set(invectorNew,i,median);
-				cnt++;
-			}
-			i++;
-		}
-
-		if (cnt != 0)
-		// Some points of the invector have been replaced with the median
-		{
-			temp = gsl_vector_subvector(invectorNew,0,size);
-			if (findMeanSigma (&temp.vector, &mean2, &sg2New))
-			{
-				message = "Cannot run findMeanSigma routine for kappa-sigma iteration after replacement with the median";
-				EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-			}
-		}
-		else
-		// No points of the invector have been replaced with the median
-		{
-			mean2 =mean1;
-			sg2New = sg1;
-		}
-
-	} while (fabs((mean2-mean1)/mean1)>(stopCriteria/100.0));	// HARDPOINT!!!!!!!!!!!!!!!!!!! (stopCriteria)
-
-	// Establish the threshold as mean+nSigmas*sigma
-	double thresholdNew = mean2+nSigmas*sg2New;	// HARDPOINT!!!!!!!!!!!!!!!!!!! (nSigmas)
-	cout<<thresholdNew<<endl;
-	//cout<<"thresholdNew="<<thresholdNew<<endl;
-        //cout<<"sigmaNew="<<sg2New<<endl;
-        
-        //cout<<"theshold-thesholdNew="<<(*threshold-thresholdNew)/sg2<<"sgs"<<endl;
-        //cout<<"theshold-thesholdNew="<<(*threshold-thresholdNew)/sg2New<<"sgsNew"<<endl;*/
-	////////////////////////////////////////////////////////////////
 
 	gsl_vector_free(invectorNew); invectorNew= 0;
 
@@ -1609,37 +1436,18 @@ int find_model_maxDERs(double maxDER, ReconstructInitSIRENA *reconstruct_init, g
 	string message = "";
 	char valERROR[256];
 
-	/*gsl_vector *modelFound_aux;
-	if ((modelFound_aux = gsl_vector_alloc(reconstruct_init->library_collection->pulse_templates[0].template_duration)) == 0)
-	{
-		sprintf(valERROR,"%d",__LINE__-2);
-		string str(valERROR);
-	        message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-		EP_PRINT_ERROR(message,EPFAIL);
-	}*/
-
 	long nummodels = reconstruct_init->library_collection->ntemplates;
         
         gsl_vector_view temp;
 
 	if (maxDER < gsl_vector_get(reconstruct_init->library_collection->maxDERs,0))
 	{
-		//gsl_vector_memcpy(modelFound_aux,reconstruct_init->library_collection->pulse_templates_filder[0].ptemplate);
-		//gsl_vector_scale(modelFound_aux,maxDER/gsl_vector_max(modelFound_aux));
-                
-                /*gsl_vector_memcpy(modelFound_aux,reconstruct_init->library_collection->pulse_templates_filder[0].ptemplate);
-                temp = gsl_vector_subvector(modelFound_aux,0,(*modelFound)->size);
-                gsl_vector_memcpy(*modelFound,&temp.vector);
-		gsl_vector_scale(*modelFound,maxDER/gsl_vector_max(*modelFound));*/
                 temp = gsl_vector_subvector(reconstruct_init->library_collection->pulse_templates_filder[0].ptemplate,0,(*modelFound)->size);
                 gsl_vector_memcpy(*modelFound,&temp.vector);
 		gsl_vector_scale(*modelFound,maxDER/gsl_vector_max(*modelFound));
 	}
 	else if (maxDER > gsl_vector_get(reconstruct_init->library_collection->maxDERs,nummodels-1))
 	{
-		//gsl_vector_memcpy(modelFound_aux,reconstruct_init->library_collection->pulse_templates_filder[nummodels-1].ptemplate);
-		//gsl_vector_scale(modelFound_aux,maxDER/gsl_vector_max(modelFound_aux));
-                
                 temp = gsl_vector_subvector(reconstruct_init->library_collection->pulse_templates_filder[nummodels-1].ptemplate,0,(*modelFound)->size);
                 gsl_vector_memcpy(*modelFound,&temp.vector);
 		gsl_vector_scale(*modelFound,maxDER/gsl_vector_max(*modelFound));
@@ -1650,9 +1458,6 @@ int find_model_maxDERs(double maxDER, ReconstructInitSIRENA *reconstruct_init, g
 		{
 			if (fabs(maxDER-gsl_vector_get(reconstruct_init->library_collection->maxDERs,i))<1e-6)
 			{
-				//gsl_vector_memcpy(modelFound_aux,reconstruct_init->library_collection->pulse_templates_filder[i].ptemplate);
-				//gsl_vector_scale(modelFound_aux,maxDER/gsl_vector_max(modelFound_aux));
-                            
                                 temp = gsl_vector_subvector(reconstruct_init->library_collection->pulse_templates_filder[i].ptemplate,0,(*modelFound)->size);
                                 gsl_vector_memcpy(*modelFound,&temp.vector);
                                 gsl_vector_scale(*modelFound,maxDER/gsl_vector_max(*modelFound));
@@ -1662,7 +1467,6 @@ int find_model_maxDERs(double maxDER, ReconstructInitSIRENA *reconstruct_init, g
 			else if ((maxDER > gsl_vector_get(reconstruct_init->library_collection->maxDERs,i)) && (maxDER < gsl_vector_get(reconstruct_init->library_collection->maxDERs,i+1)))
 			{
 				// Interpolate between the two corresponding rows in "models"
-				//gsl_vector_set_zero(modelFound_aux);
                                 
                                 gsl_vector *modelA = gsl_vector_alloc((*modelFound)->size);
                                 gsl_vector *modelB = gsl_vector_alloc((*modelFound)->size);
@@ -1672,7 +1476,6 @@ int find_model_maxDERs(double maxDER, ReconstructInitSIRENA *reconstruct_init, g
                                 temp = gsl_vector_subvector(reconstruct_init->library_collection->pulse_templates_filder[i+1].ptemplate,0,(*modelFound)->size);
                                 gsl_vector_memcpy(modelB,&temp.vector);
 
-				//if (interpolate_model(&modelFound_aux,maxDER,reconstruct_init->library_collection->pulse_templates_filder[i].ptemplate,gsl_vector_get(reconstruct_init->library_collection->maxDERs,i),reconstruct_init->library_collection->pulse_templates_filder[i+1].ptemplate,gsl_vector_get(reconstruct_init->library_collection->maxDERs,i+1)))
                                 if (interpolate_model(modelFound,maxDER,modelA,gsl_vector_get(reconstruct_init->library_collection->maxDERs,i),modelB,gsl_vector_get(reconstruct_init->library_collection->maxDERs,i+1)))
 				{
 					message = "Cannot run interpolate_model with two rows in models";
@@ -1686,12 +1489,6 @@ int find_model_maxDERs(double maxDER, ReconstructInitSIRENA *reconstruct_init, g
 			}
 		}
 	}
-
-	/*gsl_vector_view temp;
-	temp = gsl_vector_subvector(modelFound_aux,0,(*modelFound)->size);
-	gsl_vector_memcpy(*modelFound,&temp.vector);*/
-
-	//gsl_vector_free(modelFound_aux);
 
     return(EPOK);
 }
@@ -1720,43 +1517,21 @@ int find_model_samp1DERs(double samp1DER, ReconstructInitSIRENA *reconstruct_ini
 	string message = "";
 	char valERROR[256];
 	
-	/*gsl_vector *modelFound_aux;
-	if ((modelFound_aux = gsl_vector_alloc(reconstruct_init->library_collection->pulse_templates[0].template_duration)) == 0)
-	{
-		sprintf(valERROR,"%d",__LINE__-2);
-		string str(valERROR);
-	        message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-		EP_PRINT_ERROR(message,EPFAIL);
-	}*/
-        //samp1DER = 1090;
-	
 	long nummodels = reconstruct_init->library_collection->ntemplates;
         
         gsl_vector_view temp;
 
 	if (samp1DER < gsl_vector_get(reconstruct_init->library_collection->samp1DERs,0))
 	{
-		//gsl_vector_memcpy(modelFound_aux,reconstruct_init->library_collection->pulse_templates_filder[0].ptemplate);
-		//gsl_vector_scale(modelFound_aux,samp1DER/gsl_vector_get(modelFound_aux,0));
-                
                 temp = gsl_vector_subvector(reconstruct_init->library_collection->pulse_templates_filder[0].ptemplate,0,(*modelFound)->size);
                 gsl_vector_memcpy(*modelFound,&temp.vector);
                 gsl_vector_scale(*modelFound,samp1DER/gsl_vector_get(*modelFound,0));
-                
-                //cout<<"Emin: <"<<gsl_vector_get(reconstruct_init->library_collection->energies,0)<<endl;
-                //cout<<"Emax: "<<gsl_vector_get(reconstruct_init->library_collection->energies,0)<<endl;
 	}
 	else if (samp1DER > gsl_vector_get(reconstruct_init->library_collection->samp1DERs,nummodels-1))
 	{
-		//gsl_vector_memcpy(modelFound_aux,reconstruct_init->library_collection->pulse_templates_filder[nummodels-1].ptemplate);
-		//gsl_vector_scale(modelFound_aux,samp1DER/gsl_vector_get(modelFound_aux,nummodels-1));
-            
                 temp = gsl_vector_subvector(reconstruct_init->library_collection->pulse_templates_filder[nummodels-1].ptemplate,0,(*modelFound)->size);
                 gsl_vector_memcpy(*modelFound,&temp.vector);
                 gsl_vector_scale(*modelFound,samp1DER/gsl_vector_get(*modelFound,0));  ///Creo que había un error antes escalando con 'gsl_vector_get(modelFound_aux,nummodels-1)'
-                
-                //cout<<"Emin: "<<gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1)<<endl;
-                //cout<<"Emax: >"<<gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1)<<endl;
 	}
 	else
 	{
@@ -1765,10 +1540,6 @@ int find_model_samp1DERs(double samp1DER, ReconstructInitSIRENA *reconstruct_ini
 			if ((samp1DER >= gsl_vector_get(reconstruct_init->library_collection->samp1DERs,i)) && (samp1DER < gsl_vector_get(reconstruct_init->library_collection->samp1DERs,i+1)))
 			{
 				// Interpolate between the two corresponding rows in "models"
-				//gsl_vector_set_zero(modelFound_aux);
-                            
-                                //cout<<samp1DER<<" "<<gsl_vector_get(reconstruct_init->library_collection->samp1DERs,i)<<" "<<gsl_vector_get(reconstruct_init->library_collection->samp1DERs,i+1)<<endl;
-                            
                                 gsl_vector *modelA = gsl_vector_alloc((*modelFound)->size);
                                 gsl_vector *modelB = gsl_vector_alloc((*modelFound)->size);
                                 gsl_vector_set_zero(*modelFound);
@@ -1777,7 +1548,6 @@ int find_model_samp1DERs(double samp1DER, ReconstructInitSIRENA *reconstruct_ini
                                 temp = gsl_vector_subvector(reconstruct_init->library_collection->pulse_templates_filder[i+1].ptemplate,0,(*modelFound)->size);
                                 gsl_vector_memcpy(modelB,&temp.vector);
 
-				//if (interpolate_model(&modelFound_aux,samp1DER,reconstruct_init->library_collection->pulse_templates_filder[i].ptemplate,gsl_vector_get(reconstruct_init->library_collection->samp1DERs,i),reconstruct_init->library_collection->pulse_templates_filder[i+1].ptemplate,gsl_vector_get(reconstruct_init->library_collection->samp1DERs,i+1)))
                                 if (interpolate_model(modelFound,samp1DER,modelA,gsl_vector_get(reconstruct_init->library_collection->samp1DERs,i),modelB,gsl_vector_get(reconstruct_init->library_collection->samp1DERs,i+1)))
 				{
 					message = "Cannot run interpolate_model with two rows in models";
@@ -1792,12 +1562,6 @@ int find_model_samp1DERs(double samp1DER, ReconstructInitSIRENA *reconstruct_ini
 		}
 	}
 	
-	/*gsl_vector_view temp;
-	temp = gsl_vector_subvector(modelFound_aux,0,(*modelFound)->size);
-	gsl_vector_memcpy(*modelFound,&temp.vector);
-
-	gsl_vector_free(modelFound_aux);*/
-
     return(EPOK);
 }
 /*xxxx end of SECTION 9 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
@@ -1830,7 +1594,6 @@ int interpolate_model(gsl_vector **modelFound, double p_model, gsl_vector *model
 {
 	// Declare variables
 	double factor1, factor2;
-	//gsl_vector_set_zero(*modelFound);
 	
 	// It is not necessary to check the allocation because 'modelIn1' and 'modelIn2' sizes must already be > 0
 	gsl_vector *modelIn1Aux = gsl_vector_alloc(modelIn1->size);
@@ -1848,7 +1611,6 @@ int interpolate_model(gsl_vector **modelFound, double p_model, gsl_vector *model
 	factor2 = (p_model-p_modelIn1)/(p_modelIn2-p_modelIn1);
 	gsl_vector_scale(modelIn1Aux,factor1);
 	gsl_vector_scale(modelIn2Aux,factor2);
-	//gsl_vector_add(*modelFound,modelIn1Aux);
         gsl_vector_memcpy(*modelFound,modelIn1Aux);
 	gsl_vector_add(*modelFound,modelIn2Aux);
 	
