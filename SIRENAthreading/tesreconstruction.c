@@ -20,8 +20,124 @@
 
 #include "tesreconstruction.h"
 
-////////////////////////////////////
-/** Main procedure. */
+/***** SECTION 1 ************************************
+* MAIN function: This function is mainly a wrapper to pass a data file to the SIRENA tasks in order to reconstruct the energy of the incoming X-ray photons after their detection.
+* 
+* It can run the SIRENA tasks or the Philippe Peille's tasks depending on the 'Rcmethod' selected.
+* 	
+* The user must supply the following input parameters (.par file).
+* 
+* Common parameters:
+* 
+* - Rcmethod: Reconstruction method (PP or SIRENA)
+*   - SIRENA: If Rcmethod starts with '@' it provides a file text containing several record input FITS files
+* - RecordFile: Record FITS file
+* - TesEventFile: Output event list file
+* - PulseLength: Pulse length
+* - EventListSize: Default size of the event list
+* - clobber:Overwrite or not output files if exist (1/0)
+* - history: write program parameters into output file
+* 
+* PP parameters:
+* 
+* - SaturationValue: Saturation level of the ADC curves
+* - OptimalFilterFile: Optimal filters file
+* - PulseTemplateFile: Pulse template file
+* - Threshold: Threshold level
+* - Calfac: Calibration factor (should be read from the xml file)
+* - NormalExclusion: Minimal distance before using OFs after a misreconstruction
+* - DerivateExclusion: Minimal distance before reconstructing any event after a misreconstruction
+*
+* SIRENA parameters:
+* 
+* - LibraryFile: File with calibration library
+* - scaleFactor: Detection scale factor for initial filtering
+* - samplesUp: Number of consecutive samples up for threshold trespassing (only used in calibration run, and in production run with STC detection mode)
+* - samplesDown: Number of consecutive samples below the threshold to look for other pulse (only used in production run with STC detection mode)
+* - nSgms: Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm
+* - detectSP: Detect secondary pulses (1) or not (0)
+* - LrsT: Running sum length for the RS raw energy estimation (seconds) (only for library creation)
+* - LbT: Baseline averaging length (seconds)
+* - monoenergy: Monochromatic energy of the pulses in the input FITS file in eV (only for library creation)
+* - hduPRECALWN: Add or not the PRECALWN HDU in the library file (1/0) (only for library creation)
+* - hduPRCLOFWM: Add or not the PRCLOFWM HDU in the library file (1/0) (only for library creation)
+* - largeFilter: Length of the longest fixed filter (only for library creation)
+* - opmode: Calibration run (0) or energy reconstruction run (1)
+* - detectionMode: Adjusted Derivative (AD) or Single Threshold Crossing (STC)
+* - NoiseFile: Noise FITS file with noise spectrum
+* - FilterDomain: Filtering Domain: Time (T) or Frequency (F)
+* - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)
+* - EnergyMethod: Energy calculation Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED or PCA
+* - filtEeV: Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R, I2RALL, I2RNOL and I2RFITTED)
+* - OFNoise: Noise to use with Optimal Filtering: NSD or WEIGHTM
+* - LagsOrNot: Lags or no lags (1/0)
+* - nLags: Number of lags (positive odd number)
+* - Fitting35: Number of lags to analytically calculate a parabola (3) or to fit a parabola (5)
+* - OFIter: Iterate or not iterate (1/0)
+* - OFLib: Work or not with a library with optimal filters (1/0)
+* - OFStrategy: Optimal Filter length Strategy: FREE, BYGRADE or FIXED
+* - OFLength: Optimal Filter length (taken into account if OFStrategy=FIXED)
+* - preBuffer: Some samples added before the starting time of a pulse
+* - intermediate: Write or not intermediate files (1/0)
+* - detectFile: Intermediate detections file (if intermediate=1)
+* - filterFile: Intermediate filters file (if intermediate=1)
+* - errorT: Additional error (in samples) added to the detected time (Logically, it changes the reconstructed energies )
+* - Sum0Filt: 0-padding: Subtract the sum of the filter (1) or not (0)
+* - tstartPulse1: Integer number: Sample where the first pulse starts or nameFile: File where the tstart (in seconds) of every pulse is
+* - tstartPulse2: Tstart (samples) of the second pulse
+* - tstartPulse3: Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS)
+* - energyPCA1: First energy (only for PCA)
+* - energyPCA2: Second energy (only for PCA)
+* - XMLFile: XML input FITS file with instrument definition
+* 
+* Steps:
+* 
+* - Register HEATOOL
+* - Reading all programm parameters by using PIL
+* - Read XML info 
+* - Obtain the samplig rate and the 'trig_reclength':
+*   - If Rcmethod starts with '@' => List of record input FITS files. For every FITS file:
+*       - Open FITS file
+*       - If it is a xifusim simulated file
+*           - Obtain the sampling rate from the HISTORY block
+*           - Obtain 'trig_reclength' from the HISTORY block
+*       - If it is a tessim simulated file
+*           - Read DELTAT keyword to obtain the sampling rate
+*   - If Rcemethod doesn't start with '@' => Single record input FITS file
+*       - Open FITS file
+*       - If it is a xifusim simulated file
+*           - Obtain the sampling rate from the HISTORY block
+*           - Obtain 'trig_reclength' from the HISTORY block
+*       - If it is a tessim simulated file
+*           - Read DELTAT keyword to obtain the sampling rate
+* - Sixt standard keywords structure
+* - Open output FITS file
+* - Initialize PP data structures needed for pulse filtering
+* - Initialize SIRENA data structures needed for pulse filtering
+* - Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
+* - Build up TesEventList to recover the results of the reconstruction
+* - Reconstruct the input record FITS file:
+*   - If Rcmethod starts with '@' => List of record input FITS files. For every FITS file:
+*       - Open record file
+*       - Initialize: initializeReconstruction or initializeReconstructionSIRENA
+*       - Build up TesRecord to read the file
+*       - Iterate of records and do the reconstruction
+*           - Reconstruct: reconstructRecord or reconstructRecordSIRENA
+*           - Save events to the event_list
+*           - Copy trigger keywords to event file
+*           - Close file
+*   - If Rcemethod doesn't start with '@' => Single record input FITS file
+*       - Open record file
+*       - Initialize: initializeReconstruction or initializeReconstructionSIRENA
+*       - Build up TesRecord to read the file
+*       - Iterate of records and do the reconstruction
+*           - Reconstruct: reconstructRecord or reconstructRecordSIRENA
+*           - Save events to the event_list
+*           - Copy trigger keywords to event file
+*           - Close file
+* - Save GTI extension to event file
+* - Free memory
+*****************************************************/
 int tesreconstruction_main() {
   time_t ttstart = time(0);
   
@@ -38,6 +154,7 @@ int tesreconstruction_main() {
   do { // Beginning of the ERROR handling loop (will at
        // most be run once).
     headas_chat(3, "initialize ...\n");
+    
     // Get program parameters.
     status=getpar(&par);
     CHECK_STATUS_BREAK(status);
@@ -61,7 +178,7 @@ int tesreconstruction_main() {
     strcpy(firstchar2,firstchar);
         
     //printf("%s %s %s","File: ",par.RecordFile,"\n");
-    // Check input file header is complete to work with xifusim/tessim simulated files
+    // Check if input file header is complete to work with xifusim/tessim simulated files
     // -------------------------------------------------------------------------------
     fitsfile* fptr = NULL;
     int numfits;
@@ -100,7 +217,6 @@ int tesreconstruction_main() {
     
                     if ((hdunum == 8) || (hdunum == 9)) //xifusim simulated file (with TESRECORDS)
                     {    
-                        
                         // Move to "Primary" HDU to obtain SAMPLING_RATE
                         fits_movabs_hdu(fptr, 1, NULL, &status); 
                         CHECK_STATUS_BREAK(status);
@@ -676,8 +792,17 @@ int tesreconstruction_main() {
 	return(status);
   }
 }
+/*xxxx end of SECTION 1 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
+
+/***** SECTION 2 ************************************************************
+* getpar function: This function gets the input parameter from the command line or their default values from the tesreconstruction .par file
+*
+* Parameters:
+* - par: Structure containing the input parameters
+******************************************************************************/
 int getpar(struct Parameters* const par)
+
 {
   // String input buffer.
   char* sbuffer=NULL;
@@ -790,9 +915,9 @@ int getpar(struct Parameters* const par)
 
 	status=ape_trad_query_double("scaleFactor", &par->scaleFactor);
     
-	status=ape_trad_query_double("samplesUp", &par->samplesUp);
+	status=ape_trad_query_int("samplesUp", &par->samplesUp);
         
-        status=ape_trad_query_double("samplesDown", &par->samplesDown);
+        status=ape_trad_query_int("samplesDown", &par->samplesDown);
   
 	status=ape_trad_query_double("nSgms", &par->nSgms);
         
@@ -1010,7 +1135,16 @@ int getpar(struct Parameters* const par)
   }
   return(status);
 }
+/*xxxx end of SECTION 2 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
+
+/***** SECTION 3 ************************************************************
+* MyAssert function: This function displays an error message if the condition in 'expr' is true
+*
+* Parameters:
+* - expr: Condition to be true in order to display the error message
+* - msg: Message to be displayed
+******************************************************************************/
 void MyAssert(int expr, char* msg)
 {
     if (expr == 0)
@@ -1019,3 +1153,4 @@ void MyAssert(int expr, char* msg)
         abort();
     }
 }
+/*xxxx end of SECTION 3 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/

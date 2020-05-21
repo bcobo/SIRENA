@@ -1761,12 +1761,18 @@ int createDetectFile(ReconstructInitSIRENA* reconstruct_init, double samprate, f
 		keyvalstr[999]='\0';
 		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
 		
-		char str_samplesUp[125];	snprintf(str_samplesUp,125,"%f",reconstruct_init->samplesUp);
+		char str_samplesUp[125];	snprintf(str_samplesUp,125,"%d",reconstruct_init->samplesUp);
 		strhistory=string("samplesUp = ") + string(str_samplesUp);
 		strncpy(keyvalstr,strhistory.c_str(),999);
 		keyvalstr[999]='\0';
 		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
 		
+                char str_samplesDown[125];	snprintf(str_samplesDown,125,"%d",reconstruct_init->samplesDown);
+		strhistory=string("samplesDown = ") + string(str_samplesDown);
+		strncpy(keyvalstr,strhistory.c_str(),999);
+		keyvalstr[999]='\0';
+		fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
+                
 		char str_nSgms[125];	    	snprintf(str_nSgms,125,"%f",reconstruct_init->nSgms);
 		strhistory=string("nSgms = ") + string(str_nSgms);
 		strncpy(keyvalstr,strhistory.c_str(),999);
@@ -2113,7 +2119,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 
 	double scaleFactor = (*reconstruct_init)->scaleFactor;
 	int sizePulse_b = (*reconstruct_init)->pulse_length;
-	double samplesUp = (*reconstruct_init)->samplesUp;
+	int samplesUp = (*reconstruct_init)->samplesUp;
 	double nSgms = (*reconstruct_init)->nSgms;
 	double Lrs = (int) ((*reconstruct_init)->LrsT*samprate);	// Running sum length (in the RS filter case): 'LrsT' in samples
 	double Lb = (int) ((*reconstruct_init)->LbT*samprate); 		// Baseline averaging length (in the RS filter case): 'LbT' in samples
@@ -3978,8 +3984,13 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
                 strcpy(keyvalstr,strproc.c_str());
                 fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
                
-                char str_samplesUp[125];                snprintf(str_samplesUp,125,"%f",(*reconstruct_init)->samplesUp);
+                char str_samplesUp[125];                snprintf(str_samplesUp,125,"%d",(*reconstruct_init)->samplesUp);
                 strproc=string("samplesUp = ") + string(str_samplesUp);
+                strcpy(keyvalstr,strproc.c_str());
+                fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
+                
+                char str_samplesDown[125];              snprintf(str_samplesDown,125,"%d",(*reconstruct_init)->samplesDown);
+                strproc=string("samplesDown = ") + string(str_samplesDown);
                 strcpy(keyvalstr,strproc.c_str());
                 fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
                

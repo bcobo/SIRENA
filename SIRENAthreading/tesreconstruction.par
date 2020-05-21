@@ -20,8 +20,8 @@ DerivateExclusion,i,h,8,,,"Minimal distance before reconstructing any event afte
 # 
 LibraryFile,s,h,"library.fits",,,"File with calibration library"
 scaleFactor,r,h,0,,,"Detection scale factor for initial filtering"
-samplesUp,r,h,3,,,"Number of consecutive samples up for threshold trespassing (only used in calibration run, and in production run with STC detection mode)"
-samplesDown,r,h,4,,,"Number of consecutive samples below the threshold to look for other pulse (only used in production run with STC detection mode)"
+samplesUp,i,h,3,,,"Number of consecutive samples up for threshold trespassing (only used in calibration run, and in production run with STC detection mode)"
+samplesDown,i,h,4,,,"Number of consecutive samples below the threshold to look for other pulse (only used in production run with STC detection mode)"
 nSgms,r,h,3.5,,,"Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm"
 detectSP,i,h,1,,,"Detect secondary pulses (1) or not (0)"
 LrsT,r,h,30E-6,,,"Running sum length for the RS raw energy estimation (seconds) (only for library creation)"

@@ -448,10 +448,10 @@ typedef struct ReconstructInitSIRENA
   double scaleFactor;
   
   /** Detection samplesUp (samples to confirm threshold overcoming) **/
-  double samplesUp;
+  int samplesUp;
   
-        /** A1 Detection samplesDown (samples below the threshold to look for other pulse) **/
-  double samplesDown;
+  /** STC Detection samplesDown (samples below the threshold to look for other pulse) **/
+  int samplesDown;
   
   /** Detection nSgms (sigmas to establish a threshold for detection) **/
   double nSgms;
@@ -621,7 +621,7 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     char* const library_file,
                                     char* const event_file,
                                     int pulse_length, double scaleFactor, 
-                                    double samplesUp, double samplesDown, 
+                                    int samplesUp, int samplesDown, 
                                     double nSgms, int detectSP,
                                     int opmode, char* detectionMode,double LrsT, 
                                     double LbT, char* const noise_file, 

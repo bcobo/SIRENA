@@ -140,7 +140,7 @@ int _resize_array(int size, int pulses){ return (size * MUL_FAC  < pulses) ? pul
 * - status: Input/output status
 ******************************************************************************/
 extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init, char* const record_file, fitsfile *fptr,
-		char* const library_file, char* const event_file, int pulse_length, double scaleFactor, double samplesUp, double samplesDown,
+		char* const library_file, char* const event_file, int pulse_length, double scaleFactor, int samplesUp, int samplesDown,
 		double nSgms, int detectSP, int opmode, char *detectionMode, double LrsT, double LbT, char* const noise_file, char* filter_domain, char* filter_method, 
 		char* energy_method, double filtEev, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
 		char* oflength_strategy, int oflength, int preBuffer,
@@ -2898,8 +2898,8 @@ ReconstructInitSIRENA::ReconstructInitSIRENA():
   threshold(0.0f),
   pulse_length(0),
   scaleFactor(0.0f),
-  samplesUp(0.0f),
-  samplesDown(0.0f),
+  samplesUp(0),
+  samplesDown(0),
   nSgms(0.0f),
   detectSP(0),
   opmode(0),

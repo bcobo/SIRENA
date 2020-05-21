@@ -91,9 +91,6 @@ struct Parameters {
         //Transform to resistance space (I2R, I2RALL, I2RNOL, I2RFITTED) or not (I)
 	char I2R[10];
         
-        //Verbosity level of the output log file (in [0,3])
-	int verbosity;
-        
         //Boolean to choose whether to erase an already existing event list
 	char clobber;
         
@@ -259,7 +256,7 @@ struct Parameters {
         
         int medianKappaClipping_noiseSigma (gsl_vector *invector, double kappa, double stopCriteria, double nSigmas, double *mean, double *sigma);
         
-        int getpar(struct Parameters* const par);
+        int getpar_noiseSpec(struct Parameters* const par);
 
         void MyAssert(int expr, char* msg);
         

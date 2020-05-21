@@ -50,7 +50,7 @@ MAP OF SECTIONS IN THIS FILE:
  - 8. findTstartNoise
  - 9. weightMatrixNoise
  - 10. medianKappaClipping_noiseSigma
- - 11. getpar
+ - 11. getpar_noiseSpec
  - 12. MyAssert
  
 *******************************************************************************/
@@ -86,8 +86,8 @@ MAP OF SECTIONS IN THIS FILE:
 * - samplesUp: Consecutive samples over the threshold to locate a pulse
 * - nSgms: Number of Sigmas to establish the threshold
 * - pulse_length: Pulse length (samples)
-* - LrsT: Running sum length in seconds (only in notcreationlib mode)
-* - LbT: Baseline averaging length in seconds (only in notcreationlib mode)
+* - LrsT: Running sum length in seconds 
+* - LbT: Baseline averaging length in seconds
 * - weightMS: Calculate and write the weight matrixes if weightMS=yes
 * - I2R: Transform to resistance space (I2R, I2RALL, I2RNOL, I2RFITTED) or not (I)
 * - clobber: Re-write output files if clobber=yes
@@ -104,7 +104,7 @@ MAP OF SECTIONS IN THIS FILE:
 * - Initialize variables and transform from seconds to samples
 * - Declare variables
 * - Create structure to run Iteration: inDataIterator
-* 	- Read columns (TIME and ADC)
+*   - Read columns (TIME and ADC)
 * - Called iteration function: inDataIterator
 * - Close input FITS file
 * - Generate CSD representation
@@ -130,10 +130,10 @@ int gennoisespec_main ()
         string message = "";
         
         // Reading all programm parameters by using PIL
-        status=getpar(&par);
+        status=getpar_noiseSpec(&par);
         if (status != 0)
         {
-                message = "Cannot run getpar routine to get input parameters";
+                message = "Cannot run getpar_noiseSpec routine to get input parameters";
                 EP_EXIT_ERROR(message,status); 
         }
             
@@ -829,7 +829,8 @@ int gennoisespec_main ()
 * - Allocate input GSL vectors
 * - Read iterator
 * - Processing each record
-* 	- Assigning positive polarity (by using ASQUID and PLSPOLAR)
+*       - Information has been read by blocks (with nrows per block)
+*       - Just in case the last record has been filled out with 0's => Last record discarded
 * 	- To avoid taking into account the pulse tails at the beginning of a record as part of a pulse-free interval
 * 	- Low-pass filtering
 *   	- Differentiate 
@@ -1749,8 +1750,8 @@ int writeTPSreprExten ()
 * - nsgms: Number of Sigmas to establish the threshold
 * - lb: Vector containing the baseline averaging length used for each pulse
 * - lrs: Running sum length (equal to the 'Lrs' global_variable)
-* - stopCriteriamkc: Used in medianKappaClipping (%)
-* - kappamkc: Used in medianKappaClipping
+* - stopCriteriamkc: Used in medianKappaClipping_noiseSigma (%)
+* - kappamkc: Used in medianKappaClipping_noiseSigma
 * 
 ****************************************************************************/
 int findPulsesNoise
@@ -1996,7 +1997,7 @@ int findTstartNoise
 
 
 /***** SECTION 9 ************************************************************
-* weightMatrixNoise function: This function calculates the weight matrix of the noise....
+* weightMatrixNoise function: This function calculates the weight matrix of the noise.
 *
 * Di: Pulse free interval
 * V: Covariance matrix
@@ -2132,7 +2133,7 @@ int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
 * - Declare variables
 * - Calculate the median
 * - Iterate until there are no points out of the maximum excursion (kappa*sigma)
-* - Establish the threshold as mean+nSigmas*sigma
+* - Calculate mean and sigma
 *
 * Parameters:
 * - invector: First derivative of the (filtered) record
@@ -2241,12 +2242,12 @@ int medianKappaClipping_noiseSigma (gsl_vector *invector, double kappa, double s
 
 
 /***** SECTION 11 ************************************************************
-* getpar function: This function gets the input parameter from the command line or their default values from the .par file
+* getpar_noiseSpec function: This function gets the input parameter from the command line or their default values from the gennoisespec.par file
 *
 * Parameters:
 * - par: Structure containing the input parameters
 ******************************************************************************/
-int getpar(struct Parameters* const par)
+int getpar_noiseSpec(struct Parameters* const par)
 {
   // String input buffer.
   char* sbuffer=NULL;
