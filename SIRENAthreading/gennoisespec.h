@@ -136,8 +136,6 @@ struct Parameters {
 	double asquid;		// Just in case it would be necessary
 	double plspolar;	// Just in case it would be necessary
 	
-	double aducnv;
-	
 	double Imin;
         double Imax;
         double R0;

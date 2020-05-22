@@ -400,7 +400,6 @@ int gennoisespec_main ()
 	}
 	
 	ivcal=1.0;
-        aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534  // If this calculus changes => Change it also in TASKSSIRENA
 	asquid = 1.0;
 	plspolar = 1.0;
 
@@ -948,8 +947,6 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
                             EP_EXIT_ERROR(message,EPFAIL);
                     }
                 }
-		
-		gsl_vector_scale(ioutgsl,aducnv);
 
 		// Assigning positive polarity (by using ASQUID and PLSPOLAR)
 		gsl_vector_memcpy(ioutgsl_aux,ioutgsl);
@@ -1585,7 +1582,7 @@ int writeTPSreprExten ()
 	double sumBaseline;
 	gsl_vector_Sumsubvector(baseline, 0, indexBaseline, &sumBaseline);
 	double keyvaldouble;
-        keyvaldouble = (sumBaseline/indexBaseline)/aducnv;
+        keyvaldouble = sumBaseline/indexBaseline;
 	if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
 	{
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(par.outFile);
@@ -1601,7 +1598,7 @@ int writeTPSreprExten ()
 	strcpy(keyname,"NOISESTD");
 	double sumSigma;
 	gsl_vector_Sumsubvector(sigma, 0, indexBaseline, &sumSigma);
-        keyvaldouble = (sumSigma/indexBaseline)/aducnv;
+        keyvaldouble = sumSigma/indexBaseline;
 	if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
 	{
 		message = "Cannot write keyword " + string(keyname) + " in file " + string(par.outFile);
