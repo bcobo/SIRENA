@@ -97,9 +97,11 @@ MAP OF SECTIONS IN THIS FILE:
 * 
 * - Reading all programm parameters by using PIL
 * - Open input FITS file
-* - Read IMIN/IMAX to calculate ADUCNV
+* - Check if input FITS file have been simulated with TESSIM or XIFUSIM
 * - Read keywords to transform to resistance space
 * - Read and check other input keywords
+* - Read the sampling rate from input FITS file (check its value with the samplinRate input parameter)
+* - Read other necessary keywords from ANY HDU
 * - Get structure of input FITS file columns
 * - Initialize variables and transform from seconds to samples
 * - Declare variables
@@ -124,6 +126,8 @@ MAP OF SECTIONS IN THIS FILE:
 *****************************************************/
 int gennoisespec_main ()
 {
+        headas_chat(3, "initialize ...\n");
+        
 	time_t t_start = time(NULL);
         
         int status=EPOK, extver=0;
@@ -158,68 +162,96 @@ int gennoisespec_main ()
 		message = "Cannot open file " + string(par.inFile);
 		EP_EXIT_ERROR(message,status);
 	}
-	
-	// Read IMIN/IMAX to calculate ADUCNV
-	strcpy(extname,"ADCPARAM");
+	int hdunum; // Number of HDUs in the input FITS file
+        fits_get_num_hdus(infileObject, &hdunum,&status);
+        
+        // Check if input FITS file have been simulated with TESSIM or XIFUSIM
+        strcpy(extname,"RECORDS");
         fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
-        if (status == 0)
+        if (status != 0)
         {
-                strcpy(keyname,"IMIN");
-                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
-                {
-                    message = "Cannot read keyword " + string(keyname) + " in input file (ADCPARAM HDU)";
-                    EP_PRINT_ERROR(message,status); return(EPFAIL);
-                }
-                strcpy(keyname,"IMAX");
-                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
-                {
-                    message = "Cannot read keyword " + string(keyname) + " in input file (ADCPARAM HDU)";
-                    EP_PRINT_ERROR(message,status); return(EPFAIL);
-                }
+            status = 0;
+            strcpy(extname,"TESRECORDS");
+            if (fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status))
+            {
+                message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
+                EP_EXIT_ERROR(message,status);
+            }
+            else
+            {
+                tessimOrxifusim = 1;
+            }
         }
-        else
+        else 
         {
-                status = 0;
-                strcpy(extname,"TESRECORDS");
-                fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status);
+            tessimOrxifusim = 0;
+        }
+        if (tessimOrxifusim == -999)
+        {
+                message = "Neither the 'RECORDS' nor 'TESRECORDS' HDUs are in the input FITS file";
+                EP_EXIT_ERROR(message,status);
+        }
+	
+	// Read keywords to transform to resistance space
+	if (strcmp(par.I2R,"I") != 0)  
+        {
+                strcpy(extname,"ADCPARAM");
+                fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
                 if (status == 0)
                 {
                         strcpy(keyname,"IMIN");
                         if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
                         {
-                            message = "Cannot read keyword " + string(keyname) + " in input file (TESRECORDS HDU)";
+                            message = "Cannot read keyword " + string(keyname) + " in input file (ADCPARAM HDU)";
                             EP_PRINT_ERROR(message,status); return(EPFAIL);
                         }
                         strcpy(keyname,"IMAX");
                         if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
                         {
-                            message = "Cannot read keyword " + string(keyname) + " in input file (TESRECORDS HDU)";
+                            message = "Cannot read keyword " + string(keyname) + " in input file (ADCPARAM HDU)";
                             EP_PRINT_ERROR(message,status); return(EPFAIL);
                         }
                 }
                 else
                 {
                         status = 0;
-                        strcpy(extname,"RECORDS");
+                        strcpy(extname,"TESRECORDS");
                         fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status);
-                        strcpy(keyname,"IMIN");
-                        if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
+                        if (status == 0)
                         {
-                            message = "Cannot read keyword " + string(keyname) + " in input file (RECORDS HDU)";
-                            EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                strcpy(keyname,"IMIN");
+                                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
+                                {
+                                    message = "Cannot read keyword " + string(keyname) + " in input file (TESRECORDS HDU)";
+                                    EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                }
+                                strcpy(keyname,"IMAX");
+                                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
+                                {
+                                    message = "Cannot read keyword " + string(keyname) + " in input file (TESRECORDS HDU)";
+                                    EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                }
                         }
-                        strcpy(keyname,"IMAX");
-                        if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
+                        else
                         {
-                            message = "Cannot read keyword " + string(keyname) + " in input file (RECORDS HDU)";
-                            EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                status = 0;
+                                strcpy(extname,"RECORDS");
+                                fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status);
+                                strcpy(keyname,"IMIN");
+                                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
+                                {
+                                    message = "Cannot read keyword " + string(keyname) + " in input file (RECORDS HDU)";
+                                    EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                }
+                                strcpy(keyname,"IMAX");
+                                if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
+                                {
+                                    message = "Cannot read keyword " + string(keyname) + " in input file (RECORDS HDU)";
+                                    EP_PRINT_ERROR(message,status); return(EPFAIL);
+                                }
                         }
                 }
-        }
-	
-	// Read keywords to transform to resistance space
-	if (strcmp(par.I2R,"I") != 0)  
-        {
+            
                 strcpy(extname,"RECORDS");
                 fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
                 if (status != 0)
@@ -285,16 +317,8 @@ int gennoisespec_main ()
                                 }
                                 LFILTER = gsl_vector_get(vector,0);
                                 
-                                // V0=Ibias*(R0+RPARA/TTRÃÂÃÂ²)*TTR
+                                // V0=Ibias*(R0+RPARA/TTR²)*TTR
                                 if (V0 != 0)    R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
-                                
-                                /*cout<<"Imin: "<<Imin<<endl;
-                                cout<<"Imax: "<<Imax<<endl;
-                                cout<<"R0: "<<R0<<endl;
-                                cout<<"Ibias: "<<Ibias<<endl;
-                                cout<<"RPARA: "<<RPARA<<endl;
-                                cout<<"TTR: "<<TTR<<endl;
-                                cout<<"LFILTER: "<<LFILTER<<endl;*/
                                 
                                 strcpy(extname,"TESRECORDS");
                                 if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
@@ -310,23 +334,8 @@ int gennoisespec_main ()
                         }
                 }
         }
-        else
-        {
-                strcpy(extname,"RECORDS");
-                fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
-                if (status != 0)
-                {
-                    status = 0;
-                    strcpy(extname,"TESRECORDS");
-                    if (fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status))
-                    {
-                        message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
-                        EP_EXIT_ERROR(message,status);
-                    }
-                }
-        }
-
-	// Read and check other input keywords
+        
+	//Read and check other input keywords
 	if (fits_get_num_rows(infileObject,&eventcnt, &status))
 	{
 		message = "Cannot get number of rows in HDU " + string(extname);
@@ -338,59 +347,125 @@ int gennoisespec_main ()
 	sigma = gsl_vector_alloc(eventcnt);
 	gsl_vector_set_all(sigma,-999.0);
         
-        samprate = 156250.; //default xifusim value
-        int hdunum; // Number of the current HDU (RECORDS or TESRECORDS)
-        fits_get_num_hdus(infileObject, &hdunum,&status);
-        if ((hdunum == 8) || (hdunum == 9))    // Input files simulated with xifusim
-        {    
-                fits_movabs_hdu(infileObject, 1, NULL, &status); // Move to "Primary" HDU
-                int numberkeywords;
-                char *headerPrimary;
-                fits_hdr2str(infileObject, 0, NULL, 0,&headerPrimary, &numberkeywords, &status);   // Reading thee whole "Primary" HDU and store it in 'headerPrimary'
-                char * sample_rate_pointer;
-                sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    // Pointer to where the text "sample_rate=" is
-		if(sample_rate_pointer){
-		  sample_rate_pointer = sample_rate_pointer + 12; // Pointer to the next character to "sample_rate=" (which has 12 characters)   
-		  char each_character_after_srate[125];		
-		  snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
-		  char characters_after_srate[125];
-		  snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
-		  while (*sample_rate_pointer != ' ')
-		    {
-		      sample_rate_pointer = sample_rate_pointer + 1;
-		      snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
-		      strcat(characters_after_srate,each_character_after_srate); 
-		    }
-		  samprate = atof(characters_after_srate);
-		}
-                
-                fits_movnam_hdu(infileObject, ANY_HDU,"TRIGGERPARAM", 0, &status);
-                fits_read_key(infileObject,TLONG,"RECLEN", &eventsz,NULL,&status);
-                status = 0;
-		strcpy(extname,"TESRECORDS");
+        // Read the sampling rate from input FITS file (check its value with the samplinRate input parameter)
+        fits_movabs_hdu(infileObject, 1, NULL, &status); // Move to "Primary" HDU
+        int numberkeywords;
+        char *headerPrimary;
+        fits_hdr2str(infileObject, 0, NULL, 0,&headerPrimary, &numberkeywords, &status);   // Reading thee whole "Primary" HDU and store it in 'headerPrimary'
+        char * sample_rate_pointer;
+        sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    // Pointer to where the text "sample_rate=" is
+        if(sample_rate_pointer){
+                sample_rate_pointer = sample_rate_pointer + 12; // Pointer to the next character to "sample_rate=" (which has 12 characters)   
+                char each_character_after_srate[125];		
+                snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+                char characters_after_srate[125];
+                snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
+                while (*sample_rate_pointer != ' ')
+                {
+                    sample_rate_pointer = sample_rate_pointer + 1;
+                    snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+                    strcat(characters_after_srate,each_character_after_srate); 
+                }
+                samprate = atof(characters_after_srate);
+                cout<<"samprate: "<<samprate<<endl;
+        }
+        if ((par.samplingRate != -999.0) && (samprate == -999.0))  // Sampling rate on command line and not in HISTORY (Primary HDU)
+        {
+                samprate = par.samplingRate;
+        }
+        else if ((par.samplingRate != -999.0) && (samprate != -999.0))  // Sampling rate on command line and in HISTORY (Primary HDU)
+        {
+                if (par.samplingRate != samprate)
+                {
+                        message = "Sampling frequency on command line and in input file do not match";
+                        EP_EXIT_ERROR(message,status);
+                }
+        }
+        else if ((par.samplingRate == -999.0) && (samprate == -999.0))  // Sampling rate NOT on command line and NOT in HISTORY (Primary HDU)
+        {
+                message = "Sampling frequency neither on command line nor in input file";
+                EP_EXIT_ERROR(message,status);
+        }
+        
+        // Read other necessary keywords from ANY HDU
+        if (tessimOrxifusim == 1) //XIFUSIM
+        {
+                //Read RECLEN
+                strcpy(keyname,"RECLEN");
+                for (int i=0;i<hdunum;i++)
+                {
+                        fits_movabs_hdu(infileObject, i+1, NULL, &status); 
+                        fits_read_key(infileObject,TLONG,keyname, &eventsz,comment,&status);
+                        if (status == 0)
+                        {
+                                break;
+                        }
+                        else if ((status != 0) && (i < hdunum-1))
+                        {
+                                status = 0;
+                        }
+                }
+                if (status != 0)
+                {
+                        message = "Cannot read the keyword " + string(keyname) + " in any HDU from the input file";
+                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                }
+                strcpy(extname,"TESRECORDS");
 		fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
         }
-        else    // Input files simulated with tessim
+        else if (tessimOrxifusim == 0) //TESSIM
         {
+                //Read TRIGGSZ
                 strcpy(keyname,"TRIGGSZ");
-                if (fits_read_key(infileObject,TLONG,keyname, &eventsz,comment,&status))
+                for (int i=0;i<hdunum;i++)
                 {
-                        message = "Cannot read keyword " + string(keyname) + " in input file";
+                        fits_movabs_hdu(infileObject, i+1, NULL, &status); 
+                        fits_read_key(infileObject,TLONG,keyname, &eventsz,comment,&status);
+                        if (status == 0)
+                        {
+                                break;
+                        }
+                        else if ((status != 0) && (i < hdunum-1))
+                        {
+                                status = 0;
+                        }
+                }
+                if (status != 0)
+                {
+                        message = "Cannot read the keyword " + string(keyname) + " in any HDU from the input file";
                         EP_PRINT_ERROR(message,status); return(EPFAIL);
                 }
-                
-                strcpy(keyname,"DELTAT");
-                if (fits_read_key(infileObject,TDOUBLE,keyname, &samprate,comment,&status))
+                if (samprate == -999.0)
                 {
-                        message = "Cannot read keyword " + string(keyname) + " in input file";
-                        EP_PRINT_ERROR(message,status); return(EPFAIL);
+                        strcpy(keyname,"DELTAT");
+                        for (int i=0;i<hdunum;i++)
+                        {
+                                fits_movabs_hdu(infileObject, i+1, NULL, &status); 
+                                fits_read_key(infileObject,TDOUBLE,keyname, &deltat,comment,&status);
+                                if (status == 0)
+                                {
+                                        if (samprate != 1.0/deltat)
+                                        {
+                                                deltat = 1.0/deltat;
+                                                message = "Sampling rate on command line and in input file (from DELTAT) do not match";
+                                                EP_EXIT_ERROR(message,EPFAIL);
+                                        }
+                                        //samprate = 1.0/samprate;
+                                        break;
+                                }
+                                else if ((status != 0) && (i < hdunum-1))
+                                {
+                                        status = 0;
+                                }
+                        }
+                        if (status != 0)
+                        {
+                                message = "Cannot read the keyword " + string(keyname) + " in any HDU from the input file";
+                                EP_PRINT_ERROR(message,status); return(EPFAIL);
+                        }
                 }
-                if (samprate <= 0)
-                {
-                        message = "Legal values for DELTAT (RECORDS) are real numbers greater than 0";
-                        EP_EXIT_ERROR(message,EPFAIL); 
-                }
-                samprate = 1.0/samprate;
+                strcpy(extname,"RECORDS");
+		fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
         }
             
 	if (eventsz <= 0)
@@ -447,7 +522,7 @@ int gennoisespec_main ()
 	iteratorCol cols [2];		// Structure of Iteration
 	int n_cols = 2; 		// Number of columns:  Time + ADC
 
-	strcpy(extname,"RECORDS");
+	/*strcpy(extname,"RECORDS");
 	if (fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status))
 	if (status != 0)
         {
@@ -458,7 +533,7 @@ int gennoisespec_main ()
 		message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
 		EP_EXIT_ERROR(message,status);
             }
-        }
+        }*/
 
 	// Read Time column
 	strcpy(straux,"TIME");
@@ -2357,6 +2432,18 @@ int getpar_noiseSpec(struct Parameters* const par)
   {
       message = "matrixSize must be an integer in [0,8192]";
       return(EXIT_FAILURE);
+  }
+  
+  status=ape_trad_query_double("samplingRate", &par->samplingRate);
+  if (EXIT_SUCCESS!=status) {
+      message = "failed reading the samplingRate parameter";
+      EP_EXIT_ERROR(message,EPFAIL);
+  }
+  
+  if (EXIT_SUCCESS!=status) 
+  {
+      message = "Failed reading some SIRENA parameter";
+      EP_EXIT_ERROR(message,EPFAIL);
   }
   
   return(status);

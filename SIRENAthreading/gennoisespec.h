@@ -41,7 +41,24 @@
 	#include "genutils.h"
 	#include "pulseprocess.h"
 	#include "inoututils.h"
+	//#include "advdet.h"    // To use loadAdvDet
+	//#include "progressbar.h"
 	
+	//#include "optimalfilters.h"
+        //#include "testriggerfile.h"
+        //#include "teseventlist.h"
+        //#include "tesproftemplates.h"
+        
+        ////#include "testrigger.h"
+        
+        //#include "gti.h"
+        //#include "integraSIRENA.h"
+        //#include <gsl/gsl_vector.h>
+        //#include<stdio.h>
+        //#include<string.h>
+        
+        //#include "versionSIRENA.h"
+
 	#define TOOLSUB gennoisespec_main
         #include "headas_main.c"
 	
@@ -96,6 +113,9 @@ struct Parameters {
         
         //Size of noise matrix if only one to be created
 	int matrixSize;
+        
+        // Sampling rate
+	double samplingRate;
        
 	// END GENNOISESPEC input parameters
 };
@@ -127,10 +147,10 @@ struct Parameters {
 
 // INPUT KEYWORDS	
 
-	long eventcnt;		// Number of rows
-	long eventsz;		// TRIGGSZ
-	double samprate;	// Related to DELTAT
-	double energy;		// Related to MONOEN
+	long eventcnt;		        // Number of rows
+	long eventsz;	         	// TRIGGSZ
+	double samprate = -999.0;       // Related to DELTAT
+	double energy;		        // Related to MONOEN
 
 	double ivcal;		// Just in case it would be necessary
 	double asquid;		// Just in case it would be necessary
@@ -197,6 +217,10 @@ struct Parameters {
         
         gsl_vector *baselineInterval;   // Baseline of each interval of a record
         gsl_vector *sigmaInterval;      // Sigma of each interval of a record
+        
+        int tessimOrxifusim = -999;     // 0: tessim, 1: xifusim
+        
+        double deltat;
 
 // OUTPUT FILE
 
