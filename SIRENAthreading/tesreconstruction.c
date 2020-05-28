@@ -73,7 +73,7 @@
 * - LagsOrNot: Lags or no lags (1/0)
 * - nLags: Number of lags (positive odd number)
 * - Fitting35: Number of lags to analytically calculate a parabola (3) or to fit a parabola (5)
-* - OFIter: Iterate or not iterate (1/0)
+* - OFIter: Iterate or not iterate (1/0) 
 * - OFLib: Work or not with a library with optimal filters (1/0)
 * - OFStrategy: Optimal Filter length Strategy: FREE, BYGRADE or FIXED
 * - OFLength: Optimal Filter length (taken into account if OFStrategy=FIXED)
