@@ -318,7 +318,7 @@ int gennoisespec_main ()
                                 }
                                 LFILTER = gsl_vector_get(vector,0);
                                 
-                                // V0=Ibias*(R0+RPARA/TTR²)*TTR
+                                // V0=Ibias*(R0+RPARA/TTRÂ²)*TTR
                                 if (V0 != 0)    R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
                                 
                                 strcpy(extname,"TESRECORDS");
@@ -368,7 +368,6 @@ int gennoisespec_main ()
                     strcat(characters_after_srate,each_character_after_srate); 
                 }
                 samprate = atof(characters_after_srate);
-                cout<<"samprate: "<<samprate<<endl;
         }
         if ((par.samplingRate != -999.0) && (samprate == -999.0))  // Sampling rate on command line and not in HISTORY (Primary HDU)
         {
@@ -1889,6 +1888,7 @@ int findPulsesNoise
 		message = "Cannot run findTstartNoise with two rows in models";
 		EP_PRINT_ERROR(message,EPFAIL);
 	}
+	//cout<<"nPulses: "<<*nPulses<<endl;
 
 	if (*nPulses != 0)
 	{

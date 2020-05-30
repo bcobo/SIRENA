@@ -1694,6 +1694,7 @@ int findPulsesCAL
 		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 	}
 	*threshold = thresholdmediankappa;
+        //cout<<*threshold<<endl;
         
         // Find pulses
 	if (findTstartCAL (reconstruct_init->maxPulsesPerRecord, vectorinDER, thresholdmediankappa, samplesUp, reconstruct_init, nPulses, tstart, quality, maxDERgsl))
