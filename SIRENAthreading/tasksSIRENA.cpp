@@ -2195,7 +2195,6 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	}
 	if (status == 4)
 	{
-                cout<<"Entra"<<endl;
 		message = "lpf_boxcar: scaleFactor too high => Cut-off frequency too low";
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
 	}

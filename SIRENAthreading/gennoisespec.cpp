@@ -92,6 +92,7 @@ MAP OF SECTIONS IN THIS FILE:
 * - I2R: Transform to resistance space (I2R, I2RALL, I2RNOL, I2RFITTED) or not (I)
 * - clobber: Re-write output files if clobber=yes
 * - matrixSize: Size of noise matrix if only one to be created
+* - samplingRate: Sampling rate (hertzs)
 * 
 * Steps:
 * 

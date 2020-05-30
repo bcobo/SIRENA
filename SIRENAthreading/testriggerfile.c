@@ -176,18 +176,38 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
         
         int hdunum;
         fits_get_num_hdus(file->fptr, &hdunum,status);
-        
-	//Move to the binary table
-	fits_movnam_hdu(file->fptr,ANY_HDU,"RECORDS",0, status);
-	if (*status != 0)
-	{
-		*status = 0;
- 		fits_movnam_hdu(file->fptr,ANY_HDU,"TESRECORDS",0, status);
+
+	// Check if input FITS file have been simulated with TESSIM or XIFUSIM
+	int tessimOrxifusim = -999;
+        fits_movnam_hdu(file->fptr, ANY_HDU,"RECORDS", 0, status);
+        if (*status != 0)
+        {
+	        *status = 0;
+                fits_movnam_hdu(file->fptr, ANY_HDU,"TESRECORDS", 0, status);
+		if (*status != 0)                
+		{
+			printf("%s","Cannot move to TESRECORDS HDU in input FITS file\n");
+                        CHECK_STATUS_RET(*status, NULL);
+                }
+                else
+                {
+	                tessimOrxifusim = 1;
+                }
 	}
+        else 
+        {
+	        tessimOrxifusim = 0;
+        }
+        if (tessimOrxifusim == -999)
+        {
+		printf("%s","Neither the 'RECORDS' nor 'TESRECORDS' HDUs are in the input FITS file\n");
+                CHECK_STATUS_RET(*status, NULL);
+        }
+	
 	//Read standard keywords
 	//(shouldn't we read these from the record extension?)
 	sixt_read_fits_stdkeywords(file->fptr,keywords,status);
-        
+
 	//Get number of rows
 	char comment[FLEN_COMMENT];
 	fits_read_key(file->fptr, TINT, "NAXIS2", &(file->nrows), comment, status);
@@ -199,25 +219,84 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
 	fits_get_colnum(file->fptr, CASEINSEN,"PH_ID", &(file->ph_idCol), status);
 	CHECK_STATUS_RET(*status, NULL);
         
-        if ((hdunum != 8) && (hdunum != 9))
+        if (tessimOrxifusim == 0)	//TESSIM
         {
                 //Get trigger_size
-                fits_read_key(file->fptr, TULONG, "TRIGGSZ", &(file->trigger_size), comment, status);
+                //fits_read_key(file->fptr, TULONG, "TRIGGSZ", &(file->trigger_size), comment, status);
+                for (int i=0;i<hdunum;i++)
+                {
+                        fits_movabs_hdu(file->fptr, i+1, NULL, status); 
+                        fits_read_key(file->fptr,TULONG,"TRIGGSZ", &(file->trigger_size),comment,status);
+                        if (*status == 0)
+                        {
+                                break;
+                        }
+                        else if ((*status != 0) && (i < hdunum-1))
+                        {
+                                *status = 0;
+                        }
+                }
+                if (*status != 0)
+                {
+			printf("%s","Cannot read TRIGGSZ keyword in any HDU from the input file\n");
+                        CHECK_STATUS_RET(*status, NULL);
+                }
+
                 //Get delta_t
-                fits_read_key(file->fptr, TDOUBLE, "DELTAT", &(file->delta_t), comment, status);
+                //fits_read_key(file->fptr, TDOUBLE, "DELTAT", &(file->delta_t), comment, status);
+		for (int i=0;i<hdunum;i++)
+                {
+                        fits_movabs_hdu(file->fptr, i+1, NULL, status); 
+                        fits_read_key(file->fptr,TDOUBLE,"DELTAT", &(file->delta_t),comment,status);
+                        if (*status == 0)
+                        {
+                                break;
+                        }
+                        else if ((*status != 0) && (i < hdunum-1))
+                        {
+                                *status = 0;
+                        }
+                }
+                if (*status != 0)
+                {
+			printf("%s","Cannot read DELTAT keyword in any HDU from the input file\n");
+                        CHECK_STATUS_RET(*status, NULL);                }
+
+		fits_movnam_hdu(file->fptr, ANY_HDU,"RECORDS", 0, status);
         }
-        else
+        else				//XIFUSIM
         {
                 //Get trigger_size
-                fits_movnam_hdu(file->fptr,ANY_HDU,"TRIGGERPARAM",0, status);
-                fits_read_key(file->fptr, TULONG, "RECLEN", &(file->trigger_size), comment, status);
+                /*fits_movnam_hdu(file->fptr,ANY_HDU,"TRIGGERPARAM",0, status);
+                fits_read_key(file->fptr, TULONG, "RECLEN", &(file->trigger_size), comment, status);*/
+		for (int i=0;i<hdunum;i++)
+                {
+                        fits_movabs_hdu(file->fptr, i+1, NULL, status); 
+                        fits_read_key(file->fptr,TULONG,"RECLEN", &(file->trigger_size),comment,status);
+                        if (*status == 0)
+                        {
+                                break;
+                        }
+                        else if ((*status != 0) && (i < hdunum-1))
+                        {
+                                *status = 0;
+                        }
+                }
+                if (*status != 0)
+                {
+			printf("%s","Cannot read RECLEN keyword in any HDU from the input file\n");
+                        CHECK_STATUS_RET(*status, NULL);            
+		}
+
+		fits_movnam_hdu(file->fptr, ANY_HDU,"TESRECORDS", 0, &status);
                 
-                fits_movnam_hdu(file->fptr,ANY_HDU,"RECORDS",0, status);
+                /*fits_movnam_hdu(file->fptr,ANY_HDU,"RECORDS",0, status);
                 if (*status != 0)
                 {
                         *status = 0;
                         fits_movnam_hdu(file->fptr,ANY_HDU,"TESRECORDS",0, status);
-                }
+                }*/
+
                 file->delta_t = -999;
         }
 

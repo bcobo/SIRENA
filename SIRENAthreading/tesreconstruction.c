@@ -104,7 +104,7 @@
 *           - Obtain the sampling rate from the HISTORY block and check
 *           - Obtain 'trig_reclength' from the HISTORY block
 *       - If it is a tessim simulated file
-*           - Read DELTAT keyword to obtain the sampling rate and check
+*           - Check the sampling rate from the XML and from the input FITS file (inverse of DELTAT)
 *   - If Rcemethod doesn't start with '@' => Single record input FITS file
 *       - Open FITS file
 *       - Check if input FITS file have been simulated with TESSIM or XIFUSIM
@@ -113,7 +113,7 @@
 *           - Obtain the sampling rate from the HISTORY block and check
 *           - Obtain 'trig_reclength' from the HISTORY block
 *       - If it is a tessim simulated file
-*           - Read DELTAT keyword to obtain the sampling rate and check
+*           - Check the sampling rate from the XML and from the input FITS file (inverse of DELTAT)
 * - Sixt standard keywords structure
 * - Open output FITS file
 * - Initialize PP data structures needed for pulse filtering
@@ -237,7 +237,8 @@ int tesreconstruction_main() {
                     {
                         status = 0;
                         strcpy(extname,"TESRECORDS");
-                        if (fits_movnam_hdu(fptr, ANY_HDU,extname, extver, &status))
+                        fits_movnam_hdu(fptr, ANY_HDU,extname, extver, &status);
+                        if (status != 0)
                         {
                             SIXT_ERROR("Cannot move to TESRECORDS HDU in input FITS file");
                             return(EXIT_FAILURE);
@@ -281,8 +282,6 @@ int tesreconstruction_main() {
                         snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
                         snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
                         
-                        
-                        
                         while (*sample_rate_pointer != ' ')
                         {
                             sample_rate_pointer = sample_rate_pointer + 1;
@@ -307,28 +306,31 @@ int tesreconstruction_main() {
                         // Pointer to where the text "trig_reclength=" is in HISTORY block
                         trig_reclength = -999.0;
                         trig_reclength_pointer = strstr (headerPrimary,"trig_reclength=");    
-                        if(!sample_rate_pointer)
+                        if(!trig_reclength_pointer)
                         {
-                                SIXT_ERROR("'trig_reclength' is not in the input FITS file (necessary if SIRENA is going tu run in THREADING mode)");
-                                return(EXIT_FAILURE);
+                                //SIXT_ERROR("'trig_reclength' is not in the input FITS file (necessary if SIRENA is going tu run in THREADING mode)");
+                                //return(EXIT_FAILURE);
+                                printf("%s","Attention: 'trig_reclength' is not in the input FITS file (necessary if SIRENA is going to run in THREADING mode)\n");
                         }
-                
-                        // Pointer to the next character to "trig_reclength=" (15 characters)   
-                        trig_reclength_pointer = trig_reclength_pointer + 15; 
-                        snprintf(each_character_after_treclength,125,"%c",*trig_reclength_pointer);
-                        
-                        snprintf(characters_after_treclength,125,"%c",*trig_reclength_pointer);
-                        
-                        while (*trig_reclength_pointer != ' ')
+                        else
                         {
-                            trig_reclength_pointer = trig_reclength_pointer + 1;
-                            snprintf(each_character_after_treclength,125,"%c",*trig_reclength_pointer);
-                            strcat(characters_after_treclength,each_character_after_treclength); 
+                                // Pointer to the next character to "trig_reclength=" (15 characters)   
+                                trig_reclength_pointer = trig_reclength_pointer + 15; 
+                                snprintf(each_character_after_treclength,125,"%c",*trig_reclength_pointer);
+                                
+                                snprintf(characters_after_treclength,125,"%c",*trig_reclength_pointer);
+                                
+                                while (*trig_reclength_pointer != ' ')
+                                {
+                                    trig_reclength_pointer = trig_reclength_pointer + 1;
+                                    snprintf(each_character_after_treclength,125,"%c",*trig_reclength_pointer);
+                                    strcat(characters_after_treclength,each_character_after_treclength); 
+                                }
+                                
+                                trig_reclength = atoi(characters_after_treclength);
                         }
-                        
-                        trig_reclength = atoi(characters_after_treclength);
                     }
-                    else  //tessim simulated file (with RECORDS)
+                    /*else  //tessim simulated file (with RECORDS)
                     {
                         fits_movnam_hdu(fptr, ANY_HDU,"RECORDS", 0, &status);
                         CHECK_STATUS_BREAK(status);
@@ -339,7 +341,7 @@ int tesreconstruction_main() {
                                 SIXT_ERROR("Sampling rate from input FITS file (DELTAT) and from XML file do not match");
                                 return(EXIT_FAILURE);
                         }
-                    }
+                    }*/
                     fits_close_file(fptr,&status);
                     CHECK_STATUS_BREAK(status);
             }
@@ -428,28 +430,31 @@ int tesreconstruction_main() {
                 // Pointer to where the text "trig_reclength=" is in HISTORY block
                 trig_reclength = -999.0;
                 trig_reclength_pointer = strstr (headerPrimary,"trig_reclength=");   
-                if(!sample_rate_pointer)
+                if(!trig_reclength_pointer)
                 {
-                    SIXT_ERROR("'trig_reclength' is not in the input FITS file");
-                    return(EXIT_FAILURE);
+                    //SIXT_ERROR("'trig_reclength' is not in the input FITS file (necessary if SIRENA is going tu run in THREADING mode)");
+                    //return(EXIT_FAILURE);
+                    printf("%s","Attention: 'trig_reclength' is not in the input FITS file (necessary if SIRENA is going to run in THREADING mode)\n");
                 }
-                
-                // Pointer to the next character to "trig_reclength=" (15 characters)   
-                trig_reclength_pointer = trig_reclength_pointer + 15; 
-                snprintf(each_character_after_treclength,125,"%c",*trig_reclength_pointer);
-                
-                snprintf(characters_after_treclength,125,"%c",*trig_reclength_pointer);
-                
-                while (*trig_reclength_pointer != ' ')
+                else
                 {
-                    trig_reclength_pointer = trig_reclength_pointer + 1;
+                    // Pointer to the next character to "trig_reclength=" (15 characters)   
+                    trig_reclength_pointer = trig_reclength_pointer + 15; 
                     snprintf(each_character_after_treclength,125,"%c",*trig_reclength_pointer);
-                    strcat(characters_after_treclength,each_character_after_treclength); 
+                    
+                    snprintf(characters_after_treclength,125,"%c",*trig_reclength_pointer);
+                    
+                    while (*trig_reclength_pointer != ' ')
+                    {
+                        trig_reclength_pointer = trig_reclength_pointer + 1;
+                        snprintf(each_character_after_treclength,125,"%c",*trig_reclength_pointer);
+                        strcat(characters_after_treclength,each_character_after_treclength); 
+                    }
+                    
+                    trig_reclength = atoi(characters_after_treclength);
                 }
-                
-                trig_reclength = atoi(characters_after_treclength);
             }
-            else  //tessim simulated file (with RECORDS)
+            /*else  //tessim simulated file (with RECORDS)
             {
                 fits_movnam_hdu(fptr, ANY_HDU,"RECORDS", 0, &status);
                 CHECK_STATUS_BREAK(status);
@@ -460,7 +465,7 @@ int tesreconstruction_main() {
                     SIXT_ERROR("Sampling rate from input FITS file (DELTAT) and from XML file do not match");
                     return(EXIT_FAILURE);
                 }
-            } 
+            } */
             fits_close_file(fptr,&status);
             CHECK_STATUS_BREAK(status);
     }
@@ -542,6 +547,12 @@ int tesreconstruction_main() {
                     // ----------------
                     record_file = openexistingTesTriggerFile(filefits,keywords,&status);
                     CHECK_STATUS_BREAK(status);
+                    
+                    if ((tessimOrxifusim == 0) && (1/record_file->delta_t != sf))
+                    {
+                        SIXT_ERROR("Sampling rate from input FITS file (DELTAT) and from XML file do not match");
+                        return(EXIT_FAILURE);
+                    }
                     
                     if(!strcmp(par.Rcmethod,"PP"))
                     {
@@ -689,6 +700,12 @@ int tesreconstruction_main() {
             // ----------------
             record_file = openexistingTesTriggerFile(par.RecordFile,keywords,&status);
             CHECK_STATUS_BREAK(status);
+            
+            if ((tessimOrxifusim == 0) && (1/record_file->delta_t != sf))
+            {
+                SIXT_ERROR("Sampling rate from input FITS file (DELTAT) and from XML file do not match");
+                return(EXIT_FAILURE);
+            }
 
             if(!strcmp(par.Rcmethod,"PP")){
                 initializeReconstruction(reconstruct_init,par.OptimalFilterFile,par.PulseLength,

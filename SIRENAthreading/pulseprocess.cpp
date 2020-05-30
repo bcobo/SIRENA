@@ -371,11 +371,10 @@ int medianKappaClipping (gsl_vector *invector, double kappa, double stopCriteria
 		}
 
 	} while (fabs((mean2-mean1)/mean1)>(stopCriteria/100.0));	// HARDPOINT!!!!!!!!!!!!!!!!!!! (stopCriteria)
-	
 
 	// Establish the threshold as mean+nSigmas*sigma
 	*threshold = mean2+nSigmas*sg2;	// HARDPOINT!!!!!!!!!!!!!!!!!!! (nSigmas)
-
+	
 	gsl_vector_free(invectorNew); invectorNew= 0;
 
 	return EPOK;
@@ -1695,7 +1694,7 @@ int findPulsesCAL
 		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 	}
 	*threshold = thresholdmediankappa;
-
+        
         // Find pulses
 	if (findTstartCAL (reconstruct_init->maxPulsesPerRecord, vectorinDER, thresholdmediankappa, samplesUp, reconstruct_init, nPulses, tstart, quality, maxDERgsl))
 	{
