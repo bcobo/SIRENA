@@ -318,7 +318,7 @@ int gennoisespec_main ()
                                 }
                                 LFILTER = gsl_vector_get(vector,0);
                                 
-                                // V0=Ibias*(R0+RPARA/TTRÂ²)*TTR
+                                // V0=Ibias*(R0+RPARA/TTRÃÂ²)*TTR
                                 if (V0 != 0)    R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
                                 
                                 strcpy(extname,"TESRECORDS");
@@ -1069,6 +1069,8 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 		}
 
 		if (nPulses != 0)	pulseFound = 1;
+                
+                nPulses = 0;
 		
 		if ((pulseFound == 1) || (tail_duration != 0))
 		{
@@ -1088,6 +1090,23 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 				EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 			}
 		}
+		
+		//for (int k=0; k<ioutgsl_aux->size; k++)   cout<<k<<" "<<gsl_vector_get(ioutgsl_aux,k)<<endl;
+		//cout<<"threshold: "<<threshold<<endl;
+		//double baselineInterval,sigmaInterval;   
+		//for (int k=0; k<nIntervals; k++)
+                //{
+                        //temp = gsl_vector_subvector(ioutgsl_aux,gsl_vector_get(startIntervalgsl,k), intervalMinBins);
+                        //findMeanSigma (&temp.vector, &baselineInterval, &sigmaInterval);
+                        //cout<<"baseline: "<<baselineInterval<<" sigmaInterval: "<<sigmaInterval<<" umbral: "<<baselineInterval + (par.nSgms)*sigmaInterval<<endl;
+                        //cout<<"max: "<<gsl_vector_max(&temp.vector)<<endl;
+                        //cout<<"max: "<<gsl_vector_max(ioutgsl_aux)<<endl;
+                        cout<<gsl_vector_max(ioutgsl_aux)<<endl;
+                        if (gsl_vector_max(ioutgsl_aux) > 100)
+                        {
+                                cout<<"¡¡PULSO NO ENCONTRADO!!: "<<gsl_vector_max_index(ioutgsl_aux)<<endl;
+                        }
+                //}
 		
 		// Calculating the mean and sigma of the intervals without pulses together => BSLN0 & NOISESTD
 		gsl_vector *intervalsWithoutPulsesTogether = gsl_vector_alloc(nIntervals*intervalMinBins);
@@ -1124,8 +1143,6 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
                         NumMeanSamples = NumMeanSamples + 1;
                     }
 		}
-		gsl_vector_free(baselineInterval); baselineInterval = 0;
-                gsl_vector_free(sigmaInterval); sigmaInterval = 0;
 
 		ntotalrows++;
 	}

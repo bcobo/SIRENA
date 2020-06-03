@@ -2520,7 +2520,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                     foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i);
                 }
                 foundPulses->pulses_detected[i].rmsbsln = gsl_vector_get(rmsBgsl,i);
-		//cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<" , Tstart="<<foundPulses->pulses_detected[i].Tstart<<" , Tend="<<foundPulses->pulses_detected[i].Tend<<endl;
+                //cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", tend="<<gsl_vector_get(tendgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<" , Tstart="<<foundPulses->pulses_detected[i].Tstart<<" , Tend="<<foundPulses->pulses_detected[i].Tend<<endl;
                 //log_debug("Pulse %d", i," tstart=%f",gsl_vector_get(tstartgsl,i), " maxDER=%f",foundPulses->pulses_detected[i].maxDER, " samp1DER=%f",gsl_vector_get(samp1DERgsl,i), " pulse_duration=%d",foundPulses->pulses_detected[i].pulse_duration," quality=%d",foundPulses->pulses_detected[i].quality," lags=%f",gsl_vector_get(lagsgsl,i)," Tstart=%f",foundPulses->pulses_detected[i].Tstart," Tend=%f",foundPulses->pulses_detected[i].Tend);
                 //log_debug("Pulse %i tstart=%f maxDER=%f samp1DER=%f pulse_duration=%i quality=%f lags=%f",i,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].maxDER,gsl_vector_get(samp1DERgsl,i),foundPulses->pulses_detected[i].pulse_duration,foundPulses->pulses_detected[i].quality,gsl_vector_get(lagsgsl,i));
                 //cout<<"Bgsl = "<<foundPulses->pulses_detected[i].bsln<<endl;
@@ -2639,7 +2639,7 @@ int writePulses(ReconstructInitSIRENA** reconstruct_init, double samprate, doubl
 			gsl_vector_set(tstart,i,initialtime + (gsl_vector_get (tstart,i) * (1/samprate)));
 			gsl_vector_set(tend,i,initialtime + (gsl_vector_get (tend,i) * (1/samprate)));
 
-			if (invectorNOTFIL->size - t0 > (*reconstruct_init)->pulse_length)	//The invectorNOTFIL has more sampless than sizePulse
+			if (invectorNOTFIL->size - t0 > (*reconstruct_init)->pulse_length)	//The invectorNOTFIL has more samples than sizePulse
 			{
 				if ((t0 < 0) || (t0 > invectorNOTFIL->size-2)
 					|| ((*reconstruct_init)->pulse_length < 1) || ((*reconstruct_init)->pulse_length > invectorNOTFIL->size-t0))
@@ -2671,8 +2671,11 @@ int writePulses(ReconstructInitSIRENA** reconstruct_init, double samprate, doubl
 		obj.inObject = dtcObject;
 		obj.nameTable = new char [255];
 		strcpy(obj.nameTable,"PULSES");
-		obj.iniRow = totalpulses+1;
-		obj.endRow = totalpulses+numPulsesRecord-1+1;
+                if (totalpulses == 0)   obj.iniRow = totalpulses+1;
+		else                    obj.iniRow = totalpulses;
+                if (numPulsesRecord == 1)   obj.endRow = obj.iniRow;
+		else                        obj.endRow = obj.iniRow + numPulsesRecord;
+		obj.endRow = totalpulses+numPulsesRecord;
 		obj.iniCol = 0;
 		obj.nameCol = new char [255];
 		strcpy(obj.nameCol,"TSTART");

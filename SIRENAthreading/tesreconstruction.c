@@ -1134,12 +1134,7 @@ int getpar(struct Parameters* const par)
             return(EXIT_FAILURE);
         }
 	  
-	//MyAssert((par->intermediate == 0) || (par->intermediate == 1), "intermediate must be 0 or 1");
-	if (par->intermediate == 1)
-        {
-            SIXT_ERROR("'intermediate = 1' is not available at the moment because the code to write an intermediate file is obsolete");
-            return(EXIT_FAILURE);
-        }
+	MyAssert((par->intermediate == 0) || (par->intermediate == 1), "intermediate must be 0 or 1");
 	
         if (par->opmode == 0) MyAssert(par->monoenergy > 0, "monoenergy must be greater than 0");
 	

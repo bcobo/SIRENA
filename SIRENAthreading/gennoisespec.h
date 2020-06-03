@@ -215,9 +215,6 @@ struct Parameters {
 	gsl_vector *weightpoints;
 	gsl_matrix *weightMatrixes;
         
-        gsl_vector *baselineInterval;   // Baseline of each interval of a record
-        gsl_vector *sigmaInterval;      // Sigma of each interval of a record
-        
         int tessimOrxifusim = -999;     // 0: tessim, 1: xifusim
         
         double deltat;
