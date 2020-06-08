@@ -2520,8 +2520,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                     foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i);
                 }
                 foundPulses->pulses_detected[i].rmsbsln = gsl_vector_get(rmsBgsl,i);
-                //cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", tend="<<gsl_vector_get(tendgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<" ,lags="<<gsl_vector_get(lagsgsl,i)<<" , Tstart="<<foundPulses->pulses_detected[i].Tstart<<" , Tend="<<foundPulses->pulses_detected[i].Tend<<endl;
-                //log_debug("Pulse %d", i," tstart=%f",gsl_vector_get(tstartgsl,i), " maxDER=%f",foundPulses->pulses_detected[i].maxDER, " samp1DER=%f",gsl_vector_get(samp1DERgsl,i), " pulse_duration=%d",foundPulses->pulses_detected[i].pulse_duration," quality=%d",foundPulses->pulses_detected[i].quality," lags=%f",gsl_vector_get(lagsgsl,i)," Tstart=%f",foundPulses->pulses_detected[i].Tstart," Tend=%f",foundPulses->pulses_detected[i].Tend);
+                //cout<<"Pulse "<<i<<" tstart="<<gsl_vector_get(tstartgsl,i)<<", tend="<<gsl_vector_get(tendgsl,i)<<", maxDER= "<<foundPulses->pulses_detected[i].maxDER<<" , samp1DER="<<gsl_vector_get(samp1DERgsl,i)<<", pulse_duration= "<<foundPulses->pulses_detected[i].pulse_duration<<",quality= "<<foundPulses->pulses_detected[i].quality<<endl;             //log_debug("Pulse %d", i," tstart=%f",gsl_vector_get(tstartgsl,i), " maxDER=%f",foundPulses->pulses_detected[i].maxDER, " samp1DER=%f",gsl_vector_get(samp1DERgsl,i), " pulse_duration=%d",foundPulses->pulses_detected[i].pulse_duration," quality=%d",foundPulses->pulses_detected[i].quality," lags=%f",gsl_vector_get(lagsgsl,i)," Tstart=%f",foundPulses->pulses_detected[i].Tstart," Tend=%f",foundPulses->pulses_detected[i].Tend);
                 //log_debug("Pulse %i tstart=%f maxDER=%f samp1DER=%f pulse_duration=%i quality=%f lags=%f",i,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].maxDER,gsl_vector_get(samp1DERgsl,i),foundPulses->pulses_detected[i].pulse_duration,foundPulses->pulses_detected[i].quality,gsl_vector_get(lagsgsl,i));
                 //cout<<"Bgsl = "<<foundPulses->pulses_detected[i].bsln<<endl;
                 //cout<<"rmsBgsl = "<<foundPulses->pulses_detected[i].rmsbsln<<endl;
@@ -7394,7 +7393,7 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
                 log_trace("Calculating the low energy estimator...");
                 energy_lowres = -999;
                 // Pulse 
-                if (resize_mf_lowres <= recordAux->size-tstartSamplesRecord)
+                if ((resize_mf_lowres <= recordAux->size-tstartSamplesRecord) && ((*reconstruct_init)->OFLib == 1))
                 {
                     /*if (resize_mf_lowres > recordAux->size-tstartSamplesRecord)
                     {
@@ -7432,7 +7431,7 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
                                     EP_EXIT_ERROR(message,EPFAIL);
                             }
                     }
-                                    
+                            
                     // Get the filter
                     if (strcmp((*reconstruct_init)->OFInterp,"MF") == 0)
                     {
@@ -7925,7 +7924,6 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
 			gsl_vector_free(pulseToCalculateEnergy); pulseToCalculateEnergy = 0;
                         log_debug("After calculateEnergy");
                         
-                        
 			// If using lags, it is necessary to modify the tstart of the pulse 
 			if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && tstartNewDev != -999.0)
 			{
@@ -8035,7 +8033,9 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
 		// Write info of the pulse in the output intemediate file if 'intermediate'=1
 		if ((*reconstruct_init)->intermediate == 1)
 		{
-			if (writeFilterHDU(reconstruct_init, i,energy, optimalfilter, optimalfilter_f, optimalfilter_FFT, &dtcObject))
+			//if (writeFilterHDU(reconstruct_init, i,energy, optimalfilter, optimalfilter_f, optimalfilter_FFT, &dtcObject))
+                        //if (writeFilterHDU(reconstruct_init, i,energy, filtergsl, optimalfilter_f, filtergsl, &dtcObject))
+                        if (writeFilterHDU(reconstruct_init, i,energy, filtergsl, &dtcObject))
 			{
 				message = "Cannot run writeFilterHDU routine for pulse i=" + boost::lexical_cast<std::string>(i);
 				EP_EXIT_ERROR(message,EPFAIL);
@@ -8982,7 +8982,8 @@ void th_runEnergy(TesRecord* record, int trig_reclength,
 		// Write info of the pulse in the output intemediate file if 'intermediate'=1
 		if ((*reconstruct_init)->intermediate == 1)
 		{
-			if (writeFilterHDU(reconstruct_init, i,energy, optimalfilter, optimalfilter_f, optimalfilter_FFT, &dtcObject))
+			//if (writeFilterHDU(reconstruct_init, i,energy, optimalfilter, optimalfilter_f, optimalfilter_FFT, &dtcObject))
+                        if (writeFilterHDU(reconstruct_init, i,energy, filtergsl, &dtcObject))
 			{
 				message = "Cannot run writeFilterHDU routine for pulse i=" + boost::lexical_cast<std::string>(i);
 				EP_EXIT_ERROR(message,EPFAIL);
@@ -10846,8 +10847,8 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                                             else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
                                                             /*cout<<"maxParabolaFound: "<<maxParabolaFound<<endl;
                                                             cout<<"xmax: "<<xmax<<endl;
-                                                            cout<<"exitLags: "<<exitLags<<endl;
-                                                            cout<<"indexLags: "<<indexLags<<" limite="<<(reconstruct_init->nLags)/2-1<<endl;*/
+                                                            cout<<"exitLags: "<<exitLags<<endl;*/
+                                                            //cout<<"indexLags: "<<indexLags<<" limite="<<(reconstruct_init->nLags)/2-1<<endl;
                                                             
                                                         } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
                                                     }
@@ -11723,12 +11724,10 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 *                     In particular, this function uses 'detectFile', 'clobber' and 'pulse_length'
 * - pulse_index: Index of the pulse whose info is going to be written (to know if it is the first pulse)
 * - energy: Estimated energy (eV)
-* - optimalfilter: Optimal filter in time domain
-* - optimalfilter_f: Frequency axis of the optimal filter spectrum
-* - optimalfilter_FFT: Optimal filter spectrum
+* - optimalfilter: Optimal filter (in time domain or frequency domain)
 * - dtcObject: FITS object for intermeadiate file name
 ******************************************************************************/
-int writeFilterHDU(ReconstructInitSIRENA **reconstruct_init, int pulse_index, double energy, gsl_vector *optimalfilter, gsl_vector *optimalfilter_f, gsl_vector *optimalfilter_FFT, fitsfile **dtcObject)
+int writeFilterHDU(ReconstructInitSIRENA **reconstruct_init, int pulse_index, double energy, gsl_vector *optimalfilter, fitsfile **dtcObject)
 {
 	// Declare variables
 	string message = "";
@@ -11754,100 +11753,94 @@ int writeFilterHDU(ReconstructInitSIRENA **reconstruct_init, int pulse_index, do
 		EP_PRINT_ERROR(message,status); return(EPFAIL);
 	}
 	
-	// Create the FILTER HDU is if it is the first pulse
-	if ( ((*reconstruct_init)->clobber == 1) && (pulse_index == 0))
-	{
-		strcpy(extname,"FILTER");
-		if (fits_create_tbl(*dtcObject, BINARY_TBL,0,0,tt,tf,tu,extname,&status))
-		{
-			message = "Cannot create table " + string(extname) + " in output intermediate file " + string(dtcName);
-			EP_PRINT_ERROR(message,status);return(EPFAIL);
-		}
-	}
-
-	strcpy(extname,"FILTER");
-	if (fits_movnam_hdu(*dtcObject, ANY_HDU,extname, 0, &status))
-	{
-		message = "Cannot move to HDU " + string(extname) + " in output intermediate file " + string(dtcName);
-		EP_PRINT_ERROR(message,status); return(EPFAIL);
-	}
-
-	if (fits_get_num_rows(*dtcObject,&totalpulses, &status))
-	{
-		message = "Cannot get number of rows in " + string(dtcName);
-		EP_PRINT_ERROR(message,status); return(EPFAIL);
-	}
-
-	// It is not necessary to check the allocation because '(*reconstruct_init)->pulse_length'=PulseLength(input parameter) has been checked previously
-	gsl_matrix *optimalfilter_matrix = gsl_matrix_alloc(1,(*reconstruct_init)->pulse_length);
-	gsl_matrix *optimalfilter_f_matrix = gsl_matrix_alloc(1,(*reconstruct_init)->pulse_length);
-	gsl_matrix *optimalfilter_FFT_matrix = gsl_matrix_alloc(1,(*reconstruct_init)->pulse_length);
-
-	gsl_matrix_set_zero(optimalfilter_matrix);
-	gsl_matrix_set_zero(optimalfilter_f_matrix);
-	gsl_matrix_set_zero(optimalfilter_FFT_matrix);
-
-	for (int i=0;i<optimalfilter->size;i++)
-	{
-		gsl_matrix_set(optimalfilter_matrix,0,i,gsl_vector_get(optimalfilter,i));
-		gsl_matrix_set(optimalfilter_f_matrix,0,i,gsl_vector_get(optimalfilter_f,i));
-		gsl_matrix_set(optimalfilter_FFT_matrix,0,i,gsl_vector_get(optimalfilter_FFT,i));
-	}
-
+	strcpy(extname,"PULSES");
+        if (fits_movnam_hdu(*dtcObject, ANY_HDU,extname, 0, &status))
+        {
+            message = "Cannot move to HDU " + string(extname) + " in output intermediate file " + string(dtcName);
+            EP_PRINT_ERROR(message,status); return(EPFAIL);
+        }
+        
+        if (fits_get_num_rows(*dtcObject,&totalpulses, &status))
+        {
+            message = "Cannot get number of rows in " + string(dtcName);
+            EP_PRINT_ERROR(message,status); return(EPFAIL);
+        }
+	
 	// Write data
 	IOData obj;
 	obj.inObject = *dtcObject;
 	obj.nameTable = new char [255];
-	strcpy(obj.nameTable,"FILTER");
-	obj.iniCol = 0;
+        obj.iniCol = 0;
 	obj.nameCol = new char [255];
 	obj.type = TDOUBLE;
 	obj.unit = new char [255];
-
-	// OPTIMALF column
-	obj.iniRow = totalpulses+1;
-	obj.endRow = totalpulses+1;
-	strcpy(obj.nameCol,"OPTIMALF");
-	strcpy(obj.unit," ");
-	if (writeFitsComplex (obj,optimalfilter_matrix))
-	{
-		message = "Cannot run routine writeFitsComplex to write " + string(obj.nameCol) + " column in FILTER";
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-	gsl_matrix_free(optimalfilter_matrix); optimalfilter_matrix = 0;
-
-	// OFLENGTH column
-	gsl_vector *oflength = gsl_vector_alloc(1);
-	gsl_vector_set(oflength,0,optimalfilter->size);
-	strcpy(obj.nameCol,"OFLENGTH");
-	if (writeFitsSimple (obj,oflength))
-	{
-		message = "Cannot run routine writeFitsSimple to write " + string(obj.nameCol) +
-			    " column in FILTER";
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-	gsl_vector_free(oflength); oflength = 0;
-
-	// FREQ column
-	strcpy(obj.nameCol,"FREQ");
-	strcpy(obj.unit,"Hz");
-	if (writeFitsComplex (obj,optimalfilter_f_matrix))
-	{
-		message = "Cannot run routine writeFitsComplex to write " + string(obj.nameCol) + " column in FILTER";
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-	gsl_matrix_free(optimalfilter_f_matrix); optimalfilter_f_matrix = 0;
-
-	// OPTIMALFF column
-	strcpy(obj.nameCol,"OPTIMALFF");
-	strcpy(obj.unit," ");
-	if (writeFitsComplex (obj,optimalfilter_FFT_matrix))
-	{
-		message = "Cannot run routine writeFitsComplex to write " + string(obj.nameCol) + " column in FILTER";
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-	gsl_matrix_free(optimalfilter_FFT_matrix); optimalfilter_FFT_matrix = 0;
-
+        obj.iniRow = totalpulses;
+        obj.endRow = totalpulses;
+	
+	if (((*reconstruct_init)->OFLib == 0) || (((*reconstruct_init)->OFLib == 1) && ((*reconstruct_init)->filtEev == 0) && ((*reconstruct_init)->library_collection->maxDERs->size > 1))) // Optimal filter used is written in the intermediate FITS file
+        {
+                // Create the FILTER HDU is if it is the first pulse
+                if ( ((*reconstruct_init)->clobber == 1) && (pulse_index == 0))
+                {
+                        strcpy(extname,"FILTER");
+                        if (fits_create_tbl(*dtcObject, BINARY_TBL,0,0,tt,tf,tu,extname,&status))
+                        {
+                                message = "Cannot create table " + string(extname) + " in output intermediate file " + string(dtcName);
+                                EP_PRINT_ERROR(message,status);return(EPFAIL);
+                        }
+                }
+                
+                gsl_matrix *optimalfilter_matrix;
+                // It is not necessary to check the allocation because '(*reconstruct_init)->pulse_length'=PulseLength(input parameter) has been checked previously
+                if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)
+                {
+                        optimalfilter_matrix = gsl_matrix_alloc(1,(*reconstruct_init)->pulse_length);
+                }
+                else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)
+                {
+                        optimalfilter_matrix = gsl_matrix_alloc(1,(*reconstruct_init)->pulse_length*2);
+                }
+                gsl_matrix_set_zero(optimalfilter_matrix);
+                for (int i=0;i<optimalfilter_matrix->size2;i++)
+                {
+                        gsl_matrix_set(optimalfilter_matrix,0,i,gsl_vector_get(optimalfilter,i));
+                }
+                
+                strcpy(obj.nameTable,"FILTER");
+                strcpy(obj.unit," ");
+                
+                if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)
+                {
+                        // OPTIMALF column
+                        strcpy(obj.nameCol,"OPTIMALF");
+                }
+                else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)
+                {
+                        // OPTIMALFF column
+                        strcpy(obj.nameCol,"OPTIMALFF");
+                }
+                if (writeFitsComplex (obj,optimalfilter_matrix))
+                {
+                    message = "Cannot run routine writeFitsComplex to write " + string(obj.nameCol) + " column in FILTER";
+                    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                }
+                gsl_matrix_free(optimalfilter_matrix); optimalfilter_matrix = 0;
+                
+                // OFLENGTH column
+                gsl_vector *oflength = gsl_vector_alloc(1);
+                gsl_vector_set(oflength,0,(*reconstruct_init)->pulse_length);
+                strcpy(obj.nameCol,"OFLENGTH");
+                if (writeFitsSimple (obj,oflength))
+                {
+                        message = "Cannot run routine writeFitsSimple to write " + string(obj.nameCol) + " column in FILTER";
+                        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                }
+                gsl_vector_free(oflength); oflength = 0;
+        }
+        //else (((*reconstruct_init)->OFLib == 1) && ((*reconstruct_init)->filtEev != 0)) // Optimal filter used is NOT written in the intermediate FITS file (is is one of the filters already in the library FITS file)
+        //{
+        //}
+	
 	strcpy(obj.nameTable,"PULSES");
 
 	// ENERGY column

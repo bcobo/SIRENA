@@ -579,7 +579,7 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, T
                         }
                         else
                         {
-                                cout<<"TESRECORDS"<<endl;
+                                //cout<<"TESRECORDS"<<endl;
                                 double R0;
                                 double I0_START;
                                 double RPARA;
@@ -1260,7 +1260,7 @@ LibraryCollection* getLibraryCollection(const char* const filename, int opmode, 
 		EP_PRINT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",*status);
 		*status=EPFAIL; return(library_collection);
 	}
-	if (opmode == 1)
+	if ((opmode == 1) && (oflib == 1))
         {
                 int filtEevIsAEnergy = 0;
                 if (filtEev != 0)
