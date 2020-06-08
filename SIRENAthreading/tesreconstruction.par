@@ -48,7 +48,6 @@ OFLength,i,h,8192,,,"Optimal Filter length (taken into account if OFStrategy=FIX
 preBuffer,i,h,0,,,"Some samples added before the starting time of a pulse"
 intermediate,i,h,0,,,"Write or not intermediate files (1/0)"
 detectFile,s,h,"detections.fits",,,"Intermediate detections file (if intermediate=1)"
-filterFile,s,h,"filters.fits",,,"Intermediate filters file (if intermediate=1)" 
 errorT,i,h,0,,,"Additional error (in samples) added to the detected time"  # Logically, it changes the reconstructed energies 
 Sum0Filt,i,h,0,,,"0-padding: Subtract the sum of the filter (1) or not (0)" 
 #tstartPulse1,i,h,0,,,"Tstart (samples) of the first pulse (different from 0 if the tstartPulsei input parameters are going to be used)"

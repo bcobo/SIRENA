@@ -1812,9 +1812,6 @@ int createDetectFile(ReconstructInitSIRENA* reconstruct_init, double samprate, f
 		sprintf(comment, "detectFile = %s", reconstruct_init->detectFile);
 		fits_write_comment(*dtcObject, comment, &status);
 		
-		sprintf(comment, "fiterFile = %s", reconstruct_init->filterFile);
-		fits_write_comment(*dtcObject, comment, &status);
-		
 		char str_clobber[125];      	snprintf(str_clobber,125,"%d",reconstruct_init->clobber);
 		strhistory=string("clobber = ") + string(str_clobber);
 		strncpy(keyvalstr,strhistory.c_str(),999);
@@ -4037,9 +4034,6 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
                 fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
                		
 		sprintf(comment, "detectFile = %s", (*reconstruct_init)->detectFile);
-		fits_write_comment(*inLibObject, comment, &status);
-		
-		sprintf(comment, "filterFile = %s", (*reconstruct_init)->filterFile);
 		fits_write_comment(*inLibObject, comment, &status);
                
                 char str_clobber[125];                  snprintf(str_clobber,125,"%d",(*reconstruct_init)->clobber);
@@ -11704,18 +11698,16 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
 
 /***** SECTION B12 ************************************************************
 * writeFilterHDU: This function runs in RECONSTRUCTION mode and writes the optimal filter info (in the FILTER HDU) for each pulse
-*                 if 'intermediate'=1.
+*                 if intermediate'=1 and either OFLib=no or OFLib=yes, filtEeV=0 and number of rows in the library FITS file is greater than 1.
 *
 * - Declare variables
 * - Open intermediate FITS file
-* - Create the FILTER HDU if it is the first pulse
-* - Write data
-* 	- OPTIMALF column
-* 	- OFLENGTH column
-* 	- FREQ column
-* 	- OPTIMALFF column
-* 	- ENERGY column
-* - Modify the Primary HDU
+* - If OFLib=no or OFLib=yes+filtEev=0+libraryRowsNumber>1:
+*       - Create the FILTER HDU if it is the first pulse
+*       - Write data:
+* 	     - OPTIMALF or OPTIMALFF column (in time or frequency domain)
+* 	     - OFLENGTH column
+* - Write ENERGY column in PULSES HDU
 * - Close intermediate output FITS file if it is necessary
 * - Free memory
 *
@@ -11777,7 +11769,7 @@ int writeFilterHDU(ReconstructInitSIRENA **reconstruct_init, int pulse_index, do
         obj.iniRow = totalpulses;
         obj.endRow = totalpulses;
 	
-	if (((*reconstruct_init)->OFLib == 0) || (((*reconstruct_init)->OFLib == 1) && ((*reconstruct_init)->filtEev == 0) && ((*reconstruct_init)->library_collection->maxDERs->size > 1))) // Optimal filter used is written in the intermediate FITS file
+	if (((*reconstruct_init)->OFLib == 0) || (((*reconstruct_init)->OFLib == 1) && ((*reconstruct_init)->filtEev == 0) && ((*reconstruct_init)->library_collection->maxDERs->size > 1))) // Optimal filter used is written in the intermediate FITS file (in other cases it is not necessary because the optimal filter itself is in the library FITS file)
         {
                 // Create the FILTER HDU is if it is the first pulse
                 if ( ((*reconstruct_init)->clobber == 1) && (pulse_index == 0))
@@ -11837,9 +11829,6 @@ int writeFilterHDU(ReconstructInitSIRENA **reconstruct_init, int pulse_index, do
                 }
                 gsl_vector_free(oflength); oflength = 0;
         }
-        //else (((*reconstruct_init)->OFLib == 1) && ((*reconstruct_init)->filtEev != 0)) // Optimal filter used is NOT written in the intermediate FITS file (is is one of the filters already in the library FITS file)
-        //{
-        //}
 	
 	strcpy(obj.nameTable,"PULSES");
 

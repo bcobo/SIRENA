@@ -122,7 +122,6 @@ int _resize_array(int size, int pulses){ return (size * MUL_FAC  < pulses) ? pul
 * - largeFilter: Length of the longest fixed filter
 * - interm: Write or not intermediate files (1/0)
 * - detectFile: Intermediate detections file (if intermediate=1)
-* - filterFile: Intermediate filters file (if intermediate=1)
 * - errorT: Additional error (in samples) added to the detected time (logically, it changes the reconstructed energies)
 * - Sum0Filt: 0-padding: Subtract the sum of the filter (1) or not (0)
 * - clobber: Overwrite or not output files if exist (1/0)
@@ -144,7 +143,7 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 		double nSgms, int detectSP, int opmode, char *detectionMode, double LrsT, double LbT, char* const noise_file, char* filter_domain, char* filter_method, 
 		char* energy_method, double filtEev, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
 		char* oflength_strategy, int oflength, int preBuffer,
-		double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, char* const filterFile, int errorT,
+		double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, int errorT,
                 int Sum0Filt,
 		char clobber, int maxPulsesPerRecord, double SaturationValue,
                 char* const tstartPulse1, int tstartPulse2, int tstartPulse3, double energyPCA1, double energyPCA2, char * const XMLFile, int* const status)
@@ -329,8 +328,6 @@ extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruc
 	reconstruct_init->event_file[255]='\0';
 	strncpy(reconstruct_init->detectFile,detectFile,255);
 	reconstruct_init->detectFile[255]='\0';
-	strncpy(reconstruct_init->filterFile,filterFile,255);
-	reconstruct_init->filterFile[255]='\0';
 	reconstruct_init->threshold 	= 0.0;
 	reconstruct_init->pulse_length 	= pulse_length;
 	reconstruct_init->scaleFactor  	= scaleFactor;
@@ -3006,7 +3003,6 @@ ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other)
   strcpy(OFStrategy, other.OFStrategy);
     
   strcpy(detectFile, other.detectFile);
-  strcpy(filterFile, other.filterFile);
     
   strcpy(XMLFile, other.XMLFile);
     
@@ -3095,7 +3091,6 @@ ReconstructInitSIRENA::operator=(const ReconstructInitSIRENA& other)
     intermediate = other.intermediate;
     
     strcpy(detectFile, other.detectFile);
-    strcpy(filterFile, other.filterFile);
     
     clobber = other.clobber;
     maxPulsesPerRecord = other.maxPulsesPerRecord;
@@ -3216,7 +3211,6 @@ ReconstructInitSIRENA* ReconstructInitSIRENA::get_threading_object(int n_record)
   
   strcpy(ret->detectFile, this->detectFile);
   sprintf(ret->detectFile, "%s_%i", ret->detectFile, n_record);
-  strcpy(ret->filterFile, this->filterFile);
   
   ret->clobber = this->clobber;
   ret->maxPulsesPerRecord = this->maxPulsesPerRecord;

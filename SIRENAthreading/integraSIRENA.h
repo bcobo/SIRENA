@@ -536,9 +536,6 @@ typedef struct ReconstructInitSIRENA
   /** Intermediate file **/
   char detectFile[256];
   
-  /** File with the optimal filter info **/
-  char filterFile[256];
-  
   //Additional error (in samples) added to the detected time"  (Logically, it changes the reconstructed energies) 
   int errorT;
   
@@ -634,7 +631,7 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     double monoenergy, char hduPRECALWN, 
                                     char hduPRCLOFWM, int largeFilter, 
                                     int interm, char* detectFile, 
-                                    char* filterFile, int errorT, int Sum0Filt, char clobber, 
+                                    int errorT, int Sum0Filt, char clobber, 
                                     int maxPulsesPerRecord, 
                                     double SaturationValue,
                                     //int tstartPulse1, int tstartPulse2, 

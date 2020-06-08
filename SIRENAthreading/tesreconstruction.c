@@ -80,7 +80,6 @@
 * - preBuffer: Some samples added before the starting time of a pulse
 * - intermediate: Write or not intermediate files (1/0)
 * - detectFile: Intermediate detections file (if intermediate=1)
-* - filterFile: Intermediate filters file (if intermediate=1)
 * - errorT: Additional error (in samples) added to the detected time (Logically, it changes the reconstructed energies )
 * - Sum0Filt: 0-padding: Subtract the sum of the filter (1) or not (0)
 * - tstartPulse1: Integer number: Sample where the first pulse starts or nameFile: File where the tstart (in seconds) of every pulse is
@@ -569,7 +568,7 @@ int tesreconstruction_main() {
                                                     par.filtEev, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter, 
                                                     par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer,par.monoenergy, 
                                                     par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, 
-                                                    par.filterFile, par.errorT, par.Sum0Filt, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
+                                                    par.errorT, par.Sum0Filt, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
                                                     par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
                                             
                     }  
@@ -719,7 +718,7 @@ int tesreconstruction_main() {
                         par.filtEev, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter, 
                         par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer, par.monoenergy, 
                         par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile, 
-                        par.filterFile, par.errorT, par.Sum0Filt, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
+                        par.errorT, par.Sum0Filt, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1, 
                         par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
             }
             CHECK_STATUS_BREAK(status);
@@ -1034,10 +1033,6 @@ int getpar(struct Parameters* const par)
 
 	status=ape_trad_query_string("detectFile", &sbuffer);
 	strcpy(par->detectFile, sbuffer);
-	free(sbuffer);
-
-	status=ape_trad_query_string("filterFile", &sbuffer);
-	strcpy(par->filterFile, sbuffer);
 	free(sbuffer);
 
 	status=ape_trad_query_double("monoenergy", &par->monoenergy);
