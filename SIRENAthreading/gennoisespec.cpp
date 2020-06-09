@@ -318,7 +318,7 @@ int gennoisespec_main ()
                                 }
                                 LFILTER = gsl_vector_get(vector,0);
                                 
-                                // V0=Ibias*(R0+RPARA/TTRÃÂ²)*TTR
+                                // V0=Ibias*(R0+RPARA/TTRÃÂÃÂ²)*TTR
                                 if (V0 != 0)    R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
                                 
                                 strcpy(extname,"TESRECORDS");
@@ -522,19 +522,6 @@ int gennoisespec_main ()
 	iteratorCol cols [2];		// Structure of Iteration
 	int n_cols = 2; 		// Number of columns:  Time + ADC
 
-	/*strcpy(extname,"RECORDS");
-	if (fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status))
-	if (status != 0)
-        {
-            status = 0;
-            strcpy(extname,"TESRECORDS");
-            if (fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status))
-            {
-		message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
-		EP_EXIT_ERROR(message,status);
-            }
-        }*/
-
 	// Read Time column
 	strcpy(straux,"TIME");
 	status = fits_iter_set_by_name(&cols[0], infileObject, straux, TDOUBLE, InputCol);
@@ -614,11 +601,20 @@ int gennoisespec_main ()
                 findMeanSigma(interval, &bsln, &sgm);
                 gsl_vector_set(sigmaInterval,i, sgm);
         }
+        /*cout<<"sigmaInterval->size: "<<sigmaInterval->size<<endl;
+        for (int i=0;i<NumMeanSamples;i++)
+        {
+            cout<<i<<" "<<gsl_vector_get(sigmaInterval,i)<<endl;
+        }*/
+        
+        //cout<<"sigmaInterval->size: "<<sigmaInterval->size<<endl;
         if (medianKappaClipping_noiseSigma (sigmaInterval, kappaMKC, stopCriteriaMKC, par.nSgms, &meanThreshold, &sgmThreshold))
 	{
 		message = "Cannot run medianKappaClipping_noiseSigma looking for mean and sigma of the noise sigmas";
 		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 	}
+	//cout<<"meanThreshold: "<<meanThreshold<<endl;
+        //cout<<"sgmThreshold: "<<sgmThreshold<<endl;
         
         gsl_vector *intervalsgmOK = gsl_vector_alloc(NumMeanSamples);
         gsl_vector_set_all(intervalsgmOK,1);
@@ -628,9 +624,13 @@ int gennoisespec_main ()
 	vector_aux1 = gsl_vector_complex_alloc(intervalMinBins);
         double SelectedTimeDuration = SelectedTimeDuration = intervalMinBins/((double)samprate);
         double nSgms_sigmaInterval = 1;
+        //cout<<"nSgms_sigmaInterval: "<<nSgms_sigmaInterval<<endl;
+        //cout<<"meanThreshold-nSgms_sigmaInterval*sgmThreshold: "<<meanThreshold-nSgms_sigmaInterval*sgmThreshold<<endl;
+        //cout<<"meanThreshold+nSgms_sigmaInterval*sgmThreshold: "<<meanThreshold+nSgms_sigmaInterval*sgmThreshold<<endl;
         for (int i=0;i<NumMeanSamples;i++)
         {
-                if ((gsl_vector_get(sigmaInterval,i) < meanThreshold-nSgms_sigmaInterval*sgmThreshold) || (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold))
+                //if ((gsl_vector_get(sigmaInterval,i) < meanThreshold-nSgms_sigmaInterval*sgmThreshold) || (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold))
+                if (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold)
                 {
                         // Interval not to be taken account
                         cnt --;
@@ -1090,23 +1090,6 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 				EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 			}
 		}
-		
-		//for (int k=0; k<ioutgsl_aux->size; k++)   cout<<k<<" "<<gsl_vector_get(ioutgsl_aux,k)<<endl;
-		//cout<<"threshold: "<<threshold<<endl;
-		//double baselineInterval,sigmaInterval;   
-		//for (int k=0; k<nIntervals; k++)
-                //{
-                        //temp = gsl_vector_subvector(ioutgsl_aux,gsl_vector_get(startIntervalgsl,k), intervalMinBins);
-                        //findMeanSigma (&temp.vector, &baselineInterval, &sigmaInterval);
-                        //cout<<"baseline: "<<baselineInterval<<" sigmaInterval: "<<sigmaInterval<<" umbral: "<<baselineInterval + (par.nSgms)*sigmaInterval<<endl;
-                        //cout<<"max: "<<gsl_vector_max(&temp.vector)<<endl;
-                        //cout<<"max: "<<gsl_vector_max(ioutgsl_aux)<<endl;
-                        cout<<gsl_vector_max(ioutgsl_aux)<<endl;
-                        if (gsl_vector_max(ioutgsl_aux) > 100)
-                        {
-                                cout<<"¡¡PULSO NO ENCONTRADO!!: "<<gsl_vector_max_index(ioutgsl_aux)<<endl;
-                        }
-                //}
 		
 		// Calculating the mean and sigma of the intervals without pulses together => BSLN0 & NOISESTD
 		gsl_vector *intervalsWithoutPulsesTogether = gsl_vector_alloc(nIntervals*intervalMinBins);
