@@ -4385,6 +4385,8 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
         else if (runF0orB0val == 1)
             gsl_matrix_get_row(matchedfilters_row,MFB0,0);
         
+        //for (int i=0;i<matchedfilters_row->size;i++)    cout<<i<<" "<<gsl_vector_get(matchedfilters_row,i)<<endl;
+        
 	// Calculate the optimal filter
 	if (calculus_optimalFilter (0, 0, reconstruct_init->opmode, matchedfilters_row, matchedfilters_row->size, samprate, runF0orB0val, reconstruct_init->noise_spectrum->noisefreqs, reconstruct_init->noise_spectrum->noisespec, &optimalfilter, &optimalfilter_f, &optimalfilter_FFT, &optimalfilter_FFT_complex))
 	{
@@ -4527,7 +4529,10 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 			}
 			else
 			{
-                                if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j)+preBuffer > matchedfilters_row->size))
+                                //cout<<"matchedfilters_row->size: "<<matchedfilters_row->size<<endl;
+                                //cout<<"gsl_vector_get(fixedlengths,j): "<<gsl_vector_get(fixedlengths,j)<<endl;
+                                //if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j)+preBuffer > matchedfilters_row->size))
+                                if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j) > matchedfilters_row->size))
                                 {
                                         sprintf(valERROR,"%d",__LINE__+5);
                                         string str(valERROR);
