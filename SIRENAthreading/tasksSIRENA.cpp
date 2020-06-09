@@ -303,8 +303,6 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
 	{	
                 log_trace("Building the library...");
 		// Calculate an average record 
-
-                int preBuffer = (*reconstruct_init)-> preBuffer;
                 
                 // It is not necessary to check the allocation because 'PulseLength' (input parameter) has been checked previously                    
 		gsl_vector *pulsetemplateMaxLengthFixedFilter = gsl_vector_alloc((*reconstruct_init)->largeFilter);
@@ -3830,8 +3828,6 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 	{
 		runF0orB0val = 1;
 	}
-	
-	int preBuffer = (*reconstruct_init)-> preBuffer;
 
 	// Adding a new row to the library
 	if (appendToLibrary == true)
@@ -4886,8 +4882,6 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 	IOData objTIME;
 	IOData objWN;
 	IOData objOFWM;
-        
-        int preBuffer = reconstruct_init-> preBuffer;
 	
 	int runF0orB0val;
 	if (strcmp(reconstruct_init->FilterMethod,"F0") == 0)		// Deleting the frequency-zero bin
@@ -7352,8 +7346,8 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
 			message = "Cannot run routine pulseGrading";
 			EP_EXIT_ERROR(message,EPFAIL);
 		}
-		resize_mf = resize_mf + preBuffer;
 		(*pulsesInRecord)->pulses_detected[i].grade1 = resize_mf;
+		resize_mf = resize_mf + preBuffer;
                 log_debug("resize_mf (after pulseGrading): %i",resize_mf);
  
                 // Pulse: Load the proper piece of the record in *pulse*
@@ -8303,8 +8297,9 @@ void th_runEnergy(TesRecord* record, int trig_reclength,
 			message = "Cannot run routine pulseGrading";
 			EP_EXIT_ERROR(message,EPFAIL);
 		}
-		resize_mf = resize_mf + preBuffer;
 		(*pulsesInRecord)->pulses_detected[i].grade1 = resize_mf;
+		resize_mf = resize_mf + preBuffer;
+		
 
 		// Pulse: Load the proper piece of the record in 'pulse'
 		if ((pulse = gsl_vector_alloc(resize_mf)) == 0)
@@ -9737,8 +9732,6 @@ int find_optimalfilter(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA
 {
 	string message = "";
 	char valERROR[256];
-        
-        int preBuffer = reconstruct_init-> preBuffer;
 	
         gsl_vector *maxDERs_LIB1row;
         long nummodels;
