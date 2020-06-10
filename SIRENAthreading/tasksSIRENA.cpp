@@ -2100,6 +2100,8 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	int status = EPOK;
 	string message = "";
 	char valERROR[256];
+        
+        int preBuffer = (*reconstruct_init)-> preBuffer;
     
 	// Declare and initialize variables
 	int numPulses = 0;
@@ -2310,10 +2312,10 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                 }
                 else
                 {
-                        gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
+                        gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)-preBuffer+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
                 }
 
-		if (gsl_vector_get(tendgsl,i) >= recordDERIVATIVE->size)		// Truncated pulses at the end of the record
+		if (gsl_vector_get(tendgsl,i) > recordDERIVATIVE->size)		// Truncated pulses at the end of the record
 		{
 			gsl_vector_set(tendgsl,i,(recordDERIVATIVE->size)-1);
 			gsl_vector_set (qualitygsl,i,2);
@@ -2360,8 +2362,6 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	    message = "Cannot run routine obtainTau to calculate pulses slopes";
 	    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 	}*/
-
-        int preBuffer = (*reconstruct_init)-> preBuffer;
         
         // Calculate the baseline before a pulse (in general 'before') => To be written in BSLN column in the output FITS file
         gsl_vector *Lbgsl = gsl_vector_alloc((*reconstruct_init)->maxPulsesPerRecord);	// If there is no free-pulses segments longer than Lb=>
@@ -2395,7 +2395,8 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	//cout<<"numPulses: "<<numPulses<<endl;
 	for (int i=0;i<numPulses;i++)
 	{
-                foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i));
+                //foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i));
+                foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-preBuffer));
                 
                 foundPulses->pulses_detected[i].avg_4samplesDerivative = gsl_vector_get(samp1DERgsl,i);
                 foundPulses->pulses_detected[i].E_lowres = -999;
@@ -2426,7 +2427,8 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                 }
                 else        
                 {
-                        if ((foundPulses->pulses_detected[i].pulse_adc = gsl_vector_alloc(foundPulses->pulses_detected[i].pulse_duration)) == 0)
+                        //if ((foundPulses->pulses_detected[i].pulse_adc = gsl_vector_alloc(foundPulses->pulses_detected[i].pulse_duration)) == 0)
+                        if ((foundPulses->pulses_detected[i].pulse_adc = gsl_vector_alloc(floor(gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i)))) == 0)
                         {
                                 sprintf(valERROR,"%d",__LINE__-2);
                                 string str(valERROR);
@@ -2440,7 +2442,8 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                                 message = "tstart < 0 in line " + str + " (" + __FILE__ + ")";
                                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                         }
-                        temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].pulse_duration);
+                        //temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].pulse_duration);
+                        temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i),floor(gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i)));
                         if (gsl_vector_memcpy(foundPulses->pulses_detected[i].pulse_adc,&temp.vector) != 0)
                         {
                                 sprintf(valERROR,"%d",__LINE__-2);
@@ -2913,6 +2916,7 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 	// It is not necessary because 'totalPulses'='pulsesAll->ndetpulses + pulsesInRecord->ndetpulses' has been checked previously
 	gsl_vector *pulseheightAUX = gsl_vector_alloc(totalPulses);
 	int cnt = 0;
+        //cout<<"totalpulses: "<<totalPulses<<endl;
 	for (int i=0;i<totalPulses;i++)
 	{
 		if (i == totalPulses-1)		tstartnext = gsl_vector_get(tstart,i)+2*reconstruct_init->pulse_length;
@@ -2987,7 +2991,6 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 			// It is note necessary to check 'memcpy' because it is the non pile-up case
 			if (i < pulsesAll->ndetpulses)
 			{
-                          
                                 temp = gsl_vector_subvector(pulsesAll->pulses_detected[i].pulse_adc_preBuffer,0,inputPulseLength);
                                 gsl_vector_memcpy(pulse,&temp.vector);
 			}
