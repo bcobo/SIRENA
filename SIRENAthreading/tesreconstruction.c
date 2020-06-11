@@ -750,11 +750,11 @@ int tesreconstruction_main() {
                     {
                             nrecord = nrecord + 1;
                             if(nrecord == record_file->nrows) lastRecord=1;
-                            /*if(nrecord < 7905) 
+                            /*if(nrecord < 7) 
                             {
                               continue;
                             }
-                            else if(nrecord > 7905)
+                            else if(nrecord > 7)
                             {
                               status=1;
                               CHECK_STATUS_BREAK(status);

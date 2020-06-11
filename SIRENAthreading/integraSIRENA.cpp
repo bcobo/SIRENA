@@ -688,6 +688,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, T
                 if (event_list->pix_ids != NULL) 	delete [] event_list->pix_ids;
                 if (event_list->tstarts != NULL) 	delete [] event_list->tstarts;
                 if (event_list->tends != NULL) 	        delete [] event_list->tends;
+                if (event_list->risetimes != NULL)       delete [] event_list->risetimes;
+                if (event_list->falltimes != NULL)       delete [] event_list->falltimes;
                 
                 if (event_list->event_indexes != NULL) 	delete [] event_list->event_indexes;    //!!!!!!!!!!!!!!!
 	
@@ -748,6 +750,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, T
         event_list->pix_ids   = new long[event_list->index];
         event_list->tends   = new double[event_list->index];
         event_list->tstarts   = new double[event_list->index];
+        event_list->risetimes   = new double[event_list->index];
+        event_list->falltimes   = new double[event_list->index];
         
         event_list->event_indexes   = new double[event_list->index];   //!!!!!!!!!!!!
 	
@@ -780,6 +784,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, T
                         event_list->ph_ids[ip]  = pulsesInRecord->pulses_detected[ip].phid;
                         event_list->tstarts[ip]  = pulsesInRecord->pulses_detected[ip].Tstart;
                         event_list->tends[ip]  = pulsesInRecord->pulses_detected[ip].Tend;
+                        event_list->risetimes[ip]  = pulsesInRecord->pulses_detected[ip].riseTime;
+                        event_list->falltimes[ip]  = pulsesInRecord->pulses_detected[ip].fallTime;
 		}
 		
 		if (lastRecord == 1)
@@ -820,6 +826,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, T
 			event_list->pulse_heights  = new double[event_list->index];
 			event_list->ph_ids   = new long[event_list->index];
                         event_list->pix_ids   = new long[event_list->index];
+                        event_list->risetimes   = new double[event_list->index];
+                        event_list->falltimes   = new double[event_list->index];
 		
 			for (int ip=0; ip<(*pulsesAll)->ndetpulses; ip++)
 			{	
@@ -846,6 +854,8 @@ extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, T
 				event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
 				event_list->ph_ids[ip]   = (*pulsesAll)->pulses_detected[ip].phid;		    
                                 event_list->pix_ids[ip]  = (*pulsesAll)->pulses_detected[ip].pixid;
+                                event_list->risetimes[ip]  = (*pulsesAll)->pulses_detected[ip].riseTime;
+                                event_list->falltimes[ip]  = (*pulsesAll)->pulses_detected[ip].fallTime;
 			}
 		}
 	}

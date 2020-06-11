@@ -318,7 +318,7 @@ int gennoisespec_main ()
                                 }
                                 LFILTER = gsl_vector_get(vector,0);
                                 
-                                // V0=Ibias*(R0+RPARA/TTRÃÂÃÂ²)*TTR
+                                // V0=Ibias*(R0+RPARA/TTRÃÂÃÂÃÂÃÂ²)*TTR
                                 if (V0 != 0)    R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
                                 
                                 strcpy(extname,"TESRECORDS");
@@ -600,13 +600,10 @@ int gennoisespec_main ()
                 gsl_matrix_get_row(interval,noiseIntervals,i);
                 findMeanSigma(interval, &bsln, &sgm);
                 gsl_vector_set(sigmaInterval,i, sgm);
+                //cout<<i<<" "<<bsln<<" "<<sgm<<endl;
+                
         }
-        /*cout<<"sigmaInterval->size: "<<sigmaInterval->size<<endl;
-        for (int i=0;i<NumMeanSamples;i++)
-        {
-            cout<<i<<" "<<gsl_vector_get(sigmaInterval,i)<<endl;
-        }*/
-        
+            
         //cout<<"sigmaInterval->size: "<<sigmaInterval->size<<endl;
         if (medianKappaClipping_noiseSigma (sigmaInterval, kappaMKC, stopCriteriaMKC, par.nSgms, &meanThreshold, &sgmThreshold))
 	{
