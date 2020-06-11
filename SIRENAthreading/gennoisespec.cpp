@@ -601,7 +601,6 @@ int gennoisespec_main ()
                 findMeanSigma(interval, &bsln, &sgm);
                 gsl_vector_set(sigmaInterval,i, sgm);
                 //cout<<i<<" "<<bsln<<" "<<sgm<<endl;
-                
         }
             
         //cout<<"sigmaInterval->size: "<<sigmaInterval->size<<endl;
@@ -626,12 +625,13 @@ int gennoisespec_main ()
         //cout<<"meanThreshold+nSgms_sigmaInterval*sgmThreshold: "<<meanThreshold+nSgms_sigmaInterval*sgmThreshold<<endl;
         for (int i=0;i<NumMeanSamples;i++)
         {
-                //if ((gsl_vector_get(sigmaInterval,i) < meanThreshold-nSgms_sigmaInterval*sgmThreshold) || (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold))
-                if (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold)
+                //if (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold)
+                if ((par.rmNoiseIntervals == 1) && (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold))
                 {
                         // Interval not to be taken account
                         cnt --;
                         gsl_vector_set(intervalsgmOK,i,0);
+                        //cout<<"cnt: "<<cnt<<endl;
                 }
                 else
                 {
@@ -1515,6 +1515,24 @@ int createTPSreprFile ()
         
 	char str_matrixSize[125];			sprintf(str_matrixSize,"%d",par.matrixSize);
 	strhistory=string("matrixSize = ") + string(str_matrixSize);
+	strcpy(keyvalstr,strhistory.c_str());
+	if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+	{
+		message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+		EP_PRINT_ERROR(message,status); return(EPFAIL);
+	}
+	
+	char str_samplingRate[125];	    		sprintf(str_samplingRate,"%f",par.samplingRate);
+	strhistory=string("samplingRate = ") + string(str_samplingRate);
+	strcpy(keyvalstr,strhistory.c_str());
+	if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+	{
+		message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+		EP_PRINT_ERROR(message,status); return(EPFAIL);
+	}
+	
+	char str_rmNoiseIntervals[125];      sprintf(str_rmNoiseIntervals,"%d",par.rmNoiseIntervals);
+	strhistory=string("rmNoiseIntervals = ") + string(str_rmNoiseIntervals);
 	strcpy(keyvalstr,strhistory.c_str());
 	if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
 	{
@@ -2437,6 +2455,8 @@ int getpar_noiseSpec(struct Parameters* const par)
       message = "failed reading the samplingRate parameter";
       EP_EXIT_ERROR(message,EPFAIL);
   }
+  
+  status=ape_trad_query_bool("rmNoiseIntervals", &par->rmNoiseIntervals);
   
   if (EXIT_SUCCESS!=status) 
   {

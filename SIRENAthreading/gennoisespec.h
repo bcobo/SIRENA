@@ -96,10 +96,10 @@ struct Parameters {
         //Pulse length in samples
 	int pulse_length;
         
-        // Running sum (RS) length for the RS-filtering for raw energy estimation, in seconds
+        //Running sum (RS) length for the RS-filtering for raw energy estimation, in seconds
 	double LrsT;
 	
-	// Baseline averaging length for the RS-filtering for raw energy estimation, in seconds
+	//Baseline averaging length for the RS-filtering for raw energy estimation, in seconds
 	double LbT;
         
         //Calculate and write the weight matrixes if weightMS=yes
@@ -114,8 +114,11 @@ struct Parameters {
         //Size of noise matrix if only one to be created
 	int matrixSize;
         
-        // Sampling rate
+        //Sampling rate
 	double samplingRate;
+        
+        //Remove some noise intervals before calculating the noise spectrum if rmNoiseIntervals=yes
+	char rmNoiseIntervals;
        
 	// END GENNOISESPEC input parameters
 };
