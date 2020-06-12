@@ -7125,10 +7125,10 @@ int filterByWavelets (ReconstructInitSIRENA* reconstruct_init, gsl_vector **inve
 * - tauRisegsl: Rise time of the detected pulses in the record (in seconds)
 * - tauFallgsl: Fall time of the detected pulses in the record (in seconds)
 ******************************************************************************/
-int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vector *tstartgsl, gsl_vector *tendgsl, gsl_vector *Bgsl, gsl_vector *Lbgsl, int numPulses, gsl_vector **tauRisegsl, gsl_vector **tauFallgsl)
+/*int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vector *tstartgsl, gsl_vector *tendgsl, gsl_vector *Bgsl, gsl_vector *Lbgsl, int numPulses, gsl_vector **tauRisegsl, gsl_vector **tauFallgsl)
 {
-	string message = "";
-	char valERROR[256];
+	//string message = "";
+	//char valERROR[256];
         
         double amax, abase;
         double t1,t2,t3, tmean;
@@ -7139,6 +7139,7 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
         
         gsl_vector_view(temp);
         
+        //bool pointAtMediumHeight_Rising_Found = false;
         bool pointAtMediumHeight_Tail_Found = false;
         
         for (int i=0;i<numPulses;i++)
@@ -7160,18 +7161,7 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
                         if ((gsl_vector_get(&temp.vector,k) > abase+(amax-abase)/2.0))
                         {
                                 t2_index = k;
-                                if (k == 0)
-                                {
-                                        a2 = gsl_vector_get(&temp.vector,k+1);
-                                        t2 = (k+1)/samprate;
-                                                                
-                                        a1 = gsl_vector_get(&temp.vector,k);
-                                        t1 = k/samprate;
-                                
-                                        a3 = gsl_vector_get(&temp.vector,k+2);
-                                        t3 = (k+2)/samprate;
-                                }
-                                else 
+                                if (k != 0)
                                 {
                                         a2 = gsl_vector_get(&temp.vector,k);
                                         t2 = k/samprate;
@@ -7186,27 +7176,28 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
                                 //cout<<"(a2,t2): "<<a2<<","<<t2<<endl;
                                 //cout<<"(a3,t3): "<<a3<<","<<t3<<endl;
                                 
+                                tmean = (t1+t2+t3)/3;
+                                amean = (a1+a2+a3)/3;
+                                //cout<<"amean: "<<amean<<endl;
+                                //cout<<"tmean: "<<tmean<<endl;
+                                
+                                m = ((t1-tmean)*(a1-amean)+(t2-tmean)*(a2-amean)+(t3-tmean)*(a3-amean))/(pow(t1-tmean,2.0)+pow(t2-tmean,2.0)+pow(t3-tmean,2.0));
+                                b = amean - m*tmean;
+                                //cout<<"mRise: "<<m<<endl;
+                                //cout<<"bRise: "<<b<<endl;
+                                
+                                t0 = (abase-b)/m;
+                                tmax = (amax-b)/m;
+                                //cout<<"t0Rise: "<<t0<<endl;
+                                //cout<<"tmaxRise: "<<tmax<<endl;
+                                
+                                gsl_vector_set(*tauRisegsl,i,tmax-t0);
+                                //cout<<"Rise time: "<<gsl_vector_get(*tauRisegsl,i)<<endl;
+                                
+                                //pointAtMediumHeight_Rising_Found = true;
                                 break;
                         }
                 }
-                
-                tmean = (t1+t2+t3)/3;
-                amean = (a1+a2+a3)/3;
-                //cout<<"amean: "<<amean<<endl;
-                //cout<<"tmean: "<<tmean<<endl;
-                
-                m = ((t1-tmean)*(a1-amean)+(t2-tmean)*(a2-amean)+(t3-tmean)*(a3-amean))/(pow(t1-tmean,2.0)+pow(t2-tmean,2.0)+pow(t3-tmean,2.0));
-                b = amean - m*tmean;
-                //cout<<"mRise: "<<m<<endl;
-                //cout<<"bRise: "<<b<<endl;
-                
-                t0 = (abase-b)/m;
-                tmax = (amax-b)/m;
-                //cout<<"t0Rise: "<<t0<<endl;
-                //cout<<"tmaxRise: "<<tmax<<endl;
-                
-                gsl_vector_set(*tauRisegsl,i,tmax-t0);
-                //cout<<"Rise time: "<<gsl_vector_get(*tauRisegsl,i)<<endl;
                     
                 for (int k=t2_index;k<(&temp.vector)->size;k++)
                 {
@@ -7279,6 +7270,128 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
         }
 	
 	return(EPOK);
+}*/
+
+int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vector *tstartgsl, gsl_vector *tendgsl, gsl_vector *Bgsl, gsl_vector *Lbgsl, int numPulses, gsl_vector **tauRisegsl, gsl_vector **tauFallgsl)
+{
+        double abase, amax;
+        int indexmax;
+        double threshold10, threshold50;
+        int index10;
+        int index50;
+        
+        double m, b;
+        double tmax, t0;
+        
+        double t10, t50;
+        double a10, a50;
+        
+        bool providingRiseTime;
+        bool providingFallTime;
+        
+        gsl_vector_view(temp);
+        
+        for (int i=0;i<numPulses;i++)
+        {
+                providingRiseTime = false;
+                providingFallTime = false;
+                
+                index10 = -999;
+                index50 = -999;
+            
+                abase = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
+                //cout<<"abase: "<<abase<<endl;
+                
+                temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i),gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i));
+                amax = gsl_vector_max(&temp.vector);
+                indexmax = gsl_vector_max_index(&temp.vector);
+                //cout<<"amax: "<<amax<<endl;
+                
+                threshold10 = abase+(amax-abase)*0.1;
+                threshold50 = abase+(amax-abase)*0.5;
+                //cout<<"threshold10: "<<threshold10<<endl;
+                //cout<<"threshold50: "<<threshold50<<endl;
+                
+                //cout<<"index_maxTOTAL: "<<gsl_vector_max_index(recordNOTFILTERED)<<endl;
+                //cout<<"index_max: "<<indexmax<<endl;
+                for (int k=0;k<(&temp.vector)->size;k++)
+                {
+                        //cout<<"gsl_vector_get(&temp.vector,k): "<<k<<" "<<gsl_vector_get(&temp.vector,k)<<endl;
+                        if (gsl_vector_get(&temp.vector,k) < threshold10)      providingRiseTime = true;
+                        if ((gsl_vector_get(&temp.vector,k) > threshold10) && (index10 == -999))      index10 = k;
+                        if (gsl_vector_get(&temp.vector,k) > threshold50)      
+                        {    
+                                index50 = k;
+                                break;
+                        }
+                }
+                //cout<<"providingRiseTime: "<<providingRiseTime<<endl;
+                //cout<<"index10: "<<index10<<endl;
+                //cout<<"index50: "<<index50<<endl;
+                if (providingRiseTime == true)
+                {
+                        t10 = index10/samprate;
+                        t50 = index50/samprate;
+                        a10 = gsl_vector_get(&temp.vector,index10);
+                        a50 = gsl_vector_get(&temp.vector,index50);
+                        //cout<<"(t10,a10): "<<t10<<","<<a10<<endl;
+                        //cout<<"(t50,a50): "<<t50<<","<<a50<<endl;
+                        
+                        m = (a50-a10)/(t50-t10);
+                        b = a50-m*t50;
+                        //cout<<"m: "<<m<<endl;
+                        //cout<<"b: "<<b<<endl;
+                        
+                        t0 = (abase-b)/m;
+                        tmax = (amax-b)/m;
+                        //cout<<"t0Rise: "<<t0<<endl;
+                        //cout<<"tmaxRise: "<<tmax<<endl;
+                        
+                        gsl_vector_set(*tauRisegsl,i,tmax-t0);
+                        //cout<<"Rise time: "<<gsl_vector_get(*tauRisegsl,i)<<endl;
+                }
+                
+                index10 = -999;
+                index50 = -999; 
+                for (int k=indexmax;k<(&temp.vector)->size;k++)
+                {
+                        //cout<<"gsl_vector_get(&temp.vector,k): "<<k<<" "<<gsl_vector_get(&temp.vector,k)<<endl;
+                        if ((gsl_vector_get(&temp.vector,k) < threshold50) && (index50 == -999))     index50 = k;
+                        if (gsl_vector_get(&temp.vector,k) < threshold10)      
+                        {    
+                                index10 = k;
+                                providingFallTime = true;
+                                break;
+                        }
+                }
+                //cout<<"providingFallTime: "<<providingFallTime<<endl;
+                //cout<<"index10: "<<index10<<endl;
+                //cout<<"index50: "<<index50<<endl;
+                if (providingFallTime == true)
+                {
+                        t10 = index10/samprate;
+                        t50 = index50/samprate;
+                        a10 = gsl_vector_get(&temp.vector,index10);
+                        a50 = gsl_vector_get(&temp.vector,index50);
+                        //cout<<"(t10,a10): "<<t10<<","<<a10<<endl;
+                        //cout<<"(t50,a50): "<<t50<<","<<a50<<endl;
+                        
+                        m = (a10-a50)/(t10-t50);
+                        b = a50-m*t50;
+                        //cout<<"m: "<<m<<endl;
+                        //cout<<"b: "<<b<<endl;
+                        
+                        t0 = (abase-b)/m;
+                        tmax = (amax-b)/m;
+                        //cout<<"t0Fall: "<<t0<<endl;
+                        //cout<<"tmaxFall: "<<tmax<<endl;
+                        
+                        gsl_vector_set(*tauFallgsl,i,t0-tmax);
+                        //cout<<"Fall time: "<<gsl_vector_get(*tauFallgsl,i)<<endl;
+                }
+        }
+    
+    	return(EPOK);
 }
 /*xxxx end of SECTION A22 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
