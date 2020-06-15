@@ -565,24 +565,24 @@ int gennoisespec_main ()
         infileObject = 0;
         
 	// Generate CSD representation	
-	if (NumMeanSamples == 0)
+	/*if (NumMeanSamples == 0)
 	{
-		message = "Pulse-free intervals not found";
+		message = "0Pulse-free intervals not found";
 		EP_EXIT_ERROR(message,EPFAIL);
 	}
 	else if	(NumMeanSamples < par.nintervals)
 	{
 		sprintf(str_stat,"%d",NumMeanSamples);
 		sprintf(str_stat1,"%d",intervalMinBins);
-		message = "Not enough pulse-free intervals for calculus. CSD and W" + string(str_stat1) + " matrix calculated with " + string(str_stat);
+		message = "0Not enough pulse-free intervals for calculus. CSD and W" + string(str_stat1) + " matrix calculated with " + string(str_stat);
                 cout<<message<<endl;
 	}
 	else if	(NumMeanSamples >= par.nintervals)
 	{
 		sprintf(str_stat,"%d",par.nintervals);
-		message = "CSD and all Wx matrixes calculated with " + string(str_stat);
+		message = "0CSD and all Wx matrixes calculated with " + string(str_stat);
                 cout<<message<<endl;
-	}
+	}*/
            
         // Applying medianKappaClipping in order to remove the noise intervals with a high sigma
         gsl_vector *interval = gsl_vector_alloc(noiseIntervals->size2);
@@ -655,9 +655,29 @@ int gennoisespec_main ()
         gsl_vector_free(vector_aux); vector_aux = 0;
 	gsl_vector_complex_free(vector_aux1); vector_aux1 = 0;
         
+        //cout<<"cnt: "<<cnt<<endl;
+        if (NumMeanSamples == 0)
+	{
+		message = "Pulse-free intervals not found";
+		EP_EXIT_ERROR(message,EPFAIL);
+	}
+	else if	(NumMeanSamples < par.nintervals)
+	{
+		sprintf(str_stat,"%d",cnt);
+		sprintf(str_stat1,"%d",intervalMinBins);
+		message = "Not enough pulse-free intervals for calculus. CSD and W" + string(str_stat1) + " matrix calculated with " + string(str_stat);
+                cout<<message<<endl;
+	}
+	else if	(NumMeanSamples >= par.nintervals)
+	{
+		sprintf(str_stat,"%d",par.nintervals);
+		message = "CSD and all Wx matrixes calculated with " + string(str_stat);
+                cout<<message<<endl;
+	}
         // Current noise spectral density
         // sqrt(sum(FFT^2)/NumMeanSamplesCSD) => sqrt(A^2) = A and sqrt(1/NumMeanSamplesCSD)=1/sqrt(Hz)
-	gsl_vector_scale(EventSamplesFFTMean,(1.0/(double)NumMeanSamples));
+	//gsl_vector_scale(EventSamplesFFTMean,(1.0/(double)NumMeanSamples));
+	gsl_vector_scale(EventSamplesFFTMean,(1.0/(double)cnt));
 	for (int i=0;i<EventSamplesFFTMean->size;i++)
 	{
 		if (gsl_vector_get(EventSamplesFFTMean,i)<0)
