@@ -657,19 +657,19 @@ int gennoisespec_main ()
 	gsl_vector_complex_free(vector_aux1); vector_aux1 = 0;
         
         //cout<<"cnt: "<<cnt<<endl;
-        if (NumMeanSamples == 0)
+        if (cnt == 0)
 	{
 		message = "Pulse-free intervals not found";
 		EP_EXIT_ERROR(message,EPFAIL);
 	}
-	else if	(NumMeanSamples < par.nintervals)
+	else if	(cnt < par.nintervals)
 	{
 		sprintf(str_stat,"%d",cnt);
 		sprintf(str_stat1,"%d",intervalMinBins);
 		message = "Not enough pulse-free intervals for calculus. CSD and W" + string(str_stat1) + " matrix calculated with " + string(str_stat);
                 cout<<message<<endl;
 	}
-	else if	(NumMeanSamples >= par.nintervals)
+	else if	(cnt >= par.nintervals)
 	{
 		sprintf(str_stat,"%d",par.nintervals);
 		message = "CSD and all Wx matrixes calculated with " + string(str_stat);
