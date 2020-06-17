@@ -626,7 +626,8 @@ int gennoisespec_main ()
         for (int i=0;i<NumMeanSamples;i++)
         {
                 //if (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold)
-                if ((par.rmNoiseIntervals == 1) && (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold))
+                //if ((par.rmNoiseIntervals == 1) && (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold))
+                if ((par.rmNoiseIntervals == 1) && ((gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold)||(gsl_vector_get(sigmaInterval,i) < meanThreshold-nSgms_sigmaInterval*sgmThreshold)))
                 {
                         // Interval not to be taken account
                         cnt --;
