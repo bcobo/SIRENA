@@ -988,6 +988,7 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 	ioutgsl = gsl_vector_alloc(eventsz); 			// GSL of input ADC column
 	gsl_vector *ioutgsl_aux = gsl_vector_alloc(eventsz);	//In case of working with ioutgsl without filtering
 	gsl_vector *ioutgslNOTFIL = gsl_vector_alloc(eventsz);
+        gsl_vector *ioutgslFIL = gsl_vector_alloc(eventsz);
 
 	// Read iterator
 	// NOTE: fits_iter_get_array because in this fits function the 1st element
@@ -1065,6 +1066,7 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 			message = "lpf_boxcar: scaleFactor too high => Cut-off frequency too low";
 			EP_PRINT_ERROR(message,EPFAIL); 
 		}
+		gsl_vector_memcpy(ioutgslFIL,ioutgsl_aux);
 
 		// Differentiate
 		if (differentiate (&ioutgsl_aux,ioutgsl_aux->size))
@@ -1109,6 +1111,11 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 			}
 		}
 		
+		if (par.scaleFactor != 0)
+                {
+                        gsl_vector_memcpy(ioutgsl,ioutgslFIL);
+                }
+		
 		// Calculating the mean and sigma of the intervals without pulses together => BSLN0 & NOISESTD
 		gsl_vector *intervalsWithoutPulsesTogether = gsl_vector_alloc(nIntervals*intervalMinBins);
                 for (int k=0; k<nIntervals; k++)
@@ -1152,6 +1159,7 @@ int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int n
 	gsl_vector_free(timegsl); timegsl = 0;
 	gsl_vector_free(ioutgsl); ioutgsl = 0;
 	gsl_vector_free(ioutgsl_aux); ioutgsl_aux = 0;
+        gsl_vector_free(ioutgslFIL); ioutgslFIL = 0;
 	gsl_vector_free(timegsl_block); timegsl_block = 0;
 	gsl_matrix_free(ioutgsl_block); ioutgsl_block = 0;
 	gsl_vector_free(derSGN); derSGN = 0;
