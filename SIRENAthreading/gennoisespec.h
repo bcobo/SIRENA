@@ -155,18 +155,19 @@ struct Parameters {
 	double samprate = -999.0;       // Related to DELTAT
 	double energy;		        // Related to MONOEN
 
+	double aducnv;
 	double ivcal;		// Just in case it would be necessary
 	double asquid;		// Just in case it would be necessary
 	double plspolar;	// Just in case it would be necessary
 	
-	double Imin;
-        double Imax;
-        double R0;
-        double V0;
-        double Ibias;
-        double RPARA;
-        double TTR;
-        double LFILTER;
+	double Imin = -999.0;
+    double Imax = -999.0;
+    double R0;
+    double V0;
+    double Ibias;
+    double RPARA;
+    double TTR;
+    double LFILTER;
 
 // INPUT VECTORS
 

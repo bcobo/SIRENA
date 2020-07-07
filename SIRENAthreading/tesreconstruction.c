@@ -770,7 +770,7 @@ int tesreconstruction_main() {
                                 strcpy(reconstruct_init_sirena->EnergyMethod,par.EnergyMethod);
                             }
                         
-                            //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
+                            printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
                             //printf("%s %d %s", "pixid: ",record->pixid,"\n");
                             //printf("%s %d %s","ph_id: ",record->phid_list->phid_array[0],"\n");
                             reconstructRecordSIRENA(record,trig_reclength, event_list,reconstruct_init_sirena,

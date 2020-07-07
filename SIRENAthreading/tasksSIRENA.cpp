@@ -142,8 +142,8 @@ MAP OF SECTIONS IN THIS FILE:
 void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
 {       
         // Declare variables
-	int inputPulseLength = (*reconstruct_init)->pulse_length;
 	if ((*reconstruct_init)->opmode == 0)	(*reconstruct_init)->pulse_length = (*reconstruct_init)->largeFilter;
+        int inputPulseLength = (*reconstruct_init)->pulse_length;
 	  
 	string message="";
 	char valERROR[256];
@@ -2880,18 +2880,23 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 	gsl_vector *tstart = gsl_vector_alloc(totalPulses);
 	gsl_vector *pulseheight = gsl_vector_alloc(totalPulses);
 	gsl_vector *quality = gsl_vector_alloc(totalPulses);
+        //gsl_vector *bslnpulse = = gsl_vector_alloc(totalPulses);
 	for (int i=0;i<pulsesAll->ndetpulses;i++)
 	{
 		gsl_vector_set(tstart,i,pulsesAll->pulses_detected[i].Tstart);
 		gsl_vector_set(pulseheight,i,pulsesAll->pulses_detected[i].pulse_height);
 		gsl_vector_set(quality,i,pulsesAll->pulses_detected[i].quality);
+                //gsl_vector_set(bslnpulse,i,pulsesAll->pulses_detected[i].bsln);
 	}
 	for (int i=0;i<pulsesInRecord->ndetpulses;i++)
 	{
 		gsl_vector_set(tstart,i+pulsesAll->ndetpulses,pulsesInRecord->pulses_detected[i].Tstart);
 		gsl_vector_set(pulseheight,i+pulsesAll->ndetpulses,pulsesInRecord->pulses_detected[i].pulse_height);
 		gsl_vector_set(quality,i+pulsesAll->ndetpulses,pulsesInRecord->pulses_detected[i].quality);
+                //gsl_vector_set(bslnpulse,i+pulsesAll->ndetpulses,pulsesInRecord->pulses_detected[i].bsln);
 	}
+	
+	cout<<"Paso1"<<endl;
         
 	// It is not necessary because 'pulsesAll->ndetpulses + pulsesInRecord->ndetpulses' has been checked previously
 	gsl_vector *nonpileup = gsl_vector_alloc(totalPulses);	// Piled-up pulse => Not taken into account to calculate the template
@@ -2907,6 +2912,8 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 	bool firstnonpileupPulse = true;
 	// It is not necessary because 'reconstruct_init->pulse_length'='PulseLength' (input parameter) has been checked previously
 	gsl_vector *pulse = gsl_vector_alloc(reconstruct_init->pulse_length);
+        cout<<"reconstruct_init->pulse_length: "<<reconstruct_init->pulse_length<<endl;
+        cout<<"inputPulseLength: "<<inputPulseLength<<endl;
 
 	double tstartnext;
 
@@ -2930,6 +2937,7 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
                         cnt = cnt +1;
                 }
 	}
+	cout<<"Paso2"<<endl;
 	
 	if (cnt == 0)
 	{
@@ -2954,6 +2962,7 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 	}
 	gsl_vector_memcpy(pulseheightAUX2,&temp.vector);
 	gsl_vector_free(pulseheightAUX); pulseheightAUX = 0;
+        cout<<"Paso3"<<endl;
 
 	// Create the pulseheights histogram
 	nBins = floor(sqrt(cnt)); 
@@ -2974,6 +2983,7 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 
 	index_maximumpulseheight = gsl_vector_max_index(yhisto);
 	maximumpulseheight = gsl_vector_get(xhisto,index_maximumpulseheight);
+        cout<<"Paso4"<<endl;
 
 	// Calculate the pulseaverage only taking into account the valid pulses
 	gsl_vector_set_all(*pulseaverage,0.0);
@@ -3020,6 +3030,7 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 			if (firstnonpileupPulse == true)	firstnonpileupPulse = false;
 		}
 	}
+	cout<<"Paso5"<<endl;
 	
 	//cout<<"Number of pulses to average: "<<nonpileupPulses<<endl;
 	gsl_vector_scale(*pulseaverage,1.0/(nonpileupPulses));
@@ -3029,6 +3040,7 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 	*pulseaverage = gsl_vector_alloc(inputPulseLength);
 	temp = gsl_vector_subvector(*pulseaverageMaxLengthFixedFilter,0,inputPulseLength);
 	gsl_vector_memcpy(*pulseaverage,&temp.vector);
+        cout<<"Paso6"<<endl;
         
         if (reconstruct_init->hduPRECALWN == 1)
         {
@@ -4392,6 +4404,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
         
         //for (int i=0;i<matchedfilters_row->size;i++)    cout<<i<<" "<<gsl_vector_get(matchedfilters_row,i)<<endl;
         
+        cout<<"matchedfilters_row->size: "<<matchedfilters_row->size<<endl;
 	// Calculate the optimal filter
 	if (calculus_optimalFilter (0, 0, reconstruct_init->opmode, matchedfilters_row, matchedfilters_row->size, samprate, runF0orB0val, reconstruct_init->noise_spectrum->noisefreqs, reconstruct_init->noise_spectrum->noisespec, &optimalfilter, &optimalfilter_f, &optimalfilter_FFT, &optimalfilter_FFT_complex))
 	{
@@ -4488,6 +4501,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 	{
 		if (gsl_vector_get(fixedlengths,j) == optimalfilter_FFT_complex->size)
 		{
+                        cout<<"PasoB1"<<endl;
                         if ((optimalfilter_x = gsl_vector_alloc(optimalfilter_FFT_complex->size)) == 0)
                         {
                                 sprintf(valERROR,"%d",__LINE__-2);
@@ -4499,9 +4513,11 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 		  
 			optimalfilter_FFT_complex_x = gsl_vector_complex_alloc(optimalfilter_FFT_complex->size);
 			gsl_vector_complex_memcpy(optimalfilter_FFT_complex_x,optimalfilter_FFT_complex);
+                        cout<<"PasoB2"<<endl;
 		}
 		else
 		{
+                        cout<<"PasoC1"<<endl;
 			// It will enter this 'else' for fixedlengths_i=largeFilter and fixedlengths_i<optimalfilter_FFT_complex->size
                         if ((matchedfiltersSHORT = gsl_vector_alloc(gsl_vector_get(fixedlengths,j))) == 0)
                         {
@@ -4512,6 +4528,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
                         }
 			if (gsl_vector_get(fixedlengths,j) == reconstruct_init->largeFilter)
 			{
+                                cout<<"PasoC2"<<endl;
 				gsl_vector *matchedfiltersMaxLengthFixedFilter_row = gsl_vector_alloc(reconstruct_init->largeFilter);
 				gsl_matrix_get_row(matchedfiltersMaxLengthFixedFilter_row,PULSEMaxLengthFixedFilter,0);	//Matched filter
 				gsl_vector_scale(matchedfiltersMaxLengthFixedFilter_row,1.0/reconstruct_init->monoenergy);
@@ -4555,6 +4572,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 				gsl_vector_memcpy(matchedfiltersSHORT,&temp.vector);
                         }
                         
+                        cout<<"matchedfiltersSHORT->size: "<<matchedfiltersSHORT->size<<endl;
 			// Calculate the optimal filter
 			if (calculus_optimalFilter (0, 0, reconstruct_init->opmode, matchedfiltersSHORT, matchedfiltersSHORT->size, samprate, runF0orB0val, reconstruct_init->noise_spectrum->noisefreqs, reconstruct_init->noise_spectrum->noisespec, &optimalfilter_x, &optimalfilter_f_x, &optimalfilter_FFT_x, &optimalfilter_FFT_complex_x))
 			{
@@ -4614,6 +4632,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 		}
 		strcpy(objTIME.nameCol,(string("T")+string(str_length)).c_str());
 		optimalfiltersT_matrix = gsl_matrix_alloc(1,optimalfilter_x->size);
+                cout<<"optimalfilter_x->size: "<<optimalfilter_x->size<<endl;
 		gsl_matrix_set_row(optimalfiltersT_matrix,0,optimalfilter_x);
 		if (writeFitsComplex(objTIME,optimalfiltersT_matrix))
 		{
