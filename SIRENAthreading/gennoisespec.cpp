@@ -256,11 +256,23 @@
              }
          }
      }
-     strcpy(extname,"TESRECORDS");
-     if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
+     if (tessimOrxifusim == 0)
      {
-         message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
-         EP_EXIT_ERROR(message,status);
+         strcpy(extname,"RECORDS");
+         if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
+         {
+             message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
+             EP_EXIT_ERROR(message,status);
+         }
+     }
+     else
+     {
+         strcpy(extname,"TESRECORDS");
+         if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
+         {
+             message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
+             EP_EXIT_ERROR(message,status);
+         }
      }
      
      // Read keywords to transform to resistance space
@@ -418,45 +430,6 @@
      sigma = gsl_vector_alloc(eventcnt);
      gsl_vector_set_all(sigma,-999.0);
      
-     // Read the sampling rate from input FITS file (check its value with the samplinRate input parameter)
-     fits_movabs_hdu(infileObject, 1, NULL, &status); // Move to "Primary" HDU
-     int numberkeywords;
-     char *headerPrimary;
-     fits_hdr2str(infileObject, 0, NULL, 0,&headerPrimary, &numberkeywords, &status);   // Reading thee whole "Primary" HDU and store it in 'headerPrimary'
-     char * sample_rate_pointer;
-     sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    // Pointer to where the text "sample_rate=" is
-     if(sample_rate_pointer){
-         sample_rate_pointer = sample_rate_pointer + 12; // Pointer to the next character to "sample_rate=" (which has 12 characters)   
-         char each_character_after_srate[125];		
-         snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
-         char characters_after_srate[125];
-         snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
-         while (*sample_rate_pointer != ' ')
-         {
-             sample_rate_pointer = sample_rate_pointer + 1;
-             snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
-             strcat(characters_after_srate,each_character_after_srate); 
-         }
-         samprate = atof(characters_after_srate);
-     }
-     if ((par.samplingRate != -999.0) && (samprate == -999.0))  // Sampling rate on command line and not in HISTORY (Primary HDU)
-     {
-         samprate = par.samplingRate;
-     }
-     else if ((par.samplingRate != -999.0) && (samprate != -999.0))  // Sampling rate on command line and in HISTORY (Primary HDU)
-     {
-         if (par.samplingRate != samprate)
-         {
-             message = "Sampling frequency on command line and in input file do not match";
-             EP_EXIT_ERROR(message,status);
-         }
-     }
-     else if ((par.samplingRate == -999.0) && (samprate == -999.0))  // Sampling rate NOT on command line and NOT in HISTORY (Primary HDU)
-     {
-         message = "Sampling frequency neither on command line nor in input file";
-         EP_EXIT_ERROR(message,status);
-     }
-     
      // Read other necessary keywords from ANY HDU
      if (tessimOrxifusim == 1) //XIFUSIM
      {
@@ -514,7 +487,7 @@
                  fits_read_key(infileObject,TDOUBLE,keyname, &deltat,comment,&status);
                  if (status == 0)
                  {
-                     if (samprate != 1.0/deltat)
+                     if ((par.samplingRate != -999.0) && (par.samplingRate != 1.0/deltat))
                      {
                          deltat = 1.0/deltat;
                          message = "Sampling rate on command line and in input file (from DELTAT) do not match";
@@ -536,6 +509,48 @@
          }
          strcpy(extname,"RECORDS");
          fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
+     }
+     
+     // Read the sampling rate from input FITS file (check its value with the samplinRate input parameter)
+     if ((tessimOrxifusim == 1) && (par.samplingRate == -999.0) && (samprate == -999.0))
+     {
+         fits_movabs_hdu(infileObject, 1, NULL, &status); // Move to "Primary" HDU
+         int numberkeywords;
+         char *headerPrimary;
+         fits_hdr2str(infileObject, 0, NULL, 0,&headerPrimary, &numberkeywords, &status);   // Reading thee whole "Primary" HDU and store it in 'headerPrimary'
+         char * sample_rate_pointer;
+         sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    // Pointer to where the text "sample_rate=" is
+         if(sample_rate_pointer){
+             sample_rate_pointer = sample_rate_pointer + 12; // Pointer to the next character to "sample_rate=" (which has 12 characters)   
+             char each_character_after_srate[125];		
+             snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+             char characters_after_srate[125];
+             snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
+             while (*sample_rate_pointer != ' ')
+             {
+                 sample_rate_pointer = sample_rate_pointer + 1;
+                 snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+                 strcat(characters_after_srate,each_character_after_srate); 
+             }
+             samprate = atof(characters_after_srate);
+         }
+         if ((par.samplingRate != -999.0) && (samprate == -999.0))  // Sampling rate on command line and not in HISTORY (Primary HDU)
+         {
+             samprate = par.samplingRate;
+         }
+         else if ((par.samplingRate != -999.0) && (samprate != -999.0))  // Sampling rate on command line and in HISTORY (Primary HDU)
+         {
+             if (par.samplingRate != samprate)
+             {
+                 message = "Sampling frequency on command line and in input file do not match";
+                 EP_EXIT_ERROR(message,status);
+             }
+         }
+         else if ((par.samplingRate == -999.0) && (samprate == -999.0))  // Sampling rate NOT on command line and NOT in HISTORY (Primary HDU)
+         {
+             message = "Sampling frequency neither on command line nor in input file";
+             EP_EXIT_ERROR(message,status);
+         }
      }
      
      if (eventsz <= 0)
