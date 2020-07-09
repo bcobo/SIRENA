@@ -114,9 +114,6 @@ struct Parameters {
         //Size of noise matrix if only one to be created
 	int matrixSize;
         
-        //Sampling rate
-	double samplingRate;
-        
         //Remove some noise intervals before calculating the noise spectrum if rmNoiseIntervals=yes
 	char rmNoiseIntervals;
        
@@ -152,7 +149,7 @@ struct Parameters {
 
 	long eventcnt;		        // Number of rows
 	long eventsz;	         	// TRIGGSZ
-	double samprate = -999.0;       // Related to DELTAT
+	double samprate = -999.0;       // Related to DELTAT or TCLOCK+DEC_FAC or NROW+P_ROW
 	double energy;		        // Related to MONOEN
 
 	double aducnv;
@@ -222,6 +219,8 @@ struct Parameters {
         int tessimOrxifusim = -999;     // 0: tessim, 1: xifusim
         
         double deltat;
+        double tclock;
+        double dec_fac;
 
 // OUTPUT FILE
 

@@ -178,30 +178,30 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
         fits_get_num_hdus(file->fptr, &hdunum,status);
 
 	// Check if input FITS file have been simulated with TESSIM or XIFUSIM
-	int tessimOrxifusim = -999;
+        int tessimOrxifusim = -999;
         fits_movnam_hdu(file->fptr, ANY_HDU,"RECORDS", 0, status);
         if (*status != 0)
         {
-	        *status = 0;
-                fits_movnam_hdu(file->fptr, ANY_HDU,"TESRECORDS", 0, status);
-		if (*status != 0)                
-		{
-			printf("%s","Cannot move to TESRECORDS HDU in input FITS file\n");
-                        CHECK_STATUS_RET(*status, NULL);
-                }
-                else
-                {
-	                tessimOrxifusim = 1;
-                }
-	}
+            *status = 0;
+            fits_movnam_hdu(file->fptr, ANY_HDU,"TESRECORDS", 0, status);
+            if (*status != 0)                
+            {
+                printf("%s","Cannot move to TESRECORDS HDU in input FITS file\n");
+                CHECK_STATUS_RET(*status, NULL);
+            }
+            else
+            {
+                tessimOrxifusim = 1;
+            }
+        }
         else 
         {
-	        tessimOrxifusim = 0;
+            tessimOrxifusim = 0;
         }
         if (tessimOrxifusim == -999)
         {
-		printf("%s","Neither the 'RECORDS' nor 'TESRECORDS' HDUs are in the input FITS file\n");
-                CHECK_STATUS_RET(*status, NULL);
+            printf("%s","Neither the 'RECORDS' nor 'TESRECORDS' HDUs are in the input FITS file\n");
+            CHECK_STATUS_RET(*status, NULL);
         }
 	
 	//Read standard keywords
@@ -218,89 +218,162 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
 	fits_get_colnum(file->fptr, CASEINSEN,"PIXID", &(file->pixIDCol), status);
 	fits_get_colnum(file->fptr, CASEINSEN,"PH_ID", &(file->ph_idCol), status);
 	CHECK_STATUS_RET(*status, NULL);
+
+    file->delta_t = -999;
+    int deltat_exists = 0;
+    int dec_fac_exists = 0;
+    int tclock_exists = 0;
+    int numrow_exists = 0;
+    int p_row_exists = 0;
+    // To get the sampling rate no matter the origin of the file
+    for (int i=0;i<hdunum;i++)
+    {
+        fits_movabs_hdu(file->fptr, i+1, NULL, status); 
+        fits_read_key(file->fptr,TDOUBLE,"DELTAT", &(file->delta_t),comment,status);
+        if (*status == 0)
+        {
+            deltat_exists = 1;
+            break;
+        }
+        else if ((*status != 0) && (i < hdunum-1))
+        {
+            *status = 0;
+        }
+    }
+    //printf("%s %d %s","deltat_exists: ",deltat_exists,"\n");
+    //printf("%s %f %s","file->delta_t: ",file->delta_t,"\n");
+    double tclock;
+    if (deltat_exists == 0)
+    {
+        double dec_fac;
+        for (int i=0;i<hdunum;i++)
+        {
+            fits_movabs_hdu(file->fptr, i+1, NULL, status); 
+            fits_read_key(file->fptr,TDOUBLE,"DEC_FAC", &dec_fac,comment,status);
+            if (*status == 0)
+            {
+                dec_fac_exists = 1;
+                break;
+            }
+            else if ((*status != 0) && (i < hdunum-1))
+            {
+                *status = 0;
+            }
+        }
+        for (int i=0;i<hdunum;i++)
+        {
+            fits_movabs_hdu(file->fptr, i+1, NULL, status); 
+            fits_read_key(file->fptr,TDOUBLE,"TCLOCK", &tclock,comment,status);
+            if (*status == 0)
+            {
+                tclock_exists = 1;
+                break;
+            }
+            else if ((*status != 0) && (i < hdunum-1))
+            {
+                *status = 0;
+            }
+        }
+        file->delta_t = tclock*dec_fac;
+        //printf("%s %d %s","tclock_exists: ",tclock_exists,"\n");
+        //printf("%s %d %s","dec_fac_exists: ",dec_fac_exists,"\n");
+        //printf("%s %f %s","file->delta_t: ",file->delta_t,"\n");
+    }
+    if ((deltat_exists == 0) && ((tclock_exists == 0) || (dec_fac_exists == 0)))
+    {
+        int numrow;
+        for (int i=0;i<hdunum;i++)
+        {
+            fits_movabs_hdu(file->fptr, i+1, NULL, status); 
+            fits_read_key(file->fptr,TINT,"NUMROW", &numrow,comment,status);
+            if (*status == 0)
+            {
+                numrow_exists = 1;
+                break;
+            }
+            else if ((*status != 0) && (i < hdunum-1))
+            {
+                *status = 0;
+            }
+        }
+        int p_row;
+        for (int i=0;i<hdunum;i++)
+        {
+            fits_movabs_hdu(file->fptr, i+1, NULL, status); 
+            fits_read_key(file->fptr,TINT,"P_ROW", &p_row,comment,status);
+            if (*status == 0)
+            {
+                p_row_exists = 1;
+                break;
+            }
+            else if ((*status != 0) && (i < hdunum-1))
+            {
+                *status = 0;
+            }
+        }
+        file->delta_t = tclock*numrow*p_row;
+        //printf("%s %d %s","numrow_exists: ",numrow_exists,"\n");
+        //printf("%s %d %s","p_row_exists: ",p_row_exists,"\n");
+        //printf("%s %f %s","file->delta_t: ",file->delta_t,"\n");
+    }
+    if ((deltat_exists == 0) && ((dec_fac_exists == 0) || (tclock_exists == 0)) && ((numrow_exists == 0) || (p_row_exists == 0)))
+    {
+        printf("%s","Cannot read neither DELTAT nor TCLOCK+DEC_FAC nor NUMROW+P_ROW keywords in any HDU from the input file in order to calculate the sampling rate\n");
+        CHECK_STATUS_RET(*status, NULL);
+    }
+    
+    if (tessimOrxifusim == 0)	//TESSIM
+    {
+        //Get trigger_size
+        for (int i=0;i<hdunum;i++)
+        {
+            fits_movabs_hdu(file->fptr, i+1, NULL, status); 
+            fits_read_key(file->fptr,TULONG,"TRIGGSZ", &(file->trigger_size),comment,status);
+            if (*status == 0)
+            {
+                break;
+            }
+            else if ((*status != 0) && (i < hdunum-1))
+            {
+                *status = 0;
+            }
+        }
+        if (*status != 0)
+        {
+            printf("%s","Cannot read TRIGGSZ keyword in any HDU from the input file\n");
+            CHECK_STATUS_RET(*status, NULL);
+        }
         
-        if (tessimOrxifusim == 0)	//TESSIM
+        fits_movnam_hdu(file->fptr, ANY_HDU,"RECORDS", 0, status);
+    }
+    else				//XIFUSIM
+    {
+        //Get trigger_size
+        for (int i=0;i<hdunum;i++)
         {
-                //Get trigger_size
-                //fits_read_key(file->fptr, TULONG, "TRIGGSZ", &(file->trigger_size), comment, status);
-                for (int i=0;i<hdunum;i++)
-                {
-                        fits_movabs_hdu(file->fptr, i+1, NULL, status); 
-                        fits_read_key(file->fptr,TULONG,"TRIGGSZ", &(file->trigger_size),comment,status);
-                        if (*status == 0)
-                        {
-                                break;
-                        }
-                        else if ((*status != 0) && (i < hdunum-1))
-                        {
-                                *status = 0;
-                        }
-                }
-                if (*status != 0)
-                {
-			printf("%s","Cannot read TRIGGSZ keyword in any HDU from the input file\n");
-                        CHECK_STATUS_RET(*status, NULL);
-                }
-
-                //Get delta_t
-                //fits_read_key(file->fptr, TDOUBLE, "DELTAT", &(file->delta_t), comment, status);
-		for (int i=0;i<hdunum;i++)
-                {
-                        fits_movabs_hdu(file->fptr, i+1, NULL, status); 
-                        fits_read_key(file->fptr,TDOUBLE,"DELTAT", &(file->delta_t),comment,status);
-                        if (*status == 0)
-                        {
-                                break;
-                        }
-                        else if ((*status != 0) && (i < hdunum-1))
-                        {
-                                *status = 0;
-                        }
-                }
-                if (*status != 0)
-                {
-			printf("%s","Cannot read DELTAT keyword in any HDU from the input file\n");
-                        CHECK_STATUS_RET(*status, NULL);                }
-
-		fits_movnam_hdu(file->fptr, ANY_HDU,"RECORDS", 0, status);
+            fits_movabs_hdu(file->fptr, i+1, NULL, status); 
+            fits_read_key(file->fptr,TULONG,"RECLEN", &(file->trigger_size),comment,status);
+            if (*status == 0)
+            {
+                break;
+            }
+            else if ((*status != 0) && (i < hdunum-1))
+            {
+                *status = 0;
+            }
         }
-        else				//XIFUSIM
+        if (*status != 0)
         {
-                //Get trigger_size
-                /*fits_movnam_hdu(file->fptr,ANY_HDU,"TRIGGERPARAM",0, status);
-                fits_read_key(file->fptr, TULONG, "RECLEN", &(file->trigger_size), comment, status);*/
-		for (int i=0;i<hdunum;i++)
-                {
-                        fits_movabs_hdu(file->fptr, i+1, NULL, status); 
-                        fits_read_key(file->fptr,TULONG,"RECLEN", &(file->trigger_size),comment,status);
-                        if (*status == 0)
-                        {
-                                break;
-                        }
-                        else if ((*status != 0) && (i < hdunum-1))
-                        {
-                                *status = 0;
-                        }
-                }
-                if (*status != 0)
-                {
-			printf("%s","Cannot read RECLEN keyword in any HDU from the input file\n");
-                        CHECK_STATUS_RET(*status, NULL);            
-		}
-
-		fits_movnam_hdu(file->fptr, ANY_HDU,"TESRECORDS", 0, &status);
-                
-                /*fits_movnam_hdu(file->fptr,ANY_HDU,"RECORDS",0, status);
-                if (*status != 0)
-                {
-                        *status = 0;
-                        fits_movnam_hdu(file->fptr,ANY_HDU,"TESRECORDS",0, status);
-                }*/
-
-                file->delta_t = -999;
+            printf("%s","Cannot read RECLEN keyword in any HDU from the input file\n");
+            CHECK_STATUS_RET(*status, NULL);            
         }
 
-	return(file);
+        fits_movnam_hdu(file->fptr, ANY_HDU,"TESRECORDS", 0, status);
+        
+        //file->delta_t = -999;
+    }
+    
+    return(file);
 }
 
 /** Populates a TesRecord structure with the next record */

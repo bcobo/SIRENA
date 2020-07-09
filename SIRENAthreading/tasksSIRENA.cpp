@@ -2296,7 +2296,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
 	}
 	gsl_vector_free(recordDERIVATIVEOriginal); recordDERIVATIVEOriginal = 0;
 
-        //cout<<"numPulses: "<<numPulses<<endl;
+    //cout<<"numPulses: "<<numPulses<<endl;
         
 	// Calculate the tend of the found pulses and check if the pulse is saturated
         // 0 => Standard (good) pulses
@@ -2895,8 +2895,6 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 		gsl_vector_set(quality,i+pulsesAll->ndetpulses,pulsesInRecord->pulses_detected[i].quality);
                 //gsl_vector_set(bslnpulse,i+pulsesAll->ndetpulses,pulsesInRecord->pulses_detected[i].bsln);
 	}
-	
-	cout<<"Paso1"<<endl;
         
 	// It is not necessary because 'pulsesAll->ndetpulses + pulsesInRecord->ndetpulses' has been checked previously
 	gsl_vector *nonpileup = gsl_vector_alloc(totalPulses);	// Piled-up pulse => Not taken into account to calculate the template
@@ -2912,8 +2910,6 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 	bool firstnonpileupPulse = true;
 	// It is not necessary because 'reconstruct_init->pulse_length'='PulseLength' (input parameter) has been checked previously
 	gsl_vector *pulse = gsl_vector_alloc(reconstruct_init->pulse_length);
-        cout<<"reconstruct_init->pulse_length: "<<reconstruct_init->pulse_length<<endl;
-        cout<<"inputPulseLength: "<<inputPulseLength<<endl;
 
 	double tstartnext;
 
@@ -2937,8 +2933,6 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
                         cnt = cnt +1;
                 }
 	}
-	cout<<"Paso2"<<endl;
-	
 	if (cnt == 0)
 	{
 		message = "No valid pulses to calculate the template (check as a possibility if PulseLength or largeFilter > Record size)";
@@ -2962,7 +2956,6 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 	}
 	gsl_vector_memcpy(pulseheightAUX2,&temp.vector);
 	gsl_vector_free(pulseheightAUX); pulseheightAUX = 0;
-        cout<<"Paso3"<<endl;
 
 	// Create the pulseheights histogram
 	nBins = floor(sqrt(cnt)); 
@@ -2974,6 +2967,7 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 		EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
 	}
 	yhisto = gsl_vector_alloc(nBins);	// Y-axis of the pulseheights histogram
+    //cout<<gsl_vector_get(pulseheightAUX2,0)<<" "<<gsl_vector_get(pulseheightAUX2,1)<<" "<<gsl_vector_get(pulseheightAUX2,2)<<endl;
 	if (createHisto(pulseheightAUX2, nBins, &xhisto, &yhisto))
 	{
 		message = "Cannot run createHisto routine";
@@ -2983,7 +2977,6 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 
 	index_maximumpulseheight = gsl_vector_max_index(yhisto);
 	maximumpulseheight = gsl_vector_get(xhisto,index_maximumpulseheight);
-        cout<<"Paso4"<<endl;
 
 	// Calculate the pulseaverage only taking into account the valid pulses
 	gsl_vector_set_all(*pulseaverage,0.0);
@@ -3030,7 +3023,6 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 			if (firstnonpileupPulse == true)	firstnonpileupPulse = false;
 		}
 	}
-	cout<<"Paso5"<<endl;
 	
 	//cout<<"Number of pulses to average: "<<nonpileupPulses<<endl;
 	gsl_vector_scale(*pulseaverage,1.0/(nonpileupPulses));
@@ -3040,7 +3032,6 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 	*pulseaverage = gsl_vector_alloc(inputPulseLength);
 	temp = gsl_vector_subvector(*pulseaverageMaxLengthFixedFilter,0,inputPulseLength);
 	gsl_vector_memcpy(*pulseaverage,&temp.vector);
-        cout<<"Paso6"<<endl;
         
         if (reconstruct_init->hduPRECALWN == 1)
         {
@@ -3084,7 +3075,7 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 * - Free allocated GSL vectors
 *
 * Parameters:
-* - invector: GSL nput vector
+* - invector: GSL input vector
 * - nbins: Number of bins to build the histogram
 * - xhistogsl: GSL vector with output histogram x-axis
 * - yhistogsl: GSL vector with output histogram y-axis
@@ -4267,611 +4258,604 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 * - PULSEMaxLengthFixedFilter: Pulse template whose length is largeFilter associated to the first energy to be included in the library
 ******************************************************************************/
 int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject, double samprate, int runF0orB0val, gsl_vector *E, gsl_vector *PHEIGHT, gsl_matrix *PULSE, 
-	gsl_matrix *PULSEB0, gsl_matrix *MF, gsl_matrix *MFB0, gsl_matrix *COVAR, gsl_matrix *WEIGHT, gsl_matrix *PULSEMaxLengthFixedFilter)
+                gsl_matrix *PULSEB0, gsl_matrix *MF, gsl_matrix *MFB0, gsl_matrix *COVAR, gsl_matrix *WEIGHT, gsl_matrix *PULSEMaxLengthFixedFilter)
 { 
-	// Declare variables
-	int status = EPOK;
-	string message = "";
-	char valERROR[256];
-        
-        int preBuffer = reconstruct_init-> preBuffer;
-	
-	gsl_vector *optimalfilter = NULL;
-	gsl_vector *optimalfilter_f = NULL;
-	gsl_vector *optimalfilter_FFT = NULL;
-	gsl_vector_complex *optimalfilter_FFT_complex = NULL;
-	gsl_vector *optimalfilter_FFT_RI;
-	gsl_vector *optimalfilter_x = NULL;
-	gsl_vector *optimalfilter_f_x = NULL;
-	gsl_vector *optimalfilter_FFT_x = NULL;
-	gsl_vector_complex *optimalfilter_FFT_complex_x = NULL;
-	
-	IOData obj;
-	IOData objTIME;
-	IOData objFREQ;
-	IOData objPRCLOFWM;
-	
-	char extname[10];
-	
-	obj.inObject = *inLibObject;
-	obj.nameTable = new char [255];
-	strcpy(obj.nameTable,"LIBRARY");
-	obj.iniRow = 1;
-	obj.endRow = 1;
-	obj.iniCol = 0;
-	obj.nameCol = new char [255];
-	
-	objTIME.inObject = *inLibObject;
-	objTIME.nameTable = new char [255];
-	strcpy(objTIME.nameTable,"FIXFILTT");
-	objTIME.iniRow = 1;
-	objTIME.endRow = 1;
-	objTIME.iniCol = 0;
-	objTIME.nameCol = new char [255];
-	
-	objFREQ.inObject = *inLibObject;
-	objFREQ.nameTable = new char [255];
-	strcpy(objFREQ.nameTable,"FIXFILTF");
-	objFREQ.iniRow = 1;
-	objFREQ.endRow = 1;
-	objFREQ.iniCol = 0;
-	objFREQ.nameCol = new char [255];
-	
-	objPRCLOFWM.inObject = *inLibObject;
-	objPRCLOFWM.nameTable = new char [255];
-	strcpy(objPRCLOFWM.nameTable,"PRCLOFWM");
-	objPRCLOFWM.iniRow = 1;
-	objPRCLOFWM.endRow = 1;
-	objPRCLOFWM.iniCol = 0;
-	objPRCLOFWM.nameCol = new char [255];
-	
-        // Write in the first row of the library FITS file some columns with the info provided by the input GSL vectors E, PHEIGHT, PULSE, PULSEB0, MF and MFB0
-	// Creating ENERGY Column
-	strcpy(obj.nameCol,"ENERGY");
-	obj.type = TDOUBLE;
-	obj.unit = new char [255];
-	strcpy(obj.unit,"eV");
-	if (writeFitsSimple(obj, E))
-	{
-		message = "Cannot run writeFitsSimple routine for column " + string(obj.nameCol);
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-
-	// Creating PHEIGHT Column
-	strcpy(obj.nameCol,"PHEIGHT");
-	strcpy(obj.unit,"ADC");
-	if (writeFitsSimple(obj, PHEIGHT))
-	{
-		message = "Cannot run writeFitsSimple routine for column " + string(obj.nameCol);
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-
-	if (reconstruct_init->largeFilter != reconstruct_init->pulse_length)
-	{
-		// Creating PLSMXLFF Column
-		strcpy(obj.nameCol,"PLSMXLFF");
-		strcpy(obj.unit,"ADC");
-		if (writeFitsComplex(obj, PULSEMaxLengthFixedFilter))
-		{
-			message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
-			EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-		}
-	}
-	
-	// Creating PULSE Column
-	strcpy(obj.nameCol,"PULSE");
-	strcpy(obj.unit,"ADC");
-	if (writeFitsComplex(obj, PULSE))
-	{
-		message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-
-	// Creating PULSEB0 Column
-	strcpy(obj.nameCol,"PULSEB0");
-	strcpy(obj.unit,"ADC");
-	if (writeFitsComplex(obj, PULSEB0))
-	{
-		message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-
-	// Creating MF Column
-	strcpy(obj.nameCol,"MF");
-	strcpy(obj.unit," ");
-	if (writeFitsComplex(obj, MF))
-	{
-		message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-
-	// Creating MFB0 Column
-	strcpy(obj.nameCol,"MFB0");
-	strcpy(obj.unit," ");
-	if (writeFitsComplex(obj, MFB0))
-	{
-		message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-	
-	// It is not necessary to check the allocation because 'reconstruct_init->pulse_length'=PulseLength(input parameter) has been checked previously
-	gsl_vector *matchedfilters_row = gsl_vector_alloc(reconstruct_init->pulse_length);
-	
-        if (runF0orB0val == 0)
-            gsl_matrix_get_row(matchedfilters_row,MF,0);
-        else if (runF0orB0val == 1)
-            gsl_matrix_get_row(matchedfilters_row,MFB0,0);
-        
-        //for (int i=0;i<matchedfilters_row->size;i++)    cout<<i<<" "<<gsl_vector_get(matchedfilters_row,i)<<endl;
-        
-        cout<<"matchedfilters_row->size: "<<matchedfilters_row->size<<endl;
-	// Calculate the optimal filter
-	if (calculus_optimalFilter (0, 0, reconstruct_init->opmode, matchedfilters_row, matchedfilters_row->size, samprate, runF0orB0val, reconstruct_init->noise_spectrum->noisefreqs, reconstruct_init->noise_spectrum->noisespec, &optimalfilter, &optimalfilter_f, &optimalfilter_FFT, &optimalfilter_FFT_complex))
-	{
-		message = "Cannot run routine calculus_optimalFilter in writeLibrary";
-		EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-	}
-	
-	if (reconstruct_init->hduPRECALWN == 1)
+    // Declare variables
+    int status = EPOK;
+    string message = "";
+    char valERROR[256];
+    
+    int preBuffer = reconstruct_init-> preBuffer;
+    
+    gsl_vector *optimalfilter = NULL;
+    gsl_vector *optimalfilter_f = NULL;
+    gsl_vector *optimalfilter_FFT = NULL;
+    gsl_vector_complex *optimalfilter_FFT_complex = NULL;
+    gsl_vector *optimalfilter_FFT_RI;
+    gsl_vector *optimalfilter_x = NULL;
+    gsl_vector *optimalfilter_f_x = NULL;
+    gsl_vector *optimalfilter_FFT_x = NULL;
+    gsl_vector_complex *optimalfilter_FFT_complex_x = NULL;
+    
+    IOData obj;
+    IOData objTIME;
+    IOData objFREQ;
+    IOData objPRCLOFWM;
+    
+    char extname[10];
+    
+    obj.inObject = *inLibObject;
+    obj.nameTable = new char [255];
+    strcpy(obj.nameTable,"LIBRARY");
+    obj.iniRow = 1;
+    obj.endRow = 1;
+    obj.iniCol = 0;
+    obj.nameCol = new char [255];
+    
+    objTIME.inObject = *inLibObject;
+    objTIME.nameTable = new char [255];
+    strcpy(objTIME.nameTable,"FIXFILTT");
+    objTIME.iniRow = 1;
+    objTIME.endRow = 1;
+    objTIME.iniCol = 0;
+    objTIME.nameCol = new char [255];
+    
+    objFREQ.inObject = *inLibObject;
+    objFREQ.nameTable = new char [255];
+    strcpy(objFREQ.nameTable,"FIXFILTF");
+    objFREQ.iniRow = 1;
+    objFREQ.endRow = 1;
+    objFREQ.iniCol = 0;
+    objFREQ.nameCol = new char [255];
+    
+    objPRCLOFWM.inObject = *inLibObject;
+    objPRCLOFWM.nameTable = new char [255];
+    strcpy(objPRCLOFWM.nameTable,"PRCLOFWM");
+    objPRCLOFWM.iniRow = 1;
+    objPRCLOFWM.endRow = 1;
+    objPRCLOFWM.iniCol = 0;
+    objPRCLOFWM.nameCol = new char [255];
+    
+    // Write in the first row of the library FITS file some columns with the info provided by the input GSL vectors E, PHEIGHT, PULSE, PULSEB0, MF and MFB0
+    // Creating ENERGY Column
+    strcpy(obj.nameCol,"ENERGY");
+    obj.type = TDOUBLE;
+    obj.unit = new char [255];
+    strcpy(obj.unit,"eV");
+    if (writeFitsSimple(obj, E))
+    {
+        message = "Cannot run writeFitsSimple routine for column " + string(obj.nameCol);
+        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+    }
+    
+    // Creating PHEIGHT Column
+    strcpy(obj.nameCol,"PHEIGHT");
+    strcpy(obj.unit,"ADC");
+    if (writeFitsSimple(obj, PHEIGHT))
+    {
+        message = "Cannot run writeFitsSimple routine for column " + string(obj.nameCol);
+        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+    }
+    
+    if (reconstruct_init->largeFilter != reconstruct_init->pulse_length)
+    {
+        // Creating PLSMXLFF Column
+        strcpy(obj.nameCol,"PLSMXLFF");
+        strcpy(obj.unit,"ADC");
+        if (writeFitsComplex(obj, PULSEMaxLengthFixedFilter))
         {
-                // Creating COVARM Column
-                strcpy(obj.nameCol,"COVARM");
-                strcpy(obj.unit," ");
-                if (writeFitsComplex(obj, COVAR))
-                {
-                        message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
-                        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-                }
-
-                // Creating WEIGHTM Column
-                strcpy(obj.nameCol,"WEIGHTM");
-                strcpy(obj.unit," ");
-                if (writeFitsComplex(obj, WEIGHT))
-                {
-                        message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
-                        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-                }
+            message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
+            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
         }
-
-	// Writing HDUs with fixed filters in time (FIXFILTT) and frequency (FIXFILTF)
-	char str_length[125];
-	gsl_vector *fixedlengths;
-	if (reconstruct_init->pulse_length != reconstruct_init->largeFilter)
-	{
-		fixedlengths = gsl_vector_alloc(floor(log2(reconstruct_init->pulse_length))+1); 	//+1 because we are going to add a very long fixed filter (largeFilter)
-		
-		gsl_vector_set(fixedlengths,0,reconstruct_init->largeFilter);
-		for (int i=0;i<floor(log2(reconstruct_init->pulse_length));i++)					
-		{
-			gsl_vector_set(fixedlengths,i+1,pow(2,floor(log2(reconstruct_init->pulse_length))-i));
-		}
-	}
-	else 	
-	{
-		fixedlengths = gsl_vector_alloc(floor(log2(reconstruct_init->pulse_length))); 	
-		for (int i=0;i<floor(log2(reconstruct_init->pulse_length));i++)					
-		{
-			gsl_vector_set(fixedlengths,i,pow(2,floor(log2(reconstruct_init->pulse_length))-i)); 
-		}
-	}
-	
-	strcpy(extname,"FIXFILTT");
-	if (fits_movnam_hdu(*inLibObject, ANY_HDU,extname, 0, &status))
-	{
-		message = "Cannot move to HDU  " + string(extname) + " in library";
-		EP_PRINT_ERROR(message,status);return(EPFAIL);
-	}
-	
-	// Creating ENERGY Column
-	strcpy(objTIME.nameCol,"ENERGY");
-	objTIME.type = TDOUBLE;
-	objTIME.unit = new char [255];
-	strcpy(objTIME.unit,"eV");
-	if (writeFitsSimple(objTIME, E))
-	{
-		message = "Cannot run writeFitsSimple routine for column " + string(objFREQ.nameCol);
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-		
-	strcpy(extname,"FIXFILTF");
-	if (fits_movnam_hdu(*inLibObject, ANY_HDU,extname, 0, &status))
-	{
-		message = "Cannot move to HDU  " + string(extname) + " in library";
-		EP_PRINT_ERROR(message,status);return(EPFAIL);
-	}
-	
-	// Creating ENERGY Column
-	strcpy(objFREQ.nameTable,"FIXFILTF");
-	strcpy(objFREQ.nameCol,"ENERGY");
-	objFREQ.type = TDOUBLE;
-	objFREQ.unit = new char [255];
-	strcpy(objFREQ.unit,"eV");
-	if (writeFitsSimple(objFREQ, E))
-	{
-		message = "Cannot run writeFitsSimple routine for column " + string(objFREQ.nameCol);
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-	
-	// Creating Ts and Fs Columns (in the FIXFILTT and FIXFILTF HDUs respectively)
-	gsl_vector *matchedfiltersSHORT;
-	gsl_vector_view(temp);
-	gsl_matrix *optimalfiltersT_matrix;
-	gsl_matrix *optimalfiltersF_matrix;
-	for (int j=0;j<fixedlengths->size;j++)
-	{
-		if (gsl_vector_get(fixedlengths,j) == optimalfilter_FFT_complex->size)
-		{
-                        cout<<"PasoB1"<<endl;
-                        if ((optimalfilter_x = gsl_vector_alloc(optimalfilter_FFT_complex->size)) == 0)
-                        {
-                                sprintf(valERROR,"%d",__LINE__-2);
-                                string str(valERROR);
-                                message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-                                EP_PRINT_ERROR(message,EPFAIL);
-                        }
-			gsl_vector_memcpy(optimalfilter_x,optimalfilter);
-		  
-			optimalfilter_FFT_complex_x = gsl_vector_complex_alloc(optimalfilter_FFT_complex->size);
-			gsl_vector_complex_memcpy(optimalfilter_FFT_complex_x,optimalfilter_FFT_complex);
-                        cout<<"PasoB2"<<endl;
-		}
-		else
-		{
-                        cout<<"PasoC1"<<endl;
-			// It will enter this 'else' for fixedlengths_i=largeFilter and fixedlengths_i<optimalfilter_FFT_complex->size
-                        if ((matchedfiltersSHORT = gsl_vector_alloc(gsl_vector_get(fixedlengths,j))) == 0)
-                        {
-                                sprintf(valERROR,"%d",__LINE__-2);
-                                string str(valERROR);
-                                message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-                                EP_PRINT_ERROR(message,EPFAIL);
-                        }
-			if (gsl_vector_get(fixedlengths,j) == reconstruct_init->largeFilter)
-			{
-                                cout<<"PasoC2"<<endl;
-				gsl_vector *matchedfiltersMaxLengthFixedFilter_row = gsl_vector_alloc(reconstruct_init->largeFilter);
-				gsl_matrix_get_row(matchedfiltersMaxLengthFixedFilter_row,PULSEMaxLengthFixedFilter,0);	//Matched filter
-				gsl_vector_scale(matchedfiltersMaxLengthFixedFilter_row,1.0/reconstruct_init->monoenergy);
-                                if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j) > matchedfiltersMaxLengthFixedFilter_row->size))
-                                {
-                                        sprintf(valERROR,"%d",__LINE__+5);
-                                        string str(valERROR);
-                                        message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
-                                        EP_EXIT_ERROR(message,EPFAIL);
-                                }
-				temp = gsl_vector_subvector(matchedfiltersMaxLengthFixedFilter_row,0,gsl_vector_get(fixedlengths,j));
-                                if (gsl_vector_memcpy(matchedfiltersSHORT,&temp.vector) != 0)
-                                {
-                                        sprintf(valERROR,"%d",__LINE__-2);
-                                        string str(valERROR);
-                                        message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
-                                        EP_EXIT_ERROR(message,EPFAIL);
-                                }
-				gsl_vector_free(matchedfiltersMaxLengthFixedFilter_row); matchedfiltersMaxLengthFixedFilter_row = 0;
-			}
-			else
-			{
-                                //cout<<"matchedfilters_row->size: "<<matchedfilters_row->size<<endl;
-                                //cout<<"gsl_vector_get(fixedlengths,j): "<<gsl_vector_get(fixedlengths,j)<<endl;
-                                //if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j)+preBuffer > matchedfilters_row->size))
-                                if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j) > matchedfilters_row->size))
-                                {
-                                        sprintf(valERROR,"%d",__LINE__+5);
-                                        string str(valERROR);
-                                        message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
-                                        EP_EXIT_ERROR(message,EPFAIL);
-                                }
-				temp = gsl_vector_subvector(matchedfilters_row,0,gsl_vector_get(fixedlengths,j));
-                                if (gsl_vector_memcpy(matchedfiltersSHORT,&temp.vector) != 0)
-                                {
-                                        sprintf(valERROR,"%d",__LINE__-2);
-                                        string str(valERROR);
-                                        message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
-                                        EP_EXIT_ERROR(message,EPFAIL);
-                                }
-				gsl_vector_memcpy(matchedfiltersSHORT,&temp.vector);
-                        }
-                        
-                        cout<<"matchedfiltersSHORT->size: "<<matchedfiltersSHORT->size<<endl;
-			// Calculate the optimal filter
-			if (calculus_optimalFilter (0, 0, reconstruct_init->opmode, matchedfiltersSHORT, matchedfiltersSHORT->size, samprate, runF0orB0val, reconstruct_init->noise_spectrum->noisefreqs, reconstruct_init->noise_spectrum->noisespec, &optimalfilter_x, &optimalfilter_f_x, &optimalfilter_FFT_x, &optimalfilter_FFT_complex_x))
-			{
-				message = "Cannot run routine calculus_optimalFilter in writeLibrary";
-				EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-			}
-		
-			gsl_vector_free(matchedfiltersSHORT); matchedfiltersSHORT = 0;
-			gsl_vector_free(optimalfilter_f_x); optimalfilter_f_x = 0;
-			gsl_vector_free(optimalfilter_FFT_x); optimalfilter_FFT_x = 0;
-		}
-		
-		if ((optimalfilter_FFT_RI = gsl_vector_alloc(optimalfilter_FFT_complex_x->size*2)) == 0)
+    }
+    
+    // Creating PULSE Column
+    strcpy(obj.nameCol,"PULSE");
+    strcpy(obj.unit,"ADC");
+    if (writeFitsComplex(obj, PULSE))
+    {
+        message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
+        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+    }
+    
+    // Creating PULSEB0 Column
+    strcpy(obj.nameCol,"PULSEB0");
+    strcpy(obj.unit,"ADC");
+    if (writeFitsComplex(obj, PULSEB0))
+    {
+        message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
+        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+    }
+    
+    // Creating MF Column
+    strcpy(obj.nameCol,"MF");
+    strcpy(obj.unit," ");
+    if (writeFitsComplex(obj, MF))
+    {
+        message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
+        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+    }
+    
+    // Creating MFB0 Column
+    strcpy(obj.nameCol,"MFB0");
+    strcpy(obj.unit," ");
+    if (writeFitsComplex(obj, MFB0))
+    {
+        message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
+        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+    }
+    
+    // It is not necessary to check the allocation because 'reconstruct_init->pulse_length'=PulseLength(input parameter) has been checked previously
+    gsl_vector *matchedfilters_row = gsl_vector_alloc(reconstruct_init->pulse_length);
+    
+    if (runF0orB0val == 0)
+        gsl_matrix_get_row(matchedfilters_row,MF,0);
+    else if (runF0orB0val == 1)
+        gsl_matrix_get_row(matchedfilters_row,MFB0,0);
+    
+    //for (int i=0;i<matchedfilters_row->size;i++)    cout<<i<<" "<<gsl_vector_get(matchedfilters_row,i)<<endl;
+    
+    // Calculate the optimal filter
+    if (calculus_optimalFilter (0, 0, reconstruct_init->opmode, matchedfilters_row, matchedfilters_row->size, samprate, runF0orB0val, reconstruct_init->noise_spectrum->noisefreqs, reconstruct_init->noise_spectrum->noisespec, &optimalfilter, &optimalfilter_f, &optimalfilter_FFT, &optimalfilter_FFT_complex))
+    {
+        message = "Cannot run routine calculus_optimalFilter in writeLibrary";
+        EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+    }
+    
+    if (reconstruct_init->hduPRECALWN == 1)
+    {
+        // Creating COVARM Column
+        strcpy(obj.nameCol,"COVARM");
+        strcpy(obj.unit," ");
+        if (writeFitsComplex(obj, COVAR))
+        {
+            message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
+            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+        }
+        
+        // Creating WEIGHTM Column
+        strcpy(obj.nameCol,"WEIGHTM");
+        strcpy(obj.unit," ");
+        if (writeFitsComplex(obj, WEIGHT))
+        {
+            message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
+            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+        }
+    }
+    
+    // Writing HDUs with fixed filters in time (FIXFILTT) and frequency (FIXFILTF)
+    char str_length[125];
+    gsl_vector *fixedlengths;
+    if (reconstruct_init->pulse_length != reconstruct_init->largeFilter)
+    {
+        fixedlengths = gsl_vector_alloc(floor(log2(reconstruct_init->pulse_length))+1); 	//+1 because we are going to add a very long fixed filter (largeFilter)
+        
+        gsl_vector_set(fixedlengths,0,reconstruct_init->largeFilter);
+        for (int i=0;i<floor(log2(reconstruct_init->pulse_length));i++)					
+        {
+            gsl_vector_set(fixedlengths,i+1,pow(2,floor(log2(reconstruct_init->pulse_length))-i));
+        }
+    }
+    else 	
+    {
+        fixedlengths = gsl_vector_alloc(floor(log2(reconstruct_init->pulse_length))); 	
+        for (int i=0;i<floor(log2(reconstruct_init->pulse_length));i++)					
+        {
+            gsl_vector_set(fixedlengths,i,pow(2,floor(log2(reconstruct_init->pulse_length))-i)); 
+        }
+    }
+    
+    strcpy(extname,"FIXFILTT");
+    if (fits_movnam_hdu(*inLibObject, ANY_HDU,extname, 0, &status))
+    {
+        message = "Cannot move to HDU  " + string(extname) + " in library";
+        EP_PRINT_ERROR(message,status);return(EPFAIL);
+    }
+    
+    // Creating ENERGY Column
+    strcpy(objTIME.nameCol,"ENERGY");
+    objTIME.type = TDOUBLE;
+    objTIME.unit = new char [255];
+    strcpy(objTIME.unit,"eV");
+    if (writeFitsSimple(objTIME, E))
+    {
+        message = "Cannot run writeFitsSimple routine for column " + string(objFREQ.nameCol);
+        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+    }
+    
+    strcpy(extname,"FIXFILTF");
+    if (fits_movnam_hdu(*inLibObject, ANY_HDU,extname, 0, &status))
+    {
+        message = "Cannot move to HDU  " + string(extname) + " in library";
+        EP_PRINT_ERROR(message,status);return(EPFAIL);
+    }
+    
+    // Creating ENERGY Column
+    strcpy(objFREQ.nameTable,"FIXFILTF");
+    strcpy(objFREQ.nameCol,"ENERGY");
+    objFREQ.type = TDOUBLE;
+    objFREQ.unit = new char [255];
+    strcpy(objFREQ.unit,"eV");
+    if (writeFitsSimple(objFREQ, E))
+    {
+        message = "Cannot run writeFitsSimple routine for column " + string(objFREQ.nameCol);
+        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+    }
+    
+    // Creating Ts and Fs Columns (in the FIXFILTT and FIXFILTF HDUs respectively)
+    gsl_vector *matchedfiltersSHORT;
+    gsl_vector_view(temp);
+    gsl_matrix *optimalfiltersT_matrix;
+    gsl_matrix *optimalfiltersF_matrix;
+    for (int j=0;j<fixedlengths->size;j++)
+    {
+        if (gsl_vector_get(fixedlengths,j) == optimalfilter_FFT_complex->size)
+        {
+            if ((optimalfilter_x = gsl_vector_alloc(optimalfilter_FFT_complex->size)) == 0)
+            {
+                sprintf(valERROR,"%d",__LINE__-2);
+                string str(valERROR);
+                message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+                EP_PRINT_ERROR(message,EPFAIL);
+            }
+            gsl_vector_memcpy(optimalfilter_x,optimalfilter);
+            
+            optimalfilter_FFT_complex_x = gsl_vector_complex_alloc(optimalfilter_FFT_complex->size);
+            gsl_vector_complex_memcpy(optimalfilter_FFT_complex_x,optimalfilter_FFT_complex);
+        }
+        else
+        {
+            // It will enter this 'else' for fixedlengths_i=largeFilter and fixedlengths_i<optimalfilter_FFT_complex->size
+            if ((matchedfiltersSHORT = gsl_vector_alloc(gsl_vector_get(fixedlengths,j))) == 0)
+            {
+                sprintf(valERROR,"%d",__LINE__-2);
+                string str(valERROR);
+                message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+                EP_PRINT_ERROR(message,EPFAIL);
+            }
+            if (gsl_vector_get(fixedlengths,j) == reconstruct_init->largeFilter)
+            {
+                gsl_vector *matchedfiltersMaxLengthFixedFilter_row = gsl_vector_alloc(reconstruct_init->largeFilter);
+                gsl_matrix_get_row(matchedfiltersMaxLengthFixedFilter_row,PULSEMaxLengthFixedFilter,0);	//Matched filter
+                gsl_vector_scale(matchedfiltersMaxLengthFixedFilter_row,1.0/reconstruct_init->monoenergy);
+                if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j) > matchedfiltersMaxLengthFixedFilter_row->size))
                 {
+                    sprintf(valERROR,"%d",__LINE__+5);
+                    string str(valERROR);
+                    message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }
+                temp = gsl_vector_subvector(matchedfiltersMaxLengthFixedFilter_row,0,gsl_vector_get(fixedlengths,j));
+                if (gsl_vector_memcpy(matchedfiltersSHORT,&temp.vector) != 0)
+                {
+                    sprintf(valERROR,"%d",__LINE__-2);
+                    string str(valERROR);
+                    message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }
+                gsl_vector_free(matchedfiltersMaxLengthFixedFilter_row); matchedfiltersMaxLengthFixedFilter_row = 0;
+            }
+            else
+            {
+                //cout<<"matchedfilters_row->size: "<<matchedfilters_row->size<<endl;
+                //cout<<"gsl_vector_get(fixedlengths,j): "<<gsl_vector_get(fixedlengths,j)<<endl;
+                //if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j)+preBuffer > matchedfilters_row->size))
+                if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j) > matchedfilters_row->size))
+                {
+                    sprintf(valERROR,"%d",__LINE__+5);
+                    string str(valERROR);
+                    message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }
+                temp = gsl_vector_subvector(matchedfilters_row,0,gsl_vector_get(fixedlengths,j));
+                if (gsl_vector_memcpy(matchedfiltersSHORT,&temp.vector) != 0)
+                {
+                    sprintf(valERROR,"%d",__LINE__-2);
+                    string str(valERROR);
+                    message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }
+                gsl_vector_memcpy(matchedfiltersSHORT,&temp.vector);
+            }
+            
+            // Calculate the optimal filter
+            if (calculus_optimalFilter (0, 0, reconstruct_init->opmode, matchedfiltersSHORT, matchedfiltersSHORT->size, samprate, runF0orB0val, reconstruct_init->noise_spectrum->noisefreqs, reconstruct_init->noise_spectrum->noisespec, &optimalfilter_x, &optimalfilter_f_x, &optimalfilter_FFT_x, &optimalfilter_FFT_complex_x))
+            {
+                message = "Cannot run routine calculus_optimalFilter in writeLibrary";
+                EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+            }
+            
+            gsl_vector_free(matchedfiltersSHORT); matchedfiltersSHORT = 0;
+            gsl_vector_free(optimalfilter_f_x); optimalfilter_f_x = 0;
+            gsl_vector_free(optimalfilter_FFT_x); optimalfilter_FFT_x = 0;
+        }
+        
+        if ((optimalfilter_FFT_RI = gsl_vector_alloc(optimalfilter_FFT_complex_x->size*2)) == 0)
+        {
+            sprintf(valERROR,"%d",__LINE__-2);
+            string str(valERROR);
+            message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+            EP_PRINT_ERROR(message,EPFAIL);
+        }
+        for (int i=0;i<optimalfilter_FFT_complex_x->size;i++)
+        {
+            gsl_vector_set(optimalfilter_FFT_RI,i,GSL_REAL(gsl_vector_complex_get(optimalfilter_FFT_complex_x,i)));
+            if ((i+optimalfilter_FFT_complex_x->size < 0) || (i+optimalfilter_FFT_complex_x->size > optimalfilter_FFT_RI->size-1))
+            {
+                sprintf(valERROR,"%d",__LINE__+5);
+                string str(valERROR);
+                message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
+                EP_PRINT_ERROR(message,EPFAIL);
+            }
+            gsl_vector_set(optimalfilter_FFT_RI,i+optimalfilter_FFT_complex_x->size,GSL_IMAG(gsl_vector_complex_get(optimalfilter_FFT_complex_x,i)));
+        }
+        gsl_vector_complex_free(optimalfilter_FFT_complex_x); optimalfilter_FFT_complex_x = 0;
+        
+        strcpy(extname,"FIXFILTF");
+        if (fits_movnam_hdu(*inLibObject, ANY_HDU,extname, 0, &status))
+        {
+            message = "Cannot move to HDU  " + string(extname) + " in library";
+            EP_PRINT_ERROR(message,status);return(EPFAIL);
+        }
+        snprintf(str_length,125,"%ld",optimalfilter_FFT_RI->size/2);
+        strcpy(objFREQ.nameCol,(string("F")+string(str_length)).c_str());
+        strcpy(objFREQ.unit," ");
+        optimalfiltersF_matrix = gsl_matrix_alloc(1,optimalfilter_FFT_RI->size);
+        gsl_matrix_set_row(optimalfiltersF_matrix,0,optimalfilter_FFT_RI);
+        if (writeFitsComplex(objFREQ,optimalfiltersF_matrix))
+        {
+            message = "Cannot run writeFitsComplex routine for column " + string(objFREQ.nameCol);
+            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+        }
+        gsl_vector_free(optimalfilter_FFT_RI); optimalfilter_FFT_RI = 0;
+        
+        strcpy(extname,"FIXFILTT");
+        if (fits_movnam_hdu(*inLibObject, ANY_HDU,extname, 0, &status))
+        {
+            message = "Cannot move to HDU  " + string(extname) + " in library";
+            EP_PRINT_ERROR(message,status);return(EPFAIL);
+        }
+        strcpy(objTIME.nameCol,(string("T")+string(str_length)).c_str());
+        optimalfiltersT_matrix = gsl_matrix_alloc(1,optimalfilter_x->size);
+        gsl_matrix_set_row(optimalfiltersT_matrix,0,optimalfilter_x);
+        if (writeFitsComplex(objTIME,optimalfiltersT_matrix))
+        {
+            message = "Cannot run writeFitsComplex routine for column " + string(objFREQ.nameCol);
+            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+        }
+        gsl_vector_free(optimalfilter_x); optimalfilter_x = 0;
+        
+        gsl_matrix_free(optimalfiltersT_matrix); optimalfiltersT_matrix = 0;
+        gsl_matrix_free(optimalfiltersF_matrix); optimalfiltersF_matrix = 0;
+    }
+    gsl_vector_complex_free(optimalfilter_FFT_complex); optimalfilter_FFT_complex = 0;
+    
+    gsl_vector_free(optimalfilter); optimalfilter = 0;
+    gsl_vector_free(optimalfilter_f); optimalfilter_f = 0;
+    gsl_vector_free(optimalfilter_FFT); optimalfilter_FFT = 0;
+    gsl_vector_free(matchedfilters_row); matchedfilters_row = 0;
+    
+    // Calculate and write the pre-calculated values by using the noise weight matrix from noise intervals (M'WM)^{-1}M'W for different lengths, OFWx
+    if (reconstruct_init->hduPRCLOFWM == 1)
+    {
+        strcpy(extname,"PRCLOFWM");
+        if (fits_movnam_hdu(*inLibObject, ANY_HDU,extname, 0, &status))
+        {
+            message = "Cannot move to HDU  " + string(extname) + " in library";
+            EP_PRINT_ERROR(message,status);return(EPFAIL);
+        }
+        
+        // Creating ENERGY Column
+        strcpy(objPRCLOFWM.nameTable,"PRCLOFWM");
+        strcpy(objPRCLOFWM.nameCol,"ENERGY");
+        objPRCLOFWM.type = TDOUBLE;
+        objPRCLOFWM.unit = new char [255];
+        strcpy(objPRCLOFWM.unit,"eV");
+        if (writeFitsSimple(objPRCLOFWM, E))
+        {
+            message = "Cannot run writeFitsSimple routine for column " + string(objPRCLOFWM.nameCol);
+            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+        }
+        
+        // Creating ...
+        gsl_matrix *R;
+        gsl_matrix *R_transW;
+        gsl_matrix *R_transWR;
+        gsl_vector *PULSENORMshort;	// It is necessary to use the model normalized (divided by the energy)
+        gsl_vector *PULSENORM_row;
+        gsl_matrix *matrixaux1 = NULL;
+        gsl_matrix *aux = gsl_matrix_alloc(2,2);
+        gsl_matrix *inv = gsl_matrix_alloc(2,2);
+        gsl_vector *vectoraux1_2 = NULL;
+        int indexPRCLOFWM;
+        gsl_vector *fixedlengthsOFWM = gsl_vector_alloc(reconstruct_init->noise_spectrum->weightMatrixes->size1);
+        for (int j=0;j<fixedlengthsOFWM->size;j++)	gsl_vector_set(fixedlengthsOFWM,j,pow(2,reconstruct_init->noise_spectrum->weightMatrixes->size1-j));
+        int s=0;
+        
+        for (int j=0;j<fixedlengths->size;j++)
+        {
+            //    | r0 1 | |  .   1|
+            // R =| r1 1 |=|PULSE 1|          R=(PulseLengthx2)
+            //    | .    | |  .   1|
+            //    | rm 1 | |  .   1|			
+            if ((R = gsl_matrix_alloc(gsl_vector_get(fixedlengths,j),2)) == 0)
+            {
+                sprintf(valERROR,"%d",__LINE__-2);
+                string str(valERROR);
+                message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+                EP_PRINT_ERROR(message,EPFAIL);
+            }
+            gsl_matrix_set_all(R,1.0);
+            PULSENORMshort = gsl_vector_alloc(gsl_vector_get(fixedlengths,j));
+            if (gsl_vector_get(fixedlengths,j) == reconstruct_init->largeFilter)
+            {
+                PULSENORM_row = gsl_vector_alloc(PULSEMaxLengthFixedFilter->size2);
+                gsl_matrix_get_row(PULSENORM_row,PULSEMaxLengthFixedFilter,0);
+                if (gsl_vector_memcpy(PULSENORMshort,PULSENORM_row) != 0)
+                {
+                    sprintf(valERROR,"%d",__LINE__-2);
+                    string str(valERROR);
+                    message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }
+            }
+            else
+            {
+                PULSENORM_row = gsl_vector_alloc(PULSE->size2);
+                gsl_matrix_get_row(PULSENORM_row,PULSE,0);
+                if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j) > PULSENORM_row->size))
+                {
+                    sprintf(valERROR,"%d",__LINE__+5);
+                    string str(valERROR);
+                    message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }
+                temp = gsl_vector_subvector(PULSENORM_row,0,gsl_vector_get(fixedlengths,j));
+                if (gsl_vector_memcpy(PULSENORMshort,&temp.vector) != 0)
+                {
+                    sprintf(valERROR,"%d",__LINE__-2);
+                    string str(valERROR);
+                    message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }   
+            } 
+            gsl_vector *baselinegsl = gsl_vector_alloc(PULSENORMshort->size);
+            gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
+            gsl_vector_add(PULSENORMshort,baselinegsl);
+            gsl_vector_free(baselinegsl); baselinegsl = 0;
+            gsl_vector_scale(PULSENORMshort,1.0/reconstruct_init->monoenergy);
+            gsl_matrix_set_col(R,0,PULSENORMshort);
+            gsl_vector_free(PULSENORMshort); PULSENORMshort = 0;
+            gsl_vector_free(PULSENORM_row); PULSENORM_row = 0;
+            
+            gsl_vector *Wi_vector;
+            gsl_matrix *Wi_matrix;
+            gsl_vector *weightMatrixes_row = gsl_vector_alloc(reconstruct_init->noise_spectrum->weightMatrixes->size2);
+            gsl_matrix *PrecalOFWMaux;
+            indexPRCLOFWM = 0;
+            for (int i=0;i<fixedlengthsOFWM->size;i++)
+            {
+                if (gsl_vector_get(fixedlengths,j) == gsl_vector_get(fixedlengthsOFWM,i))
+                {
+                    Wi_vector = gsl_vector_alloc(gsl_vector_get(fixedlengthsOFWM,i)*gsl_vector_get(fixedlengthsOFWM,i));
+                    Wi_matrix = gsl_matrix_alloc(gsl_vector_get(fixedlengthsOFWM,i),gsl_vector_get(fixedlengthsOFWM,i));
+                    gsl_matrix_get_row(weightMatrixes_row,reconstruct_init->noise_spectrum->weightMatrixes,i);
+                    if ((gsl_vector_get(fixedlengthsOFWM,i) < 0) || (gsl_vector_get(fixedlengthsOFWM,i)*gsl_vector_get(fixedlengthsOFWM,i) > weightMatrixes_row->size))
+                    {
+                        sprintf(valERROR,"%d",__LINE__+5);
+                        string str(valERROR);
+                        message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
+                        EP_EXIT_ERROR(message,EPFAIL);
+                    }
+                    temp = gsl_vector_subvector(weightMatrixes_row,0,gsl_vector_get(fixedlengthsOFWM,i)*gsl_vector_get(fixedlengthsOFWM,i));
+                    if (gsl_vector_memcpy(Wi_vector,&temp.vector) != 0)
+                    {
                         sprintf(valERROR,"%d",__LINE__-2);
                         string str(valERROR);
-                        message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-                        EP_PRINT_ERROR(message,EPFAIL);
-                }
-		for (int i=0;i<optimalfilter_FFT_complex_x->size;i++)
-		{
-			gsl_vector_set(optimalfilter_FFT_RI,i,GSL_REAL(gsl_vector_complex_get(optimalfilter_FFT_complex_x,i)));
-                        if ((i+optimalfilter_FFT_complex_x->size < 0) || (i+optimalfilter_FFT_complex_x->size > optimalfilter_FFT_RI->size-1))
+                        message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+                        EP_EXIT_ERROR(message,EPFAIL);
+                    }  
+                    gsl_vector_memcpy(Wi_vector,&temp.vector);
+                    vector2matrix(Wi_vector,&Wi_matrix);
+                    
+                    R_transW = gsl_matrix_alloc(2,gsl_vector_get(fixedlengths,j));      		// R_transW = R'W               R_transW=(2xfixedlengths_j)
+                    if (R->size1 != Wi_matrix->size1)
+                    {
+                        sprintf(valERROR,"%d",__LINE__+5);
+                        string str(valERROR);
+                        message = "Wrong dimensions to compute matrix-matrix product in line " + str + " (" + __FILE__ + ")";
+                        EP_EXIT_ERROR(message,EPFAIL);
+                    }
+                    gsl_blas_dgemm(CblasTrans,CblasNoTrans,1.0,R,Wi_matrix,0.0,R_transW);
+                    R_transWR = gsl_matrix_alloc(2,2);                                  		// R_transWR = R'WR             R_transWR=(2x2)
+                    gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,R_transW,R,0.0,R_transWR);
+                    matrixaux1 = gsl_matrix_alloc(2,gsl_vector_get(fixedlengths,j));
+                    gsl_permutation *perm1 = gsl_permutation_alloc(2);
+                    s=0;                                        
+                    gsl_matrix_memcpy(aux,R_transWR);
+                    gsl_linalg_LU_decomp(aux, perm1, &s);
+                    if (gsl_linalg_LU_invert(aux, perm1, inv) != 0) 
+                    {
+                        sprintf(valERROR,"%d",__LINE__-2);
+                        string str(valERROR);
+                        message = "Singular matrix in line " + str + " (" + __FILE__ + ")";
+                        EP_PRINT_ERROR(message,EPFAIL);	return(EPFAIL);
+                    }
+                    gsl_permutation_free(perm1); perm1 = 0;
+                    gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,inv,R_transW,0.0,matrixaux1);      // matrixaux1 = [(R'WR)^(-1)]R'W       matrixaux1=(2xfixedlengths_j)
+                    vectoraux1_2 = gsl_vector_alloc(gsl_vector_get(fixedlengths,j)*2);
+                    for (int ii=0;ii<2;ii++)
+                    {
+                        for (int k=0;k<gsl_vector_get(fixedlengths,j);k++)
                         {
+                            if ((k+ii*gsl_vector_get(fixedlengths,j) < 0) || (k+ii*gsl_vector_get(fixedlengths,j) > vectoraux1_2->size-1))
+                            {
                                 sprintf(valERROR,"%d",__LINE__+5);
                                 string str(valERROR);
                                 message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
                                 EP_PRINT_ERROR(message,EPFAIL);
+                            }
+                            gsl_vector_set(vectoraux1_2,k+ii*gsl_vector_get(fixedlengths,j),gsl_matrix_get(matrixaux1,ii,k));
                         }
-			gsl_vector_set(optimalfilter_FFT_RI,i+optimalfilter_FFT_complex_x->size,GSL_IMAG(gsl_vector_complex_get(optimalfilter_FFT_complex_x,i)));
-		}
-		gsl_vector_complex_free(optimalfilter_FFT_complex_x); optimalfilter_FFT_complex_x = 0;
-		
-		strcpy(extname,"FIXFILTF");
-		if (fits_movnam_hdu(*inLibObject, ANY_HDU,extname, 0, &status))
-		{
-			message = "Cannot move to HDU  " + string(extname) + " in library";
-			EP_PRINT_ERROR(message,status);return(EPFAIL);
-		}
-		snprintf(str_length,125,"%ld",optimalfilter_FFT_RI->size/2);
-		strcpy(objFREQ.nameCol,(string("F")+string(str_length)).c_str());
-		strcpy(objFREQ.unit," ");
-		optimalfiltersF_matrix = gsl_matrix_alloc(1,optimalfilter_FFT_RI->size);
-		gsl_matrix_set_row(optimalfiltersF_matrix,0,optimalfilter_FFT_RI);
-		if (writeFitsComplex(objFREQ,optimalfiltersF_matrix))
-		{
-			message = "Cannot run writeFitsComplex routine for column " + string(objFREQ.nameCol);
-			EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-		}
-		gsl_vector_free(optimalfilter_FFT_RI); optimalfilter_FFT_RI = 0;
-		
-		strcpy(extname,"FIXFILTT");
-		if (fits_movnam_hdu(*inLibObject, ANY_HDU,extname, 0, &status))
-		{
-			message = "Cannot move to HDU  " + string(extname) + " in library";
-			EP_PRINT_ERROR(message,status);return(EPFAIL);
-		}
-		strcpy(objTIME.nameCol,(string("T")+string(str_length)).c_str());
-		optimalfiltersT_matrix = gsl_matrix_alloc(1,optimalfilter_x->size);
-                cout<<"optimalfilter_x->size: "<<optimalfilter_x->size<<endl;
-		gsl_matrix_set_row(optimalfiltersT_matrix,0,optimalfilter_x);
-		if (writeFitsComplex(objTIME,optimalfiltersT_matrix))
-		{
-			message = "Cannot run writeFitsComplex routine for column " + string(objFREQ.nameCol);
-			EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-		}
-		gsl_vector_free(optimalfilter_x); optimalfilter_x = 0;
-				
-		gsl_matrix_free(optimalfiltersT_matrix); optimalfiltersT_matrix = 0;
-		gsl_matrix_free(optimalfiltersF_matrix); optimalfiltersF_matrix = 0;
-	}
-	gsl_vector_complex_free(optimalfilter_FFT_complex); optimalfilter_FFT_complex = 0;
-		
-	gsl_vector_free(optimalfilter); optimalfilter = 0;
-	gsl_vector_free(optimalfilter_f); optimalfilter_f = 0;
-	gsl_vector_free(optimalfilter_FFT); optimalfilter_FFT = 0;
-	gsl_vector_free(matchedfilters_row); matchedfilters_row = 0;
-	
-        // Calculate and write the pre-calculated values by using the noise weight matrix from noise intervals (M'WM)^{-1}M'W for different lengths, OFWx
-	if (reconstruct_init->hduPRCLOFWM == 1)
-	{
-		strcpy(extname,"PRCLOFWM");
-		if (fits_movnam_hdu(*inLibObject, ANY_HDU,extname, 0, &status))
-		{
-			message = "Cannot move to HDU  " + string(extname) + " in library";
-			EP_PRINT_ERROR(message,status);return(EPFAIL);
-		}
-		
-		// Creating ENERGY Column
-		strcpy(objPRCLOFWM.nameTable,"PRCLOFWM");
-		strcpy(objPRCLOFWM.nameCol,"ENERGY");
-		objPRCLOFWM.type = TDOUBLE;
-		objPRCLOFWM.unit = new char [255];
-		strcpy(objPRCLOFWM.unit,"eV");
-		if (writeFitsSimple(objPRCLOFWM, E))
-		{
-			message = "Cannot run writeFitsSimple routine for column " + string(objPRCLOFWM.nameCol);
-			EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-		}
-		
-		// Creating ...
-		gsl_matrix *R;
-		gsl_matrix *R_transW;
-		gsl_matrix *R_transWR;
-		gsl_vector *PULSENORMshort;	// It is necessary to use the model normalized (divided by the energy)
-		gsl_vector *PULSENORM_row;
-		gsl_matrix *matrixaux1 = NULL;
-		gsl_matrix *aux = gsl_matrix_alloc(2,2);
-		gsl_matrix *inv = gsl_matrix_alloc(2,2);
-		gsl_vector *vectoraux1_2 = NULL;
-		int indexPRCLOFWM;
-		gsl_vector *fixedlengthsOFWM = gsl_vector_alloc(reconstruct_init->noise_spectrum->weightMatrixes->size1);
-		for (int j=0;j<fixedlengthsOFWM->size;j++)	gsl_vector_set(fixedlengthsOFWM,j,pow(2,reconstruct_init->noise_spectrum->weightMatrixes->size1-j));
-		int s=0;
-		
-		for (int j=0;j<fixedlengths->size;j++)
-		{
-                        //    | r0 1 | |  .   1|
-                        // R =| r1 1 |=|PULSE 1|          R=(PulseLengthx2)
-			//    | .    | |  .   1|
-			//    | rm 1 | |  .   1|			
-			if ((R = gsl_matrix_alloc(gsl_vector_get(fixedlengths,j),2)) == 0)
+                    }
+                    PrecalOFWMaux = gsl_matrix_alloc(1,gsl_vector_get(fixedlengths,j)*2);
+                    for (int ii=0;ii<vectoraux1_2->size;ii++)
+                    {		
+                        if ((ii+indexPRCLOFWM < 0) || (ii+indexPRCLOFWM > PrecalOFWMaux->size2-1))
                         {
-                                sprintf(valERROR,"%d",__LINE__-2);
-                                string str(valERROR);
-                                message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-                                EP_PRINT_ERROR(message,EPFAIL);
+                            sprintf(valERROR,"%d",__LINE__+5);
+                            string str(valERROR);
+                            message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
+                            EP_PRINT_ERROR(message,EPFAIL);
                         }
-			gsl_matrix_set_all(R,1.0);
-			PULSENORMshort = gsl_vector_alloc(gsl_vector_get(fixedlengths,j));
-			if (gsl_vector_get(fixedlengths,j) == reconstruct_init->largeFilter)
-			{
-				PULSENORM_row = gsl_vector_alloc(PULSEMaxLengthFixedFilter->size2);
-				gsl_matrix_get_row(PULSENORM_row,PULSEMaxLengthFixedFilter,0);
-                                if (gsl_vector_memcpy(PULSENORMshort,PULSENORM_row) != 0)
-                                {
-                                        sprintf(valERROR,"%d",__LINE__-2);
-                                        string str(valERROR);
-                                        message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
-                                        EP_EXIT_ERROR(message,EPFAIL);
-                                }
-			}
-			else
-			{
-				PULSENORM_row = gsl_vector_alloc(PULSE->size2);
-				gsl_matrix_get_row(PULSENORM_row,PULSE,0);
-                                if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j) > PULSENORM_row->size))
-                                {
-                                        sprintf(valERROR,"%d",__LINE__+5);
-                                        string str(valERROR);
-                                        message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
-                                        EP_EXIT_ERROR(message,EPFAIL);
-                                }
-				temp = gsl_vector_subvector(PULSENORM_row,0,gsl_vector_get(fixedlengths,j));
-				if (gsl_vector_memcpy(PULSENORMshort,&temp.vector) != 0)
-                                {
-                                        sprintf(valERROR,"%d",__LINE__-2);
-                                        string str(valERROR);
-                                        message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
-                                        EP_EXIT_ERROR(message,EPFAIL);
-                                }   
-			} 
-			gsl_vector *baselinegsl = gsl_vector_alloc(PULSENORMshort->size);
-			gsl_vector_set_all(baselinegsl,-1.0*reconstruct_init->noise_spectrum->baseline);
-			gsl_vector_add(PULSENORMshort,baselinegsl);
-			gsl_vector_free(baselinegsl); baselinegsl = 0;
-			gsl_vector_scale(PULSENORMshort,1.0/reconstruct_init->monoenergy);
-			gsl_matrix_set_col(R,0,PULSENORMshort);
-			gsl_vector_free(PULSENORMshort); PULSENORMshort = 0;
-			gsl_vector_free(PULSENORM_row); PULSENORM_row = 0;
-			
-			gsl_vector *Wi_vector;
-			gsl_matrix *Wi_matrix;
-			gsl_vector *weightMatrixes_row = gsl_vector_alloc(reconstruct_init->noise_spectrum->weightMatrixes->size2);
-			gsl_matrix *PrecalOFWMaux;
-			indexPRCLOFWM = 0;
-			for (int i=0;i<fixedlengthsOFWM->size;i++)
-			{
-				if (gsl_vector_get(fixedlengths,j) == gsl_vector_get(fixedlengthsOFWM,i))
-				{
-					Wi_vector = gsl_vector_alloc(gsl_vector_get(fixedlengthsOFWM,i)*gsl_vector_get(fixedlengthsOFWM,i));
-					Wi_matrix = gsl_matrix_alloc(gsl_vector_get(fixedlengthsOFWM,i),gsl_vector_get(fixedlengthsOFWM,i));
-					gsl_matrix_get_row(weightMatrixes_row,reconstruct_init->noise_spectrum->weightMatrixes,i);
-                                        if ((gsl_vector_get(fixedlengthsOFWM,i) < 0) || (gsl_vector_get(fixedlengthsOFWM,i)*gsl_vector_get(fixedlengthsOFWM,i) > weightMatrixes_row->size))
-                                        {
-                                                sprintf(valERROR,"%d",__LINE__+5);
-                                                string str(valERROR);
-                                                message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
-                                                EP_EXIT_ERROR(message,EPFAIL);
-                                        }
-					temp = gsl_vector_subvector(weightMatrixes_row,0,gsl_vector_get(fixedlengthsOFWM,i)*gsl_vector_get(fixedlengthsOFWM,i));
-                                        if (gsl_vector_memcpy(Wi_vector,&temp.vector) != 0)
-                                        {
-                                                sprintf(valERROR,"%d",__LINE__-2);
-                                                string str(valERROR);
-                                                message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
-                                                EP_EXIT_ERROR(message,EPFAIL);
-                                        }  
-					gsl_vector_memcpy(Wi_vector,&temp.vector);
-					vector2matrix(Wi_vector,&Wi_matrix);
-							
-					R_transW = gsl_matrix_alloc(2,gsl_vector_get(fixedlengths,j));      		// R_transW = R'W               R_transW=(2xfixedlengths_j)
-					if (R->size1 != Wi_matrix->size1)
-                                        {
-                                                sprintf(valERROR,"%d",__LINE__+5);
-                                                string str(valERROR);
-                                                message = "Wrong dimensions to compute matrix-matrix product in line " + str + " (" + __FILE__ + ")";
-                                                EP_EXIT_ERROR(message,EPFAIL);
-                                        }
-                                        gsl_blas_dgemm(CblasTrans,CblasNoTrans,1.0,R,Wi_matrix,0.0,R_transW);
-					R_transWR = gsl_matrix_alloc(2,2);                                  		// R_transWR = R'WR             R_transWR=(2x2)
-					gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,R_transW,R,0.0,R_transWR);
-					matrixaux1 = gsl_matrix_alloc(2,gsl_vector_get(fixedlengths,j));
-					gsl_permutation *perm1 = gsl_permutation_alloc(2);
-					s=0;                                        
-					gsl_matrix_memcpy(aux,R_transWR);
-					gsl_linalg_LU_decomp(aux, perm1, &s);
-                                        if (gsl_linalg_LU_invert(aux, perm1, inv) != 0) 
-                                        {
-                                                sprintf(valERROR,"%d",__LINE__-2);
-                                                string str(valERROR);
-                                                message = "Singular matrix in line " + str + " (" + __FILE__ + ")";
-                                                EP_PRINT_ERROR(message,EPFAIL);	return(EPFAIL);
-                                        }
-					gsl_permutation_free(perm1); perm1 = 0;
-					gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,inv,R_transW,0.0,matrixaux1);      // matrixaux1 = [(R'WR)^(-1)]R'W       matrixaux1=(2xfixedlengths_j)
-					vectoraux1_2 = gsl_vector_alloc(gsl_vector_get(fixedlengths,j)*2);
-					for (int ii=0;ii<2;ii++)
-					{
-						for (int k=0;k<gsl_vector_get(fixedlengths,j);k++)
-						{
-                                                        if ((k+ii*gsl_vector_get(fixedlengths,j) < 0) || (k+ii*gsl_vector_get(fixedlengths,j) > vectoraux1_2->size-1))
-                                                        {
-                                                                sprintf(valERROR,"%d",__LINE__+5);
-                                                                string str(valERROR);
-                                                                message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
-                                                                EP_PRINT_ERROR(message,EPFAIL);
-                                                        }
-							gsl_vector_set(vectoraux1_2,k+ii*gsl_vector_get(fixedlengths,j),gsl_matrix_get(matrixaux1,ii,k));
-						}
-					}
-					PrecalOFWMaux = gsl_matrix_alloc(1,gsl_vector_get(fixedlengths,j)*2);
-					for (int ii=0;ii<vectoraux1_2->size;ii++)
-                                        {		
-                                                if ((ii+indexPRCLOFWM < 0) || (ii+indexPRCLOFWM > PrecalOFWMaux->size2-1))
-                                                {
-                                                        sprintf(valERROR,"%d",__LINE__+5);
-                                                        string str(valERROR);
-                                                        message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
-                                                        EP_PRINT_ERROR(message,EPFAIL);
-                                                }
-                                                gsl_matrix_set(PrecalOFWMaux,0,ii+indexPRCLOFWM,gsl_vector_get(vectoraux1_2,ii));
-                                            
-                                        }
-					snprintf(str_length,125,"%d",(int) (gsl_vector_get(fixedlengths,j)));
-					strcpy(objPRCLOFWM.nameCol,(string("OFW")+string(str_length)).c_str());
-					strcpy(objPRCLOFWM.unit," ");
-					if (writeFitsComplex(objPRCLOFWM,PrecalOFWMaux))
-					{
-						message = "Cannot run writeFitsComplex routine for column " + string(objPRCLOFWM.nameCol);
-						EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-					}
-					gsl_matrix_free(PrecalOFWMaux); PrecalOFWMaux = 0;
-					
-					indexPRCLOFWM = indexPRCLOFWM + gsl_vector_get(fixedlengths,j)*2;
-					
-					gsl_vector_free(Wi_vector); Wi_vector = 0;
-					gsl_matrix_free(Wi_matrix); Wi_matrix = 0;
-					
-					gsl_matrix_free(R_transW); R_transW = 0;
-					gsl_matrix_free(R_transWR); R_transWR = 0;
-					gsl_matrix_free(matrixaux1); matrixaux1 = 0;
-					gsl_vector_free(vectoraux1_2); vectoraux1_2 = 0;
-					
-					break;
-				}
-			}
-			gsl_vector_free(weightMatrixes_row); weightMatrixes_row = 0;
-			gsl_matrix_free(R); R = 0;
-		}
-		delete [] objPRCLOFWM.unit; objPRCLOFWM.unit = 0;
-	}
-	
-	gsl_vector_free(fixedlengths); fixedlengths = 0;
-	
-	// Free memory
-	delete [] obj.nameTable; obj.nameTable = 0;
-	delete [] obj.nameCol; obj.nameCol = 0;
-	delete [] obj.unit; obj.unit = 0;
-	delete [] objFREQ.nameTable; objFREQ.nameTable = 0;
-	delete [] objFREQ.nameCol; objFREQ.nameCol = 0;
-	delete [] objFREQ.unit; objFREQ.unit = 0;
-	delete [] objTIME.nameTable; objTIME.nameTable = 0;
-	delete [] objTIME.nameCol; objTIME.nameCol = 0;
-	delete [] objTIME.unit; objTIME.unit = 0;
-	delete [] objPRCLOFWM.nameTable; objPRCLOFWM.nameTable = 0;
-	delete [] objPRCLOFWM.nameCol; objPRCLOFWM.nameCol = 0;
-	
-	return (EPOK);
+                        gsl_matrix_set(PrecalOFWMaux,0,ii+indexPRCLOFWM,gsl_vector_get(vectoraux1_2,ii));
+                        
+                    }
+                    snprintf(str_length,125,"%d",(int) (gsl_vector_get(fixedlengths,j)));
+                    strcpy(objPRCLOFWM.nameCol,(string("OFW")+string(str_length)).c_str());
+                    strcpy(objPRCLOFWM.unit," ");
+                    if (writeFitsComplex(objPRCLOFWM,PrecalOFWMaux))
+                    {
+                        message = "Cannot run writeFitsComplex routine for column " + string(objPRCLOFWM.nameCol);
+                        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                    }
+                    gsl_matrix_free(PrecalOFWMaux); PrecalOFWMaux = 0;
+                    
+                    indexPRCLOFWM = indexPRCLOFWM + gsl_vector_get(fixedlengths,j)*2;
+                    
+                    gsl_vector_free(Wi_vector); Wi_vector = 0;
+                    gsl_matrix_free(Wi_matrix); Wi_matrix = 0;
+                    
+                    gsl_matrix_free(R_transW); R_transW = 0;
+                    gsl_matrix_free(R_transWR); R_transWR = 0;
+                    gsl_matrix_free(matrixaux1); matrixaux1 = 0;
+                    gsl_vector_free(vectoraux1_2); vectoraux1_2 = 0;
+                    
+                    break;
+                }
+            }
+            gsl_vector_free(weightMatrixes_row); weightMatrixes_row = 0;
+            gsl_matrix_free(R); R = 0;
+        }
+        delete [] objPRCLOFWM.unit; objPRCLOFWM.unit = 0;
+    }
+    
+    gsl_vector_free(fixedlengths); fixedlengths = 0;
+    
+    // Free memory
+    delete [] obj.nameTable; obj.nameTable = 0;
+    delete [] obj.nameCol; obj.nameCol = 0;
+    delete [] obj.unit; obj.unit = 0;
+    delete [] objFREQ.nameTable; objFREQ.nameTable = 0;
+    delete [] objFREQ.nameCol; objFREQ.nameCol = 0;
+    delete [] objFREQ.unit; objFREQ.unit = 0;
+    delete [] objTIME.nameTable; objTIME.nameTable = 0;
+    delete [] objTIME.nameCol; objTIME.nameCol = 0;
+    delete [] objTIME.unit; objTIME.unit = 0;
+    delete [] objPRCLOFWM.nameTable; objPRCLOFWM.nameTable = 0;
+    delete [] objPRCLOFWM.nameCol; objPRCLOFWM.nameCol = 0;
+    
+    return (EPOK);
 }
 /*xxxx end of SECTION A15 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 

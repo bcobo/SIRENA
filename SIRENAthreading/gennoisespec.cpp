@@ -92,7 +92,6 @@
   * - I2R: Transform to resistance space (I2R, I2RALL, I2RNOL, I2RFITTED) or not (I)
   * - clobber: Re-write output files if clobber=yes
   * - matrixSize: Size of noise matrix if only one to be created
-  * - samplingRate: Sampling rate (hertzs)
   * 
   * Steps:
   * 
@@ -101,7 +100,7 @@
   * - Check if input FITS file have been simulated with TESSIM or XIFUSIM
   * - Read keywords to transform to resistance space
   * - Read and check other input keywords
-  * - Read the sampling rate from input FITS file (check its value with the samplinRate input parameter)
+  * - Calculate the sampling rate by using keywords in input FITS file (from DELTAT or TCLOCK+DEC_FAC or NUMROW+P_ROW)
   * - Read other necessary keywords from ANY HDU
   * - Get structure of input FITS file columns
   * - Initialize variables and transform from seconds to samples
@@ -478,80 +477,125 @@
              message = "Cannot read the keyword " + string(keyname) + " in any HDU from the input file";
              EP_PRINT_ERROR(message,status); return(EPFAIL);
          }
-         if (samprate == -999.0)
-         {
-             strcpy(keyname,"DELTAT");
-             for (int i=0;i<hdunum;i++)
-             {
-                 fits_movabs_hdu(infileObject, i+1, NULL, &status); 
-                 fits_read_key(infileObject,TDOUBLE,keyname, &deltat,comment,&status);
-                 if (status == 0)
-                 {
-                     if ((par.samplingRate != -999.0) && (par.samplingRate != 1.0/deltat))
-                     {
-                         deltat = 1.0/deltat;
-                         message = "Sampling rate on command line and in input file (from DELTAT) do not match";
-                         EP_EXIT_ERROR(message,EPFAIL);
-                     }
-                     //samprate = 1.0/samprate;
-                     break;
-                 }
-                 else if ((status != 0) && (i < hdunum-1))
-                 {
-                     status = 0;
-                 }
-             }
-             if (status != 0)
-             {
-                 message = "Cannot read the keyword " + string(keyname) + " in any HDU from the input file";
-                 EP_PRINT_ERROR(message,status); return(EPFAIL);
-             }
-         }
+         
          strcpy(extname,"RECORDS");
          fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
      }
      
-     // Read the sampling rate from input FITS file (check its value with the samplinRate input parameter)
-     if ((tessimOrxifusim == 1) && (par.samplingRate == -999.0) && (samprate == -999.0))
+     // Calculate the sampling rate by using keywords in input FITS file (from DELTAT or TCLOCK+DEC_FAC or NUMROW+P_ROW)
+     int deltat_exists = 0;
+     int dec_fac_exists = 0;
+     int tclock_exists = 0;
+     int numrow_exists = 0;
+     int p_row_exists = 0;
+     // To get the sampling rate no matter the origin of the file
+     for (int i=0;i<hdunum;i++)
      {
-         fits_movabs_hdu(infileObject, 1, NULL, &status); // Move to "Primary" HDU
-         int numberkeywords;
-         char *headerPrimary;
-         fits_hdr2str(infileObject, 0, NULL, 0,&headerPrimary, &numberkeywords, &status);   // Reading thee whole "Primary" HDU and store it in 'headerPrimary'
-         char * sample_rate_pointer;
-         sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    // Pointer to where the text "sample_rate=" is
-         if(sample_rate_pointer){
-             sample_rate_pointer = sample_rate_pointer + 12; // Pointer to the next character to "sample_rate=" (which has 12 characters)   
-             char each_character_after_srate[125];		
-             snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
-             char characters_after_srate[125];
-             snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
-             while (*sample_rate_pointer != ' ')
+         fits_movabs_hdu(infileObject, i+1, NULL, &status); 
+         fits_read_key(infileObject,TDOUBLE,"DELTAT", &deltat,comment,&status);
+         if (status == 0)
+         {
+             deltat_exists = 1;
+             samprate = 1/deltat;
+             break;
+         }
+         else if ((status != 0) && (i < hdunum-1))
+         {
+             status = 0;
+         }
+     }
+     double tclock;
+     if (deltat_exists == 0)
+     {
+         double dec_fac;
+         for (int i=0;i<hdunum;i++)
+         {
+             fits_movabs_hdu(infileObject, i+1, NULL, &status); 
+             fits_read_key(infileObject,TDOUBLE,"DEC_FAC", &dec_fac,comment,&status);
+             if (status == 0)
              {
-                 sample_rate_pointer = sample_rate_pointer + 1;
-                 snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
-                 strcat(characters_after_srate,each_character_after_srate); 
+                 dec_fac_exists = 1;
+                 break;
              }
-             samprate = atof(characters_after_srate);
-         }
-         if ((par.samplingRate != -999.0) && (samprate == -999.0))  // Sampling rate on command line and not in HISTORY (Primary HDU)
-         {
-             samprate = par.samplingRate;
-         }
-         else if ((par.samplingRate != -999.0) && (samprate != -999.0))  // Sampling rate on command line and in HISTORY (Primary HDU)
-         {
-             if (par.samplingRate != samprate)
+             else if ((status != 0) && (i < hdunum-1))
              {
-                 message = "Sampling frequency on command line and in input file do not match";
-                 EP_EXIT_ERROR(message,status);
+                 status = 0;
              }
          }
-         else if ((par.samplingRate == -999.0) && (samprate == -999.0))  // Sampling rate NOT on command line and NOT in HISTORY (Primary HDU)
+         for (int i=0;i<hdunum;i++)
          {
-             message = "Sampling frequency neither on command line nor in input file";
+             fits_movabs_hdu(infileObject, i+1, NULL, &status); 
+             fits_read_key(infileObject,TDOUBLE,"TCLOCK", &tclock,comment,&status);
+             if (status == 0)
+             {
+                 tclock_exists = 1;
+                 break;
+             }
+             else if ((status != 0) && (i < hdunum-1))
+             {
+                 status = 0;
+             }
+         }
+         samprate = tclock*dec_fac;
+     }
+     if ((deltat_exists == 0) && ((tclock_exists == 0) || (dec_fac_exists == 0)))
+     {
+         int numrow;
+         for (int i=0;i<hdunum;i++)
+         {
+             fits_movabs_hdu(infileObject, i+1, NULL, &status); 
+             fits_read_key(infileObject,TINT,"NUMROW", &numrow,comment,&status);
+             if (status == 0)
+             {
+                 numrow_exists = 1;
+                 break;
+             }
+             else if ((status != 0) && (i < hdunum-1))
+             {
+                 status = 0;
+             }
+         }
+         int p_row;
+         for (int i=0;i<hdunum;i++)
+         {
+             fits_movabs_hdu(infileObject, i+1, NULL, &status); 
+             fits_read_key(infileObject,TINT,"P_ROW", &p_row,comment,&status);
+             if (status == 0)
+             {
+                 p_row_exists = 1;
+                 break;
+             }
+             else if ((status != 0) && (i < hdunum-1))
+             {
+                 status = 0;
+             }
+         }
+         samprate = tclock*numrow*p_row;
+     }
+     if ((deltat_exists == 0) && ((dec_fac_exists == 0) || (tclock_exists == 0)) && ((numrow_exists == 0) || (p_row_exists == 0)))
+     {
+         message = "Cannot read neither DELTAT nor TCLOCK+DEC_FAC nor NUMROW+P_ROW keywords in any HDU from the input file in order to calculate the sampling rate";
+         EP_EXIT_ERROR(message,EPFAIL);
+     }
+     if (tessimOrxifusim == 0)
+     {
+         strcpy(extname,"RECORDS");
+         if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
+         {
+             message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
              EP_EXIT_ERROR(message,status);
          }
      }
+     else
+     {
+         strcpy(extname,"TESRECORDS");
+         if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
+         {
+             message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
+             EP_EXIT_ERROR(message,status);
+         }
+     }
+     cout<<"samprate: "<<samprate<<endl;
      
      if (eventsz <= 0)
      {
@@ -1649,15 +1693,6 @@
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
      
-     char str_samplingRate[125];	    		sprintf(str_samplingRate,"%f",par.samplingRate);
-     strhistory=string("samplingRate = ") + string(str_samplingRate);
-     strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
-     {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
-         EP_PRINT_ERROR(message,status); return(EPFAIL);
-     }
-     
      char str_rmNoiseIntervals[125];      sprintf(str_rmNoiseIntervals,"%d",par.rmNoiseIntervals);
      strhistory=string("rmNoiseIntervals = ") + string(str_rmNoiseIntervals);
      strcpy(keyvalstr,strhistory.c_str());
@@ -2577,12 +2612,6 @@
      {
          message = "matrixSize must be an integer in [0,8192]";
          return(EXIT_FAILURE);
-     }
-     
-     status=ape_trad_query_double("samplingRate", &par->samplingRate);
-     if (EXIT_SUCCESS!=status) {
-         message = "failed reading the samplingRate parameter";
-         EP_EXIT_ERROR(message,EPFAIL);
      }
      
      status=ape_trad_query_bool("rmNoiseIntervals", &par->rmNoiseIntervals);
