@@ -41,50 +41,30 @@
 	#include "genutils.h"
 	#include "pulseprocess.h"
 	#include "inoututils.h"
-	//#include "advdet.h"    // To use loadAdvDet
-	//#include "progressbar.h"
-	
-	//#include "optimalfilters.h"
-        //#include "testriggerfile.h"
-        //#include "teseventlist.h"
-        //#include "tesproftemplates.h"
-        
-        ////#include "testrigger.h"
-        
-        //#include "gti.h"
-        //#include "integraSIRENA.h"
-        //#include <gsl/gsl_vector.h>
-        //#include<stdio.h>
-        //#include<string.h>
-        
-        //#include "versionSIRENA.h"
 
 	#define TOOLSUB gennoisespec_main
         #include "headas_main.c"
 	
 	#include <time.h>
-
-	//int flag=0;
-        //gsl_vector *fila1;
         
 struct Parameters {
     
 	//Input FITS file
 	char inFile[MAXFILENAME];
         
-        //Output FITS file
+    //Output FITS file
 	char outFile[MAXFILENAME];
 
 	//Base-2 minimum length of a pulse-free interval (samples)
 	int intervalMinSamples;
         
-        //Number of pulse lengths after the end of the pulse to start the pulse-free interval searching
+    //Number of pulse lengths after the end of the pulse to start the pulse-free interval searching
 	int nplPF;
         
         //Number of pulse-free intervals to use for the noise average
 	int nintervals;
         
-        //Scale Factor
+    //Scale Factor
 	double scaleFactor;
 	
 	//Number of samples for threshold trespassing
@@ -93,28 +73,28 @@ struct Parameters {
 	//Number of standard deviations in the kappa-clipping process for threshold estimation
 	double nSgms;
         
-        //Pulse length in samples
+    //Pulse length in samples
 	int pulse_length;
         
-        //Running sum (RS) length for the RS-filtering for raw energy estimation, in seconds
+    //Running sum (RS) length for the RS-filtering for raw energy estimation, in seconds
 	double LrsT;
 	
 	//Baseline averaging length for the RS-filtering for raw energy estimation, in seconds
 	double LbT;
         
-        //Calculate and write the weight matrixes if weightMS=yes
+    //Calculate and write the weight matrixes if weightMS=yes
 	char weightMS;
         
-        //Transform to resistance space (I2R, I2RALL, I2RNOL, I2RFITTED) or not (I)
+    //Transform to resistance space (I2R, I2RALL, I2RNOL, I2RFITTED) or not (I)
 	char I2R[10];
         
-        //Boolean to choose whether to erase an already existing event list
+    //Boolean to choose whether to erase an already existing event list
 	char clobber;
         
-        //Size of noise matrix if only one to be created
+    //Size of noise matrix if only one to be created
 	int matrixSize;
         
-        //Remove some noise intervals before calculating the noise spectrum if rmNoiseIntervals=yes
+    //Remove some noise intervals before calculating the noise spectrum if rmNoiseIntervals=yes
 	char rmNoiseIntervals;
        
 	// END GENNOISESPEC input parameters
@@ -156,6 +136,10 @@ struct Parameters {
 	double ivcal;		// Just in case it would be necessary
 	double asquid;		// Just in case it would be necessary
 	double plspolar;	// Just in case it would be necessary
+	
+	double adu_cnv = -999.0;
+    double i_bias = -999.0;
+    double adu_bias = -999.0;
 	
 	double Imin = -999.0;
     double Imax = -999.0;

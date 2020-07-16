@@ -94,15 +94,17 @@
 * - Register HEATOOL
 * - Reading all programm parameters by using PIL
 * - Read XML info
-* - Obtain the 'trig_reclength':
+* - Obtain the 'trig_reclength' and the sampling rate:
 *   - If Rcmethod starts with '@' => List of record input FITS files. For every FITS file:
 *       - Open FITS file
 *       - Check if input FITS file have been simulated with TESSIM or XIFUSIM
+*       - Get the sampling rate from the HISTORY keyword from the input FITS file
 *       - If it is a xifusim simulated file
 *           - Obtain 'trig_reclength' from the HISTORY block
 *   - If Rcemethod doesn't start with '@' => Single record input FITS file
 *       - Open FITS file
 *       - Check if input FITS file have been simulated with TESSIM or XIFUSIM
+*       - Get the sampling rate from the HISTORY keyword from the input FITS file
 *       - If it is a xifusim simulated file
 *           - Obtain 'trig_reclength' from the HISTORY block
 * - Sixt standard keywords structure
@@ -160,6 +162,9 @@ int tesreconstruction_main() {
     CHECK_STATUS_BREAK(status);
     det = loadAdvDet(par.XMLFile, &status);
     CHECK_STATUS_BREAK(status);
+    double sf = -999.; 
+    sf = det->SampleFreq;
+    double sampling_rate = -999.0;
     
     int trig_reclength = -999;
     
@@ -176,11 +181,11 @@ int tesreconstruction_main() {
     int tessimOrxifusim = -999;     // 0: tessim, 1: xifusim
     int numberkeywords;
     char *headerPrimary;
-    //char * sample_rate_pointer;
+    char * sample_rate_pointer;
     char * trig_reclength_pointer;
-    //char each_character_after_srate[125];
+    char each_character_after_srate[125];
     char each_character_after_treclength[125];
-    //char characters_after_srate[125];
+    char characters_after_srate[125];
     char characters_after_treclength[125];
     char extname[20];
     int extver = 0;
@@ -244,14 +249,52 @@ int tesreconstruction_main() {
                         return(EXIT_FAILURE);
                     }
                     
+                    // Get the sampling rate from the HISTORY keyword from the input FITS file
+                    // Move to "Primary" HDU
+                    fits_movabs_hdu(fptr, 1, NULL, &status); 
+                    CHECK_STATUS_BREAK(status);
+                    // and read full Primary HDU and store it in 'headerPrimary'
+                    fits_hdr2str(fptr, 0, NULL, 0,&headerPrimary, &numberkeywords, &status); 
+                    CHECK_STATUS_BREAK(status);
+                    
+                    // Pointer to where the text "sample_rate=" is in HISTORY block          
+                    sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    
+                    if(!sample_rate_pointer)
+                    {
+                        // read it from xml file
+                        sampling_rate = sf;
+                    }
+                    else
+                    {
+                        // Pointer to the next character to "sample_rate=" (12 characters)   
+                        sample_rate_pointer = sample_rate_pointer + 12; 
+                        snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+                        snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
+                        
+                        while (*sample_rate_pointer != ' ')
+                        {
+                            sample_rate_pointer = sample_rate_pointer + 1;
+                            snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+                            strcat(characters_after_srate,each_character_after_srate); 
+                        }
+                        
+                        sampling_rate = atof(characters_after_srate);
+                        
+                        if (((sampling_rate != -999.0) && (sf != -999.0)) && (sampling_rate != sf))
+                        {
+                            SIXT_ERROR("Sampling rate from input FITS file and from XML file do not match");
+                            return(EXIT_FAILURE);
+                        }
+                    }
+                    
                     if (tessimOrxifusim == 1) //xifusim simulated file (with TESRECORDS)
                     {    
-                        // Move to "Primary" HDU 
+                        /*// Move to "Primary" HDU 
                         fits_movabs_hdu(fptr, 1, NULL, &status); 
                         CHECK_STATUS_BREAK(status);
                         // and read full Primary HDU and store it in 'headerPrimary'
                         fits_hdr2str(fptr, 0, NULL, 0,&headerPrimary, &numberkeywords, &status); 
-                        CHECK_STATUS_BREAK(status);
+                        CHECK_STATUS_BREAK(status);*/
                     
                         // Pointer to where the text "trig_reclength=" is in HISTORY block
                         trig_reclength = -999.0;
@@ -322,14 +365,52 @@ int tesreconstruction_main() {
                 return(EXIT_FAILURE);
             }
             
+            // Get the sampling rate from the HISTORY keyword from the input FITS file
+            // Move to "Primary" HDU
+            fits_movabs_hdu(fptr, 1, NULL, &status); 
+            CHECK_STATUS_BREAK(status);
+            // and read full Primary HDU and store it in 'headerPrimary'
+            fits_hdr2str(fptr, 0, NULL, 0,&headerPrimary, &numberkeywords, &status); 
+            CHECK_STATUS_BREAK(status);
+            
+            // Pointer to where the text "sample_rate=" is in HISTORY block          
+            sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    
+            if(!sample_rate_pointer)
+            {
+                // read it from xml file
+                sampling_rate = sf;
+            }
+            else
+            {
+                // Pointer to the next character to "sample_rate=" (12 characters)   
+                sample_rate_pointer = sample_rate_pointer + 12; 
+                snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+                snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
+                
+                while (*sample_rate_pointer != ' ')
+                {
+                    sample_rate_pointer = sample_rate_pointer + 1;
+                    snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+                    strcat(characters_after_srate,each_character_after_srate); 
+                }
+                
+                sampling_rate = atof(characters_after_srate);
+                
+                if (((sampling_rate != -999.0) && (sf != -999.0)) && (sampling_rate != sf))
+                {
+                    SIXT_ERROR("Sampling rate from input FITS file and from XML file do not match");
+                    return(EXIT_FAILURE);
+                }
+            }
+            
             if (tessimOrxifusim == 1) //xifusim simulated file (with TESRECORDS)
             {    
-                // Move to "Primary" HDU
+               /* // Move to "Primary" HDU
                 fits_movabs_hdu(fptr, 1, NULL, &status); 
                 CHECK_STATUS_BREAK(status);
                 // and read full Primary HDU and store it in 'headerPrimary'
                 fits_hdr2str(fptr, 0, NULL, 0,&headerPrimary, &numberkeywords, &status); 
-                CHECK_STATUS_BREAK(status);
+                CHECK_STATUS_BREAK(status);*/
             
                 // Pointer to where the text "trig_reclength=" is in HISTORY block
                 trig_reclength = -999.0;
@@ -463,6 +544,7 @@ int tesreconstruction_main() {
                     
                     // Build up TesRecord to read the file
                     record = newTesRecord(&status);
+                    if (record_file->delta_t == -999) record_file->delta_t = 1./sampling_rate;
                     if (trig_reclength == -999) trig_reclength = record_file->trigger_size;
                     allocateTesRecord(record,trig_reclength,record_file->delta_t,0,&status);
                     //allocateTesRecord(record,record_file->trigger_size,record_file->delta_t,0,&status);
@@ -612,6 +694,7 @@ int tesreconstruction_main() {
             //}
             // Build up TesRecord to read the file
             record = newTesRecord(&status);
+            if (record_file->delta_t == -999) record_file->delta_t = 1./sampling_rate;
             if (trig_reclength == -999) trig_reclength = record_file->trigger_size;
             //allocateTesRecord(record,record_file->trigger_size,record_file->delta_t,0,&status);
             allocateTesRecord(record,trig_reclength,record_file->delta_t,0,&status);

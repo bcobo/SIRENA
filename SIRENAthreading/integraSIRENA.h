@@ -293,6 +293,10 @@ typedef struct I2RData
   double TTR;
   double LFILTER;
   
+  double ADU_CNV;
+  double I_BIAS;
+  double ADU_BIAS;
+  
 #ifdef __cplusplus
   I2RData();
   I2RData(const I2RData& other);

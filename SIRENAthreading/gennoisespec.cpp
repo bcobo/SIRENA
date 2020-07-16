@@ -92,16 +92,22 @@
   * - I2R: Transform to resistance space (I2R, I2RALL, I2RNOL, I2RFITTED) or not (I)
   * - clobber: Re-write output files if clobber=yes
   * - matrixSize: Size of noise matrix if only one to be created
+  * - rmNoiseIntervals: Remove some noise intervals before calculating the noise spectrum if rmNoiseIntervals=yes
   * 
   * Steps:
   * 
   * - Reading all programm parameters by using PIL
   * - Open input FITS file
   * - Check if input FITS file have been simulated with TESSIM or XIFUSIM
+  * - To calculate 'aducnv'...
+  * -...or read ADU_CNV, I_BIAS and ADU_BIAS
   * - Read keywords to transform to resistance space
   * - Read and check other input keywords
-  * - Calculate the sampling rate by using keywords in input FITS file (from DELTAT or TCLOCK+DEC_FAC or NUMROW+P_ROW)
   * - Read other necessary keywords from ANY HDU
+  * - Calculate the sampling rate 
+  *     - By using keywords in input FITS file (from DELTAT or TCLOCK+DEC_FAC or NUMROW+P_ROW)
+  *     - If necessary read the sampling rate from input FITS file (from the HISTORY in the Primary HDU)
+  *     - If not possible, provide an error message to include DELTAT (inverse of sampling rate) in the input FITS file
   * - Get structure of input FITS file columns
   * - Initialize variables and transform from seconds to samples
   * - Declare variables
@@ -192,7 +198,7 @@
          EP_EXIT_ERROR(message,status);
      }
      
-     // To calculate ADUCNV
+     // To calculate 'aducnv'...
      strcpy(extname,"ADCPARAM");
      fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
      if (status == 0)
@@ -274,10 +280,66 @@
          }
      }
      
+     //...or read ADU_CNV, I_BIAS and ADU_BIAS
+     // ADU_CNV(A/ADU)
+     int adu_cnv_exists = 0;
+     int i_bias_exists = 0;
+     int adu_bias_exists = 0;
+     strcpy(keyname,"ADU_CNV");
+     for (int i=0;i<hdunum;i++)
+     {
+         fits_movabs_hdu(infileObject, i+1, NULL, &status); 
+         fits_read_key(infileObject,TDOUBLE,keyname, &adu_cnv,comment,&status);
+         if (status == 0)
+         {
+             adu_cnv_exists = 1;
+             break;
+         }
+         else if ((status != 0) && (i <= hdunum-1))
+         {
+             status = 0;
+         }
+     }
+     // I_BIAS(A)
+     strcpy(keyname,"I_BIAS");
+     for (int i=0;i<hdunum;i++)
+     {
+         fits_movabs_hdu(infileObject, i+1, NULL, &status); 
+         fits_read_key(infileObject,TDOUBLE,keyname, &i_bias,comment,&status);
+         if (status == 0)
+         {
+             i_bias_exists = 1;
+             break;
+         }
+         else if ((status != 0) && (i <= hdunum-1))
+         {
+             status = 0;
+         }
+     }
+     // ADU_BIAS(ADU)
+     strcpy(keyname,"ADU_BIAS");
+     for (int i=0;i<hdunum;i++)
+     {
+         fits_movabs_hdu(infileObject, i+1, NULL, &status); 
+         fits_read_key(infileObject,TDOUBLE,keyname, &adu_bias,comment,&status);
+         if (status == 0)
+         {
+             adu_bias_exists = 1;
+             break;
+         }
+         else if ((status != 0) && (i <= hdunum-1))
+         {
+             status = 0;
+         }
+     }
+     /*cout<<"adu_cnv: "<<adu_cnv<<endl;
+     cout<<"i_bias: "<<i_bias<<endl;
+     cout<<"adu_bias: "<<adu_bias<<endl;*/
+     
      // Read keywords to transform to resistance space
      if (strcmp(par.I2R,"I") != 0)  
      {
-         strcpy(extname,"ADCPARAM");
+         /*strcpy(extname,"ADCPARAM");
          fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
          if (status == 0)
          {
@@ -332,7 +394,7 @@
                      EP_PRINT_ERROR(message,status); return(EPFAIL);
                  }
              }
-         }
+         }*/
          
          strcpy(extname,"RECORDS");
          fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
@@ -415,6 +477,23 @@
                  delete [] obj.unit;
              }
          }
+         else
+         {
+             strcpy(keyname,"R0");
+             fits_read_key(infileObject,TDOUBLE,keyname, &R0,NULL,&status);
+             //cout<<"R0: "<<R0<<endl;
+             strcpy(keyname,"I0_START");
+             fits_read_key(infileObject,TDOUBLE,keyname, &Ibias,NULL,&status);
+             //cout<<"I0_START: "<<Ibias<<endl;
+             strcpy(keyname,"RPARA");
+             fits_read_key(infileObject,TDOUBLE,keyname, &RPARA,NULL,&status);
+             //cout<<"RPARA: "<<RPARA<<endl;
+             strcpy(keyname,"TTR");
+             fits_read_key(infileObject,TDOUBLE,keyname, &TTR,NULL,&status);
+             //cout<<"TTR: "<<TTR<<endl;
+             strcpy(keyname,"LFILTER");
+             fits_read_key(infileObject,TDOUBLE,keyname, &LFILTER,NULL,&status);
+         }
      }
      
      //Read and check other input keywords
@@ -482,13 +561,13 @@
          fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
      }
      
-     // Calculate the sampling rate by using keywords in input FITS file (from DELTAT or TCLOCK+DEC_FAC or NUMROW+P_ROW)
+     // Calculate the sampling rate 
+     // By using keywords in input FITS file (from DELTAT or TCLOCK+DEC_FAC or NUMROW+P_ROW)
      int deltat_exists = 0;
      int dec_fac_exists = 0;
      int tclock_exists = 0;
      int numrow_exists = 0;
      int p_row_exists = 0;
-     // To get the sampling rate no matter the origin of the file
      for (int i=0;i<hdunum;i++)
      {
          fits_movabs_hdu(infileObject, i+1, NULL, &status); 
@@ -499,7 +578,7 @@
              samprate = 1/deltat;
              break;
          }
-         else if ((status != 0) && (i < hdunum-1))
+         else if ((status != 0) && (i <= hdunum-1))
          {
              status = 0;
          }
@@ -517,7 +596,7 @@
                  dec_fac_exists = 1;
                  break;
              }
-             else if ((status != 0) && (i < hdunum-1))
+             else if ((status != 0) && (i <= hdunum-1))
              {
                  status = 0;
              }
@@ -531,13 +610,21 @@
                  tclock_exists = 1;
                  break;
              }
-             else if ((status != 0) && (i < hdunum-1))
+             else if ((status != 0) && (i <= hdunum-1))
              {
                  status = 0;
              }
          }
-         samprate = tclock*dec_fac;
+         if ((dec_fac_exists == 1) && (tclock_exists == 1)) 
+         {
+             //cout<<"tclock: "<<tclock<<endl;
+             //cout<<"dec_fac: "<<dec_fac<<endl;
+             samprate = 1/(tclock*dec_fac);
+         }
      }
+     /*cout<<"deltat_exists: "<<deltat_exists<<endl;
+     cout<<"tclock_exists: "<<tclock_exists<<endl;
+     cout<<"dec_fac_exists: "<<dec_fac_exists<<endl;*/
      if ((deltat_exists == 0) && ((tclock_exists == 0) || (dec_fac_exists == 0)))
      {
          int numrow;
@@ -550,7 +637,7 @@
                  numrow_exists = 1;
                  break;
              }
-             else if ((status != 0) && (i < hdunum-1))
+             else if ((status != 0) && (i <= hdunum-1))
              {
                  status = 0;
              }
@@ -565,18 +652,60 @@
                  p_row_exists = 1;
                  break;
              }
-             else if ((status != 0) && (i < hdunum-1))
+             else if ((status != 0) && (i <= hdunum-1))
              {
                  status = 0;
              }
          }
-         samprate = tclock*numrow*p_row;
+         if ((tclock_exists == 1) && (numrow_exists == 1) && (p_row_exists == 1)) 
+         {
+             /*cout<<"tclock: "<<tclock<<endl;
+             cout<<"numrow: "<<numrow<<endl;
+             cout<<"p_row: "<<p_row<<endl;*/
+             samprate =1/(tclock*numrow*p_row);
+         }
      }
-     if ((deltat_exists == 0) && ((dec_fac_exists == 0) || (tclock_exists == 0)) && ((numrow_exists == 0) || (p_row_exists == 0)))
+     /*cout<<"numrow_exists: "<<numrow_exists<<endl;
+     cout<<"tclock_exists: "<<tclock_exists<<endl;
+     cout<<"p_row_exists: "<<p_row_exists<<endl;*/
+     // If necessary...
+     //...read the sampling rate from input FITS file (from the HISTORY in the Primary HDU) 
+     //if ((tessimOrxifusim == 1) && (samprate == -999.0))
+     if (samprate == -999.0)
      {
-         message = "Cannot read neither DELTAT nor TCLOCK+DEC_FAC nor NUMROW+P_ROW keywords in any HDU from the input file in order to calculate the sampling rate";
+         fits_movabs_hdu(infileObject, 1, NULL, &status); // Move to "Primary" HDU
+         int numberkeywords;
+         char *headerPrimary;
+         fits_hdr2str(infileObject, 0, NULL, 0,&headerPrimary, &numberkeywords, &status);   // Reading thee whole "Primary" HDU and store it in 'headerPrimary'
+         char * sample_rate_pointer;
+         sample_rate_pointer = strstr (headerPrimary,"sample_rate=");    // Pointer to where the text "sample_rate=" is
+         if(sample_rate_pointer){
+             sample_rate_pointer = sample_rate_pointer + 12; // Pointer to the next character to "sample_rate=" (which has 12 characters)   
+             char each_character_after_srate[125];		
+             snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+             char characters_after_srate[125];
+             snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
+             while (*sample_rate_pointer != ' ')
+             {
+                 sample_rate_pointer = sample_rate_pointer + 1;
+                 snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
+                 strcat(characters_after_srate,each_character_after_srate); 
+             }
+             samprate = atof(characters_after_srate);
+         }
+     }
+     
+     // If it is not possible neither to calculate nor get the sampling rate from the input FITS file,...
+     //...provide an error message to include DELTAT (inverse of sampling rate) in the input FITS file before running again
+     if (samprate == -999.0)
+     {
+         //message =  "Cannot read neither DELTAT nor TCLOCK+DEC_FAC nor NUMROW+P_ROW keywords in any HDU from the input file in order to calculate the sampling rate AND cannot read the sampling rate from the HISTORY in the Primary HDU from the input file. Please, include the DELTAT keyword (inverse of sampling rate) in the input FITS file before running GENNOISESPEC again.";
+         message =  "Cannot read or get the sampling rate from the input file. Please, include the DELTAT keyword (inverse of sampling rate) in the input FITS file before running GENNOISESPEC again";
+         
          EP_EXIT_ERROR(message,EPFAIL);
      }
+     //cout<<"samprate: "<<samprate<<endl;
+          
      if (tessimOrxifusim == 0)
      {
          strcpy(extname,"RECORDS");
@@ -595,7 +724,6 @@
              EP_EXIT_ERROR(message,status);
          }
      }
-     cout<<"samprate: "<<samprate<<endl;
      
      if (eventsz <= 0)
      {
@@ -604,16 +732,29 @@
      }
      
      ivcal=1.0;
-     if (((Imin == -999.0) || (Imax == -999.0)) || ((Imin == 0) || (Imax == 0)))
+     if ((((Imin != -999.0) && (Imax != -999.0)) && ((Imin != 0) && (Imax != 0))) && (adu_cnv != -999.0) && ((Imax-Imin)/65534 != -1.0*adu_cnv))
+     {
+         message = "ADU_CNV and (Imax-Imin)/65534 do not match";
+         EP_PRINT_ERROR(message,-EPFAIL);
+     }
+     
+     //cout<<"Imin: "<<Imin<<endl;
+     //cout<<"Imax: "<<Imax<<endl;
+     if ((((Imin == -999.0) || (Imax == -999.0)) || ((Imin == 0) || (Imax == 0))) && (adu_cnv == -999.0))
      {
          aducnv = 1.0;
-         message = "Imin or Imax not found or both equal to 0 => Conversion factor ('aducnv' to convert adu into A) is fix to 1";
+         message = "ADU_CNV not found or Imin or Imax not found or both equal to 0 => Conversion factor ('aducnv' to convert adu into A) is fix to 1";
          EP_PRINT_ERROR(message,-999);	// Only a warning
      }
-     else
+     else if (adu_cnv != -999.0)
+     {
+         aducnv = -1*adu_cnv;
+     }
+     else if (((Imin != -999.0) && (Imax != -999.0)) && ((Imin != 0) && (Imax != 0)))
      {
          aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534  // If this calculus changes => Change it also in TASKSSIRENA
      }
+     //cout<<"aducnv: "<<aducnv<<endl;
      
      asquid = 1.0;
      plspolar = 1.0;
@@ -740,7 +881,6 @@
          gsl_matrix_get_row(interval,noiseIntervals,i);
          findMeanSigma(interval, &bsln, &sgm);
          gsl_vector_set(sigmaInterval,i, sgm);
-         //cout<<i<<" "<<bsln<<" "<<sgm<<endl;
      }
      
      //cout<<"sigmaInterval->size: "<<sigmaInterval->size<<endl;
@@ -1063,7 +1203,8 @@
   * - Processing each record
   *       - Information has been read by blocks (with nrows per block)
   *       - Just in case the last record has been filled out with 0's => Last record discarded
-  * 	- To avoid taking into account the pulse tails at the beginning of a record as part of a pulse-free interval
+  * 	- Convert to the resistance space if necessary
+  *     - To avoid taking into account the pulse tails at the beginning of a record as part of a pulse-free interval
   * 	- Low-pass filtering
   *   	- Differentiate 
   *   	- Finding the pulses: Pulses tstarts are found (call findPulsesNoise)
@@ -1173,12 +1314,54 @@
          // Just in case the last record has been filled out with 0's => Last record discarded
          if ((gsl_vector_get(ioutgsl,ioutgsl->size-1) == 0) && (gsl_vector_get(ioutgsl,ioutgsl->size-2) == 0))		break;
          
+         // Convert to the resistance space if necessary
          if (strcmp(par.I2R,"I") != 0)
          {
-             if (convertI2R(par.I2R,R0,Ibias,Imin,Imax,TTR,LFILTER,RPARA,samprate,&ioutgsl))
+             if (adu_cnv == -999.0)
              {
-                 message = "Cannot run routine convertI2R";
-                 EP_EXIT_ERROR(message,EPFAIL);
+                if (convertI2R(par.I2R,R0,Ibias,Imin,Imax,TTR,LFILTER,RPARA,samprate,&ioutgsl))
+                {
+                    message = "Cannot run routine convertI2R";
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }
+             }
+             else
+             {
+                 if (i_bias == -999.0)
+                 {
+                     message = "I_BIAS keyword (to convert to resistance space) not found in the input FITS file";
+                     EP_EXIT_ERROR(message,EPFAIL);
+                 }
+                 if (adu_bias == -999.0)
+                 {
+                     message = "ADU_BIAS keyword (to convert to resistance space) not found in the input FITS file";
+                     EP_EXIT_ERROR(message,EPFAIL);
+                 }
+                 // DeltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
+                 // R/R0 <- 1 - (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+                 gsl_vector *deltai = gsl_vector_alloc(ioutgsl->size);
+                 gsl_vector *vectoraux = gsl_vector_alloc(ioutgsl->size);
+                 
+                 gsl_vector_memcpy(deltai,ioutgsl);
+                 gsl_vector_add_constant(deltai,-1.0*adu_bias);
+                 gsl_vector_scale(deltai,adu_cnv);              // deltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
+                 
+                 for (int i=0;i<deltai->size;i++)
+                 {
+                     if (gsl_vector_get(deltai,i)<0) 	gsl_vector_set(deltai,i,(-1.*gsl_vector_get(deltai,i)));
+                 }                                              // deltai = abs(deltai)
+                 gsl_vector_scale(deltai,1./i_bias); 			// deltai = abs(DeltaI)/Ibias
+                 
+                 gsl_vector_memcpy(vectoraux,deltai);
+                 gsl_vector_add_constant(vectoraux,+1.0);       // vectoraux = 1 + abs(DeltaI)/Ibias
+                 gsl_vector_div(deltai,vectoraux);              // deltai = (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+                 gsl_vector_scale(deltai,-1.0);                 // deltai = -(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+                 gsl_vector_add_constant(deltai,1.0);           // deltai = 1-(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+                 
+                 gsl_vector_memcpy(ioutgsl,deltai);
+                
+                 gsl_vector_free(deltai); deltai = 0;
+                 gsl_vector_free(vectoraux); vectoraux = 0;
              }
          }
          
@@ -2067,7 +2250,6 @@
          message = "Cannot run findTstartNoise with two rows in models";
          EP_PRINT_ERROR(message,EPFAIL);
      }
-     //cout<<"nPulses: "<<*nPulses<<endl;
      
      if (*nPulses != 0)
      {

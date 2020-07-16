@@ -235,7 +235,7 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
             deltat_exists = 1;
             break;
         }
-        else if ((*status != 0) && (i < hdunum-1))
+        else if ((*status != 0) && (i <= hdunum-1))
         {
             *status = 0;
         }
@@ -255,7 +255,7 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
                 dec_fac_exists = 1;
                 break;
             }
-            else if ((*status != 0) && (i < hdunum-1))
+            else if ((*status != 0) && (i <= hdunum-1))
             {
                 *status = 0;
             }
@@ -269,7 +269,7 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
                 tclock_exists = 1;
                 break;
             }
-            else if ((*status != 0) && (i < hdunum-1))
+            else if ((*status != 0) && (i <= hdunum-1))
             {
                 *status = 0;
             }
@@ -291,7 +291,7 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
                 numrow_exists = 1;
                 break;
             }
-            else if ((*status != 0) && (i < hdunum-1))
+            else if ((*status != 0) && (i <= hdunum-1))
             {
                 *status = 0;
             }
@@ -306,7 +306,7 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
                 p_row_exists = 1;
                 break;
             }
-            else if ((*status != 0) && (i < hdunum-1))
+            else if ((*status != 0) && (i <= hdunum-1))
             {
                 *status = 0;
             }
@@ -318,7 +318,7 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
     }
     if ((deltat_exists == 0) && ((dec_fac_exists == 0) || (tclock_exists == 0)) && ((numrow_exists == 0) || (p_row_exists == 0)))
     {
-        printf("%s","Cannot read neither DELTAT nor TCLOCK+DEC_FAC nor NUMROW+P_ROW keywords in any HDU from the input file in order to calculate the sampling rate\n");
+        printf("%s","Cannot read or get the sampling rate from the input file. Please, include the DELTAT keyword (inverse of sampling rate) in the input FITS file before running GENNOISESPEC again\n");
         CHECK_STATUS_RET(*status, NULL);
     }
     

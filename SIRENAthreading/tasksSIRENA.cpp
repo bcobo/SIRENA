@@ -232,20 +232,52 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
 	
 	// Convert I into R if 'EnergyMethod' = I2R or I2RALL or I2RNOL or I2RFITTED
 	// It is not necessary to check the allocation because 'invector' size must be > 0
-	if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
-		|| (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
+	if (((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
+		|| (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0)) && ((*reconstruct_init)->i2rdata->ADU_CNV == -999.0))
 	{
-                if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, 1/record->delta_t, &invector))
-		{
-			message = "Cannot run routine convertI2R";
-			EP_EXIT_ERROR(message,EPFAIL);
-		}
-		
-		for (int i=0;i<invector->size;i++)	// Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
-                {
-                        record->adc_double[i] = gsl_vector_get(invector,i);
-                }
+        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, 1/record->delta_t, &invector))
+        {
+            message = "Cannot run routine convertI2R";
+            EP_EXIT_ERROR(message,EPFAIL);
+        }
+        
+        for (int i=0;i<invector->size;i++)	// Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+        {
+            record->adc_double[i] = gsl_vector_get(invector,i);
+        }
 	}
+	else if (((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
+		|| (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0)) && ((*reconstruct_init)->i2rdata->ADU_CNV != -999.0))
+	{
+        // DeltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
+        // R/R0 <- 1 - (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+        gsl_vector *deltai = gsl_vector_alloc(invector->size);
+        gsl_vector *vectoraux = gsl_vector_alloc(invector->size);
+        
+        gsl_vector_memcpy(deltai,invector);
+        gsl_vector_add_constant(deltai,-1.0*(*reconstruct_init)->i2rdata->ADU_BIAS);
+        gsl_vector_scale(deltai,(*reconstruct_init)->i2rdata->ADU_CNV);              // deltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
+        
+        for (int i=0;i<deltai->size;i++)
+        {
+            if (gsl_vector_get(deltai,i)<0) 	gsl_vector_set(deltai,i,(-1.*gsl_vector_get(deltai,i)));
+        }                                              // deltai = abs(deltai)
+        gsl_vector_scale(deltai,1./(*reconstruct_init)->i2rdata->I_BIAS); 			// deltai = abs(DeltaI)/Ibias
+        
+        gsl_vector_memcpy(vectoraux,deltai);
+        gsl_vector_add_constant(vectoraux,+1.0);       // vectoraux = 1 + abs(DeltaI)/Ibias
+        gsl_vector_div(deltai,vectoraux);              // deltai = (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+        gsl_vector_scale(deltai,-1.0);                 // deltai = -(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+        gsl_vector_add_constant(deltai,1.0);           // deltai = 1-(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+        
+        for (int i=0;i<invector->size;i++)	// Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+        {
+            record->adc_double[i] = gsl_vector_get(deltai,i);
+        }
+        
+        gsl_vector_free(deltai); deltai = 0;
+        gsl_vector_free(vectoraux); vectoraux = 0;
+    }
 	
 	log_trace("Detecting...");
 	// Process each record
@@ -821,6 +853,61 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
   gsl_vector *invectorOriginal = gsl_vector_alloc(invector->size);
   gsl_vector_memcpy(invectorOriginal,invector);
   
+  
+  
+  
+  
+  
+  if (((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
+		|| (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0)) && ((*reconstruct_init)->i2rdata->ADU_CNV == -999.0))
+	{
+        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, 1/record->delta_t, &invector))
+        {
+            message = "Cannot run routine convertI2R";
+            EP_EXIT_ERROR(message,EPFAIL);
+        }
+        
+        for (int i=0;i<invector->size;i++)	// Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+        {
+            record->adc_double[i] = gsl_vector_get(invector,i);
+        }
+	}
+	else if (((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
+		|| (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0)) && ((*reconstruct_init)->i2rdata->ADU_CNV != -999.0))
+	{
+        // DeltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
+        // R/R0 <- 1 - (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+        gsl_vector *deltai = gsl_vector_alloc(invector->size);
+        gsl_vector *vectoraux = gsl_vector_alloc(invector->size);
+        
+        gsl_vector_memcpy(deltai,invector);
+        gsl_vector_add_constant(deltai,-1.0*(*reconstruct_init)->i2rdata->ADU_BIAS);
+        gsl_vector_scale(deltai,(*reconstruct_init)->i2rdata->ADU_CNV);              // deltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
+        
+        for (int i=0;i<deltai->size;i++)
+        {
+            if (gsl_vector_get(deltai,i)<0) 	gsl_vector_set(deltai,i,(-1.*gsl_vector_get(deltai,i)));
+        }                                              // deltai = abs(deltai)
+        gsl_vector_scale(deltai,1./(*reconstruct_init)->i2rdata->I_BIAS); 			// deltai = abs(DeltaI)/Ibias
+        
+        gsl_vector_memcpy(vectoraux,deltai);
+        gsl_vector_add_constant(vectoraux,+1.0);       // vectoraux = 1 + abs(DeltaI)/Ibias
+        gsl_vector_div(deltai,vectoraux);              // deltai = (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+        gsl_vector_scale(deltai,-1.0);                 // deltai = -(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+        gsl_vector_add_constant(deltai,1.0);           // deltai = 1-(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+        
+        for (int i=0;i<invector->size;i++)	// Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+        {
+            record->adc_double[i] = gsl_vector_get(deltai,i);
+        }
+        
+        gsl_vector_free(deltai); deltai = 0;
+        gsl_vector_free(vectoraux); vectoraux = 0;
+    }
+  
+  
+  
+  
   // Convert I into R if 'EnergyMethod' = I2R or I2RALL or I2RNOL or I2RFITTED
   // It is not necessary to check the allocation because 'invector' 
   // size must be > 0
@@ -828,7 +915,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
       || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) 
       || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
       || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
-    {
+  {
       // thread safe
       // Not thread safe for the record_file_ptr
       // If the cfitsio is not compiled with -D_REENTRANT, we need to lock
@@ -836,33 +923,103 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
       // Also if the reentrant mode is on, the threads should not share the 
       // same pointer.
       if (!sc->is_reentrant()){
-        std::unique_lock<std::mutex> lk(fits_file_mut);
-    
-        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, 1/record->delta_t, &invector))
-	{
-                lk.unlock();
-		message = "Cannot run routine convertI2R";
-		EP_EXIT_ERROR(message,EPFAIL);
-	}
-		
-	for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
-        {
-                record->adc_double[i] = gsl_vector_get(invector,i);
-        }  
-        lk.unlock();
-      }else{
-        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, 1/record->delta_t, &invector))
-	{
-		message = "Cannot run routine convertI2R";
-		EP_EXIT_ERROR(message,EPFAIL);
-	}
-		
-	for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
-        {
-                record->adc_double[i] = gsl_vector_get(invector,i);
-        }  
+          std::unique_lock<std::mutex> lk(fits_file_mut);
+          
+          if ((*reconstruct_init)->i2rdata->ADU_CNV == -999.0)
+          {
+              if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, 1/record->delta_t, &invector))
+              {
+                  lk.unlock();
+                  message = "Cannot run routine convertI2R";
+                  EP_EXIT_ERROR(message,EPFAIL);
+              }
+              
+              for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+              {
+                  record->adc_double[i] = gsl_vector_get(invector,i);
+              }
+          }
+          else if ((*reconstruct_init)->i2rdata->ADU_CNV != -999.0)
+          {
+              // DeltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
+              // R/R0 <- 1 - (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+              gsl_vector *deltai = gsl_vector_alloc(invector->size);
+              gsl_vector *vectoraux = gsl_vector_alloc(invector->size);
+              
+              gsl_vector_memcpy(deltai,invector);
+              gsl_vector_add_constant(deltai,-1.0*(*reconstruct_init)->i2rdata->ADU_BIAS);
+              gsl_vector_scale(deltai,(*reconstruct_init)->i2rdata->ADU_CNV);              // deltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
+              
+              for (int i=0;i<deltai->size;i++)
+              {
+                  if (gsl_vector_get(deltai,i)<0) 	gsl_vector_set(deltai,i,(-1.*gsl_vector_get(deltai,i)));
+              }                                              // deltai = abs(deltai)
+              gsl_vector_scale(deltai,1./(*reconstruct_init)->i2rdata->I_BIAS); 			// deltai = abs(DeltaI)/Ibias
+              
+              gsl_vector_memcpy(vectoraux,deltai);
+              gsl_vector_add_constant(vectoraux,+1.0);       // vectoraux = 1 + abs(DeltaI)/Ibias
+              gsl_vector_div(deltai,vectoraux);              // deltai = (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+              gsl_vector_scale(deltai,-1.0);                 // deltai = -(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+              gsl_vector_add_constant(deltai,1.0);           // deltai = 1-(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+              
+              for (int i=0;i<invector->size;i++)	// Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+              {
+                  record->adc_double[i] = gsl_vector_get(deltai,i);
+              }
+              
+              gsl_vector_free(deltai); deltai = 0;
+              gsl_vector_free(vectoraux); vectoraux = 0;
+          }
+          lk.unlock();
       }
-    }
+      else
+      {
+          if ((*reconstruct_init)->i2rdata->ADU_CNV == -999.0)
+          {
+              if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, 1/record->delta_t, &invector))
+              {
+                  message = "Cannot run routine convertI2R";
+                  EP_EXIT_ERROR(message,EPFAIL);
+              }
+              
+              for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+              {
+                  record->adc_double[i] = gsl_vector_get(invector,i);
+              }
+          }
+          else if ((*reconstruct_init)->i2rdata->ADU_CNV != -999.0)
+          {
+              // DeltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
+              // R/R0 <- 1 - (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+              gsl_vector *deltai = gsl_vector_alloc(invector->size);
+              gsl_vector *vectoraux = gsl_vector_alloc(invector->size);
+              
+              gsl_vector_memcpy(deltai,invector);
+              gsl_vector_add_constant(deltai,-1.0*(*reconstruct_init)->i2rdata->ADU_BIAS);
+              gsl_vector_scale(deltai,(*reconstruct_init)->i2rdata->ADU_CNV);              // deltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
+              
+              for (int i=0;i<deltai->size;i++)
+              {
+                  if (gsl_vector_get(deltai,i)<0) 	gsl_vector_set(deltai,i,(-1.*gsl_vector_get(deltai,i)));
+              }                                              // deltai = abs(deltai)
+              gsl_vector_scale(deltai,1./(*reconstruct_init)->i2rdata->I_BIAS); 			// deltai = abs(DeltaI)/Ibias
+              
+              gsl_vector_memcpy(vectoraux,deltai);
+              gsl_vector_add_constant(vectoraux,+1.0);       // vectoraux = 1 + abs(DeltaI)/Ibias
+              gsl_vector_div(deltai,vectoraux);              // deltai = (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+              gsl_vector_scale(deltai,-1.0);                 // deltai = -(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+              gsl_vector_add_constant(deltai,1.0);           // deltai = 1-(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+              
+              for (int i=0;i<invector->size;i++)	// Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+              {
+                  record->adc_double[i] = gsl_vector_get(deltai,i);
+              }
+              
+              gsl_vector_free(deltai); deltai = 0;
+              gsl_vector_free(vectoraux); vectoraux = 0;
+          }
+      }
+  }
   
   // Process each record
   // thread safe
