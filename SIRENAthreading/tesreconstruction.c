@@ -694,6 +694,11 @@ int tesreconstruction_main() {
             //}
             // Build up TesRecord to read the file
             record = newTesRecord(&status);
+            if ((record_file->delta_t == -999) && (sampling_rate == -999))
+            {
+                SIXT_ERROR("Cannot read or get the sampling rate neither from the input FITS file nor the XML file. Please, include the DELTAT keyword (inverse of sampling rate) in the input FITS file before running TESRECONSTRUCTION again");
+                return(EXIT_FAILURE);
+            }
             if (record_file->delta_t == -999) record_file->delta_t = 1./sampling_rate;
             if (trig_reclength == -999) trig_reclength = record_file->trigger_size;
             //allocateTesRecord(record,record_file->trigger_size,record_file->delta_t,0,&status);

@@ -316,11 +316,11 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
         //printf("%s %d %s","p_row_exists: ",p_row_exists,"\n");
         //printf("%s %f %s","file->delta_t: ",file->delta_t,"\n");
     }
-    if ((deltat_exists == 0) && ((dec_fac_exists == 0) || (tclock_exists == 0)) && ((numrow_exists == 0) || (p_row_exists == 0)))
+    /*if ((deltat_exists == 0) && ((dec_fac_exists == 0) || (tclock_exists == 0)) && ((numrow_exists == 0) || (p_row_exists == 0)))
     {
         printf("%s","Cannot read or get the sampling rate from the input file. Please, include the DELTAT keyword (inverse of sampling rate) in the input FITS file before running GENNOISESPEC again\n");
         CHECK_STATUS_RET(*status, NULL);
-    }
+    }*/
     
     if (tessimOrxifusim == 0)	//TESSIM
     {
@@ -370,7 +370,10 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
 
         fits_movnam_hdu(file->fptr, ANY_HDU,"TESRECORDS", 0, status);
         
-        //file->delta_t = -999;
+        if ((deltat_exists == 0) && ((dec_fac_exists == 0) || (tclock_exists == 0)) && ((numrow_exists == 0) || (p_row_exists == 0)))
+        {
+            file->delta_t = -999;
+        }
     }
     
     return(file);
