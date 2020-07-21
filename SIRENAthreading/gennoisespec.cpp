@@ -99,7 +99,7 @@
   * - Reading all programm parameters by using PIL
   * - Open input FITS file
   * - Check if input FITS file have been simulated with TESSIM or XIFUSIM
-  * - To calculate 'aducnv'...
+  * - To calculate 'aducnv' (conversion factor between arbitrary units and A)...
   * -...or read ADU_CNV, I_BIAS and ADU_BIAS
   * - Read keywords to transform to resistance space
   * - Read and check other input keywords
@@ -337,65 +337,8 @@
      cout<<"adu_bias: "<<adu_bias<<endl;*/
      
      // Read keywords to transform to resistance space
-     if (strcmp(par.I2R,"I") != 0)  
+     if ((strcmp(par.I2R,"I") != 0) && (adu_cnv == -999.0))
      {
-         /*strcpy(extname,"ADCPARAM");
-         fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
-         if (status == 0)
-         {
-             strcpy(keyname,"IMIN");
-             if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
-             {
-                 message = "Cannot read keyword " + string(keyname) + " in input file (ADCPARAM HDU)";
-                 EP_PRINT_ERROR(message,status); return(EPFAIL);
-             }
-             strcpy(keyname,"IMAX");
-             if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
-             {
-                 message = "Cannot read keyword " + string(keyname) + " in input file (ADCPARAM HDU)";
-                 EP_PRINT_ERROR(message,status); return(EPFAIL);
-             }
-         }
-         else
-         {
-             status = 0;
-             strcpy(extname,"TESRECORDS");
-             fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status);
-             if (status == 0)
-             {
-                 strcpy(keyname,"IMIN");
-                 if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
-                 {
-                     message = "Cannot read keyword " + string(keyname) + " in input file (TESRECORDS HDU)";
-                     EP_PRINT_ERROR(message,status); return(EPFAIL);
-                 }
-                 strcpy(keyname,"IMAX");
-                 if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
-                 {
-                     message = "Cannot read keyword " + string(keyname) + " in input file (TESRECORDS HDU)";
-                     EP_PRINT_ERROR(message,status); return(EPFAIL);
-                 }
-             }
-             else
-             {
-                 status = 0;
-                 strcpy(extname,"RECORDS");
-                 fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status);
-                 strcpy(keyname,"IMIN");
-                 if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
-                 {
-                     message = "Cannot read keyword " + string(keyname) + " in input file (RECORDS HDU)";
-                     EP_PRINT_ERROR(message,status); return(EPFAIL);
-                 }
-                 strcpy(keyname,"IMAX");
-                 if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
-                 {
-                     message = "Cannot read keyword " + string(keyname) + " in input file (RECORDS HDU)";
-                     EP_PRINT_ERROR(message,status); return(EPFAIL);
-                 }
-             }
-         }*/
-         
          strcpy(extname,"RECORDS");
          fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
          if (status != 0)
@@ -405,14 +348,19 @@
              fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
              if (status == 0)
              {
-                 status = 0;
+                 //status = 0;
                  
-                 V0 = 0;
-                 R0 = 0;
+                 //V0 = 0;
+                 //R0 = 0;
                  IOData obj;
                  obj.inObject = infileObject;
                  obj.nameTable = new char [255];
                  strcpy(obj.nameTable,"TESPARAM");
+                 if (fits_movnam_hdu(infileObject, ANY_HDU,obj.nameTable, 0, &status))
+                 {
+                     message = "Cannot move to HDU " + string(obj.nameTable);
+                     EP_PRINT_ERROR(message,status); return(EPFAIL);
+                 }
                  obj.iniCol = 0;
                  obj.nameCol = new char [255];
                  obj.unit = new char [255];
@@ -420,49 +368,68 @@
                  obj.iniRow = 1;
                  obj.endRow = 1;
                  gsl_vector *vector = gsl_vector_alloc(1);
-                 strcpy(obj.nameCol,"R0");
+                 strcpy(obj.nameCol,"V0");
                  if (readFitsSimple (obj,&vector))
                  {
-                     strcpy(obj.nameCol,"V0");
+                     //R0_error = 1;
+                     message = "Cannot read V0 in " + string(extname) + " HDU in " + string(par.inFile) + ". Check R0";
+                     strcpy(obj.nameCol,"R0");
                      if (readFitsSimple (obj,&vector))
                      {
-                         message = "Cannot read neither R0 nor V0 in " + string(extname) + " HDU in " + string(par.inFile);
+                         //V0_error = 1;
+                         message = "Cannot read neither V0 nor R0 in " + string(extname) + " HDU in " + string(par.inFile);
                          EP_PRINT_ERROR(message,status); return(EPFAIL);
                      }
-                     V0 = gsl_vector_get(vector,0);
+                     R0 = gsl_vector_get(vector,0);
                  }
-                 if (V0 == 0)    R0 = gsl_vector_get(vector,0);
+                 
+                 if (R0 == -999.0)     V0 = gsl_vector_get(vector,0);
                  strcpy(obj.nameCol,"I0_START");
                  if (readFitsSimple (obj,&vector))
                  {
+                     //Ibias_error = 1;
                      message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(par.inFile);
                      EP_PRINT_ERROR(message,status); return(EPFAIL);
                  }
                  Ibias = gsl_vector_get(vector,0);
+                 //if (Ibias_error == 0) Ibias = gsl_vector_get(vector,0);
                  strcpy(obj.nameCol,"RPARA");
                  if (readFitsSimple (obj,&vector))
                  {
+                     //RPARA_error = 1;
                      message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(par.inFile);
                      EP_PRINT_ERROR(message,status); return(EPFAIL);
                  }
                  RPARA = gsl_vector_get(vector,0);
+                 //if (RPARA_error == 0) RPARA = gsl_vector_get(vector,0);
                  strcpy(obj.nameCol,"TTR");
                  if (readFitsSimple (obj,&vector))
                  {
+                     //TTR_error = 1;
                      message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(par.inFile);
                      EP_PRINT_ERROR(message,status); return(EPFAIL);
                  }
                  TTR = gsl_vector_get(vector,0);
+                 //if (TTR_error == 0) TTR = gsl_vector_get(vector,0);
                  strcpy(obj.nameCol,"LFILTER");
                  if (readFitsSimple (obj,&vector))
                  {
+                     //LFILTER_error = 1;
                      message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(par.inFile);
                      EP_PRINT_ERROR(message,status); return(EPFAIL);
                  }
                  LFILTER = gsl_vector_get(vector,0);
+                 //if (LFILTER_error == 0) LFILTER = gsl_vector_get(vector,0);
                  
-                 // V0=Ibias*(R0+RPARA/TTRÃÂÃÂÃÂÃÂ²)*TTR
-                 if (V0 != 0)    R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
+                 // V0=Ibias*(R0+RPARA/TTR²)*TTR
+                 if (V0 != -999.0)    R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
+                 //if ((V0_error == 0) && (Ibias_error == 0) && (TTR_error == 0) && (RPARA_error == 0))     R0 = V0/(Ibias*TTR)-RPARA/(TTR*TTR);
+                 
+                 /*if ((((R0_error == 1) && (V0_error == 1)) || (Ibias_error == 1) || (TTR_error == 1) || (RPARA_error == 1)) && ((adu_cnv_exists == 0) || (adu_bias_exists == 0) || (i_bias_exists == 0)))
+                 {
+                     message = "Cannot read neither I0/V0, I0_START, RPARA or TTR in " + string(extname) + " HDU nor ADU_CNV, I_bias or ADU_BIAS in " + string(par.inFile);
+                     EP_PRINT_ERROR(message,status); return(EPFAIL);
+                 }*/
                  
                  strcpy(extname,"TESRECORDS");
                  if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
@@ -480,23 +447,66 @@
          else
          {
              strcpy(keyname,"R0");
-             fits_read_key(infileObject,TDOUBLE,keyname, &R0,NULL,&status);
+             if (fits_read_key(infileObject,TDOUBLE,keyname, &R0,NULL,&status))
+             {
+                 message = "Cannot read neither R0 in RECORDS HDU in " + string(par.inFile);
+                 EP_PRINT_ERROR(message,status); return(EPFAIL);
+             }
              //cout<<"R0: "<<R0<<endl;
              strcpy(keyname,"I0_START");
-             fits_read_key(infileObject,TDOUBLE,keyname, &Ibias,NULL,&status);
+             if (fits_read_key(infileObject,TDOUBLE,keyname, &Ibias,NULL,&status))
+             {
+                 message = "Cannot read neither I0_START in RECORDS HDU in " + string(par.inFile);
+                 EP_PRINT_ERROR(message,status); return(EPFAIL);
+             }
              //cout<<"I0_START: "<<Ibias<<endl;
              strcpy(keyname,"RPARA");
-             fits_read_key(infileObject,TDOUBLE,keyname, &RPARA,NULL,&status);
+             if (fits_read_key(infileObject,TDOUBLE,keyname, &RPARA,NULL,&status))
+             {
+                 message = "Cannot read neither RPARA in RECORDS HDU in " + string(par.inFile);
+                 EP_PRINT_ERROR(message,status); return(EPFAIL);
+             }  
              //cout<<"RPARA: "<<RPARA<<endl;
              strcpy(keyname,"TTR");
-             fits_read_key(infileObject,TDOUBLE,keyname, &TTR,NULL,&status);
+             if (fits_read_key(infileObject,TDOUBLE,keyname, &TTR,NULL,&status))
+             {
+                 message = "Cannot read neither TTR in RECORDS HDU in " + string(par.inFile);
+                 EP_PRINT_ERROR(message,status); return(EPFAIL);
+             }    
              //cout<<"TTR: "<<TTR<<endl;
              strcpy(keyname,"LFILTER");
-             fits_read_key(infileObject,TDOUBLE,keyname, &LFILTER,NULL,&status);
+             if (fits_read_key(infileObject,TDOUBLE,keyname, &LFILTER,NULL,&status))
+             {
+                 message = "Cannot read neither LFILTER in RECORDS HDU in " + string(par.inFile);
+                 EP_PRINT_ERROR(message,status); return(EPFAIL);
+             }    
+             /*if (((R0_error == 1) || (Ibias_error == 1) || (TTR_error == 1) || (RPARA_error == 1)) && ((adu_cnv_exists == 0) || (adu_bias_exists == 0) || (i_bias_exists == 0)))
+             {
+                 message = "Cannot read neither I0/V0, I0_START, RPARA or TTR in " + string(extname) + " HDU nor ADU_CNV, I_bias or ADU_BIAS in " + string(par.inFile);
+                 EP_PRINT_ERROR(message,status); return(EPFAIL);
+             }*/
          }
      }
      
      //Read and check other input keywords
+     if (tessimOrxifusim == 0)
+     {
+         strcpy(extname,"RECORDS");
+         if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
+         {
+             message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
+             EP_EXIT_ERROR(message,status);
+         }
+     }
+     else
+     {
+         strcpy(extname,"TESRECORDS");
+         if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
+         {
+             message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
+             EP_EXIT_ERROR(message,status);
+         }
+     }
      if (fits_get_num_rows(infileObject,&eventcnt, &status))
      {
          message = "Cannot get number of rows in HDU " + string(extname);
@@ -668,6 +678,7 @@
      /*cout<<"numrow_exists: "<<numrow_exists<<endl;
      cout<<"tclock_exists: "<<tclock_exists<<endl;
      cout<<"p_row_exists: "<<p_row_exists<<endl;*/
+     
      // If necessary...
      //...read the sampling rate from input FITS file (from the HISTORY in the Primary HDU) 
      //if ((tessimOrxifusim == 1) && (samprate == -999.0))
@@ -785,7 +796,9 @@
          EP_EXIT_ERROR(message,EPFAIL); 
      }
      
-     noiseIntervals = gsl_matrix_alloc(par.nintervals,intervalMinBins);
+     //noiseIntervals = gsl_matrix_alloc(par.nintervals,intervalMinBins);
+     // Maximum number of noise intervals in all the records eventcnt*floor(eventsz/par.intervalMinSamples)
+     noiseIntervals = gsl_matrix_alloc(eventcnt*floor(eventsz/par.intervalMinSamples),intervalMinBins);
      
      EventSamplesFFTMean = gsl_vector_alloc(intervalMinBins);
      gsl_vector_set_zero(EventSamplesFFTMean);
@@ -903,6 +916,7 @@
      //cout<<"nSgms_sigmaInterval: "<<nSgms_sigmaInterval<<endl;
      //cout<<"meanThreshold-nSgms_sigmaInterval*sgmThreshold: "<<meanThreshold-nSgms_sigmaInterval*sgmThreshold<<endl;
      //cout<<"meanThreshold+nSgms_sigmaInterval*sgmThreshold: "<<meanThreshold+nSgms_sigmaInterval*sgmThreshold<<endl;
+     int NumMeanSamples_afterRm = 0;
      for (int i=0;i<NumMeanSamples;i++)
      {
          //if (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold)
@@ -916,19 +930,24 @@
          }
          else
          {
-             gsl_matrix_get_row(interval,noiseIntervals,i);
-             
-             // FFT calculus (EventSamplesFFT)
-             if(FFT(interval,vector_aux1,SelectedTimeDuration))
+             if (NumMeanSamples_afterRm < par.nintervals)
              {
-                 message = "Cannot run FFT routine for vector1";
-                 EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                NumMeanSamples_afterRm++;
+                
+                gsl_matrix_get_row(interval,noiseIntervals,i);
+                
+                // FFT calculus (EventSamplesFFT)
+                if(FFT(interval,vector_aux1,SelectedTimeDuration))
+                {
+                    message = "Cannot run FFT routine for vector1";
+                    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                }
+                gsl_vector_complex_absIFCA(vector_aux,vector_aux1);
+                
+                // Add to mean FFT samples
+                gsl_vector_mul(vector_aux,vector_aux);
+                gsl_vector_add(EventSamplesFFTMean,vector_aux);
              }
-             gsl_vector_complex_absIFCA(vector_aux,vector_aux1);
-             
-             // Add to mean FFT samples
-             gsl_vector_mul(vector_aux,vector_aux);
-             gsl_vector_add(EventSamplesFFTMean,vector_aux);
          }
      }
      gsl_vector_free(interval); interval = 0;
@@ -958,7 +977,10 @@
      // Current noise spectral density
      // sqrt(sum(FFT^2)/NumMeanSamplesCSD) => sqrt(A^2) = A and sqrt(1/NumMeanSamplesCSD)=1/sqrt(Hz)
      //gsl_vector_scale(EventSamplesFFTMean,(1.0/(double)NumMeanSamples));
-     gsl_vector_scale(EventSamplesFFTMean,(1.0/(double)cnt));
+     //cout<<"cnt: "<<cnt<<endl;
+     //cout<<"NumMeanSamples_afterRm: "<<NumMeanSamples_afterRm<<endl;
+     //gsl_vector_scale(EventSamplesFFTMean,(1.0/(double)cnt));
+     gsl_vector_scale(EventSamplesFFTMean,(1.0/(double)NumMeanSamples_afterRm));
      for (int i=0;i<EventSamplesFFTMean->size;i++)
      {
          if (gsl_vector_get(EventSamplesFFTMean,i)<0)
@@ -1201,8 +1223,8 @@
   * - Allocate input GSL vectors
   * - Read iterator
   * - Processing each record
-  *       - Information has been read by blocks (with nrows per block)
-  *       - Just in case the last record has been filled out with 0's => Last record discarded
+  *     - Information has been read by blocks (with nrows per block)
+  *     - Just in case the last record has been filled out with 0's => Last record discarded
   * 	- Convert to the resistance space if necessary
   *     - To avoid taking into account the pulse tails at the beginning of a record as part of a pulse-free interval
   * 	- Low-pass filtering
@@ -1223,7 +1245,7 @@
      int status = EPOK;
      int extver=0;
      
-     if (NumMeanSamples >= par.nintervals)	{return (EPOK);}
+     //if (NumMeanSamples >= par.nintervals)	{return (EPOK);}
      
      // Declare variables
      // To read from the input FITS file
@@ -1292,12 +1314,12 @@
      // Processing each record
      for (int i=0; i< nrows; i++)
      {      
-         if (NumMeanSamples >= par.nintervals)
+         /*if (NumMeanSamples >= par.nintervals)
          {
              message = "Enough number of pulse-free intervals to CSD and covariace matrix calculus. No more rows read";
              cout<<message<<endl;
              break;
-         }
+         }*/
          
          sprintf(straux,"%d",ntotalrows);
          message = "-------------> Record: " + string(straux);
@@ -1463,18 +1485,18 @@
          // Preparing the CSD calculus (not filtered data)
          for (int k=0; k<nIntervals;k++)
          {
-             if  (NumMeanSamples >= par.nintervals)	break;
+             //if  (NumMeanSamples >= par.nintervals)	break;
              
              temp = gsl_vector_subvector(ioutgsl,gsl_vector_get(startIntervalgsl,k), intervalMinBins);
              gsl_vector_memcpy(EventSamples,&temp.vector);
              
              
-             if (NumMeanSamples < par.nintervals)
-             {
+             //if (NumMeanSamples < par.nintervals)
+             //{
                  gsl_matrix_set_row(noiseIntervals,NumMeanSamples,EventSamples);
                  
                  NumMeanSamples = NumMeanSamples + 1;
-             }
+             //}
          }
          
          ntotalrows++;
