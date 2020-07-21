@@ -323,6 +323,7 @@ int tesreconstruction_main() {
                                 trig_reclength = atoi(characters_after_treclength);
                         }
                     }
+                    
                     fits_close_file(fptr,&status);
                     CHECK_STATUS_BREAK(status);
             }

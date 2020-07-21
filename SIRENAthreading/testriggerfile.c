@@ -215,6 +215,8 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
         //Associate column numbers
 	fits_get_colnum(file->fptr, CASEINSEN,"TIME", &(file->timeCol), status);
 	fits_get_colnum(file->fptr, CASEINSEN,"ADC", &(file->trigCol), status);
+    int colnum = file->trigCol;
+    //printf("%s %d %s","colnum: ",colnum,"\n");
 	fits_get_colnum(file->fptr, CASEINSEN,"PIXID", &(file->pixIDCol), status);
 	fits_get_colnum(file->fptr, CASEINSEN,"PH_ID", &(file->ph_idCol), status);
 	CHECK_STATUS_RET(*status, NULL);
@@ -324,56 +326,61 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
     
     if (tessimOrxifusim == 0)	//TESSIM
     {
-        //Get trigger_size
-        for (int i=0;i<hdunum;i++)
-        {
-            fits_movabs_hdu(file->fptr, i+1, NULL, status); 
-            fits_read_key(file->fptr,TULONG,"TRIGGSZ", &(file->trigger_size),comment,status);
-            if (*status == 0)
-            {
-                break;
-            }
-            else if ((*status != 0) && (i < hdunum-1))
-            {
-                *status = 0;
-            }
-        }
-        if (*status != 0)
-        {
-            printf("%s","Cannot read TRIGGSZ keyword in any HDU from the input file\n");
-            CHECK_STATUS_RET(*status, NULL);
-        }
-        
         fits_movnam_hdu(file->fptr, ANY_HDU,"RECORDS", 0, status);
     }
     else				//XIFUSIM
     {
-        //Get trigger_size
-        for (int i=0;i<hdunum;i++)
-        {
-            fits_movabs_hdu(file->fptr, i+1, NULL, status); 
-            fits_read_key(file->fptr,TULONG,"RECLEN", &(file->trigger_size),comment,status);
-            if (*status == 0)
-            {
-                break;
-            }
-            else if ((*status != 0) && (i < hdunum-1))
-            {
-                *status = 0;
-            }
-        }
-        if (*status != 0)
-        {
-            printf("%s","Cannot read RECLEN keyword in any HDU from the input file\n");
-            CHECK_STATUS_RET(*status, NULL);            
-        }
-
         fits_movnam_hdu(file->fptr, ANY_HDU,"TESRECORDS", 0, status);
         
         if ((deltat_exists == 0) && ((dec_fac_exists == 0) || (tclock_exists == 0)) && ((numrow_exists == 0) || (p_row_exists == 0)))
         {
             file->delta_t = -999;
         }
+    }
+    
+    // Get the trigger size
+    char keyname[10] = "TFORM";
+    
+    char colnumchar[10];
+    snprintf(colnumchar,10,"%d",colnum);
+    strcat(keyname,colnumchar);
+    
+    char readTFORMADC [10];
+    fits_read_key(file->fptr,TSTRING,keyname,readTFORMADC,comment,status);
+    //printf("%s %s %s","TFORM2: ",readTFORMADC,"\n");
+
+    char * pointerTFORM;
+    
+    pointerTFORM = strstr(readTFORMADC,"(");
+    
+    if (pointerTFORM) // There is a parenthesis
+    {
+        //printf("%s","YES (\n");
+        char each_character_after_paren[125];
+        char characters_after_paren[125];
+        
+        pointerTFORM = pointerTFORM + 1; // Pointer to the next character to "(" 
+        snprintf(each_character_after_paren,125,"%c",*pointerTFORM);
+        snprintf(characters_after_paren,125,"%c",*pointerTFORM);
+        while (*pointerTFORM != ')')
+        {
+            pointerTFORM = pointerTFORM + 1;
+            snprintf(each_character_after_paren,125,"%c",*pointerTFORM);
+            strcat(characters_after_paren,each_character_after_paren); 
+        }
+        file->trigger_size = atoi(characters_after_paren);
+        //printf("%s %d %s","eventsz: ",file->trigger_size,"\n");
+    }
+    else    // There is not a parenthesis
+    {   
+        //printf("%s","NO (\n");
+        
+        char *ptr;
+        long ret;
+
+        ret = strtol(readTFORMADC, &ptr, 10);
+        file->trigger_size = ret;
+        //printf("%s %d %s","eventsz: ",file->trigger_size,"\n");
     }
     
     return(file);

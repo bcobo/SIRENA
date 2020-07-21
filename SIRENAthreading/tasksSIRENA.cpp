@@ -6952,7 +6952,7 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
 * 
 * - Conversion according to 'EnergyMethod'=I2R: 
 *       DeltaI = I-Ibias
-*       R = R0 - R0*(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+*       R = 1 - 1*(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
 * - Conversion according to 'EnergyMethod'=I2RALL: 
 *       R = (V0-IRL-LdI/dt)/I
 * - Conversion according to 'EnergyMethod'=I2RNOL (I2RALL neglecting the circuit inductance): 
@@ -7008,8 +7008,10 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
 		gsl_vector_memcpy(invector_modified,*invector);  	// invector_modified = invector = DeltaI/Ibias
 		gsl_vector_add_constant(invector_modified,+1.0);	// invector_modified = 1 + DeltaI/Ibias
 		gsl_vector_div(*invector,invector_modified);     	// invector = invector/invector_modified = (DeltaI/Ibias)/(1+DeltaI/Ibias)
-		gsl_vector_scale(*invector,-1.*R0);			// invector = -R0*(DeltaI/Ibias)/(1+DeltaI/Ibias)
-		gsl_vector_add_constant(*invector,R0); 			// invector = R0 - R0*(DeltaI/Ibias)/(1+DeltaI/Ibias)
+		//gsl_vector_scale(*invector,-1.*R0);			// invector = -R0*(DeltaI/Ibias)/(1+DeltaI/Ibias)
+		//gsl_vector_add_constant(*invector,R0); 			// invector = R0 - R0*(DeltaI/Ibias)/(1+DeltaI/Ibias)
+		gsl_vector_add_constant(*invector,1.0); 			// invector = R0 - R0*(DeltaI/Ibias)/(1+DeltaI/Ibias)
+		
 		gsl_vector_free(invector_modified); invector_modified = 0;
 	}
 	else if (strcmp(EnergyMethod,"I2RALL") == 0)
@@ -7111,7 +7113,7 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
                 gsl_vector_add_constant(IfitIgsl,Ifit);         // Ifit+I
                 gsl_vector_set_all(*invector,V0);
                 gsl_vector_div(*invector,IfitIgsl);             // V0/(Ifit+I)
-               
+
                 gsl_vector_free(I); I = 0;
                 gsl_vector_free(invector_modified); invector_modified = 0;
                 gsl_vector_free(IfitIgsl); IfitIgsl = 0;

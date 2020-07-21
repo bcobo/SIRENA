@@ -101,6 +101,7 @@
   * - Check if input FITS file have been simulated with TESSIM or XIFUSIM
   * - To calculate 'aducnv' (conversion factor between arbitrary units and A)...
   * -...or read ADU_CNV, I_BIAS and ADU_BIAS
+  * - Get structure of input FITS file columns
   * - Read keywords to transform to resistance space
   * - Read and check other input keywords
   * - Read other necessary keywords from ANY HDU
@@ -108,7 +109,6 @@
   *     - By using keywords in input FITS file (from DELTAT or TCLOCK+DEC_FAC or NUMROW+P_ROW)
   *     - If necessary read the sampling rate from input FITS file (from the HISTORY in the Primary HDU)
   *     - If not possible, provide an error message to include DELTAT (inverse of sampling rate) in the input FITS file
-  * - Get structure of input FITS file columns
   * - Initialize variables and transform from seconds to samples
   * - Declare variables
   * - Create structure to run Iteration: inDataIterator
@@ -261,24 +261,6 @@
              }
          }
      }
-     if (tessimOrxifusim == 0)
-     {
-         strcpy(extname,"RECORDS");
-         if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
-         {
-             message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
-             EP_EXIT_ERROR(message,status);
-         }
-     }
-     else
-     {
-         strcpy(extname,"TESRECORDS");
-         if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
-         {
-             message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
-             EP_EXIT_ERROR(message,status);
-         }
-     }
      
      //...or read ADU_CNV, I_BIAS and ADU_BIAS
      // ADU_CNV(A/ADU)
@@ -336,8 +318,42 @@
      cout<<"i_bias: "<<i_bias<<endl;
      cout<<"adu_bias: "<<adu_bias<<endl;*/
      
+     if (tessimOrxifusim == 0)
+     {
+         strcpy(extname,"RECORDS");
+         if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
+         {
+             message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
+             EP_EXIT_ERROR(message,status);
+         }
+     }
+     else
+     {
+         strcpy(extname,"TESRECORDS");
+         if (fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status))
+         {
+             message = "Cannot move to HDU " + string(extname) + " in " + string(par.inFile);
+             EP_EXIT_ERROR(message,status);
+         }
+     }
+     
+      // Get structure of input FITS file columns
+     strcpy(straux,"Time");
+     if (fits_get_colnum(infileObject,0,straux,&colnum,&status))
+     {
+         message = "Cannot get column number for " + string(straux) +" in " + string(par.inFile);
+         EP_EXIT_ERROR(message,status);
+     }
+     strcpy(straux,"ADC");
+     if (fits_get_colnum(infileObject,0,straux,&colnum,&status))
+     {
+         message = "Cannot get column number for " + string(straux) +" in " + string(par.inFile);
+         EP_EXIT_ERROR(message,status);
+     }
+     
      // Read keywords to transform to resistance space
-     if ((strcmp(par.I2R,"I") != 0) && (adu_cnv == -999.0))
+     //if ((strcmp(par.I2R,"I") != 0) && (adu_cnv == -999.0))
+     if ((strcmp(par.I2R,"I") != 0) && ((strcmp(par.I2R,"I2R") != 0) || (adu_cnv == -999.0)))
      {
          strcpy(extname,"RECORDS");
          fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
@@ -519,56 +535,51 @@
      gsl_vector_set_all(sigma,-999.0);
      
      // Read other necessary keywords from ANY HDU
-     if (tessimOrxifusim == 1) //XIFUSIM
+     // Instead of reading TRIGGSZ (xifusim) or RECLEN (tessim), TFORM is used
+     sprintf(str_stat,"%d",colnum);
+     message = "TFORM" + string(str_stat);
+     strcpy(keyname,message.c_str());
+     char readTFORMADC [10];
+     fits_read_key(infileObject,TSTRING,keyname,readTFORMADC,comment,&status);
+     //cout<<"TFORM2_1: "<<readTFORMADC<<endl;
+     
+     char * pointerTFORM;
+     
+     pointerTFORM = strstr(readTFORMADC,"(");
+     if (pointerTFORM) // There is a parenthesis
      {
-         //Read RECLEN
-         strcpy(keyname,"RECLEN");
-         for (int i=0;i<hdunum;i++)
+         char each_character_after_paren[125];
+         char characters_after_paren[125];
+     
+         pointerTFORM = pointerTFORM + 1; // Pointer to the next character to "(" 
+         snprintf(each_character_after_paren,125,"%c",*pointerTFORM);
+         snprintf(characters_after_paren,125,"%c",*pointerTFORM);
+         while (*pointerTFORM != ')')
          {
-             fits_movabs_hdu(infileObject, i+1, NULL, &status); 
-             fits_read_key(infileObject,TLONG,keyname, &eventsz,comment,&status);
-             if (status == 0)
-             {
-                 break;
-             }
-             else if ((status != 0) && (i < hdunum-1))
-             {
-                 status = 0;
-             }
+             pointerTFORM = pointerTFORM + 1;
+             snprintf(each_character_after_paren,125,"%c",*pointerTFORM);
+             strcat(characters_after_paren,each_character_after_paren); 
          }
-         if (status != 0)
-         {
-             message = "Cannot read the keyword " + string(keyname) + " in any HDU from the input file";
-             EP_PRINT_ERROR(message,status); return(EPFAIL);
-         }
-         strcpy(extname,"TESRECORDS");
-         fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
+         eventsz = atoi(characters_after_paren);
+         //cout<<"eventsz: "<<eventsz<<endl;
      }
-     else if (tessimOrxifusim == 0) //TESSIM
-     {
-         //Read TRIGGSZ
-         strcpy(keyname,"TRIGGSZ");
-         for (int i=0;i<hdunum;i++)
-         {
-             fits_movabs_hdu(infileObject, i+1, NULL, &status); 
-             fits_read_key(infileObject,TLONG,keyname, &eventsz,comment,&status);
-             if (status == 0)
-             {
-                 break;
-             }
-             else if ((status != 0) && (i < hdunum-1))
-             {
-                 status = 0;
-             }
-         }
-         if (status != 0)
-         {
-             message = "Cannot read the keyword " + string(keyname) + " in any HDU from the input file";
-             EP_PRINT_ERROR(message,status); return(EPFAIL);
-         }
+     else    // There is not a parenthesis
+     {       
+         string readTFORMADCstring;
+         readTFORMADCstring = readTFORMADC;
          
-         strcpy(extname,"RECORDS");
-         fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
+         int index = 0;
+         string characters;
+         while (isdigit(readTFORMADCstring[index]))
+         {
+             //cout<<readTFORMADCstring[index]<<endl;
+             if (index == 0) characters = readTFORMADCstring[index];
+             else            characters = characters + readTFORMADCstring[index];
+             
+             index++;
+         }
+         eventsz = stoi(characters);
+         //cout<<"eventsz: "<<eventsz<<endl;
      }
      
      // Calculate the sampling rate 
@@ -769,20 +780,6 @@
      
      asquid = 1.0;
      plspolar = 1.0;
-     
-     // Get structure of input FITS file columns
-     strcpy(straux,"Time");
-     if (fits_get_colnum(infileObject,0,straux,&colnum,&status))
-     {
-         message = "Cannot get column number for " + string(straux) +" in " + string(par.inFile);
-         EP_EXIT_ERROR(message,status);
-     }
-     strcpy(straux,"ADC");
-     if (fits_get_colnum(infileObject,0,straux,&colnum,&status))
-     {
-         message = "Cannot get column number for " + string(straux) +" in " + string(par.inFile);
-         EP_EXIT_ERROR(message,status);
-     }
      
      // Initialize variables and transform from seconds to samples
      Lrs = par.LrsT * samprate;

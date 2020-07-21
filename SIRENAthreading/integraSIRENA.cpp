@@ -468,130 +468,42 @@
              double IMIN;
              double IMAX;
              
-             strcpy(extname,"RECORDS");
-             fits_movnam_hdu(reconstruct_init->record_file_fptr, ANY_HDU,extname, 0, status);
-             if ((*status) != 0)
+             double ADU_CNV;
+             int adu_cnv_exists = 0;
+             int i_bias_exists = 0;
+             int adu_bias_exists = 0;
+             
+             strcpy(keyname,"ADU_CNV");
+             int hdunum; // Number of the current HDU (RECORDS or TESRECORDS)
+             fits_get_hdu_num(reconstruct_init->record_file_fptr, &hdunum);
+             for (int i=0;i<hdunum;i++)
              {
-                 *status = 0;
-                 
-                 int hdunum; // Number of the current HDU (RECORDS or TESRECORDS)
-                 int hdutype;
-                 fits_get_hdu_num(reconstruct_init->record_file_fptr, &hdunum);
-                 fits_get_hdu_type(reconstruct_init->record_file_fptr, &hdutype, status);
-                 
-                 strcpy(extname,"ADCPARAM");
-                 if (fits_movnam_hdu(reconstruct_init->record_file_fptr, ANY_HDU,extname, 0, status))
+                 fits_movabs_hdu(reconstruct_init->record_file_fptr, i+1, NULL, status); 
+                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &ADU_CNV,NULL,status);
+                 if (*status == 0)
                  {
-                     EP_EXIT_ERROR("Cannot move to HDU ",EPFAIL);
+                     adu_cnv_exists = 1;
+                     reconstruct_init->i2rdata->ADU_CNV = ADU_CNV;
+                     break;
                  }
-                 strcpy(keyname,"IMIN");
-                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMIN,NULL,status);
-                 reconstruct_init->i2rdata->IMIN = IMIN;
-                 strcpy(keyname,"IMAX");
-                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMAX,NULL,status);
-                 reconstruct_init->i2rdata->IMAX = IMAX;
-                 if (*status != 0)
+                 else if ((*status != 0) && (i <= hdunum-1))
                  {
-                     EP_EXIT_ERROR("Cannot read keyword in convertI2R",EPFAIL);
+                     *status = 0;
                  }
-                 
-                 double V0 = 0;
-                 
-                 strcpy(extname,"TESPARAM");
-                 if (fits_movnam_hdu(reconstruct_init->record_file_fptr, ANY_HDU,extname, 0, status))
-                 {
-                     EP_EXIT_ERROR("Cannot move to HDU ",EPFAIL);
-                 }
-                 int numberkeywords;
-                 char *headerTESPARAM;
-                 fits_hdr2str(reconstruct_init->record_file_fptr, 0, NULL, 0,&headerTESPARAM, &numberkeywords, status);   // Reading thee whole "TESPARAM" HDU and store it in 'headerTESPARAM'
-                 char * R0_pointer;
-                 R0_pointer = strstr (headerTESPARAM,"R0");    // Pointer to where the text "RO" is
-                 // R0_pointer is 0 if R0 is not in TESPARAM
-                 IOData obj;
-                 obj.inObject = reconstruct_init->record_file_fptr;
-                 obj.nameTable = new char [255];
-                 strcpy(obj.nameTable,"TESPARAM");
-                 obj.iniCol = 0;
-                 obj.nameCol = new char [255];
-                 obj.unit = new char [255];
-                 strcpy(obj.nameCol,"R0");
-                 obj.type = TDOUBLE;
-                 obj.iniRow = 1;
-                 obj.endRow = 1;
-                 gsl_vector *vector = gsl_vector_alloc(1);
-                 if (R0_pointer == 0)    // R0_pointer is 0 if R0 is not in TESPARAM
-                 {
-                     *status == 0;
-                     strcpy(obj.nameCol,"V0");
-                     if (readFitsSimple (obj,&vector))
-                     {
-                         EP_EXIT_ERROR("Neither R0 nor V0 in TESPARAM",EPFAIL);
-                     }
-                     V0 = gsl_vector_get(vector,0);
-                 }
-                 if (V0 == 0)    reconstruct_init->i2rdata->R0 = gsl_vector_get(vector,0);
-                 strcpy(obj.nameCol,"I0_START");
-                 if (readFitsSimple (obj,&vector))
-                 {
-                     EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
-                 }
-                 reconstruct_init->i2rdata->I0_START = gsl_vector_get(vector,0);
-                 strcpy(obj.nameCol,"RPARA");
-                 if (readFitsSimple (obj,&vector))
-                 {
-                     EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
-                 }
-                 reconstruct_init->i2rdata->RPARA = gsl_vector_get(vector,0);
-                 strcpy(obj.nameCol,"TTR");
-                 if (readFitsSimple (obj,&vector))
-                 {
-                     EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
-                 }
-                 reconstruct_init->i2rdata->TTR = gsl_vector_get(vector,0);
-                 strcpy(obj.nameCol,"LFILTER");
-                 if (readFitsSimple (obj,&vector))
-                 {
-                     EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
-                 }
-                 reconstruct_init->i2rdata->LFILTER = gsl_vector_get(vector,0);
-                 
-                 if (V0 != 0)
-                 {
-                     reconstruct_init->i2rdata->R0 = V0/(reconstruct_init->i2rdata->I0_START*reconstruct_init->i2rdata->TTR)-reconstruct_init->i2rdata->RPARA/pow(reconstruct_init->i2rdata->TTR,2.0);
-                 }
-                 
-                 if (fits_movabs_hdu(reconstruct_init->record_file_fptr, hdunum, &hdutype, status))
-                 {
-                     EP_EXIT_ERROR("Cannot move to HDU ",EPFAIL);
-                 }
-                 
-                 /*cout<<"R0: "<<reconstruct_init->i2rdata->R0<<endl;
-                  *               cout<<"I0_START: "<<reconstruct_init->i2rdata->I0_START<<endl;
-                  *               cout<<"RPARA: "<<reconstruct_init->i2rdata->RPARA<<endl;
-                  *               cout<<"TTR: "<<reconstruct_init->i2rdata->TTR<<endl;
-                  *               cout<<"LFILTER: "<<reconstruct_init->i2rdata->LFILTER<<endl;*/
-                 
-                 gsl_vector_free(vector);
-                 delete [] obj.nameTable;
-                 delete [] obj.nameCol;
-                 delete [] obj.unit;
              }
-             else
+             if (adu_cnv_exists == 1)
              {
-                 double ADU_CNV;
-                 int adu_cnv_exists = 0;
-                 strcpy(keyname,"ADU_CNV");
-                 int hdunum; // Number of the current HDU (RECORDS or TESRECORDS)
-                 fits_get_hdu_num(reconstruct_init->record_file_fptr, &hdunum);
+                 double I_BIAS;
+                 
+                 strcpy(keyname,"I_BIAS");
                  for (int i=0;i<hdunum;i++)
                  {
                      fits_movabs_hdu(reconstruct_init->record_file_fptr, i+1, NULL, status); 
-                     fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &ADU_CNV,NULL,status);
+                     fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &I_BIAS,NULL,status);
                      if (*status == 0)
                      {
-                         adu_cnv_exists = 1;
-                         reconstruct_init->i2rdata->ADU_CNV = ADU_CNV;
+                         i_bias_exists = 1;
+                         reconstruct_init->i2rdata->I_BIAS = I_BIAS;
                          break;
                      }
                      else if ((*status != 0) && (i <= hdunum-1))
@@ -599,92 +511,197 @@
                          *status = 0;
                      }
                  }
-                 if (adu_cnv_exists == 1)
+                 if (i_bias_exists == 0)
                  {
-                     double I_BIAS;
-                     int i_bias_exists = 0;
-                     strcpy(keyname,"I_BIAS");
-                     for (int i=0;i<hdunum;i++)
+                     EP_EXIT_ERROR("I_BIAS keyword is not in the input FITS file",EPFAIL);
+                 }
+                 double ADU_BIAS;
+                 
+                 strcpy(keyname,"ADU_BIAS");
+                 for (int i=0;i<hdunum;i++)
+                 {
+                     fits_movabs_hdu(reconstruct_init->record_file_fptr, i+1, NULL, status); 
+                     fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &ADU_BIAS,NULL,status);
+                     if (*status == 0)
                      {
-                         fits_movabs_hdu(reconstruct_init->record_file_fptr, i+1, NULL, status); 
-                         fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &I_BIAS,NULL,status);
-                         if (*status == 0)
-                         {
-                             i_bias_exists = 1;
-                             reconstruct_init->i2rdata->I_BIAS = I_BIAS;
-                             break;
-                         }
-                         else if ((*status != 0) && (i <= hdunum-1))
-                         {
-                             *status = 0;
-                         }
+                         adu_bias_exists = 1;
+                         reconstruct_init->i2rdata->ADU_BIAS = ADU_BIAS;
+                         break;
                      }
-                     if (i_bias_exists == 0)
+                     else if ((*status != 0) && (i <= hdunum-1))
                      {
-                         EP_EXIT_ERROR("I_BIAS keyword is not in the input FITS file",EPFAIL);
-                     }
-                     double ADU_BIAS;
-                     int adu_bias_exists = 0;
-                     strcpy(keyname,"ADU_BIAS");
-                     for (int i=0;i<hdunum;i++)
-                     {
-                         fits_movabs_hdu(reconstruct_init->record_file_fptr, i+1, NULL, status); 
-                         fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &ADU_BIAS,NULL,status);
-                         if (*status == 0)
-                         {
-                             adu_bias_exists = 1;
-                             reconstruct_init->i2rdata->ADU_BIAS = ADU_BIAS;
-                             break;
-                         }
-                         else if ((*status != 0) && (i <= hdunum-1))
-                         {
-                             *status = 0;
-                         }
-                     }
-                     if (adu_bias_exists == 0)
-                     {
-                         EP_EXIT_ERROR("ADU_BIAS keyword is not in the input FITS file",EPFAIL);
+                         *status = 0;
                      }
                  }
-                 else
+                 if (adu_bias_exists == 0)
                  {
-                     //cout<<"TESRECORDS"<<endl;
-                     double R0;
-                     double I0_START;
-                     double RPARA;
-                     double TTR;
-                     double LFILTER;
+                     EP_EXIT_ERROR("ADU_BIAS keyword is not in the input FITS file",EPFAIL);
+                 }
+             }
+             
+             strcpy(extname,"RECORDS");
+             fits_movnam_hdu(reconstruct_init->record_file_fptr, ANY_HDU,extname, 0, status);
+             if ((*status) != 0)
+             {
+                 if (((strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) && ((adu_cnv_exists == 0) || (adu_bias_exists == 0) || (i_bias_exists == 0))) || (strcmp(reconstruct_init->EnergyMethod,"I2R") != 0))
+                 {
+                     *status = 0;
                      
-                     strcpy(keyname,"R0");
-                     fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &R0,NULL,status);
-                     reconstruct_init->i2rdata->R0 = R0;
-                     strcpy(keyname,"I0_START");
-                     fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &I0_START,NULL,status);
-                     reconstruct_init->i2rdata->I0_START = I0_START;
+                     int hdunum; // Number of the current HDU (RECORDS or TESRECORDS)
+                     int hdutype;
+                     fits_get_hdu_num(reconstruct_init->record_file_fptr, &hdunum);
+                     fits_get_hdu_type(reconstruct_init->record_file_fptr, &hdutype, status);
+                     
+                     strcpy(extname,"ADCPARAM");
+                     if (fits_movnam_hdu(reconstruct_init->record_file_fptr, ANY_HDU,extname, 0, status))
+                     {
+                         EP_EXIT_ERROR("Cannot move to HDU ",EPFAIL);
+                     }
                      strcpy(keyname,"IMIN");
                      fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMIN,NULL,status);
+                     if (*status != 0)
+                     {
+                         EP_EXIT_ERROR("Cannot read IMIN keyword to be used in convertI2R",EPFAIL);
+                     }
                      reconstruct_init->i2rdata->IMIN = IMIN;
                      strcpy(keyname,"IMAX");
                      fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMAX,NULL,status);
                      reconstruct_init->i2rdata->IMAX = IMAX;
-                     strcpy(keyname,"RPARA");
-                     fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &RPARA,NULL,status);
-                     reconstruct_init->i2rdata->RPARA = RPARA;
-                     strcpy(keyname,"TTR");
-                     fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &TTR,NULL,status);
-                     reconstruct_init->i2rdata->TTR = TTR;
-                     strcpy(keyname,"LFILTER");
-                     fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &LFILTER,NULL,status);
-                     reconstruct_init->i2rdata->LFILTER = LFILTER;
+                     if (*status != 0)
+                     {
+                         EP_EXIT_ERROR("Cannot read IMAX keyword to be used in convertI2R",EPFAIL);
+                     }
                      
-                     /*cout<<"Imin: "<<reconstruct_init->i2rdata->IMIN<<endl;
-                      *               cout<<"Imax: "<<reconstruct_init->i2rdata->IMAX<<endl;
-                      *               cout<<"R0: "<<reconstruct_init->i2rdata->R0<<endl;
-                      *               cout<<"Ibias: "<<reconstruct_init->i2rdata->I0_START<<endl;
+                     double V0 = 0;
+                     
+                     strcpy(extname,"TESPARAM");
+                     if (fits_movnam_hdu(reconstruct_init->record_file_fptr, ANY_HDU,extname, 0, status))
+                     {
+                         EP_EXIT_ERROR("Cannot move to HDU ",EPFAIL);
+                     }
+                     int numberkeywords;
+                     char *headerTESPARAM;
+                     fits_hdr2str(reconstruct_init->record_file_fptr, 0, NULL, 0,&headerTESPARAM, &numberkeywords, status);   // Reading thee whole "TESPARAM" HDU and store it in 'headerTESPARAM'
+                     char * R0_pointer;
+                     R0_pointer = strstr (headerTESPARAM,"R0");    // Pointer to where the text "RO" is
+                     // R0_pointer is 0 if R0 is not in TESPARAM
+                     IOData obj;
+                     obj.inObject = reconstruct_init->record_file_fptr;
+                     obj.nameTable = new char [255];
+                     strcpy(obj.nameTable,"TESPARAM");
+                     obj.iniCol = 0;
+                     obj.nameCol = new char [255];
+                     obj.unit = new char [255];
+                     strcpy(obj.nameCol,"R0");
+                     obj.type = TDOUBLE;
+                     obj.iniRow = 1;
+                     obj.endRow = 1;
+                     gsl_vector *vector = gsl_vector_alloc(1);
+                     if (R0_pointer == 0)    // R0_pointer is 0 if R0 is not in TESPARAM
+                     {
+                         *status == 0;
+                         strcpy(obj.nameCol,"V0");
+                         if (readFitsSimple (obj,&vector))
+                         {
+                             EP_EXIT_ERROR("Neither R0 nor V0 in TESPARAM",EPFAIL);
+                         }
+                         V0 = gsl_vector_get(vector,0);
+                     }
+                     if (V0 == 0)    reconstruct_init->i2rdata->R0 = gsl_vector_get(vector,0);
+                     strcpy(obj.nameCol,"I0_START");
+                     if (readFitsSimple (obj,&vector))
+                     {
+                         EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                     }
+                     reconstruct_init->i2rdata->I0_START = gsl_vector_get(vector,0);
+                     strcpy(obj.nameCol,"RPARA");
+                     if (readFitsSimple (obj,&vector))
+                     {
+                         EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                     }
+                     reconstruct_init->i2rdata->RPARA = gsl_vector_get(vector,0);
+                     strcpy(obj.nameCol,"TTR");
+                     if (readFitsSimple (obj,&vector))
+                     {
+                         EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                     }
+                     reconstruct_init->i2rdata->TTR = gsl_vector_get(vector,0);
+                     strcpy(obj.nameCol,"LFILTER");
+                     if (readFitsSimple (obj,&vector))
+                     {
+                         EP_EXIT_ERROR("Cannot run readFitsSimple in integraSIRENA.cpp",EPFAIL);
+                     }
+                     reconstruct_init->i2rdata->LFILTER = gsl_vector_get(vector,0);
+                     
+                     if (V0 != 0)
+                     {
+                         reconstruct_init->i2rdata->R0 = V0/(reconstruct_init->i2rdata->I0_START*reconstruct_init->i2rdata->TTR)-reconstruct_init->i2rdata->RPARA/pow(reconstruct_init->i2rdata->TTR,2.0);
+                     }
+                     
+                     if (fits_movabs_hdu(reconstruct_init->record_file_fptr, hdunum, &hdutype, status))
+                     {
+                         EP_EXIT_ERROR("Cannot move to HDU ",EPFAIL);
+                     }
+                     
+                     /*cout<<"R0: "<<reconstruct_init->i2rdata->R0<<endl;
+                      *               cout<<"I0_START: "<<reconstruct_init->i2rdata->I0_START<<endl;
                       *               cout<<"RPARA: "<<reconstruct_init->i2rdata->RPARA<<endl;
                       *               cout<<"TTR: "<<reconstruct_init->i2rdata->TTR<<endl;
                       *               cout<<"LFILTER: "<<reconstruct_init->i2rdata->LFILTER<<endl;*/
+                     
+                     gsl_vector_free(vector);
+                     delete [] obj.nameTable;
+                     delete [] obj.nameCol;
+                     delete [] obj.unit;
                  }
+             }
+             else
+             {
+                 
+                 //cout<<"TESRECORDS"<<endl;
+                 double R0;
+                 double I0_START;
+                 double RPARA;
+                 double TTR;
+                 double LFILTER;
+                 
+                 strcpy(keyname,"R0");
+                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &R0,NULL,status);
+                 EP_EXIT_ERROR("Cannot read R0 keyword to be used in convertI2R",EPFAIL);
+                 reconstruct_init->i2rdata->R0 = R0;
+                 strcpy(keyname,"I0_START");
+                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &I0_START,NULL,status);
+                 EP_EXIT_ERROR("Cannot read I0_START keyword to be used in convertI2R",EPFAIL);
+                 reconstruct_init->i2rdata->I0_START = I0_START;
+                 strcpy(keyname,"IMIN");
+                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMIN,NULL,status);
+                 EP_EXIT_ERROR("Cannot read IMIN keyword to be used in convertI2R",EPFAIL);
+                 reconstruct_init->i2rdata->IMIN = IMIN;
+                 strcpy(keyname,"IMAX");
+                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMAX,NULL,status);
+                 EP_EXIT_ERROR("Cannot read IMAX keyword to be used in convertI2R",EPFAIL);
+                 reconstruct_init->i2rdata->IMAX = IMAX;
+                 strcpy(keyname,"RPARA");
+                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &RPARA,NULL,status);
+                 EP_EXIT_ERROR("Cannot read RPARA keyword to be used in convertI2R",EPFAIL);
+                 reconstruct_init->i2rdata->RPARA = RPARA;
+                 strcpy(keyname,"TTR");
+                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &TTR,NULL,status);
+                 EP_EXIT_ERROR("Cannot read TTR keyword to be used in convertI2R",EPFAIL);
+                 reconstruct_init->i2rdata->TTR = TTR;
+                 strcpy(keyname,"LFILTER");
+                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &LFILTER,NULL,status);
+                 EP_EXIT_ERROR("Cannot read LFILTER keyword to be used in convertI2R",EPFAIL);
+                 reconstruct_init->i2rdata->LFILTER = LFILTER;
+                 
+                 /*cout<<"Imin: "<<reconstruct_init->i2rdata->IMIN<<endl;
+                  *               cout<<"Imax: "<<reconstruct_init->i2rdata->IMAX<<endl;
+                  *               cout<<"R0: "<<reconstruct_init->i2rdata->R0<<endl;
+                  *               cout<<"Ibias: "<<reconstruct_init->i2rdata->I0_START<<endl;
+                  *               cout<<"RPARA: "<<reconstruct_init->i2rdata->RPARA<<endl;
+                  *               cout<<"TTR: "<<reconstruct_init->i2rdata->TTR<<endl;
+                  *               cout<<"LFILTER: "<<reconstruct_init->i2rdata->LFILTER<<endl;*/
+                 
              }
          }
      }
