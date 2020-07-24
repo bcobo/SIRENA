@@ -657,53 +657,77 @@
              }
              else
              {
-                 
-                 //cout<<"TESRECORDS"<<endl;
-                 double R0;
-                 double I0_START;
-                 double RPARA;
-                 double TTR;
-                 double LFILTER;
-                 
-                 strcpy(keyname,"R0");
-                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &R0,NULL,status);
-                 EP_EXIT_ERROR("Cannot read R0 keyword to be used in convertI2R",EPFAIL);
-                 reconstruct_init->i2rdata->R0 = R0;
-                 strcpy(keyname,"I0_START");
-                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &I0_START,NULL,status);
-                 EP_EXIT_ERROR("Cannot read I0_START keyword to be used in convertI2R",EPFAIL);
-                 reconstruct_init->i2rdata->I0_START = I0_START;
-                 strcpy(keyname,"IMIN");
-                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMIN,NULL,status);
-                 EP_EXIT_ERROR("Cannot read IMIN keyword to be used in convertI2R",EPFAIL);
-                 reconstruct_init->i2rdata->IMIN = IMIN;
-                 strcpy(keyname,"IMAX");
-                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMAX,NULL,status);
-                 EP_EXIT_ERROR("Cannot read IMAX keyword to be used in convertI2R",EPFAIL);
-                 reconstruct_init->i2rdata->IMAX = IMAX;
-                 strcpy(keyname,"RPARA");
-                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &RPARA,NULL,status);
-                 EP_EXIT_ERROR("Cannot read RPARA keyword to be used in convertI2R",EPFAIL);
-                 reconstruct_init->i2rdata->RPARA = RPARA;
-                 strcpy(keyname,"TTR");
-                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &TTR,NULL,status);
-                 EP_EXIT_ERROR("Cannot read TTR keyword to be used in convertI2R",EPFAIL);
-                 reconstruct_init->i2rdata->TTR = TTR;
-                 strcpy(keyname,"LFILTER");
-                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &LFILTER,NULL,status);
-                 EP_EXIT_ERROR("Cannot read LFILTER keyword to be used in convertI2R",EPFAIL);
-                 reconstruct_init->i2rdata->LFILTER = LFILTER;
-                 
-                 /*cout<<"Imin: "<<reconstruct_init->i2rdata->IMIN<<endl;
-                  *               cout<<"Imax: "<<reconstruct_init->i2rdata->IMAX<<endl;
-                  *               cout<<"R0: "<<reconstruct_init->i2rdata->R0<<endl;
-                  *               cout<<"Ibias: "<<reconstruct_init->i2rdata->I0_START<<endl;
-                  *               cout<<"RPARA: "<<reconstruct_init->i2rdata->RPARA<<endl;
-                  *               cout<<"TTR: "<<reconstruct_init->i2rdata->TTR<<endl;
-                  *               cout<<"LFILTER: "<<reconstruct_init->i2rdata->LFILTER<<endl;*/
-                 
+                 if (((strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) && ((adu_cnv_exists == 0) || (adu_bias_exists == 0) || (i_bias_exists == 0))) || (strcmp(reconstruct_init->EnergyMethod,"I2R") != 0))
+                 {
+                     //cout<<"TESRECORDS"<<endl;
+                     double R0;
+                     double I0_START;
+                     double RPARA;
+                     double TTR;
+                     double LFILTER;
+                     
+                     strcpy(keyname,"R0");
+                     if (fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &R0,NULL,status))
+                         EP_EXIT_ERROR("Cannot read R0 keyword to be used in convertI2R",EPFAIL);
+                     reconstruct_init->i2rdata->R0 = R0;
+                     strcpy(keyname,"I0_START");
+                     if (fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &I0_START,NULL,status))
+                        EP_EXIT_ERROR("Cannot read I0_START keyword to be used in convertI2R",EPFAIL);
+                     reconstruct_init->i2rdata->I0_START = I0_START;
+                     strcpy(keyname,"IMIN");
+                     if (fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMIN,NULL,status))
+                        EP_EXIT_ERROR("Cannot read IMIN keyword to be used in convertI2R",EPFAIL);
+                     reconstruct_init->i2rdata->IMIN = IMIN;
+                     strcpy(keyname,"IMAX");
+                     if (fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMAX,NULL,status))
+                        EP_EXIT_ERROR("Cannot read IMAX keyword to be used in convertI2R",EPFAIL);
+                     reconstruct_init->i2rdata->IMAX = IMAX;
+                     strcpy(keyname,"RPARA");
+                     if (fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &RPARA,NULL,status))
+                        EP_EXIT_ERROR("Cannot read RPARA keyword to be used in convertI2R",EPFAIL);
+                     reconstruct_init->i2rdata->RPARA = RPARA;
+                     strcpy(keyname,"TTR");
+                     if (fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &TTR,NULL,status))
+                        EP_EXIT_ERROR("Cannot read TTR keyword to be used in convertI2R",EPFAIL);
+                     reconstruct_init->i2rdata->TTR = TTR;
+                     strcpy(keyname,"LFILTER");
+                     if (fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &LFILTER,NULL,status))
+                        EP_EXIT_ERROR("Cannot read LFILTER keyword to be used in convertI2R",EPFAIL);
+                     reconstruct_init->i2rdata->LFILTER = LFILTER;
+                     
+                     /*cout<<"Imin: "<<reconstruct_init->i2rdata->IMIN<<endl;
+                      *               cout<<"Imax: "<<reconstruct_init->i2rdata->IMAX<<endl;
+                      *               cout<<"R0: "<<reconstruct_init->i2rdata->R0<<endl;
+                      *               cout<<"Ibias: "<<reconstruct_init->i2rdata->I0_START<<endl;
+                      *               cout<<"RPARA: "<<reconstruct_init->i2rdata->RPARA<<endl;
+                      *               cout<<"TTR: "<<reconstruct_init->i2rdata->TTR<<endl;
+                      *               cout<<"LFILTER: "<<reconstruct_init->i2rdata->LFILTER<<endl;*/
+                 }
              }
          }
+     }
+     int tessimOrxifusim = -999;
+     // Check if input FITS file have been simulated with TESSIM or XIFUSIM
+     fits_movnam_hdu(reconstruct_init->record_file_fptr, ANY_HDU,"RECORDS", 0, status);
+     if (*status != 0)
+     {
+         *status = 0;
+         if (fits_movnam_hdu(reconstruct_init->record_file_fptr, ANY_HDU,"TESRECORDS", 0, status))
+         {
+             EP_EXIT_ERROR("'TESRECORDS' HDU is not in the input FITS file",EPFAIL);
+         }
+         else
+         {
+             tessimOrxifusim = 1;
+         }
+     }
+     else 
+     {
+         tessimOrxifusim = 0;
+     }
+     if (tessimOrxifusim == -999)
+     {
+         EP_EXIT_ERROR("Neither the 'RECORDS' nor 'TESRECORDS' HDUs are in the input FITS file",EPFAIL);
      }
      
      // In case of running with threading
