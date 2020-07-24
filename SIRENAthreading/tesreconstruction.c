@@ -171,14 +171,14 @@ int tesreconstruction_main() {
     double sampling_rate = -999.0;
     
     
-    /*FILE *filexml = fopen(par.XMLFile, "r");
+    FILE *filexml = fopen(par.XMLFile, "r");
     char line[256];
     int numlinesXML = 0;
     int numgradesXML = 0;
     char *txt_pointer;
     while(fscanf(filexml,"%s",line)!=EOF)
     {
-        printf("%s %s %s", "line: ", line, "\n");
+        //printf("%s %s %s", "line: ", line, "\n");
         numlinesXML++;
         
         txt_pointer = strstr (line,"grading");
@@ -187,41 +187,35 @@ int tesreconstruction_main() {
             numgradesXML++;
         }
     }
-    printf("%s %d %s", "numgradesBEA: ", numgradesXML, "\n");
+    //printf("%s %d %s", "numgradesXML: ", numgradesXML, "\n");
     gsl_matrix *gradesXML = gsl_matrix_alloc(numgradesXML,2);
+    gsl_matrix_set_all(gradesXML,-999.0);
     filexml = fopen(par.XMLFile, "r");  
-    int gradinginfo = 0;
     int end = 0;     
     char each_character_after_txt[125];
     char characters_after_txt[125];
     while (end < numgradesXML)    
     {
         strcpy(characters_after_txt,"");
-        
-        printf(" %s", "Entra0\n");
-        //fgets(line, 256, filexml);
-        fscanf(filexml,"%s",line);
-        //printf("%s %s %s", "line: ", line, "\n");
+    
+        fgets(line, 256, filexml);
         txt_pointer = strstr (line,"pre=");
         if (txt_pointer)
         {
-            printf(" %s", "Entra1\n");
-            //txt_pointer = strstr (line,"pre=");
             txt_pointer = txt_pointer + 5; 
             
             snprintf(each_character_after_txt,125,"%c",*txt_pointer);
-            printf("%s %s", each_character_after_txt,"\n");
+            //printf("%s %s", each_character_after_txt,"\n");
             snprintf(characters_after_txt,125,"%c",*txt_pointer);
-            printf("%s %s", characters_after_txt,"\n");
+            //printf("%s %s", characters_after_txt,"\n");
             
             while (*txt_pointer != '"')
             {
-                printf(" %s", "Entrax\n");
                 txt_pointer = txt_pointer + 1;
                 snprintf(each_character_after_txt,125,"%c",*txt_pointer);
-                printf("%s %s", each_character_after_txt,"\n");
+                //printf("%s %s", each_character_after_txt,"\n");
                 strcat(characters_after_txt,each_character_after_txt); 
-                printf("%s %s", characters_after_txt,"\n");
+                //printf("%s %s", characters_after_txt,"\n");
             }
             
             gsl_matrix_set(gradesXML,end,0,atoi(characters_after_txt));
@@ -231,8 +225,6 @@ int tesreconstruction_main() {
         if (txt_pointer)
             
         {
-            printf(" %s", "Entra2\n");
-            //txt_pointer = strstr (line,"post=");
             txt_pointer = txt_pointer + 6; 
             
             snprintf(each_character_after_txt,1,"%c",*txt_pointer);
@@ -251,23 +243,28 @@ int tesreconstruction_main() {
             
         }
     }
-    //if (gradinginfo == 0)
-    //{
-    //    SIXT_ERROR("Not grading info in the XML file");
-    //    return(EXIT_FAILURE);
-    //}
-    printf("%s %f %f %s", "grades0: ", gsl_matrix_get(gradesXML,0,0), gsl_matrix_get(gradesXML,0,1), "\n");
-    printf("%s %f %f %s", "grades1: ", gsl_matrix_get(gradesXML,1,0), gsl_matrix_get(gradesXML,1,1), "\n");
-    printf("%s %f %f %s", "grades2: ", gsl_matrix_get(gradesXML,2,0), gsl_matrix_get(gradesXML,2,1), "\n");
-    printf("%s %f %f %s", "grades3: ", gsl_matrix_get(gradesXML,3,0), gsl_matrix_get(gradesXML,3,1), "\n");
-            
-            
-            
-    fclose(filexml);*/
-    
-    
-    
-    
+    int gradinginfo = 1;
+    for (int i=0;i<numgradesXML;i++)
+    {
+        for (int j=0;j<2;j++)
+        {
+            if (gsl_matrix_get(gradesXML,i,j) == -999.0)
+            {
+                gradinginfo = 0;
+                break;
+            }
+        }
+    }
+    if (gradinginfo == 0)
+    {
+        SIXT_ERROR("Not grading info in the XML file");
+        return(EXIT_FAILURE);
+    }
+    //printf("%s %f %f %s", "grades0: ", gsl_matrix_get(gradesXML,0,0), gsl_matrix_get(gradesXML,0,1), "\n");
+    //printf("%s %f %f %s", "grades1: ", gsl_matrix_get(gradesXML,1,0), gsl_matrix_get(gradesXML,1,1), "\n");
+    //printf("%s %f %f %s", "grades2: ", gsl_matrix_get(gradesXML,2,0), gsl_matrix_get(gradesXML,2,1), "\n");
+    //printf("%s %f %f %s", "grades3: ", gsl_matrix_get(gradesXML,3,0), gsl_matrix_get(gradesXML,3,1), "\n");
+    fclose(filexml);
     
     int trig_reclength = -999;
     
@@ -584,7 +581,7 @@ int tesreconstruction_main() {
     reconstruct_init_sirena->grading->value  = NULL;
     reconstruct_init_sirena->grading->gradeData = NULL;
     
-    if (det->pix->grades == NULL)
+    /*if (det->pix->grades == NULL)
     {
         SIXT_ERROR("The provided XMLFile does not have the grading info");
         return(EXIT_FAILURE);
@@ -595,17 +592,17 @@ int tesreconstruction_main() {
     {
         gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->pix->grades[i].gradelim_pre));
         gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post));
-    }
+    }*/
     destroyAdvDet(&det);
     
-    /*reconstruct_init_sirena->grading->ngrades=numgradesXML;
+    reconstruct_init_sirena->grading->ngrades=numgradesXML;
     reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(numgradesXML,2);
     for (int i=0;i<numgradesXML;i++)
     {
         gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) gsl_matrix_get(gradesXML,i,0));
         gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) gsl_matrix_get(gradesXML,i,1));
     }
-    gsl_matrix_free(gradesXML);*/
+    gsl_matrix_free(gradesXML);
     
     // Build up TesEventList to recover the results of the reconstruction
     TesEventList* event_list = newTesEventList(&status);
