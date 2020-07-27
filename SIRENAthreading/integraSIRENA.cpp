@@ -251,6 +251,7 @@
              sprintf(valueAux,"%d",largeFilter);
              string str(valueAux);
              message = "The noise file needs to have W" + str + " (=largeFilter) in the WEIGHTMS HDU";
+             str.clear();
              EP_EXIT_ERROR(message,EPFAIL);
          }
      }

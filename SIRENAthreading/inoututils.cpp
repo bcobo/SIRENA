@@ -127,9 +127,6 @@ extern "C" int readFitsSimple(IOData obj,gsl_vector **result)
     int extver = 0, anynulls,colnum=0;
     float nullval=-99;
     string message="";
-    //cout<<"Hola1"<<endl;
-    //cout<<"obj.inObject: "<<obj.inObject<<endl;
-    //cout<<"obj.nameTable: "<<obj.nameTable<<endl;
     
     fits_movnam_hdu(obj.inObject, ANY_HDU,obj.nameTable, extver, &status);
     /*if (fits_movnam_hdu(obj.inObject, ANY_HDU,obj.nameTable, extver, &status))
@@ -186,6 +183,9 @@ extern "C" int readFitsSimple(IOData obj,gsl_vector **result)
         message = "Cannot convert " + string(obj.nameCol) + " to GSL vector";
         EP_PRINT_ERROR(message,EPFAIL);
     }
+    
+    message.clear();
+    
     return EPOK;
 }
 /*xxxx end of SECTION 1 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
@@ -278,6 +278,8 @@ int readFitsComplex(IOData obj, gsl_matrix **result)
    		message = "Cannot convert " + string(obj.nameCol) + " to GSL vector";
    		EP_PRINT_ERROR(message,EPFAIL);
 	}
+	
+	message.clear();
 
 	return EPOK;
 }
@@ -405,6 +407,9 @@ int writeFitsSimple(IOData obj, gsl_vector *vector)
         if(bufferJ) { delete [] bufferJ; bufferJ = 0; 
         }
 	
+	strcol.clear();
+    message.clear();
+    
 	return EPOK;
 }
 /*xxxx end of SECTION 3 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
@@ -559,6 +564,10 @@ int writeFitsComplex(IOData obj, gsl_matrix *matrix)
         }
 	if(bufferJ) { delete [] bufferJ; bufferJ = 0; 
         }
+        
+    strtf1.clear();
+    strcol.clear();
+    message.clear();
 	
 	return status;
 }
@@ -773,6 +782,8 @@ int interactivePars(inparam *taskPars, int np, string task)
 			}
 		}
 	}
+	
+	message.clear();
 
 	return EPOK;
 }

@@ -102,7 +102,7 @@
   * - To calculate 'aducnv' (conversion factor between arbitrary units and A)...
   * -...or read ADU_CNV, I_BIAS and ADU_BIAS
   * - Get structure of input FITS file columns
-  * - Read keywords to transform to resistance space
+  * - Read info to transform to resistance space
   * - Read and check other input keywords
   * - Read other necessary keywords from ANY HDU
   * - Calculate the sampling rate 
@@ -137,7 +137,7 @@
      time_t t_start = time(NULL);
      
      int status=EPOK, extver=0;
-     string message = "";
+     //string message = "";
      
      // Reading all programm parameters by using PIL
      status=getpar_noiseSpec(&par);
@@ -264,7 +264,7 @@
      
      //...or read ADU_CNV, I_BIAS and ADU_BIAS
      // ADU_CNV(A/ADU)
-     int adu_cnv_exists = 0;
+     //int adu_cnv_exists = 0;
      int i_bias_exists = 0;
      int adu_bias_exists = 0;
      strcpy(keyname,"ADU_CNV");
@@ -351,9 +351,10 @@
          EP_EXIT_ERROR(message,status);
      }
      
-     // Read keywords to transform to resistance space
+     
+     // Read info to transform to resistance space
      //if ((strcmp(par.I2R,"I") != 0) && (adu_cnv == -999.0))
-     if ((strcmp(par.I2R,"I") != 0) && ((strcmp(par.I2R,"I2R") != 0) || (adu_cnv == -999.0)))
+     if ((strcmp(par.I2R,"I") != 0) && ((strcmp(par.I2R,"I2R") != 0) || ((adu_cnv_exists == 0) && (strcmp(par.I2R,"I2R") == 0))))
      {
          strcpy(extname,"RECORDS");
          fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
@@ -363,78 +364,81 @@
              strcpy(extname,"TESRECORDS");
              fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
              if (status == 0)
-             {
-                 //status = 0;
-                 
+             {                 
                  //V0 = 0;
                  //R0 = 0;
-                 IOData obj;
-                 obj.inObject = infileObject;
-                 obj.nameTable = new char [255];
-                 strcpy(obj.nameTable,"TESPARAM");
-                 if (fits_movnam_hdu(infileObject, ANY_HDU,obj.nameTable, 0, &status))
+                 IOData objI2R;
+                 objI2R.inObject = infileObject;
+                 objI2R.nameTable = new char [255];
+                 strcpy(objI2R.nameTable,"TESPARAM");
+                 if (fits_movnam_hdu(infileObject, ANY_HDU,objI2R.nameTable, 0, &status))
                  {
-                     message = "Cannot move to HDU " + string(obj.nameTable);
+                     message = "Cannot move to HDU " + string(objI2R.nameTable);
                      EP_PRINT_ERROR(message,status); return(EPFAIL);
                  }
-                 obj.iniCol = 0;
-                 obj.nameCol = new char [255];
-                 obj.unit = new char [255];
-                 obj.type = TDOUBLE;
-                 obj.iniRow = 1;
-                 obj.endRow = 1;
-                 gsl_vector *vector = gsl_vector_alloc(1);
-                 strcpy(obj.nameCol,"V0");
-                 if (readFitsSimple (obj,&vector))
+                 objI2R.iniCol = 0;
+                 objI2R.nameCol = new char [255];
+                 objI2R.unit = new char [255];
+                 objI2R.type = TDOUBLE;
+                 objI2R.iniRow = 1;
+                 objI2R.endRow = 1;
+                 gsl_vector *vectorI2R = gsl_vector_alloc(1);
+                 strcpy(objI2R.nameCol,"R0");
+                 if (readFitsSimple (objI2R,&vectorI2R))
                  {
                      //R0_error = 1;
-                     message = "Cannot read V0 in " + string(extname) + " HDU in " + string(par.inFile) + ". Check R0";
-                     strcpy(obj.nameCol,"R0");
-                     if (readFitsSimple (obj,&vector))
+                     message = "Cannot read R0 in " + string(extname) + " HDU in " + string(par.inFile) + ". V0 is going to be checked...";
+                     cout<<message<<endl;
+                     status = 0;
+                     strcpy(objI2R.nameCol,"V0");
+                     if (readFitsSimple (objI2R,&vectorI2R))
                      {
                          //V0_error = 1;
-                         message = "Cannot read neither V0 nor R0 in " + string(extname) + " HDU in " + string(par.inFile);
+                         message = "Cannot read neither R0 nor V0 in " + string(extname) + " HDU in " + string(par.inFile);
                          EP_PRINT_ERROR(message,status); return(EPFAIL);
                      }
-                     R0 = gsl_vector_get(vector,0);
+                     V0 = gsl_vector_get(vectorI2R,0);
                  }
                  
-                 if (R0 == -999.0)     V0 = gsl_vector_get(vector,0);
-                 strcpy(obj.nameCol,"I0_START");
-                 if (readFitsSimple (obj,&vector))
+                 
+                 if (V0 == -999.0)     R0 = gsl_vector_get(vectorI2R,0);
+                 //cout<<"V0: "<<V0<<endl;
+                 //cout<<"R0: "<<R0<<endl;
+                 strcpy(objI2R.nameCol,"I0_START");
+                 if (readFitsSimple (objI2R,&vectorI2R))
                  {
                      //Ibias_error = 1;
-                     message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(par.inFile);
+                     message = "Cannot read " + string(objI2R.nameCol) + " in " + string(extname) + " HDU in " + string(par.inFile);
                      EP_PRINT_ERROR(message,status); return(EPFAIL);
                  }
-                 Ibias = gsl_vector_get(vector,0);
+                 Ibias = gsl_vector_get(vectorI2R,0);
                  //if (Ibias_error == 0) Ibias = gsl_vector_get(vector,0);
-                 strcpy(obj.nameCol,"RPARA");
-                 if (readFitsSimple (obj,&vector))
+                 strcpy(objI2R.nameCol,"RPARA");
+                 if (readFitsSimple (objI2R,&vectorI2R))
                  {
                      //RPARA_error = 1;
-                     message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(par.inFile);
+                     message = "Cannot read " + string(objI2R.nameCol) + " in " + string(extname) + " HDU in " + string(par.inFile);
                      EP_PRINT_ERROR(message,status); return(EPFAIL);
                  }
-                 RPARA = gsl_vector_get(vector,0);
+                 RPARA = gsl_vector_get(vectorI2R,0);
                  //if (RPARA_error == 0) RPARA = gsl_vector_get(vector,0);
-                 strcpy(obj.nameCol,"TTR");
-                 if (readFitsSimple (obj,&vector))
+                 strcpy(objI2R.nameCol,"TTR");
+                 if (readFitsSimple (objI2R,&vectorI2R))
                  {
                      //TTR_error = 1;
-                     message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(par.inFile);
+                     message = "Cannot read " + string(objI2R.nameCol) + " in " + string(extname) + " HDU in " + string(par.inFile);
                      EP_PRINT_ERROR(message,status); return(EPFAIL);
                  }
-                 TTR = gsl_vector_get(vector,0);
+                 TTR = gsl_vector_get(vectorI2R,0);
                  //if (TTR_error == 0) TTR = gsl_vector_get(vector,0);
-                 strcpy(obj.nameCol,"LFILTER");
-                 if (readFitsSimple (obj,&vector))
+                 strcpy(objI2R.nameCol,"LFILTER");
+                 if (readFitsSimple (objI2R,&vectorI2R))
                  {
                      //LFILTER_error = 1;
-                     message = "Cannot read " + string(obj.nameCol) + " in " + string(extname) + " HDU in " + string(par.inFile);
+                     message = "Cannot read " + string(objI2R.nameCol) + " in " + string(extname) + " HDU in " + string(par.inFile);
                      EP_PRINT_ERROR(message,status); return(EPFAIL);
                  }
-                 LFILTER = gsl_vector_get(vector,0);
+                 LFILTER = gsl_vector_get(vectorI2R,0);
                  //if (LFILTER_error == 0) LFILTER = gsl_vector_get(vector,0);
                  
                  // V0=Ibias*(R0+RPARA/TTR²)*TTR
@@ -454,10 +458,10 @@
                      EP_EXIT_ERROR(message,status);
                  }
                  
-                 gsl_vector_free(vector);
-                 delete [] obj.nameTable;
-                 delete [] obj.nameCol;
-                 delete [] obj.unit;
+                 gsl_vector_free(vectorI2R); vectorI2R = 0;
+                 delete [] objI2R.nameTable; objI2R.nameTable = 0;
+                 delete [] objI2R.nameCol; objI2R.nameCol = 0;
+                 delete [] objI2R.unit; objI2R.unit = 0;
              }
          }
          else
@@ -579,6 +583,9 @@
              index++;
          }
          eventsz = stoi(characters);
+         
+         readTFORMADCstring.clear();
+         characters.clear();
          //cout<<"eventsz: "<<eventsz<<endl;
      }
      
@@ -793,6 +800,7 @@
          EP_EXIT_ERROR(message,EPFAIL); 
      }
      
+     //cout<<"eventsz: "<<eventsz<<endl;
      //noiseIntervals = gsl_matrix_alloc(par.nintervals,intervalMinBins);
      // Maximum number of noise intervals in all the records eventcnt*floor(eventsz/par.intervalMinSamples)
      noiseIntervals = gsl_matrix_alloc(eventcnt*floor(eventsz/par.intervalMinSamples),intervalMinBins);
@@ -951,6 +959,7 @@
      gsl_vector_free(sigmaInterval); sigmaInterval = 0;
      gsl_vector_free(vector_aux); vector_aux = 0;
      gsl_vector_complex_free(vector_aux1); vector_aux1 = 0;
+     //cout<<"cnt: "<<cnt<<endl;
      
      //cout<<"cnt: "<<cnt<<endl;
      if (cnt == 0)
@@ -971,6 +980,7 @@
          message = "CSD and all Wx matrixes calculated with " + string(str_stat);
          cout<<message<<endl;
      }
+     
      // Current noise spectral density
      // sqrt(sum(FFT^2)/NumMeanSamplesCSD) => sqrt(A^2) = A and sqrt(1/NumMeanSamplesCSD)=1/sqrt(Hz)
      //gsl_vector_scale(EventSamplesFFTMean,(1.0/(double)NumMeanSamples));
@@ -1175,8 +1185,7 @@
      gsl_vector_free(startIntervalgsl); startIntervalgsl = 0;
      
      gsl_vector_free(baseline); baseline = 0;
-     gsl_vector_free(sigma); sigma = 0;
-     
+     gsl_vector_free(sigma); sigma = 0;     
      
      gsl_matrix_free(noiseIntervals); noiseIntervals = 0;
      if (par.weightMS == 1)
@@ -1206,6 +1215,8 @@
      
      message = "Gennoisespec Module OK";
      cout<<message<<endl;
+     
+     message.clear();
      
      return EPOK;
  }
@@ -1238,11 +1249,9 @@
  {
      char val[256];
      
-     string message = "";
+     //string message = "";
      int status = EPOK;
      int extver=0;
-     
-     //if (NumMeanSamples >= par.nintervals)	{return (EPOK);}
      
      // Declare variables
      // To read from the input FITS file
@@ -1311,13 +1320,6 @@
      // Processing each record
      for (int i=0; i< nrows; i++)
      {      
-         /*if (NumMeanSamples >= par.nintervals)
-         {
-             message = "Enough number of pulse-free intervals to CSD and covariace matrix calculus. No more rows read";
-             cout<<message<<endl;
-             break;
-         }*/
-         
          sprintf(straux,"%d",ntotalrows);
          message = "-------------> Record: " + string(straux);
          sprintf(straux,"%ld",eventcnt);
@@ -1336,7 +1338,7 @@
          // Convert to the resistance space if necessary
          if (strcmp(par.I2R,"I") != 0)
          {
-             if (adu_cnv == -999.0)
+             if (((strcmp(par.I2R,"I2R") == 0) && (adu_cnv_exists == 0)) || (strcmp(par.I2R,"I2R") != 0))
              {
                 if (convertI2R(par.I2R,R0,Ibias,Imin,Imax,TTR,LFILTER,RPARA,samprate,&ioutgsl))
                 {
@@ -1482,18 +1484,12 @@
          // Preparing the CSD calculus (not filtered data)
          for (int k=0; k<nIntervals;k++)
          {
-             //if  (NumMeanSamples >= par.nintervals)	break;
-             
              temp = gsl_vector_subvector(ioutgsl,gsl_vector_get(startIntervalgsl,k), intervalMinBins);
              gsl_vector_memcpy(EventSamples,&temp.vector);
-             
-             
-             //if (NumMeanSamples < par.nintervals)
-             //{
-                 gsl_matrix_set_row(noiseIntervals,NumMeanSamples,EventSamples);
+          
+             gsl_matrix_set_row(noiseIntervals,NumMeanSamples,EventSamples);
                  
-                 NumMeanSamples = NumMeanSamples + 1;
-             //}
+             NumMeanSamples = NumMeanSamples + 1;
          }
          
          ntotalrows++;
@@ -1641,7 +1637,7 @@
   ****************************************/
  int createTPSreprFile ()
  {
-     string message = "";
+     //string message = "";
      int status = EPOK, extver=0;
      
      // Create output FITS files: If it does not exist already
@@ -1932,6 +1928,10 @@
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
      
+     strhistory.clear();
+     piece_i.clear();
+     str_i2r.clear();
+     
      return EPOK;
  }
  /*xxxx end of SECTION 5 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
@@ -1947,7 +1947,8 @@
   * - WEIGHTMS HDU
   *****************************************************************************/
  int writeTPSreprExten ()
- {	string message = "";
+ {	
+     //string message = "";
      int status = EPOK;
      int extver=0;
      double SelectedTimeDuration;
@@ -2231,7 +2232,7 @@
   double stopcriteriamkc,
   double kappamkc)
  {
-     string message = "";
+     //string message = "";
      
      const double pi = 4.0 * atan(1.0);
      
@@ -2353,7 +2354,7 @@
   gsl_vector **flagTruncated,
   gsl_vector **maxDERgsl)
  {
-     string message="";
+     //string message="";
      char valERROR[256];
      
      // Declare variables
@@ -2405,6 +2406,7 @@
                              sprintf(valERROR,"%d",__LINE__+5);
                              string str(valERROR);
                              message = "Found pulses in record>'EventListSize'(input parameter) => Change EventListSize or check if the threshold is too low => Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
+                             str.clear();
                              EP_PRINT_ERROR(message,EPFAIL);
                          }
                          gsl_vector_set(*maxDERgsl,*numberPulses,possiblemaxDER);
@@ -2478,7 +2480,7 @@
   ******************************************************************************/
  int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
  {
-     string message = "";
+     //string message = "";
      char valERROR[256];
      
      double elementValue;
@@ -2562,6 +2564,7 @@
          sprintf(valERROR,"%d",__LINE__-2);
          string str(valERROR);
          message = "Singular matrix in line " + str + " (" + __FILE__ + ")";
+         str.clear();
          EP_PRINT_ERROR(message,EPFAIL);	return(EPFAIL);
      }
      
@@ -2598,7 +2601,7 @@
   ******************************************************************************/
  int medianKappaClipping_noiseSigma (gsl_vector *invector, double kappa, double stopCriteria, double nSigmas, double *mean, double *sigma)
  {
-     string message = "";
+     //string message = "";
      char valERROR[256];
      
      // Declare variables
@@ -2636,6 +2639,7 @@
              sprintf(valERROR,"%d",__LINE__+5);
              string str(valERROR);
              message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
+             str.clear();
              EP_PRINT_ERROR(message,EPFAIL);
          }
          temp = gsl_vector_subvector(invectorNew,0,size-boxLPF-1);
@@ -2657,6 +2661,7 @@
                      sprintf(valERROR,"%d",__LINE__+5);
                      string str(valERROR);
                      message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
+                     str.clear();
                      EP_PRINT_ERROR(message,EPFAIL);
                  }
                  gsl_vector_set(invectorNew,i,median);
@@ -2705,7 +2710,7 @@
      // String input buffer.
      char* sbuffer=NULL;
      
-     string message = "";
+     //string message = "";
      
      // Error status.
      int status=EXIT_SUCCESS;
@@ -2816,6 +2821,10 @@
      }
      
      status=ape_trad_query_bool("rmNoiseIntervals", &par->rmNoiseIntervals);
+     if (EXIT_SUCCESS!=status) {
+         message = "failed reading the rmNoiseIntervals parameter";
+         EP_EXIT_ERROR(message,EPFAIL);
+     }
      
      if (EXIT_SUCCESS!=status) 
      {

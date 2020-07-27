@@ -94,6 +94,7 @@
 * - Register HEATOOL
 * - Reading all programm parameters by using PIL
 * - Read XML info
+* - Read the grading info from the input XML file
 * - Obtain the 'trig_reclength' and the sampling rate:
 *   - If Rcmethod starts with '@' => List of record input FITS files. For every FITS file:
 *       - Open FITS file
@@ -170,7 +171,7 @@ int tesreconstruction_main() {
     //printf("%s %f %s", "det->SampleFreq: ", det->SampleFreq, "\n");
     double sampling_rate = -999.0;
     
-    
+    // Read the grading info from the input XML file
     FILE *filexml = fopen(par.XMLFile, "r");
     char line[256];
     int numlinesXML = 0;

@@ -140,6 +140,7 @@ struct Parameters {
 	double adu_cnv = -999.0;
     double i_bias = -999.0;
     double adu_bias = -999.0;
+    int adu_cnv_exists = 0;
 	
 	double Imin = -999.0;
     double Imax = -999.0;
@@ -160,11 +161,11 @@ struct Parameters {
 
 	gsl_vector *timegsl;	// GENNOISESPEC has to look at RECORDS
 	gsl_vector *ioutgsl;
-
+    
 //INPUT PARAMETERS
-
-        struct Parameters par;
-        
+    
+    struct Parameters par;
+    
 	int intervalMinBins;		// Minimum length of a pulse-free interval (bins)
 	double Lrs;			// LrsT in samples
 	double Lb;			// LbT in samples
@@ -178,6 +179,8 @@ struct Parameters {
 	
 //AUXILIARY VARIABLES
 
+    string message = " ";
+    
 	//To avoid the deprecate conversions
 	char *straux = new char[255];
 
@@ -203,15 +206,15 @@ struct Parameters {
 	gsl_vector *sigma;
 	
 	gsl_matrix *noiseIntervals;
-	gsl_vector *weightpoints;
-	gsl_matrix *weightMatrixes;
-        
-        int tessimOrxifusim = -999;     // 0: tessim, 1: xifusim
-        
-        double deltat;
-        double tclock;
-        double dec_fac;
-
+    gsl_vector *weightpoints;
+    gsl_matrix *weightMatrixes;
+    
+    int tessimOrxifusim = -999;     // 0: tessim, 1: xifusim
+    
+    double deltat;
+    double tclock;
+    double dec_fac;
+    
 // OUTPUT FILE
 
 	fitsfile *gnoiseObject = NULL;	// Object which contains information of output FITS file
