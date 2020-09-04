@@ -1,0 +1,802 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SIRENA description &#8212; SIRENA 4.0 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/_themes/themes_overrides.css" type="text/css" />
+    <link rel="stylesheet" href="_static/style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SIRENA Tools CLI" href="SIRENAcommandline.html" />
+    <link rel="prev" title="SIRENA documentation" href="index.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><img src="_static/SIRENA_black.png" border="0" alt="py4sci"/></a>
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="SIRENAcommandline.html" title="SIRENA Tools CLI"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="SIRENA documentation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/SIRENA_black.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">SIRENA description</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#files">Files</a><ul>
+<li><a class="reference internal" href="#auxiliary-files">Auxiliary Files</a><ul>
+<li><a class="reference internal" href="#noise-file"><span class="pageblue">Noise file</span></a></li>
+<li><a class="reference internal" href="#template-library"><span class="pageblue">Template Library</span></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#input-files">Input Files</a></li>
+<li><a class="reference internal" href="#output-files">Output Files</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#reconstruction-process">Reconstruction Process</a><ul>
+<li><a class="reference internal" href="#event-detection">Event Detection</a><ul>
+<li><a class="reference internal" href="#adjusted-derivative"><span class="pageblue">Adjusted Derivative</span></a></li>
+<li><a class="reference internal" href="#single-threshold-crossing"><span class="pageblue">Single Threshold Crossing</span></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#event-grading">Event Grading</a></li>
+<li><a class="reference internal" href="#event-energy-determination-methods">Event Energy Determination: methods</a><ul>
+<li><a class="reference internal" href="#optimal-filtering-by-using-the-noise-spectral-density"><span class="pageblue">Optimal Filtering by using the noise spectral density</span></a></li>
+<li><a class="reference internal" href="#optimal-filtering-by-using-the-noise-weight-matrix-from-noise-intervals"><span class="pageblue">Optimal Filtering by using the noise weight matrix from noise intervals</span></a></li>
+<li><a class="reference internal" href="#quasi-resistance-space"><span class="pageblue">Quasi Resistance Space</span></a></li>
+<li><a class="reference internal" href="#two-experimental-approaches-adding-a-prebuffer-or-0-padding"><span class="pageblue">Two experimental approaches: adding a preBuffer or 0-padding</span></a></li>
+<li><a class="reference internal" href="#covariance-matrices"><span class="pageblue">Covariance matrices</span></a></li>
+<li><a class="reference internal" href="#covariance-matrices-0-n"><span class="pageblue">Covariance matrices 0(n)</span></a></li>
+<li><a class="reference internal" href="#principal-component-analysis-pca"><span class="pageblue">Principal Component Analysis (PCA)</span></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#use-of-library-columns-in-the-different-reconstruction-methods">Use of library columns in the different reconstruction methods</a></li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">SIRENA documentation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="SIRENAcommandline.html"
+                        title="next chapter">SIRENA Tools CLI</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/SIRENA.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sirena-description">
+<span id="sirena"></span><h1>SIRENA description<a class="headerlink" href="#sirena-description" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>SIRENA (<em>Software Ifca for Reconstruction of EveNts for Athena X-IFU</em>) is a software package developed to reconstruct the energy of the incoming X-ray photons after their detection in the <a class="reference external" href="http://x-ifu.irap.omp.eu/">X-IFU</a> TES detector. It is integrated in the <a class="reference external" href="http://www.sternwarte.uni-erlangen.de/research/sixte">SIXTE</a> end-to-end simulations environment where it currently runs over SIXTE or XIFUSIM (available for the XIFU consortium members upon request at <a class="reference external" href="mailto:sixte-xifusim&#37;&#52;&#48;lists&#46;fau&#46;de">sixte-xifusim<span>&#64;</span>lists<span>&#46;</span>fau<span>&#46;</span>de</a> ) simulated data. This is done by means of a tool called <a class="reference internal" href="SIRENAcommandline.html#tesreconstruction"><span class="std std-ref">tesreconstruction</span></a>, which is mainly a wrapper to pass a data file to the SIRENA tasks.</p>
+</div>
+<div class="section" id="files">
+<h2>Files<a class="headerlink" href="#files" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="auxiliary-files">
+<span id="auxiliary"></span><h3>Auxiliary Files<a class="headerlink" href="#auxiliary-files" title="Permalink to this headline">¶</a></h3>
+<p>All the <a class="reference internal" href="#reconmethods"><span class="std std-ref">reconstruction methods</span></a> used by SIRENA software rely on the existence of a <em>library</em> created from a set of data calibration files. In addition, some methods require also a file with the <em>noise data</em>. Let’s describe these auxiliary files in detail.</p>
+<div class="section" id="noise-file">
+<span id="noise"></span><h4><span class="pageblue">Noise file</span><a class="headerlink" href="#noise-file" title="Permalink to this headline">¶</a></h4>
+<p>The detector <strong>noise file</strong> is currently obtained from a long stream of pulse-free (noise) simulated data. This stream is ingested in the tool <a class="reference internal" href="SIRENAcommandline.html#gennoisespec"><span class="std std-ref">gennoisespec</span></a>, which generates the spectrum of this simulated noise.</p>
+<p><strong>1) Calibration Stream Simulation</strong></p>
+<p>The first step is creating a photon list (not required if is already available one with no pulses):</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">tesconstpileup</span></code> (SIXTE):  which creates a <a class="reference internal" href="#piximpactfig"><span class="std std-ref">piximpact file</span></a> of zero-energy events.</li>
+</ul>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">tesconstpileup</span> <span class="n">PixImpList</span><span class="o">=</span><span class="n">noise</span><span class="o">.</span><span class="n">piximpact</span> <span class="n">XMLFile</span><span class="o">=</span><span class="n">tes</span><span class="o">.</span><span class="n">XML</span> <span class="n">tstop</span><span class="o">=</span><span class="n">simulationTime</span> <span class="n">energy</span><span class="o">=</span><span class="mi">0</span> \
+<span class="n">pulseDistance</span><span class="o">=</span><span class="mi">1</span> <span class="n">triggersize</span><span class="o">=</span><span class="mi">10000</span>
+</pre></div>
+</div>
+<div class="figure align-center" id="piximpactfig">
+<a class="reference internal image-reference" href="_images/NoisePiximpact1.png"><img alt="_images/NoisePiximpact1.png" src="_images/NoisePiximpact1.png" style="width: 50%;" /></a>
+</div>
+<div class="figure align-center" id="id38">
+<a class="reference internal image-reference" href="_images/NoisePiximpact2.png"><img alt="_images/NoisePiximpact2.png" src="_images/NoisePiximpact2.png" style="width: 50%;" /></a>
+<p class="caption"><span class="caption-text">Piximpact file of no events.</span></p>
+</div>
+<p>The second step is simulating the noise stream. This can be done by choosing either a SIXTE tool (<code class="docutils literal"><span class="pre">tessim</span></code>) or a XIFUSIM tool (<code class="docutils literal"><span class="pre">xifusim</span></code>), both of them simulating the fake impacts through the detector’s physics and creating data stream splitted into records:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">tessim</span></code> (<a class="reference internal" href="zreferences.html#wilms2016" id="id1">[Wilms+16]</a>)(SIXTE): use option <cite>triggertype=noise</cite>.</li>
+</ul>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">tessim</span> <span class="n">PixID</span><span class="o">=</span><span class="n">pixelNumber</span> <span class="n">PixImpList</span><span class="o">=</span><span class="n">noise</span><span class="o">.</span><span class="n">piximpact</span> <span class="n">Streamfile</span><span class="o">=</span><span class="n">noise</span><span class="o">.</span><span class="n">fits</span> <span class="n">tstart</span><span class="o">=</span><span class="mf">0.</span> \
+<span class="n">tstop</span><span class="o">=</span><span class="n">simulationTime</span> <span class="n">triggertype</span><span class="o">=</span><span class="n">noise</span> <span class="n">triggersize</span><span class="o">=</span><span class="mi">10000</span> <span class="n">prebuffer</span><span class="o">=</span><span class="mi">1000</span> \
+<span class="n">PixType</span><span class="o">=</span><span class="s1">&#39;file:newpixels[SPA]&#39;</span> <span class="n">acbias</span><span class="o">=</span><span class="n">yes</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">xifusim</span></code> (XIFUSIM): use option <cite>simnoise=y</cite>.</li>
+</ul>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xifusim</span> <span class="n">PixImpList</span><span class="o">=</span><span class="n">noise</span><span class="o">.</span><span class="n">piximpact</span> <span class="n">Streamfile</span><span class="o">=</span><span class="n">noise</span><span class="o">.</span><span class="n">fits</span> <span class="n">tstop</span><span class="o">=</span><span class="n">simulationTime</span> <span class="n">acbias</span><span class="o">=</span><span class="n">no</span>\
+<span class="n">XMLfilename</span><span class="o">=</span><span class="n">myfileXF</span><span class="o">.</span><span class="n">xml</span> <span class="n">trig_reclength</span><span class="o">=</span><span class="mi">10000</span> <span class="n">sample_rate</span><span class="o">=</span><span class="mi">156250</span> <span class="n">simnoise</span><span class="o">=</span><span class="n">y</span>
+</pre></div>
+</div>
+<div class="figure align-center" id="id39">
+<span id="noise-records"></span><a class="reference internal image-reference" href="_images/stream2triggers.png"><img alt="_images/stream2triggers.png" src="_images/stream2triggers.png" style="width: 678.0px; height: 447.5px;" /></a>
+<p class="caption"><span class="caption-text">Noise file triggered into records of 10000 samples by using <code class="docutils literal"><span class="pre">tessim</span></code> <a class="footnote-reference" href="#id3" id="id2">[1]</a> .</span></p>
+</div>
+<table class="docutils footnote" frame="void" id="id3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td>If <code class="docutils literal"><span class="pre">xifusim</span></code> (XIFUSIM) is used, the noise records are in the <em>TESRECORDS</em> HDU (Header Data Unit) among others HDUs such as <em>GEOCHANNELPARAM</em>, <em>TESPARAM</em>, <em>SQUIDPARAM</em>,…</td></tr>
+</tbody>
+</table>
+<p><strong>2) Noise spectrum and weight matrices generation</strong></p>
+<p>In <a class="reference internal" href="SIRENAcommandline.html#gennoisespec"><span class="std std-ref">gennoisespec</span></a>, the data is analysed record by record: if there are events present, this tool <a class="reference internal" href="#detect"><span class="std std-ref">finds</span></a> and rejects them, keeping only the pulse-free intervals of a size given by the input parameter <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-intervalminsamples"><code class="xref std std-option docutils literal"><span class="pre">intervalMinSamples</span></code></a>. If no events are present, the record is divided into pulse-free intervals sized also by this parameter.</p>
+<p>Once the pulse-free intervals have been defined, a long noise interval is built by putting together these pulse-free intervals in order to calculate the noise baseline. Moreover, the noise intervals whose standard deviation is too high are discarded.</p>
+<p>On one hand, the tool calculates the FFT of the non-discarded pulse-free intervals (over the unfiltered data) and averages them. Only a specific number of intervals (input parameter <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-nintervals"><code class="xref std std-option docutils literal"><span class="pre">nintervals</span></code></a>) will be used. The noise spectrum density is stored in the <em>NOISE</em> and <em>NOISEALL</em> HDUs in the <em>noise data</em> file.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">gennoisespec</span> <span class="n">inFile</span><span class="o">=</span><span class="n">noise</span><span class="o">.</span><span class="n">fits</span> <span class="n">outFile</span><span class="o">=</span><span class="n">noiseSpec</span><span class="o">.</span><span class="n">fits</span> <span class="n">intervalMinSamples</span><span class="o">=</span><span class="n">pulseLength</span> \
+<span class="n">nintervals</span><span class="o">=</span><span class="mi">1000</span> <span class="n">pulse_length</span><span class="o">=</span><span class="n">pulseLength</span>
+</pre></div>
+</div>
+<div class="figure align-center" id="id40">
+<span id="noisespec"></span><a class="reference internal image-reference" href="_images/NoiseSpec.png"><img alt="_images/NoiseSpec.png" src="_images/NoiseSpec.png" style="width: 662.5px; height: 421.5px;" /></a>
+<p class="caption"><span class="caption-text">Noise spectrum (see noise file <a class="reference internal" href="SIRENAcommandline.html#outnoise"><span class="std std-ref">description</span></a>)</span></p>
+</div>
+<p>On the other hand, if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-weightms"><code class="xref std std-option docutils literal"><span class="pre">weightMS</span></code></a> = <em>yes</em> the tool calculates the covariance matrix of the noise, <img class="math" src="_images/math/fae0e7a73748991e5540d874416000583f64f58e.png" alt="V"/>, whose elements are expectation values (<img class="math" src="_images/math/9fd36ef1c33f3c6c5e59281c8f636b25fb14d38e.png" alt="E[·]"/>) of two-point products for a pulse-free data sequence <img class="math" src="_images/math/541e532bc20caca36e8834c23d34432b04694d8a.png" alt="{di}"/> (over the unfiltered data) (<a class="reference internal" href="zreferences.html#fowler2015" id="id4">[FowlerAlpertDoriese+15]</a>)</p>
+<div class="math">
+<p><img src="_images/math/e9df0fabe03637d0041338fa769a6b87e2e58a98.png" alt="V_{ij}=E[d_i d_j]-E[d_i]E[d_j]"/></p>
+</div><p>The weight matrix is the inverse of the covariance matrix, <img class="math" src="_images/math/160efada5a15b3d0ecba7bd4e8a2a3b400e69876.png" alt="V^{-1}"/>. The weight matrixes, <strong>Wx</strong>, for different lenghts are stored in the <em>WEIGHTMS</em> HDU in the <em>noise data</em> file. The lengths x will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-intervalminsamples"><code class="xref std std-option docutils literal"><span class="pre">intervalMinSamples</span></code></a> decreasing until 2.</p>
+<div class="figure align-center" id="id41">
+<span id="noisespec2"></span><a class="reference internal image-reference" href="_images/WeightMatrix.png"><img alt="_images/WeightMatrix.png" src="_images/WeightMatrix.png" style="width: 355.2px; height: 365.6px;" /></a>
+<p class="caption"><span class="caption-text">Noise weight matrix (see noise file <a class="reference internal" href="SIRENAcommandline.html#outnoise"><span class="std std-ref">description</span></a>)</span></p>
+</div>
+<p><a class="reference internal" href="SIRENAcommandline.html#gennoisespec"><span class="std std-ref">gennoisespec</span></a> also adds the <code class="docutils literal"><span class="pre">BSLN0</span></code> and <code class="docutils literal"><span class="pre">NOISESTD</span></code> keywords to the <em>NOISE</em> HDU in the <em>noise data</em> file. They store the mean and the standard deviation of the noise (by working with the long noise interval).</p>
+<p>If the noise spectrum or the weight matrixes are to be created from a data stream containing pulses, care should be taken with the parameters <a class="reference internal" href="SIRENAcommandline.html#scalefactor-gennoisespec"><span class="std std-ref">scaleFactor</span></a>, <a class="reference internal" href="SIRENAcommandline.html#samplesup-gennoisespec"><span class="std std-ref">samplesUp</span></a> and <a class="reference internal" href="SIRENAcommandline.html#nsgms-gennoisespec"><span class="std std-ref">nSgms</span></a> responsible of the detection process.</p>
+</div>
+<div class="section" id="template-library">
+<span id="library"></span><h4><span class="pageblue">Template Library</span><a class="headerlink" href="#template-library" title="Permalink to this headline">¶</a></h4>
+<p>The <strong>library</strong> purpose is to store detector pulse magnitudes (templates, covariance matrices, optimal filters) at different calibration energies, so that they could be used afterwards for the
+reconstruction of input pulses of unknown energy.</p>
+<p>To build this library, a bunch of monochromatic pulses at different energies are simulated by <code class="docutils literal"><span class="pre">tesconstpileup</span></code> (which now creates a <em>piximpact</em> file with pairs of constant separation pulses) and either <code class="docutils literal"><span class="pre">tessim</span></code> or <code class="docutils literal"><span class="pre">xifusim</span></code> (which simulate the detector physics).</p>
+<p><strong>1) Calibration Files simulation</strong></p>
+<p>Typical run commands to create these calibration files for a given energy <em>monoEkeV</em> and a given (large) <em>separation</em> in samples between the pulses would be:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">tesconstpileup</span> <span class="n">PixImpList</span><span class="o">=</span><span class="n">calib</span><span class="o">.</span><span class="n">piximpact</span> <span class="n">XMLFile</span><span class="o">=</span><span class="n">tes</span><span class="o">.</span><span class="n">XML</span> <span class="n">timezero</span><span class="o">=</span><span class="mf">3.E-7</span>\
+<span class="n">tstop</span><span class="o">=</span><span class="n">simulationTime</span> <span class="n">offset</span><span class="o">=-</span><span class="mi">1</span> <span class="n">energy</span><span class="o">=</span><span class="n">monoEkeV</span> <span class="n">pulseDistance</span><span class="o">=</span><span class="n">separation</span>\
+<span class="n">TriggerSize</span><span class="o">=</span><span class="n">tsize</span> <span class="n">sample_freq</span><span class="o">=</span><span class="mi">156250</span>
+</pre></div>
+</div>
+<p>where <em>simulationTime</em> should be large enough to simulate around 20000 isolated pulses and <em>tsize</em> is the size of every simulation stream containing the two separated pulses.</p>
+<p>As in the noise simulation, either SIXTE (<code class="docutils literal"><span class="pre">tessim</span></code>) or XIFUSIM (<code class="docutils literal"><span class="pre">xifusim</span></code>) are eligible:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">tessim</span> <span class="n">PixID</span><span class="o">=</span><span class="n">pixelNumber</span> <span class="n">PixImpList</span><span class="o">=</span><span class="n">calib</span><span class="o">.</span><span class="n">piximpact</span> <span class="n">Streamfile</span><span class="o">=</span><span class="n">calib</span><span class="o">.</span><span class="n">fits</span> <span class="n">tstart</span><span class="o">=</span><span class="mf">0.</span> \
+<span class="n">tstop</span><span class="o">=</span><span class="n">simulationTime</span> <span class="n">triggertype</span><span class="o">=</span><span class="s1">&#39;diff:3:100:supress&#39;</span> <span class="n">triggerSize</span><span class="o">=</span><span class="n">recordSize</span> \
+<span class="n">PixType</span><span class="o">=</span><span class="n">newpixels</span><span class="p">[</span><span class="n">SPA</span><span class="p">]</span> <span class="n">acbias</span><span class="o">=</span><span class="n">yes</span>
+</pre></div>
+</div>
+<p>where <em>suppress</em> is the time (in samples) after the triggering of an event, during which <cite>tessim</cite> will avoid triggering again (see figure below).</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">xifusim</span> <span class="n">PixImpList</span><span class="o">=</span><span class="n">calib</span><span class="o">.</span><span class="n">piximpact</span> <span class="n">Streamfile</span><span class="o">=</span><span class="n">calib</span><span class="o">.</span><span class="n">fits</span> <span class="n">tstart</span><span class="o">=</span><span class="mf">0.</span> <span class="n">tstop</span><span class="o">=</span><span class="mf">5000.</span> \
+<span class="n">XMLfilename</span><span class="o">=</span><span class="n">myfileXF</span><span class="o">.</span><span class="n">xml</span> <span class="n">trig_reclength</span><span class="o">=</span><span class="n">tsize</span> <span class="n">trig_n_pre</span><span class="o">=</span><span class="mi">1000</span> <span class="n">trig_thresh</span><span class="o">=</span><span class="mf">60.</span> \
+<span class="n">trig_n_suppress</span><span class="o">=</span><span class="mi">8192</span> <span class="n">acbias</span><span class="o">=</span><span class="n">no</span> <span class="n">sample_rate</span><span class="o">=</span><span class="mi">156250</span> <span class="n">simnoise</span><span class="o">=</span><span class="n">y</span>
+</pre></div>
+</div>
+<div class="figure align-center" id="id42">
+<a class="reference internal image-reference" href="_images/triggering.png"><img alt="_images/triggering.png" src="_images/triggering.png" style="width: 561.5px; height: 397.0px;" /></a>
+<p class="caption"><span class="caption-text">Parameters involved in triggering into records from <code class="docutils literal"><span class="pre">tesconstpileup</span></code> to <code class="docutils literal"><span class="pre">tessim</span></code> <a class="footnote-reference" href="#id6" id="id5">[2]</a>.</span></p>
+</div>
+<table class="docutils footnote" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[2]</a></td><td>Previous figure is equivalent in <code class="docutils literal"><span class="pre">xifusim</span></code> replacing <em>triggerSize</em>, <em>suppress</em> and <em>PreBufferSize</em> by <em>trig_reclength</em>, <em>trig_n_suppress</em> and <em>trig_n_pre</em> respectively.</td></tr>
+</tbody>
+</table>
+<p>The SIXTE simulated calibration files are now FITS files with only one HDU called <em>RECORDS</em> <a class="footnote-reference" href="#id8" id="id7">[3]</a> populated with four columns: <strong>TIME</strong> (arrival time of the event), <strong>ADC</strong> (digitized current), <strong>PIXID</strong> (pixel identification) and <strong>PH_ID</strong> (photon identification, for debugging purposes only).</p>
+<div class="figure align-center" id="id43">
+<a class="reference internal image-reference" href="_images/records.png"><img alt="_images/records.png" src="_images/records.png" style="width: 554.0px; height: 448.0px;" /></a>
+<p class="caption"><span class="caption-text">Records in calibration file by using <code class="docutils literal"><span class="pre">tessim</span></code>.</span></p>
+</div>
+<table class="docutils footnote" frame="void" id="id8" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id7">[3]</a></td><td>If XIFUSIM is used, the calibration files have not only the <em>TESRECORDS</em> HDU with the events records but also others such as <em>GEOCHANNELPARAM</em>, <em>TESPARAM</em>, <em>SQUIDPARAM</em>, <em>WFEEPARAM</em>, <em>DREPARAM</em>, <em>ADCPARAM</em> and <em>TRIGGERPARAM</em>.</td></tr>
+</tbody>
+</table>
+<p><strong>2) Library construction</strong></p>
+<p>Once the calibration files (for all the 1..N calibration energies) have been created, the library is built through the wrapper tool <code class="docutils literal"><span class="pre">tesreconstruction</span></code>. To run it using SIRENA code:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">tesreconstruction</span> <span class="n">Recordfile</span><span class="o">=</span><span class="n">calib</span><span class="o">.</span><span class="n">fits</span> <span class="n">TesEventFile</span><span class="o">=</span><span class="n">evtcal</span><span class="o">.</span><span class="n">fits</span> <span class="n">Rcmethod</span><span class="o">=</span><span class="n">SIRENA</span> \
+<span class="n">PulseLength</span><span class="o">=</span><span class="n">pulseLength</span> <span class="n">LibraryFile</span><span class="o">=</span><span class="n">library</span><span class="o">.</span><span class="n">fits</span> <span class="n">opmode</span><span class="o">=</span><span class="mi">0</span> <span class="n">clobber</span><span class="o">=</span><span class="n">yes</span> <span class="n">monoenergy</span><span class="o">=</span><span class="n">monoEeV_1</span> \
+<span class="n">EventListSize</span><span class="o">=</span><span class="mi">1000</span> <span class="n">NoiseFile</span><span class="o">=</span><span class="n">noiseSpec</span><span class="o">.</span><span class="n">fits</span> <span class="n">scaleFactor</span><span class="o">=</span><span class="n">sF</span> <span class="n">samplesUp</span><span class="o">=</span><span class="n">sU</span> <span class="n">nSgms</span><span class="o">=</span><span class="n">nS</span> \
+<span class="n">XMLfilename</span><span class="o">=</span><span class="n">myfileXF</span><span class="o">.</span><span class="n">xml</span> <span class="n">hduPRECALWN</span><span class="o">=</span><span class="n">yes</span><span class="o">/</span><span class="n">no</span> <span class="n">hduPRCLOFWM</span><span class="o">=</span><span class="n">yes</span><span class="o">/</span><span class="n">no</span>
+
+<span class="p">[</span><span class="o">.....</span><span class="p">]</span>
+
+<span class="o">&gt;</span> <span class="n">tesreconstruction</span> <span class="n">Recordfile</span><span class="o">=</span><span class="n">calib</span><span class="o">.</span><span class="n">fits</span> <span class="n">TesEventFile</span><span class="o">=</span><span class="n">evtcal</span><span class="o">.</span><span class="n">fits</span> <span class="n">Rcmethod</span><span class="o">=</span><span class="n">SIRENA</span> \
+<span class="n">PulseLength</span><span class="o">=</span><span class="n">pulseLength</span> <span class="n">LibraryFile</span><span class="o">=</span><span class="n">library</span><span class="o">.</span><span class="n">fits</span> <span class="n">opmode</span><span class="o">=</span><span class="mi">0</span> <span class="n">clobber</span><span class="o">=</span><span class="n">yes</span> <span class="n">monoenergy</span><span class="o">=</span><span class="n">monoEeV_N</span> \
+<span class="n">EventListSize</span><span class="o">=</span><span class="mi">1000</span> <span class="n">NoiseFile</span><span class="o">=</span><span class="n">noiseSpec</span><span class="o">.</span><span class="n">fits</span> <span class="n">scaleFactor</span><span class="o">=</span><span class="n">sF</span> <span class="n">samplesUp</span><span class="o">=</span><span class="n">sU</span> <span class="n">nSgms</span><span class="o">=</span><span class="n">nS</span> \
+<span class="n">XMLfilename</span><span class="o">=</span><span class="n">myfileXF</span><span class="o">.</span><span class="n">xml</span> <span class="n">hduPRECALWN</span><span class="o">=</span><span class="n">yes</span><span class="o">/</span><span class="n">no</span> <span class="n">hduPRCLOFWM</span><span class="o">=</span><span class="n">yes</span><span class="o">/</span><span class="n">no</span>
+</pre></div>
+</div>
+<p>The relevant parameters of <code class="docutils literal"><span class="pre">tesreconstruction</span></code>  for the library creation process are:</p>
+<ul class="simple">
+<li><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal"><span class="pre">opmode</span></code></a>: should be set to <strong>0</strong> if tool is used for library creation</li>
+<li><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a>:  length of the pulses to create the pulse templates. If the pulse length used to create the noise is larger that this value, noise will be decimated accordingly when used to pre-calculate the optimal filters or the covariance matrices. If it is shorter, an error will be raised.</li>
+<li><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-monoenergy"><code class="xref std std-option docutils literal"><span class="pre">monoenergy</span></code></a>: the monochromatic energy of the calibration pulses used to create the current row in the library</li>
+<li><a class="reference internal" href="SIRENAcommandline.html#id3"><code class="xref std std-option docutils literal"><span class="pre">scaleFactor</span></code></a>, <a class="reference internal" href="SIRENAcommandline.html#id4"><code class="xref std std-option docutils literal"><span class="pre">samplesUp</span></code></a> and <a class="reference internal" href="SIRENAcommandline.html#id5"><code class="xref std std-option docutils literal"><span class="pre">nSgms</span></code></a>: parameters involved in the pulse detection process.</li>
+<li><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprecalwn"><code class="xref std std-option docutils literal"><span class="pre">hduPRECALWN</span></code></a> and <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprclofwm"><code class="xref std std-option docutils literal"><span class="pre">hduPRCLOFWM</span></code></a>: parameters to create or not the corresponding HDUs.</li>
+</ul>
+<p id="librarycolumns"><strong>3) Library structure</strong></p>
+<p>The library FITS file has 3 HDUs called <em>LIBRARY</em>, <em>FIXFILTT</em>, <em>FIXFILTF</em> which are always present, and other 2 HDUs  <em>PRECALWN</em> and <em>PRCLOFWM</em> which are optional depending on the input parameters <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprecalwn"><code class="xref std std-option docutils literal"><span class="pre">hduPRECALWN</span></code></a> and <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprclofwm"><code class="xref std std-option docutils literal"><span class="pre">hduPRCLOFWM</span></code></a>.</p>
+<p><em>LIBRARY</em> contains the following columns:</p>
+<ul class="simple">
+<li><strong>ENERGY</strong>: energies (in eV) in the library</li>
+<li><strong>PHEIGHT</strong>: pulse heights of the templates</li>
+<li><strong>PLSMXLFF</strong>: long templates according to <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-largefilter"><code class="xref std std-option docutils literal"><span class="pre">largeFilter</span></code></a> (obtained averaging many signals) with baseline. If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-largefilter"><code class="xref std std-option docutils literal"><span class="pre">largeFilter</span></code></a> is equal to <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> it does not appear</li>
+<li><strong>PULSE</strong>: templates (obtained averaging many signals) with baseline</li>
+<li><strong>PULSEB0</strong>: baseline subtracted templates</li>
+<li><strong>MF</strong>: matched filters (energy normalized templates)</li>
+<li><strong>MFB0</strong>: baseline subtracted matched filters</li>
+<li><strong>COVARM</strong>: <a class="reference internal" href="#covmatrices"><span class="std std-ref">covariance matrices</span></a> ( <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> x <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> in shape ) stored in the FITS column as vectors of size <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> * <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a>. It appears if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprecalwn"><code class="xref std std-option docutils literal"><span class="pre">hduPRECALWN</span></code></a> =yes</li>
+<li><strong>WEIGHTM</strong>: <a class="reference internal" href="#covmatrices"><span class="std std-ref">weight matrices</span></a> ( <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> x <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> in shape) stored in the FITS column as vectors of size <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> * <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a>. It appears if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprecalwn"><code class="xref std std-option docutils literal"><span class="pre">hduPRECALWN</span></code></a> =yes</li>
+<li><strong>WAB</strong>: matrices <img class="math" src="_images/math/30c843fb123cb8a22c9e4688d8719ac8240c9bd3.png" alt="(W_\alpha + W_\beta)/2"/> stored as vectors ( <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> * <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> ), being <img class="math" src="_images/math/e05dd0b5f04f36d9f4f7582848392105587342be.png" alt="\mathit{W}"/> weight matrixes and <img class="math" src="_images/math/877d234f4cec6974ce218fc2e975a486a7972dfd.png" alt="\alpha"/> and <img class="math" src="_images/math/410a9d0df9c135dd73b269cba7ef04dcfd932b1f.png" alt="\beta"/> two consecutive energies in the library. It appears if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprecalwn"><code class="xref std std-option docutils literal"><span class="pre">hduPRECALWN</span></code></a> =yes</li>
+<li><strong>TV</strong>: vectors <img class="math" src="_images/math/0e8903c8a6a6cbf3764437df84073d20064d2400.png" alt="S_{\beta}-S_{\alpha}"/> being <img class="math" src="_images/math/fb8ccc4c36b68e38680b68016473a630edc0e0f4.png" alt="S_i"/> the template at <img class="math" src="_images/math/c97e0418bc8581c42295f9e0af2f727f1771f1c3.png" alt="\mathit{i}"/> energy. It appears if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprecalwn"><code class="xref std std-option docutils literal"><span class="pre">hduPRECALWN</span></code></a> =yes</li>
+<li><strong>tE</strong>: scalars <img class="math" src="_images/math/64cf251d9bbd0b2d54939af7d12d4a11f14497d5.png" alt="T \cdot W_{\alpha} \cdot T"/>. It appears if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprecalwn"><code class="xref std std-option docutils literal"><span class="pre">hduPRECALWN</span></code></a> =yes</li>
+<li><strong>XM</strong>: matrices <img class="math" src="_images/math/02fd43f97da107c154d6f40ec4a6de1ecd307570.png" alt="(W_\beta + W_\alpha)/t"/> stored as vectors ( <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> * <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> ). It appears if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprecalwn"><code class="xref std std-option docutils literal"><span class="pre">hduPRECALWN</span></code></a> =yes</li>
+<li><strong>YV</strong>: vectors <img class="math" src="_images/math/0bc61b04da3a08ad7278212ecdaeb65fe125d070.png" alt="(W_\alpha \cdot T)/t"/>. It appears if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprecalwn"><code class="xref std std-option docutils literal"><span class="pre">hduPRECALWN</span></code></a> =yes</li>
+<li><strong>ZV</strong>: vectors <img class="math" src="_images/math/9d0034de928c6e7a4e08b4b372fd67edc01aa1c2.png" alt="\mathit{X \cdot T}"/>. It appears if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprecalwn"><code class="xref std std-option docutils literal"><span class="pre">hduPRECALWN</span></code></a> =yes</li>
+<li><strong>rE</strong>: scalars <img class="math" src="_images/math/c8cc7dbceebbea62a13aacd2e33eb86e34c03a7c.png" alt="\mathit{1/(Z \cdot T)}"/>. It appears if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-hduprecalwn"><code class="xref std std-option docutils literal"><span class="pre">hduPRECALWN</span></code></a> =yes</li>
+<li><strong>PAB</strong>: vectors <img class="math" src="_images/math/7157fcfea5a0ae4060926da9f9071c1341d184c8.png" alt="S_{\alpha}- E_{\alpha}(S_{\beta}-S_{\alpha})/(E_{\beta}-E_{\alpha})"/>, <img class="math" src="_images/math/0d5b0d858a78ba380d82343b1941e1d5df1b9312.png" alt="P(t)_{\alpha\beta}"/> in <a class="reference internal" href="#optimalfilter-nsd"><span class="std std-ref">first order approach</span></a>. It appears if there are several calibration energies (not only one) included in the library</li>
+<li><strong>PABMXLFF</strong>: <strong>PAB</strong> according to <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-largefilter"><code class="xref std std-option docutils literal"><span class="pre">largeFilter</span></code></a>. If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-largefilter"><code class="xref std std-option docutils literal"><span class="pre">largeFilter</span></code></a> is equal to <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> it does not appear (although several calibration energies are included in the library)</li>
+<li><strong>DAB</strong>: vectors <img class="math" src="_images/math/5dbd42628c59490645e3cd7f5e8d7a26b50cc424.png" alt="(S_{\beta}-S_{\alpha})/(E_{\beta}-E_{\alpha})"/>, <img class="math" src="_images/math/006e2912c2d3504da29fcef517b45ad136bc30df.png" alt="D(t)_{\alpha\beta}"/> in <a class="reference internal" href="#optimalfilter-nsd"><span class="std std-ref">first order approach</span></a>. It appears if there are several calibration energies (not only one) included in the library.</li>
+</ul>
+<p>The <em>FIXFILTT</em> HDU contains pre-calculated optimal filters in the time domain for different lengths, calculated from the matched filters (<em>MF</em> or <em>MFB0</em> columns) in <strong>Tx</strong> columns, or from the <em>DAB</em> column, in the <strong>ABTx</strong> columns. The lengths <em>x</em> will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the pulse length decreasing until 2. Moreover, <strong>Txmax</strong> and <strong>ABTxmax</strong> columns being <em>xmax</em> = <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-largefilter"><code class="xref std std-option docutils literal"><span class="pre">largeFilter</span></code></a> are added. The <em>FIXFILTT</em> HDU always contains <strong>Tx</strong> columns but <strong>ABTx</strong> columns only appear if there are several calibration energies (not only one) included in the library.</p>
+<p>The <em>FIXFILTF</em> HDU contains pre-calculated optimal filters in frequency domain for different lengths calculated from the matched filters (<em>MF</em> or <em>MFB0</em> columns), in columns <strong>Fx</strong>, or from the <em>DAB</em> column, in <strong>ABFx</strong> columns. The lengths <em>x</em> will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the pulse length decreasing until 2. Moreover, <strong>Fxmax</strong> and <strong>ABFxmax</strong> columns being <em>xmax</em> = <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-largefilter"><code class="xref std std-option docutils literal"><span class="pre">largeFilter</span></code></a> are added. The <em>FIXFILTF</em> HDU always contains <strong>Fx</strong> columns but <strong>ABFx</strong> columns only appear if there are several calibration energies (not only one) included in the library.</p>
+<p>The <em>PRECALWN</em> HDU contains <a class="reference internal" href="#weightn"><span class="std std-ref">pre-calculated values by using the noise weight matrix from the subtraction of model from pulses</span></a> <img class="math" src="_images/math/7b8ac641ae4f818a1a00761ddfad68100bb93583.png" alt="(X'WX)^{-1}X'W"/> for different lengths, <strong>PCLx</strong>. The lengths <em>x</em> will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the pulse length decreasing until 2.</p>
+<p>The <em>PRCLOFWM</em> HDU contains <a class="reference internal" href="#optimalfilter-weightm"><span class="std std-ref">pre-calculated values by using the noise weight matrix from noise intervals</span></a> <img class="math" src="_images/math/0abfa432f081b35a55531d1ccf1b02ece969aa0c.png" alt="(M'WM)^{-1}M'W"/> for different lengths, <strong>OFWx</strong>. The lengths <em>x</em> will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the  decreasing <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-largefilter"><code class="xref std std-option docutils literal"><span class="pre">largeFilter</span></code></a> until 2.</p>
+</div>
+</div>
+<div class="section" id="input-files">
+<span id="inputfiles"></span><h3>Input Files<a class="headerlink" href="#input-files" title="Permalink to this headline">¶</a></h3>
+<p>The input data (simulated) files, currently required to be in FITS format, are a sequence of variable length RECORDS, containing at least a column for the <strong>TIME</strong> of the digitalization process and a column for the detector current (<strong>ADC</strong>) at these samples. Every record (file row) is the result of an initial triggering process done by the SIXTE simulation tool <code class="docutils literal"><span class="pre">tessim</span></code> <a class="footnote-reference" href="#id10" id="id9">[4]</a>.</p>
+<div class="figure align-center" id="id44">
+<span id="records"></span><a class="reference internal image-reference" href="_images/records.png"><img alt="_images/records.png" src="_images/records.png" style="width: 554.0px; height: 448.0px;" /></a>
+<p class="caption"><span class="caption-text">Simulated data (pulses) in FITS records by using <code class="docutils literal"><span class="pre">tessim</span></code>.</span></p>
+</div>
+<table class="docutils footnote" frame="void" id="id10" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id9">[4]</a></td><td>When working with <code class="docutils literal"><span class="pre">xifusim</span></code>, <em>TESRECORDS</em> HDU (among others HDUs such as <em>GEOCHANNELPARAM</em>, <em>TESPARAM</em>, <em>SQUIDPARAM</em>,…) instead of <em>RECORDS</em> HDU.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="output-files">
+<span id="reconoutfiles"></span><h3>Output Files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h3>
+<p>The reconstructed energies for all the detected events are saved into an output FITS file (governed by the <code class="docutils literal"><span class="pre">tesreconstruction</span></code> input parameter <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-teseventfile"><code class="xref std std-option docutils literal"><span class="pre">TesEventFile</span></code></a>). It stores one event per row with the following information, in the HDU named <em>EVENTS</em>:</p>
+<ul class="simple">
+<li><strong>TIME</strong>: arrival time of the event (in s).</li>
+<li><strong>SIGNAL</strong>: energy of the event (in keV).</li>
+<li><strong>AVG4SD</strong>: average of the first 4 samples of the derivative of the pulse.</li>
+<li><strong>ELOWRES</strong>: energy provided by a low resolution energy estimator filtering with a 4-samples-length filter (in keV).</li>
+<li><strong>GRADE1</strong>: length of the filter used, i.e., the distance to the following pulse (in samples) or the <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> if the next event is further than this value or if there are no more events in the same record.</li>
+<li><strong>GRADE2</strong>: distance to the end of the preceding pulse (in samples). If pulse is the first event in the record, this is fixed to the <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> value.</li>
+<li><strong>PHI</strong>: arrival phase (offset relative to the central point of the parabola) (in samples).</li>
+<li><strong>LAGS</strong>: number of samples shifted to find the maximum of the parabola.</li>
+<li><strong>BSLN</strong>: mean value of the baseline in general ‘before’ a pulse (according the value in samples of <a class="reference internal" href="SIRENAcommandline.html#id7"><code class="xref std std-option docutils literal"><span class="pre">LbT</span></code></a>).</li>
+<li><strong>RMSBSLN</strong>: standard deviation of the baseline in general ‘before’ a pulse (according the value in samples of <a class="reference internal" href="SIRENAcommandline.html#id7"><code class="xref std std-option docutils literal"><span class="pre">LbT</span></code></a>).</li>
+<li><strong>PIX_ID</strong>: pixel number</li>
+<li><strong>PH_ID</strong>: photon number identification for cross matching with the impact list.</li>
+<li><strong>GRADING</strong>: Pulse grade (HighRes=1, MidRes=2, LimRes=3, LowRes=4, Rejected=-1, Pileup=-2).</li>
+</ul>
+<div class="figure align-center" id="evtfile">
+<a class="reference internal image-reference" href="_images/events1.png"><img alt="_images/events1.png" src="_images/events1.png" style="width: 382.2px; height: 82.8px;" /></a>
+</div>
+<div class="figure align-center" id="id45">
+<a class="reference internal image-reference" href="_images/events2.png"><img alt="_images/events2.png" src="_images/events2.png" style="width: 879.0px; height: 373.2px;" /></a>
+<p class="caption"><span class="caption-text">Output event file.</span></p>
+</div>
+<p>In all the output files generated by SIRENA (the noise spectrum file, the library file and the reconstructed events file) the keywords <code class="docutils literal"><span class="pre">CREADATE</span></code> and <code class="docutils literal"><span class="pre">SIRENAV</span></code> provide the date of creation of the file and the SIRENA version used to run it respectively.</p>
+</div>
+</div>
+<div class="section" id="reconstruction-process">
+<span id="recons"></span><h2>Reconstruction Process<a class="headerlink" href="#reconstruction-process" title="Permalink to this headline">¶</a></h2>
+<p>The energy reconstruction of the energies of the input pulses is performed with the tool <code class="docutils literal"><span class="pre">tesreconstruction</span></code> along three main blocks:</p>
+<ul class="simple">
+<li>Event Detection</li>
+<li>Event Grading</li>
+<li>Energy Determination</li>
+</ul>
+<div class="section" id="event-detection">
+<span id="detect"></span><h3>Event Detection<a class="headerlink" href="#event-detection" title="Permalink to this headline">¶</a></h3>
+<p>The first stage of SIRENA processing is a fine detection process performed over every <em>RECORD</em> in the input file, to look for missing (or secondary) pulses that can be on top of the primary (initially triggered) ones. Two algorithms can be used for this purpose, the <em>Adjusted derivative</em> (<strong>AD</strong>) (see <a class="reference internal" href="zreferences.html#boyce1999" id="id11">[Boyce+99]</a>) and what has been called <em>Single Threshold Crossing</em> (<strong>STC</strong>) (which has been implemented in the code with the aim of reducing the complexity and the computer power of the AD scheme) (<a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-detectionmode"><code class="xref std std-option docutils literal"><span class="pre">detectionMode</span></code></a> ).</p>
+<div class="section" id="adjusted-derivative">
+<span id="detection-ad"></span><h4><span class="pageblue">Adjusted Derivative</span><a class="headerlink" href="#adjusted-derivative" title="Permalink to this headline">¶</a></h4>
+<p>It follows these steps:</p>
+<p>1.- The record is differentiated and a <em>median kappa-clipping</em> process is applied to the data, so that the data values larger than the median plus <em>kappa</em> times the quiescent-signal standard deviation, are replaced by the median value in an iterative process until no more data points are left. Then the threshold is established at the clipped-data mean value plus <a class="reference internal" href="SIRENAcommandline.html#id5"><code class="xref std std-option docutils literal"><span class="pre">nSgms</span></code></a> times the standard deviation.</p>
+<div class="figure align-center" id="id46">
+<a class="reference internal image-reference" href="_images/mediankappaclipping.png"><img alt="_images/mediankappaclipping.png" src="_images/mediankappaclipping.png" style="width: 952.0px; height: 112.0px;" /></a>
+<p class="caption"><span class="caption-text">Median kappa-clipping block diagram.</span></p>
+</div>
+<p>2.- A pulse is detected whenever the derivarive signal is above this threshold.</p>
+<div class="figure align-center" id="id47">
+<a class="reference internal image-reference" href="_images/ADskecth_blue.png"><img alt="_images/ADskecth_blue.png" src="_images/ADskecth_blue.png" style="width: 476.4px; height: 614.4px;" /></a>
+<p class="caption"><span class="caption-text">Block diagram explaining the AD detection process (after the threshold establishment).</span></p>
+</div>
+<p>3.- Based on the first sample of the signal derivative which passes the threshold level, a template is selected from the library. The 25-samples-long dot product of the pre-detected pulse and the template is then calculated at different positions (lags) around the initial starting time of the pulse to better determine its correct starting point. Usually a dot product in 3 different <strong>lags</strong> <a class="footnote-reference" href="#id13" id="id12">[5]</a> around the sample of the initial detection is adequate to find a maximum and the following steps will depend on whether a maximum of the dot product has been found or not:</p>
+<ul class="simple">
+<li>If a maximum of the dot product has not been found, the starting time of the pulse is fixed to the time when the derivative gets over the threshold (in this case, the <em>tstart</em> matches a digitized sample without taking the possible jitter into account).</li>
+<li>If a maximum of the dot product has been found, a new starting time f the pulse is going to be established (by using the 3-dot-product results around the maximum to analytically define a parabola and locate its maximum). Then, an iterative process begins in order to select the best template from the library, resulting each time in a new starting time with a different jitter. As due to the jitter, the pulses are placed out of a digitized sample clock, the first sample of the derivative of the pulse itself is not exactly the value of the first sample getting over the threshold and it would need to be corrected depending on the time shift with respect to the digitized samples (<em>samp1DER correction</em>).</li>
+</ul>
+<table class="docutils footnote" frame="void" id="id13" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id12">[5]</a></td><td>Nevertheless, when the residual signals are large, the maximum of the dot product moves towards the secondary pulse, missing the primary detection. This is why currently the maximum number of the dot product lags is limited to 5.</td></tr>
+</tbody>
+</table>
+<p>4.- Every time a sample is over the threshold, a check is performed for the slope of the straight line defined by this sample, its preceding one and its following one. If the slope is lower than the minimum slope of the templates in the calibration library, the pulse is discarded (it is likely a residual signal) and start a new search. If the slope is higher than the minimum slope of the templates in the calibration library, the pulse is labeled as detected.</p>
+<p>5.- Once a primary pulse is detected in the record, the system starts a secondary detection to look for missing pulses that could be hidden by the primary one. For this purpose, a model template is chosen from the auxiliary library  and subtracted at the position of the detected pulse. The first sample of the detected pulse derivative (possibly different from the initial one after the realocation done by the dot product in the previous step) is used to select again the appropriate template from the library. After the <em>samp1DER correction</em> and also due to the jitter, the 100-samples-long template needs to be aligned with the pulse before subtraction (<em>template correction</em>). Then the search for samples above the threshold starts again.</p>
+<p>This is an iterative process, until no more pulses are found.</p>
+<p id="lpf">If the noise is large, input data can be low-pass filtered for the initial stage of the event detection. For this purpose, the input parameter <a class="reference internal" href="SIRENAcommandline.html#id3"><code class="xref std std-option docutils literal"><span class="pre">scaleFactor</span></code></a> (<img class="math" src="_images/math/4f7e75c1857a15abfa7c7efcdc7e080843c7b007.png" alt="\mathit{sF}"/>) is used. The low-pass filtering is applied as a box-car function, a temporal average window. If the cut-off frequency of the filter is <img class="math" src="_images/math/41aece5c934076735a0a1e4202348d60d9c5bc81.png" alt="fc"/>, the box-car length is <img class="math" src="_images/math/2554582297d78725e416d5ebeb085cef47eef2e6.png" alt="(1/fc) \times \mathit{samprate}"/>, where <img class="math" src="_images/math/74bafdacc60bd229cd214f4552c8a02aa19e7f09.png" alt="\mathit{samprate}"/> is the value of the sampling rate in Hz (inverse of the input file keyword <code class="docutils literal"><span class="pre">DELTAT</span></code>).</p>
+<div class="math">
+<p><img src="_images/math/0da4eef7a77e7d6cc7260b84504e062e18664714.png" alt="f_{c1} &amp;= \frac{1}{2\pi\cdot\mathit{sF_1}} \\
+f_{c2} &amp;= \frac{1}{2\pi\cdot\mathit{sF_2}}"/></p>
+</div><p>for <img class="math" src="_images/math/b512043cd0e9dab5ad8ad50d9fd7974fe7f0af82.png" alt="\mathit{sF_1} &lt; \mathit{sF_2}"/></p>
+<div class="figure align-center" id="id48">
+<a class="reference internal image-reference" href="_images/lowpassfilter.png"><img alt="_images/lowpassfilter.png" src="_images/lowpassfilter.png" style="width: 376.5px; height: 100.0px;" /></a>
+<p class="caption"><span class="caption-text">Low-pass filtering (LPF)</span></p>
+</div>
+<p>If the parameter <a class="reference internal" href="SIRENAcommandline.html#id3"><code class="xref std std-option docutils literal"><span class="pre">scaleFactor</span></code></a> is too large, the low-pass filter band is too narrow, and not only noise is rejected during the filtering, but also the signal.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">A proper cut-off frequency of the low-pass filter must be chosen in order to avoid piling-up the first derivative and to detect as many pulses as possible in the input FITS file. However, filtering gives rise to a spreading in the signal so, the pulses start time calculated from the first derivative of the low-pass filtered event (which is spread by the low-pass filtering) has to be transformed into the start time of the non-filtered pulse.</p>
+</div>
+<div class="figure align-center" id="id49">
+<a class="reference internal image-reference" href="_images/detect.jpeg"><img alt="_images/detect.jpeg" src="_images/detect.jpeg" style="width: 779.2px; height: 303.2px;" /></a>
+<p class="caption"><span class="caption-text">First derivative of initial signal and initial threshold (left) and derivative of signal after subtraction of primary pulses (right).</span></p>
+</div>
+</div>
+<div class="section" id="single-threshold-crossing">
+<span id="detection-stc"></span><h4><span class="pageblue">Single Threshold Crossing</span><a class="headerlink" href="#single-threshold-crossing" title="Permalink to this headline">¶</a></h4>
+<p>1.- This alternative detection method also compares the derivative signal to a threshold (established in the same way as in the step 1 of the previous algorithm).</p>
+<p>2.- If <a class="reference internal" href="SIRENAcommandline.html#id4"><code class="xref std std-option docutils literal"><span class="pre">samplesUp</span></code></a> samples of the derivative are above this threshold a pulse is detected.</p>
+<p>3.- After the detection, the first sample of the derivative that crosses the threshold is taken as the Start Time of the detected pulse.</p>
+<p>4.- If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-samplesdown"><code class="xref std std-option docutils literal"><span class="pre">samplesDown</span></code></a> samples of the derivative are below the threshold, the process of looking for a new pulse starts again.</p>
+<p>In contrast to apply either of the last two detection algorithms, for testing and debugging purposes SIRENA code can be run in <strong>perfect detection</strong> mode, leaving out the detection stage, provided the (pairs or triplets of) simulated pulses are at the same position in all the RECORDS. In this case the start sample of the first/second/third pulse in the record is taken from the input parameter(s) <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-tstartpulse1"><code class="xref std std-option docutils literal"><span class="pre">tstartPulse1</span></code></a> <a class="footnote-reference" href="#id15" id="id14">[6]</a>, <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-tstartpulse2"><code class="xref std std-option docutils literal"><span class="pre">tstartPulse2</span></code></a>, <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-tstartpulse3"><code class="xref std std-option docutils literal"><span class="pre">tstartPulse3</span></code></a> (parameters <a class="reference internal" href="SIRENAcommandline.html#id3"><code class="xref std std-option docutils literal"><span class="pre">scaleFactor</span></code></a>, <a class="reference internal" href="SIRENAcommandline.html#id4"><code class="xref std std-option docutils literal"><span class="pre">samplesUp</span></code></a> or <a class="reference internal" href="SIRENAcommandline.html#id5"><code class="xref std std-option docutils literal"><span class="pre">nSgms</span></code></a> would then not be required). Currently no subsample pulse rising has been implemented in the simulations nor in the reconstruction code (future development).</p>
+<table class="docutils footnote" frame="void" id="id15" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id14">[6]</a></td><td><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-tstartpulse1"><code class="xref std std-option docutils literal"><span class="pre">tstartPulse1</span></code></a> can also be a string with the file name containing the tstart (in seconds) of every pulse.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="event-grading">
+<span id="grade"></span><h3>Event Grading<a class="headerlink" href="#event-grading" title="Permalink to this headline">¶</a></h3>
+<p>The <em>Event Grading</em> stage qualifies the pulses according to the proximity of other events in the same record.</p>
+<p>Once the events in a given record have been detected and their start times established, <strong>grades</strong> are assigned to every event taking into account the proximity of the following and previous pulses. This way, pulses are classified as <em>High</em>, <em>Medium</em>, <em>Limited</em> or <em>Low</em> resolution and as <em>Rejected</em> and <em>Pileup</em> pulses. Currently the grading is performed following the information in the input <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-xmlfile"><code class="xref std std-option docutils literal"><span class="pre">XMLFile</span></code></a>.</p>
+</div>
+<div class="section" id="event-energy-determination-methods">
+<span id="reconmethods"></span><h3>Event Energy Determination: methods<a class="headerlink" href="#event-energy-determination-methods" title="Permalink to this headline">¶</a></h3>
+<p>Once the input events have been detected and graded, their energy content can be determined. Currently all the events (independently of their grade) are processed with the same reconstruction method, but in the future, a different approach could be taken, for example simplifying the reconstruction for the lowest resolution events.</p>
+<p>The SIRENA input parameter that controls the reconstruction method applied is <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-energymethod"><code class="xref std std-option docutils literal"><span class="pre">EnergyMethod</span></code></a> that should take values of <em>OPTFILT</em> for Optimal Filtering in Current space, <em>WEIGHT</em> for Covariance Matrices, <em>WEIGHTN</em> for first order approach of Covariance matrices method and <em>I2R</em>, <em>I2RALL</em>, <em>I2RNOL</em> or <em>I2RFITTED</em> for Optimal Filtering implementation in (quasi)Resistance space. If optimal filtering and <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-ofnoise"><code class="xref std std-option docutils literal"><span class="pre">OFNoise</span></code></a> is <em>WEIGHTM</em> tthe noise weightt matrix from noise intervals is employed instead the noise spectral density (<a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-ofnoise"><code class="xref std std-option docutils literal"><span class="pre">OFNoise</span></code></a> is <em>NSD</em>).</p>
+<div class="section" id="optimal-filtering-by-using-the-noise-spectral-density">
+<span id="optimalfilter-nsd"></span><h4><span class="pageblue">Optimal Filtering by using the noise spectral density</span><a class="headerlink" href="#optimal-filtering-by-using-the-noise-spectral-density" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><p>This is the baseline standard technique commonly used to process microcalorimeter data streams. It relies on two main assumptions. Firstly, the detector response is linear; that is, the pulse shapes are identical regardless of their energy and thus, the pulse amplitude is the scaling factor from one pulse to another <a class="reference internal" href="zreferences.html#boyce1999" id="id16">[Boyce+99]</a>, <a class="reference internal" href="zreferences.html#szym1993" id="id17">[Szymkowiak+93]</a>.</p>
+<p>In the frequency domain (as noise can be frequency dependent), the raw data can be expressed as <img class="math" src="_images/math/d87e74601f195a06bf850e864e9f5d42616e8780.png" alt="P(f) = E\cdot S(f) + N(f)"/>, where <img class="math" src="_images/math/b2f67a4faf74e9acbc6c0ffb7048e3f413ec8ef7.png" alt="S(f)"/> is the normalized model pulse shape (matched filter), <img class="math" src="_images/math/1472d8c90c81821f3b7388c17905e5aa7a8ae6db.png" alt="N(f)"/> is the noise and <img class="math" src="_images/math/4b6222b865b812d2a59368cd1629eed6b54454d5.png" alt="E"/> is the scalar amplitude for the photon energy.</p>
+<p>The second assumption is that the noise is stationary, i.e. it does not vary with time. The amplitude of each pulse can then be estimated by minimizing (weighted least-squares sense) the difference between the noisy data and the model pulse shape, being the <img class="math" src="_images/math/b0a677c7b64a9ce46bca897eabaf2af1c84de1a5.png" alt="\chi^2"/> condition to be minimized:</p>
+<div class="math" id="eqopt">
+<p><img src="_images/math/d876505e8663e64465cf3e96b284801c216dbc78.png" alt="\chi^2 = \int \frac{(P(f)-E \cdot S(f))^2}{\langle\lvert N(f)\lvert ^2\rangle} df"/></p>
+</div><p>In the time domain, the amplitude is the best weighted (optimally filtered) sum of the values in the pulse.</p>
+<div class="math">
+<p><img src="_images/math/0da68e05fb8442625b9803f3f5d9be9ff1bfb218.png" alt="E = k \int P(t)\cdot OF(t),"/></p>
+</div><p>where <img class="math" src="_images/math/389b8c0305e23d9b8fbfc156bdf17f197b6a72ee.png" alt="OF(t)"/> is the time domain expression of optimal filter in frequency domain</p>
+<div class="math">
+<p><img src="_images/math/2ea70a8acefdfcdb475b00eb0f91c9e24491be3e.png" alt="OF(f) = \frac{S^*(f)}{\langle\lvert N(f)\lvert ^2\rangle}"/></p>
+</div><p>and <img class="math" src="_images/math/0b7c1e16a3a8a849bb8ffdcdbf86f65fd1f30438.png" alt="k"/> is the normalization factor to give <img class="math" src="_images/math/4b6222b865b812d2a59368cd1629eed6b54454d5.png" alt="E"/> in units of energy</p>
+<div class="math">
+<p><img src="_images/math/4cc2b936d06d51f76d03b94baa896d0ddfb7799b.png" alt="k = \int \frac{S(f)\cdot S^{*}(f)}{\langle\lvert N(f)\lvert ^2\rangle} df"/></p>
+</div><p>Optimal filtering reconstruction can be currently performed in two different implementations: <em>baseline subtraction</em> (<strong>B0</strong> in SIRENA wording), where the baseline value read from the <code class="docutils literal"><span class="pre">BASELINE</span></code> keyword in the noise file is subtracted from the signal, and <em>frequency bin 0</em> (<strong>F0</strong>), where the frequency bin at <em>f=0 Hz</em> is discarded for the construction of the optimal filter. The final filter is thus zero summed, which produces an effective rejection of the signal baseline (see <a class="reference internal" href="zreferences.html#doriese2009" id="id18">[Doriese+09]</a> for a discussion about the effect of this approach on the TES energy resolution). This option is controlled by the parameter <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-filtermethod"><code class="xref std std-option docutils literal"><span class="pre">FilterMethod</span></code></a>.</p>
+<p><strong>As the X-IFU detector is a non-linear one, the energy estimation after any filtering method has been applied, has to be transformed to an unbiased estimation by the application of a gain scale obtained by the application of the same method to pulse templates at different energies (not done inside SIRENA)</strong>.</p>
+<p>In SIRENA, optimal filters can be calculated <em>on-the-fly</em> or read as pre-calculated values from the calibration library. This option is selected with the input parameter <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-oflib"><code class="xref std std-option docutils literal"><span class="pre">OFLib</span></code></a>. If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-oflib"><code class="xref std std-option docutils literal"><span class="pre">OFLib</span></code></a> =1, fixed-length pre-calculated optimal filters (<strong>Tx</strong> or <strong>Fx</strong>) will be read from the library (the length selected <strong>x</strong> will be the base-2 system value closest -lower than or equal- to that of the event being reconstructed or <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-largefilter"><code class="xref std std-option docutils literal"><span class="pre">largeFilter</span></code></a>). If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-oflib"><code class="xref std std-option docutils literal"><span class="pre">OFLib</span></code></a> =0, optimal filters will be calculated specifically for the pulse length of the event under study. This length calculation is determined by the parameter <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-ofstrategy"><code class="xref std std-option docutils literal"><span class="pre">OFStrategy</span></code></a>. This way <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-ofstrategy"><code class="xref std std-option docutils literal"><span class="pre">OFStrategy</span></code></a> = <em>FREE</em> will optimize the length of the filter to the maximum length available (let’s call this value <em>fltmaxlength</em>), given by the position of the following pulse, or the pulse length if this is shorter (it should be noticed that if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-ofstrategy"><code class="xref std std-option docutils literal"><span class="pre">OFStrategy</span></code></a> = <em>FREE</em> and <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-oflib"><code class="xref std std-option docutils literal"><span class="pre">OFLib</span></code></a> =1, the base-2 system value closest -lower than or equal- to <em>fltmaxlength</em> will be chosen as the optimal filter length). <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-ofstrategy"><code class="xref std std-option docutils literal"><span class="pre">OFStrategy</span></code></a> = <em>BYGRADE</em> will choose the filter length to use, according to the <a class="reference internal" href="#grade"><span class="std std-ref">grade</span></a> of the pulse (currently read from the <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-xmlfile"><code class="xref std std-option docutils literal"><span class="pre">XMLFile</span></code></a>) and <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-ofstrategy"><code class="xref std std-option docutils literal"><span class="pre">OFStrategy</span></code></a> = <em>FIXED</em> will take a fixed length (given by the parameter <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-oflength"><code class="xref std std-option docutils literal"><span class="pre">OFLength</span></code></a>) for all the pulses. These last 2 options are only for checking and development purposes; a normal run with <em>on-the-fly</em> calculations with be done with <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-ofstrategy"><code class="xref std std-option docutils literal"><span class="pre">OFStrategy</span></code></a> = <em>FREE</em>. Note that if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-oflib"><code class="xref std std-option docutils literal"><span class="pre">OFLib</span></code></a> =0, a noise file must be provided through parameter <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-noisefile"><code class="xref std std-option docutils literal"><span class="pre">NoiseFile</span></code></a> (not in the case of <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-oflib"><code class="xref std std-option docutils literal"><span class="pre">OFLib</span></code></a> =1), since in this case the optimal filter must be computed for each pulse at the required length.</p>
+<p>In order to reconstruct all the events using filters at a single monochromatic energy, the input library should only contain one row with the calibration columns for that specific energy. If the input library is made of several monochromatic calibration energies, the optimal filters used in the reconstruction process can be tunned to the initially estimated energy of the event being analysed. For this purpose, a first order expansion of the temporal expression of a pulse at the unknown energy <em>E</em> will be taken into account:</p>
+<div class="math" id="n">
+<p><img src="_images/math/5d0e571f81f0e61e9cad51c11bf93490d135c7bb.png" alt="P(t,E) = S(t,E_{\alpha}) + b + \frac{(E-E_{\alpha})}{(E_{\beta}-E_{\alpha})}[S(t,E_{\beta})- S(t,E_{\alpha})]"/></p>
+</div><p>where <img class="math" src="_images/math/57c9d14bb082716df9000146882ce365335d08f1.png" alt="b"/> is the baseline level, and <img class="math" src="_images/math/6a9383a5bc94991fefab9dc53bb463b0186a5f47.png" alt="S(t,E_{\alpha}), S(t,E_{\beta})"/> are pulse templates (<strong>PULSEB0</strong> columns) at the corresponding energies <img class="math" src="_images/math/9a542eef614bd5310c891e3f8d4b21475ba3d690.png" alt="E_{\alpha}, E_{\beta}"/> which embrace the energy <img class="math" src="_images/math/4b6222b865b812d2a59368cd1629eed6b54454d5.png" alt="E"/>. Operating here and grouping some terms:</p>
+<div class="math">
+<p><img src="_images/math/26d573d8849bcc87e383c8db59dc302aaea89852.png" alt="&amp; P(t)_{\alpha\beta} = S(t,E_{\alpha}) - \frac{E_{\alpha}}{(E_{\beta}-E_{\alpha})}[S(t,E_{\beta})-S(t,E_{\alpha})]\\
+&amp; D(t)_{\alpha\beta} = \frac{[S(t,E_{\beta})-S(t,E_{\alpha})]}{(E_{\beta}-E_{\alpha})}"/></p>
+</div><p>then</p>
+<div class="math">
+<p><img src="_images/math/62c0e5a14bc2125a3865ae28cff269b667a0acc5.png" alt="P(t,E) - P(t)_{\alpha\beta} = E \cdot D(t)_{\alpha\beta} + b"/></p>
+</div><p>This expression resembles the one above for the optimal filtering if now the data <img class="math" src="_images/math/406389ef198bd207d59e167ef2ff927efd41922f.png" alt="P(t)"/> is given by <img class="math" src="_images/math/1835b2f2ac3789189fcc110339365f30f87d2e7c.png" alt="P(t,E) - P(t)_{\alpha\beta}"/> and the role of normalized template <img class="math" src="_images/math/b2f67a4faf74e9acbc6c0ffb7048e3f413ec8ef7.png" alt="S(f)"/> is played by <img class="math" src="_images/math/006e2912c2d3504da29fcef517b45ad136bc30df.png" alt="D(t)_{\alpha\beta}"/>. This way, the optimal filters can be built over <img class="math" src="_images/math/006e2912c2d3504da29fcef517b45ad136bc30df.png" alt="D(t)_{\alpha\beta}"/>.</p>
+<p>Again, <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-oflib"><code class="xref std std-option docutils literal"><span class="pre">OFLib</span></code></a> will control whether the required (<em>interpolated</em>) optimal filter (built from <img class="math" src="_images/math/006e2912c2d3504da29fcef517b45ad136bc30df.png" alt="D(t)_{\alpha\beta}"/>) is read from the library (at any of the several fixed lengths stored, <strong>Fx</strong> or <strong>Tx</strong> if only one energy included in the library, or <strong>ABFx</strong> or <strong>ABTx</strong> if several energies included in the library) or whether an adequate filter is calculated <em>on-the-fly</em> (<a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-oflib"><code class="xref std std-option docutils literal"><span class="pre">OFLib</span></code></a> = <em>0</em>).</p>
+<div class="figure align-center" id="id50">
+<a class="reference internal image-reference" href="_images/OPTloop_new.png"><img alt="_images/OPTloop_new.png" src="_images/OPTloop_new.png" style="width: 635.2px; height: 459.2px;" /></a>
+<p class="caption"><span class="caption-text">Decision loop for optimal filter calculation</span></p>
+</div>
+<p>The optimal filtering technique (selected through the input parameter <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-energymethod"><code class="xref std std-option docutils literal"><span class="pre">EnergyMethod</span></code></a>) can be applied in the frequency or in the time domain with the option <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-filterdomain"><code class="xref std std-option docutils literal"><span class="pre">FilterDomain</span></code></a>.</p>
+<p>The misalignement between the triggered pulse and the template applied for the optimal filter can affect the energy estimate. As the response will be maximum when the data and the template are coincident, an option has been implemented in SIRENA to calculate the energy at three different fixed lags between both, and estimate the final energy to better than the sample frequency (<a class="reference internal" href="zreferences.html#adams2009" id="id19">[Adams+09]</a>). This possibility is driven by input <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-lagsornot"><code class="xref std std-option docutils literal"><span class="pre">LagsOrNot</span></code></a>.</p>
+</div></blockquote>
+</div>
+<div class="section" id="optimal-filtering-by-using-the-noise-weight-matrix-from-noise-intervals">
+<span id="optimalfilter-weightm"></span><h4><span class="pageblue">Optimal Filtering by using the noise weight matrix from noise intervals</span><a class="headerlink" href="#optimal-filtering-by-using-the-noise-weight-matrix-from-noise-intervals" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><p>By choosing the input parameter <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-ofnoise"><code class="xref std std-option docutils literal"><span class="pre">OFNoise</span></code></a> as <strong>WEIGHTM</strong> the optimal filtering method is going to use the noise weight matrix calculated from noise intervals (rather than the noise spectral density as in <a class="reference internal" href="#optimalfilter-nsd"><span class="std std-ref">the previous section</span></a>). Using the noise power spectrum (FFT) is also possible, but it introduces an additional wrong assumption of periodicity. The signal-to-noise cost for filtering in the Fourier domain may be small in some cases but it is worth while checking the importance of this cost (<a class="reference internal" href="zreferences.html#fowler2015" id="id20">[FowlerAlpertDoriese+15]</a>).</p>
+<p>Being <img class="math" src="_images/math/953bde2ab2fca30897f66185e5b37b73747b8b46.png" alt="W"/> the noise covariance matrix, the best estimate energy is (<a class="reference internal" href="#weightn"><span class="std std-ref">see mathematical development of the first order approach</span></a> where the variables <img class="math" src="_images/math/7a7bb470119808e2db2879fc2b2526f467b7a40b.png" alt="X"/> and <img class="math" src="_images/math/450a8e2c2320d77181e0d4fc68c947e9a5de8ecb.png" alt="M"/> should be exchanged because they are not exactly the same):</p>
+<div class="math">
+<p><img src="_images/math/804b8828581b546c1db60b8bad152ce2f17b6525.png" alt="E = e_1^T[M^T \cdot W \cdot M]^{-1} [M^T \cdot W \cdot Y]"/></p>
+</div><p>where <img class="math" src="_images/math/a75ea2008afa80926a524dd9c7ad62f547d0d67c.png" alt="e_1^T \equiv [1, 0]"/> is the unit vector to select only the term that corresponds to the energy (amplitude) of the pulse. <img class="math" src="_images/math/450a8e2c2320d77181e0d4fc68c947e9a5de8ecb.png" alt="M"/> is a model matrix whose first column is the pulse shape and the second column is a column of ones in order to can calculate the baseline. <img class="math" src="_images/math/0062c26909b3e07ee8f5a6285b2563d69bc979ff.png" alt="Y"/> is the measured data.</p>
+</div></blockquote>
+</div>
+<div class="section" id="quasi-resistance-space">
+<span id="rspace"></span><h4><span class="pageblue">Quasi Resistance Space</span><a class="headerlink" href="#quasi-resistance-space" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><p>A new approach aimed at dealing with the non-linearity of the signals, is the transformation of the current signal before the reconstruction process to a (quasi) resistance space (<a class="reference internal" href="zreferences.html#bandler2006" id="id21">[Bandler+06]</a>, <a class="reference internal" href="zreferences.html#lee2015" id="id22">[Lee+15]</a>). It should improve the linearity by removing the non-linearity due to the bias circuit, although the non-linearity from the R-T transition still remains. A potential additional benefit could also be a more uniform noise across the pulse.</p>
+<p>This type of transformations are currently implemented in SIRENA and can be accessed through the <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-energymethod"><code class="xref std std-option docutils literal"><span class="pre">EnergyMethod</span></code></a> command line option. Some of them, considers linearization as a linear scale in the height of the pulses with energy (<em>I2RALL</em>, <em>I2RNOL</em>, <em>I2R</em>) while the last one is also able to get a linear  gain scale when the signal is reconstructed with a simple filter (<em>I2RFITTED</em>).</p>
+<p>Let’s see first some definitions given by columns and keywords in <code class="docutils literal"><span class="pre">tessim</span></code> simulated data files <a class="footnote-reference" href="#id28" id="id23">[7]</a>:</p>
+<blockquote>
+<div><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">PXLnnnnn:</th><td class="field-body">column that stores the data signal in pixel <em>nnnnn</em> [ADC]</td>
+</tr>
+<tr class="field-even field"><th class="field-name">PULSEnnnnn:</th><td class="field-body">column for the data signal in pixel <em>nnnnn</em> over the bias current [Amp]</td>
+</tr>
+<tr class="field-odd field"><th class="field-name"><code class="docutils literal"><span class="pre">ADUCNV</span></code>:</th><td class="field-body">ADU conversion factor [Amp/ADU]</td>
+</tr>
+<tr class="field-even field"><th class="field-name"><code class="docutils literal"><span class="pre">I0_START</span></code>:</th><td class="field-body">Initial bias current [Amp]</td>
+</tr>
+<tr class="field-odd field"><th class="field-name"><code class="docutils literal"><span class="pre">IMIN</span></code>:</th><td class="field-body">Current corresponding to 0 ADU [Amp]</td>
+</tr>
+<tr class="field-even field"><th class="field-name">I:</th><td class="field-body">Data signal in Current space [Amp]</td>
+</tr>
+<tr class="field-odd field"><th class="field-name"><code class="docutils literal"><span class="pre">R0</span></code>:</th><td class="field-body">Operating point resistance [Ohm]</td>
+</tr>
+<tr class="field-even field"><th class="field-name"><code class="docutils literal"><span class="pre">TTR</span></code>:</th><td class="field-body">Transformer Turns Ratio</td>
+</tr>
+<tr class="field-odd field"><th class="field-name"><code class="docutils literal"><span class="pre">LFILTER</span></code>:</th><td class="field-body">Filter circuit inductance [H]</td>
+</tr>
+<tr class="field-even field"><th class="field-name"><code class="docutils literal"><span class="pre">RPARA</span></code>:</th><td class="field-body">Parasitic resistor value [Ohm]</td>
+</tr>
+</tbody>
+</table>
+<p><img class="math" src="_images/math/1e992b1b60f7868a9802723c12c367ab99af4d94.png" alt="IP \equiv \mathit{PULSEnnnnn} = \mathit{PXLnnnnn} \times"/> <code class="docutils literal"><span class="pre">ADUCNV</span></code> + <code class="docutils literal"><span class="pre">IMIN</span></code> = <code class="docutils literal"><span class="pre">I0_START</span></code> - I</p>
+</div></blockquote>
+<ul>
+<li><p class="first"><strong>I2RALL</strong> transformation</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">tessim</span></code> (<a class="reference internal" href="zreferences.html#wilms2016" id="id24">[Wilms+16]</a>) is based on a generic model of the TES/absorber pixel with a first stage read-out circuit. The overall setup of this model is presented in the figure below. <code class="docutils literal"><span class="pre">tessim</span></code> performs the numerical solution of the differential equations for the time-dependent temperature, <img class="math" src="_images/math/81522d84cd0ba9a884d95bf92056909391d1ad41.png" alt="T(t)"/>, and the current, <img class="math" src="_images/math/d99bf05f4dc0286cefe03eb8cff81ef3bb39dbda.png" alt="I(t)"/>, in the TES using <a class="reference internal" href="zreferences.html#irwin2005" id="id25">[Irw05]</a> :</p>
+<div class="figure align-center" id="id51">
+<a class="reference internal image-reference" href="_images/Physicsmodel_equivalentcircuit.png"><img alt="_images/Physicsmodel_equivalentcircuit.png" src="_images/Physicsmodel_equivalentcircuit.png" style="width: 60%;" /></a>
+<p class="caption"><span class="caption-text">Physics model coupling the thermal and electrical behaviour of the TES/absorber pixel used by <code class="docutils literal"><span class="pre">tessim</span></code>.</span></p>
+</div>
+<div class="math">
+<p><img src="_images/math/4d35bca1727ea9ae2c8f9cc9329421f4484e8508.png" alt="C \frac{dT}{dt} = -P_b + R(T,I)I^2 + P_{X-ray} + Noise
+
+L \frac{dI}{dt} = V_0 - IR_L - IR(T,I) + Noise"/></p>
+</div><p>In the electrical equation, <img class="math" src="_images/math/ae2b750f71e1fc0daaa3de9a85d42794d7cd1326.png" alt="L"/> is the effective inductance of the readout circuit, <img class="math" src="_images/math/7d4b8dacaee5dadae0c4c26b879f0302b57cc75e.png" alt="R_L"/> is the effective load resistor and <img class="math" src="_images/math/cab26b455c541a5b524c2b798caa76a45679f0cf.png" alt="V_0"/> is the constant voltage bias. Under AC bias conditions,</p>
+<blockquote>
+<div><p><img class="math" src="_images/math/17f0d7a18516e3d40b6d366d084a31411c3387aa.png" alt="L ="/> <code class="docutils literal"><span class="pre">LFILTER</span></code> / <code class="docutils literal"><span class="pre">TTR²</span></code></p>
+<p><img class="math" src="_images/math/7d6479e59e9deb4ffc8247470d47d7ab51d9d039.png" alt="R_L ="/> <code class="docutils literal"><span class="pre">RPARA</span></code> / <code class="docutils literal"><span class="pre">TTR²</span></code></p>
+<p><img class="math" src="_images/math/22c4c552268fdb1ce119deefe1fb40a7db759e56.png" alt="\mathit{V0} ="/> <code class="docutils literal"><span class="pre">I0_START</span></code> ( <code class="docutils literal"><span class="pre">R0</span></code> <img class="math" src="_images/math/dbec49d1da8dfb7845f9f1d91e4f075537ec6888.png" alt="+ \mathit{R_L} )"/></p>
+<p>and thus the transformation to resistance space is:</p>
+<p><img class="math" src="_images/math/a6f2b793512441d08ec43b759a5e5c2f6a5ef47a.png" alt="R = (\mathit{V0} - I \cdot R_L - L \cdot dI/dt)/I"/></p>
+</div></blockquote>
+</div></blockquote>
+</li>
+<li><p class="first"><strong>I2RNOL</strong> transformation</p>
+<blockquote>
+<div><p>In the previous transformation <em>I2RALL</em>, the addition of a derivative term increases the noise and thus degrades the resolution. Therefore, a new transformation <em>I2RNOL</em> is done where the circuit inductance is neglected ( <a class="reference internal" href="zreferences.html#lee2015" id="id26">[Lee+15]</a> ), thus suppressing the main source on non-linearity of the detector that comes from the first stage read-out circuit:</p>
+<div class="math">
+<p><img src="_images/math/d9d98efa8c3ef710163a9da1a11cdbab3f9d34cc.png" alt="R = (\mathit{V0} - I \cdot R_L)/I"/></p>
+</div></div></blockquote>
+</li>
+<li><p class="first"><strong>I2R</strong> transformation</p>
+<blockquote>
+<div><p>A different linearization (in the sense of pulse height vs. energy) has been implemented in SIRENA for developing purposes:</p>
+<div class="math">
+<p><img src="_images/math/2061c3e57f02b3d60b6b8aa45e6a4347322cdae0.png" alt="R = \mathit{R0} - \mathit{R0}\left(\frac{abs(\mathit{IP}-\mathit{I0\_START})/\mathit{I0\_START}}{1 + abs(\mathit{IP}-\mathit{I0\_START})/\mathit{I0\_START}}\right)"/></p>
+</div></div></blockquote>
+</li>
+<li><p class="first"><strong>I2RFITTED</strong> transformation</p>
+<blockquote>
+<div><p>Looking for a simple transformation that would produce also a linear gain scale, a new transformation <em>I2RFITTED</em> has been proposed in <a class="reference internal" href="zreferences.html#peille2016" id="id27">[Peille+16]</a>:</p>
+<div class="math">
+<p><img src="_images/math/82a90e88ee0666cdd02f5dc19cf62dc5d5664bcd.png" alt="R = \mathit{V0}/(I_{fit}+I)"/></p>
+</div><p><em>The optimal</em> <img class="math" src="_images/math/a700da77ce42dbe766ade7ba5220f87658099a3a.png" alt="I_{fit}"/> was found to be  <img class="math" src="_images/math/e1feb195454d60cb501c5c9e4501bf863fccf5b1.png" alt="45.3\mu A"/>.*</p>
+</div></blockquote>
+</li>
+</ul>
+<table class="docutils footnote" frame="void" id="id28" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id23">[7]</a></td><td>When working with <code class="docutils literal"><span class="pre">xifusim</span></code> simulated data files, the parameters used in the previous transformations are provided in different keywords and columns:</td></tr>
+</tbody>
+</table>
+<ul>
+<li><p class="first">The next colums in the <em>TESPARAM</em> HDU:</p>
+<blockquote>
+<div><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">V0:</th><td class="field-body">Initial bias voltage [V]</td>
+</tr>
+<tr class="field-even field"><th class="field-name">I0_START:</th><td class="field-body">Initial bias current [Amp]</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">RPARA:</th><td class="field-body">Parasitic resistor value [Ohm]</td>
+</tr>
+<tr class="field-even field"><th class="field-name">LFILTER:</th><td class="field-body">Filter circuit inductance [H]</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">TTR:</th><td class="field-body">Transformer Turns Ratio</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</li>
+<li><p class="first">The next keywords in the <em>ADCPARAM</em> HDU:</p>
+<blockquote>
+<div><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name"><code class="docutils literal"><span class="pre">IMIN</span></code>:</th><td class="field-body">Current corresponding to 0 ADU [Amp]</td>
+</tr>
+<tr class="field-even field"><th class="field-name"><code class="docutils literal"><span class="pre">IMAX</span></code>:</th><td class="field-body">Current corresponding to maximm ADU [Amp]</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="two-experimental-approaches-adding-a-prebuffer-or-0-padding">
+<span id="prebuffer-or-0-padding"></span><h4><span class="pageblue">Two experimental approaches: adding a preBuffer or 0-padding</span><a class="headerlink" href="#two-experimental-approaches-adding-a-prebuffer-or-0-padding" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><p>For pulses closer than the High Resolution length, short optimal filters in current or quasi-resistance space must be used in their reconstruction, causing a degradation of the energy resolution that must be studied <a class="reference internal" href="zreferences.html#doriese2009" id="id29">[Doriese+09]</a>. Two different experimental approaches (<strong>variant of Optimal Filtering by using the noise spectral density in current or quasi resistance space</strong>) have been developed to try to minimize this degradation:</p>
+<p><strong>a) Adding a preBuffer:</strong></p>
+<p>First, the addition of a few signal samples, <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-prebuffer"><code class="xref std std-option docutils literal"><span class="pre">preBuffer</span></code></a> (different from 0), before the triggering point to the pulses template that is used to build the optimal filter.</p>
+<div class="figure align-center" id="id52">
+<a class="reference internal image-reference" href="_images/preBuffer.png"><img alt="_images/preBuffer.png" src="_images/preBuffer.png" style="width: 227.7px; height: 166.2px;" /></a>
+<p class="caption"><span class="caption-text">Adding a preBuffer as a variant of Optimal Filtering by using the noise spectral density in current or quasi resistance space</span></p>
+</div>
+<p><strong>b) 0-padding:</strong></p>
+<p>Second, instead of obtaining the energy through the scalar product of the short pulse and the corresponding short optimal filter (built with a reduced-length template), the full filter (built from a high resolution-long template) is always used, but it is padded with 0s after the short pulse length. If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> &lt; <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-oflength"><code class="xref std std-option docutils literal"><span class="pre">OFLength</span></code></a>, 0-padding will be run.</p>
+<div class="figure align-center" id="id53">
+<a class="reference internal image-reference" href="_images/0-padding.png"><img alt="_images/0-padding.png" src="_images/0-padding.png" style="width: 227.7px; height: 166.5px;" /></a>
+<p class="caption"><span class="caption-text">0-padding as a variant of Optimal Filtering by using the noise spectral density in current or quasi resistance space</span></p>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="covariance-matrices">
+<span id="covmatrices"></span><h4><span class="pageblue">Covariance matrices</span><a class="headerlink" href="#covariance-matrices" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><p>In real detectors, none of the above assumptions (linearity and stationary noise) is strictly correct, so a different approach is required in the presence of non-stationary noise along the signal event, which has to be optimal also when the detector is non-linear. In this method a set of calibration points constructed by many pulse repetitions (<img class="math" src="_images/math/e0bf3e863a8eca1084f64ff22903a30cdba64a3d.png" alt="S^i"/>), is defined at different energies <img class="math" src="_images/math/c3eaaaa17ce98e824f2667aac63e592c723d7a91.png" alt="(\alpha, \beta, ...)"/>. At these energy points, a pulse model (<strong>PULSEB0</strong> column in library) is obtained averaging the data pulses <img class="math" src="_images/math/98244c0558bf78e1ba3243bb4f19de428ff64467.png" alt="(M = &lt;S^i&gt;)"/>, and the deviations of these pulses from the data model <img class="math" src="_images/math/76d4698b962e6268b869b71dcca29274548fc38c.png" alt="(D^i = S^i - M^i)"/> are used to build a covariance matrix <img class="math" src="_images/math/d81b918355dcd09ad42b328f15563c30905bdf2d.png" alt="V^{ij} = &lt;D^iD^j&gt;"/> (the weight matrix <img class="math" src="_images/math/953bde2ab2fca30897f66185e5b37b73747b8b46.png" alt="W"/>, inverse of the covariance matrix, is also calculated).  The non-stationary noise is better described by a full noise covariance matrix rather than a simpler Fourier transform <a class="reference internal" href="zreferences.html#fixsen2004" id="id30">[Fixsen+04]</a>.</p>
+<p>An initial estimation of the energy of the unknown signal data is sufficient to determine the calibration points which straddle it. Then with a linear interpolation of the weight matrix and the signal, the best energy estimate is just a function of the energies of the embracing calibration points, the unknown signal and some other magnitudes that can be pre-calculated with the calibration data (see Eq. 2 in <a class="reference internal" href="zreferences.html#fixsen2004" id="id31">[Fixsen+04]</a>):</p>
+<div class="math">
+<p><img src="_images/math/5a5c432ed17bb588798d0ee9310f1e25bd71e8bd.png" alt="E = E_{\alpha} + (E_{\beta}-E_{\alpha}) \frac{r}{3}\left((2DZ - 1) + \sqrt{(2DZ - 1)^2 + \frac{3(2DY - DXD)}{r}}\right)"/></p>
+</div><p>where <img class="math" src="_images/math/2c0a06563efe401e7ad237c004abf57279ab7780.png" alt="D = U - M_{\alpha}"/>, being <img class="math" src="_images/math/169c982b5e649cd1bd6445df5583affe427ea269.png" alt="U"/> the unknown data signal (<img class="math" src="_images/math/169c982b5e649cd1bd6445df5583affe427ea269.png" alt="U"/> and <img class="math" src="_images/math/05f3da8a8de175369a25b0935d1d87f5a1302e56.png" alt="M_{\alpha}"/> are signals without baseline, i.e., we are assuming that the baseline is known or that the baseline is constant from calibration to the measurement time). Some of these terms are precalculated with calibration data and included in the <a class="reference internal" href="#library"><span class="std std-ref">library</span></a> to be read during the reconstruction process. In particular: <img class="math" src="_images/math/9727fb1dd366e4abdecd9dcd9faf7883a13be4a1.png" alt="T = (S_{\beta} - S_{\alpha})"/>, <img class="math" src="_images/math/610b7d0fd72bff1cf5a8cedc8c6916ae1736e10f.png" alt="t = TW_{\alpha}T"/>, <img class="math" src="_images/math/c67403b6b585428347691702706dccda08db0691.png" alt="X = (W_{\beta} - W_{\alpha})/t"/>, <img class="math" src="_images/math/0630c39d1bed7ba7099926c0ae767349832879f5.png" alt="Y = W_{\alpha}T/t"/>, <img class="math" src="_images/math/35719046b5f3dbde5549674c8452967dabfa5835.png" alt="Z = XT"/> and <img class="math" src="_images/math/b6caf3581cbf8990bb6ea56a7ee73d72ce4f621a.png" alt="r = 1(ZT)"/>.</p>
+<p>Energy reconstruction with <em>Covariance Matrices</em> is selected with input option <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-energymethod"><code class="xref std std-option docutils literal"><span class="pre">EnergyMethod</span></code></a> = <strong>WEIGHT</strong>.</p>
+</div></blockquote>
+</div>
+<div class="section" id="covariance-matrices-0-n">
+<span id="weightn"></span><h4><span class="pageblue">Covariance matrices 0(n)</span><a class="headerlink" href="#covariance-matrices-0-n" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><p>A first order approximation can be used for the Covariance Matrices method from a first order expansion of the pulse expression at a given <em>t</em>:</p>
+<div class="math">
+<p><img src="_images/math/c8d65d541ef38b8b36ff21bf0b18d9f964ba636c.png" alt="P(t,E) = S(t,E_{\alpha}) + b + \frac{(E-E_{\alpha})}{(E_{\beta}-E_{\alpha})}[S(t,E_{\beta})-S(t,E_{\alpha})]"/></p>
+</div><p>where <img class="math" src="_images/math/57c9d14bb082716df9000146882ce365335d08f1.png" alt="b"/> is the baseline level, and <img class="math" src="_images/math/6a9383a5bc94991fefab9dc53bb463b0186a5f47.png" alt="S(t,E_{\alpha}), S(t,E_{\beta})"/> are pulse templates (column <strong>PULSEB0</strong> in the library) at the corresponding energies <img class="math" src="_images/math/9a542eef614bd5310c891e3f8d4b21475ba3d690.png" alt="E_{\alpha}, E_{\beta}"/> which embrace the unknown energy <img class="math" src="_images/math/4b6222b865b812d2a59368cd1629eed6b54454d5.png" alt="E"/>.</p>
+<div class="math">
+<p><img src="_images/math/64cc1d962f02f67b7afeb024715a63590874d60f.png" alt="&amp; D(t)_{\alpha\beta} =  \frac{[S(t,E_{\beta})- S(t,E_{\alpha})]}{(E_{\beta}-E_{\alpha})} \\
+&amp; P(t)_{\alpha\beta} = S(t,E_{\alpha}) - \frac{E_{\alpha}}{(E_{\beta}-E_{\alpha})}[S(t,E_{\beta})-S(t,E_{\alpha})] \\
+&amp; P(t,E) - P(t)_{\alpha\beta} = E \cdot D(t)_{\alpha\beta} + b"/></p>
+</div><p>resembles an equation of condition in matrix notation <img class="math" src="_images/math/e310cebf4fc898bb68c5dde38978b2a90e0aa7f0.png" alt="Y = A\cdot X"/> that for a <img class="math" src="_images/math/b0a677c7b64a9ce46bca897eabaf2af1c84de1a5.png" alt="\chi^2"/> problem with the covariance matrices used as weights (<img class="math" src="_images/math/12acf4ad53bcbdb47e7af32f36e6312a5cfb3990.png" alt="W=V^{-1}"/>):</p>
+<div class="math">
+<p><img src="_images/math/2ae43e95f95463cf3c854a0471c0cf062484d00d.png" alt="X = \left[ \begin{array}{ccc} x_0 &amp; 1 \\ x_1 &amp; 1 \\ \vdots &amp; \vdots \\ x_m &amp; 1 \end{array} \right] =  \left[ \begin{array}{ccc} . &amp; 1 \\ D(t)_{\alpha\beta} &amp; 1 \\ . &amp; 1 \end{array} \right] , Y = \left[ \begin{array}{ccc} y_0 \\ y_1 \\ \vdots \\ y_m \end{array} \right] = \left[ \begin{array}{ccc} . \\ P(t,E)-P(t)_{\alpha\beta} \\ . \end{array} \right] , A = \left[ \begin{array}{ccc} E \\ b \end{array} \right]"/></p>
+</div><div class="math">
+<p><img src="_images/math/01212c1f82a08f7baa5f587453c44ebee34ed198.png" alt="A = [X^T \cdot W \cdot X]^{-1} [X^T \cdot W \cdot Y]
+
+E = e_1^T[X^T \cdot W \cdot X]^{-1} [X^T \cdot W \cdot Y]"/></p>
+</div><p>where <img class="math" src="_images/math/a75ea2008afa80926a524dd9c7ad62f547d0d67c.png" alt="e_1^T \equiv [1, 0]"/> is the unit vector to select only the term that corresponds to the energy (amplitude) of the pulse.</p>
+<p>Energy reconstruction with <em>Covariance Matrices 0(n)</em> is selected with input option <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-energymethod"><code class="xref std std-option docutils literal"><span class="pre">EnergyMethod</span></code></a> = <strong>WEIGHTN</strong>. If parameter <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-oflib"><code class="xref std std-option docutils literal"><span class="pre">OFLib</span></code></a> =1, some components can be used from the precalculated values at the <a class="reference internal" href="#library"><span class="std std-ref">libraryColumns</span></a> (<em>PRECALWN</em> HDU).</p>
+</div></blockquote>
+</div>
+<div class="section" id="principal-component-analysis-pca">
+<span id="pca"></span><h4><span class="pageblue">Principal Component Analysis (PCA)</span><a class="headerlink" href="#principal-component-analysis-pca" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><p>As the assumptions of the optimal filter technique (linearity and stationary noise) are not strictly correct and the covariance matrix methods are highly resource-demanding, energy reconstruction with <em>Principal Component Analysis</em> has been explored (<a class="reference internal" href="zreferences.html#busch2015" id="id32">[Busch+15]</a> and <a class="reference internal" href="zreferences.html#yan2016" id="id33">[Yan+16]</a>).</p>
+<p>According to <a class="reference internal" href="zreferences.html#yan2016" id="id34">[Yan+16]</a>, taking a set of non piled-up pulses from the detector (<img class="math" src="_images/math/573d201b920841ef80eba2ae945131f7f807d52e.png" alt="n=1,...N"/>), each one sampled in time (<img class="math" src="_images/math/9ac3967be5cc4f981057657801d4454e5add6f97.png" alt="t=1,...T"/>), a data matrix <img class="math" src="_images/math/173b41e0e028c9585da12a22b2a923f13302c843.png" alt="D_{T \times N}"/></p>
+<div class="math">
+<p><img src="_images/math/3459bd20b31206513572ed97a61a5d26a3526b48.png" alt="D_{T \times N} = C_{T \times S} \cdot R_{S \times N}"/></p>
+</div><p>can be represented through the basis set <img class="math" src="_images/math/91e5873ee830634c94330dd66c931810bf8d59e3.png" alt="C_{T \times S}"/> with <em>S</em> characteristics pulse shape factors. <img class="math" src="_images/math/9e7c6a69db1f439b169c2ec52cfb63a9aa135095.png" alt="R_{S \times N}"/> is the weigthing of members of this basis set.</p>
+<p>The basis set <img class="math" src="_images/math/91e5873ee830634c94330dd66c931810bf8d59e3.png" alt="C_{T \times S}"/> can be calculated from the data time covariance <img class="math" src="_images/math/3a8935bb574543d39e35d0079de4cda1cc3e33f3.png" alt="[T \times T]"/> square matrix. Unlike the (residuals) <a class="reference internal" href="#covmatrices"><span class="std std-ref">covariance matrix</span></a> created for <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-energymethod"><code class="xref std std-option docutils literal"><span class="pre">EnergyMethod</span></code></a> = <strong>WEIGHT</strong> or <strong>WEIGHTN</strong>, the <em>pulseaverage</em> (i.e. model) is not subtracted in <a class="reference internal" href="SIRENAfunctions.html#_CPPv212weightMatrixP21ReconstructInitSIRENAbP16PulsesCollectionP16PulsesCollectionlP10gsl_vectorP10gsl_vectorPP10gsl_matrixPP10gsl_matrix" title="weightMatrix"><code class="xref cpp cpp-func docutils literal"><span class="pre">weightMatrix()</span></code></a>.</p>
+<p>Since this time covariance matrix is symetric, it can be represented it in terms of a set of eigenvectors <img class="math" src="_images/math/91e5873ee830634c94330dd66c931810bf8d59e3.png" alt="C_{T \times S}"/> (and eigenvalues weightings). The eigenvectors of the data covariance matrix are the principal components to characterise the information.</p>
+<p>If a subset (<em>S’</em>) of eigenvectors can be found (finding patterns depending on the values of the eigenvalues), each pulse could be more compactly represented, not with all the time points <em>T</em> but in terms of just its <em>S’</em> weighting factors, i.e., the chosen eigenvectors. Once the matrix <img class="math" src="_images/math/268a94dd116dbc8df55cc804538dffbd1299f6bc.png" alt="C_{T \times S'}"/> has been determined and inverted, the weighting factors <img class="math" src="_images/math/6ce4004a696c754480f8092d83e28331fc539bae.png" alt="R_{S' \times N}"/> of each pulse can be found by</p>
+<div class="math">
+<p><img src="_images/math/57cd8bc1b4a55c2e1a07ca7d2f2663d3573b8d29.png" alt="R_{S' \times N} = C_{T \times S'}^{-1} \cdot D_{T \times N}"/></p>
+</div><p>If the matrix <img class="math" src="_images/math/91e5873ee830634c94330dd66c931810bf8d59e3.png" alt="C_{T \times S}"/> is constructed to have orthogonal vectors to ease matrix inversion, these eigenvectors could be sorted in order of decreasing statistical significance and a reduced basis set <img class="math" src="_images/math/268a94dd116dbc8df55cc804538dffbd1299f6bc.png" alt="C_{T \times S'}"/> could be easily separated from the full basis set <img class="math" src="_images/math/91e5873ee830634c94330dd66c931810bf8d59e3.png" alt="C_{T \times S}"/>. This reduced set <img class="math" src="_images/math/268a94dd116dbc8df55cc804538dffbd1299f6bc.png" alt="C_{T \times S'}"/> of eigenvectors can describe all the significant characteristic pulse shape components.</p>
+<div class="math">
+<p><img src="_images/math/6248daa73e8eb549dfaac485634d099401ae389d.png" alt="R_{S' \times N} = C_{T \times S'}^{-1} \cdot D_{T \times N} = C_{S' \times T}^{T} \cdot D_{T \times N}"/></p>
+</div><p>A compressed (and noise-filtered) version of the original data can also then be generated:</p>
+<div class="math">
+<p><img src="_images/math/236d2a69a2586271f3ad3c520f70d61a74970d6c.png" alt="D'_{T \times N} = C_{T \times S'} \cdot R_{S' \times N}"/></p>
+</div><p>The next step is understanding how to extract energy information from these 2D scatter plot. In <a class="reference internal" href="zreferences.html#yan2016" id="id35">[Yan+16]</a>, PCA method is applied to a real dataset with Mn <img class="math" src="_images/math/d33baf680be15e9991435d46d3c981e60de3a119.png" alt="K \alpha"/> and Mn <img class="math" src="_images/math/9a831b998898733aae091072f7568d59ea837ab4.png" alt="K \beta"/> lines of the Fe-55 source and very different pulse shapes. In order to extract energy information, the weighting matrix <img class="math" src="_images/math/6ce4004a696c754480f8092d83e28331fc539bae.png" alt="R_{S' \times N}"/>, restricted to <em>S’</em> =2 for simplicity, is examined (see their fig.4 below). Two clusters (elongated by the pulse shape variation) can be seen associated with the Mn <img class="math" src="_images/math/d33baf680be15e9991435d46d3c981e60de3a119.png" alt="K \alpha"/> (black) and Mn <img class="math" src="_images/math/9a831b998898733aae091072f7568d59ea837ab4.png" alt="K \beta"/> (blue) lines. By fitting a line (red) to the Mn <img class="math" src="_images/math/d33baf680be15e9991435d46d3c981e60de3a119.png" alt="K \alpha"/> cluster, an axis is generated and used to rotate the 2D scatter plot of the weighting matrix so that the clusters are vertical. From the projection onto the X-axis, the energy histogram (right subfigure) is built and thus, the energy can be correlated to a linear combination of the first two PCA components.</p>
+<div class="figure align-center" id="id54">
+<a class="reference internal image-reference" href="_images/merge.png"><img alt="_images/merge.png" src="_images/merge.png" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-text">Fig. 4 from <a class="reference internal" href="zreferences.html#yan2016" id="id36">[Yan+16]</a> showing the distribution of elements in the weighting matrix (left) and the energy histogram (right).</span></p>
+</div>
+<p>In order to show more clearly how to follow the process, we have simulated (using <code class="docutils literal"><span class="pre">tessim</span></code>) a data set containing pulses of two different energies, 0.5 and 1 keV (ADC units), that we trim at <img class="math" src="_images/math/66e776401b96ad47f42bc338c8ea9e5373bde587.png" alt="T=1024"/> samples. The first 50 eigenvalues of this dataset are shown in the left subfigure below. According to the eigenvalues, this dataset contains two primary eigenvectors (see the right subfigure below), giving essentially the averages of the pulse shapes (there are two different pulse shapes in the data for two different energies). Higher order eigenvevectors give corrections to these averages and noise correlations.</p>
+<div class="figure align-center" id="id55">
+<a class="reference internal image-reference" href="_images/eigen.png"><img alt="_images/eigen.png" src="_images/eigen.png" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-text">Most significant eigenvalues (left) and eigenvectors (right) of a dataset containing pulses of two different energies (shapes), 0.5 and 1 keV (ADC units), and 1024 samples.</span></p>
+</div>
+<p>The next subfigure on the left shows the distribution of elements from the weighting matrix <img class="math" src="_images/math/6fe882e19ebccd551c81902e4e8a518762e2900c.png" alt="R_{S'=2 \times N}"/>, where components 1 and 2, respectively, are the weighting factors of the first and second eigenvectors. The right subfigure is simply a zoom showing only the 0.5 keV (ADC units) events.</p>
+<div class="figure align-center" id="id56">
+<a class="reference internal image-reference" href="_images/r2xn.png"><img alt="_images/r2xn.png" src="_images/r2xn.png" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-text">Distribution of the events from the weighting matrix <img class="math" src="_images/math/6fe882e19ebccd551c81902e4e8a518762e2900c.png" alt="R_{S'=2 \times N}"/> for <em>S’</em> =2 (left) and zoom of the left bottom cluster (right).</span></p>
+</div>
+<p>In the next figure, the <img class="math" src="_images/math/ed36570dba39ec302634f8be89575b936df8f323.png" alt="\Delta E"/> line represents the direction of variable energies and the <img class="math" src="_images/math/191fcfafc090f74b575c48c85582cbbbb0882575.png" alt="ConstantE"/> line the perpendicular direction which is used to rotate the 2D scatter plot. From the projection onto the X-axis (clusters in red), the energy histograms are built. Since we know the energy difference in eV (the two energies are provided as input parameters <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-energypca1"><code class="xref std std-option docutils literal"><span class="pre">energyPCA1</span></code></a> and <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-energypca2"><code class="xref std std-option docutils literal"><span class="pre">energyPCA2</span></code></a>), it is possible to calculate a conversion factor between arbitrary units to eV.</p>
+<div class="figure align-center" id="id57">
+<a class="reference internal image-reference" href="_images/rsxnRotatedHistograms.png"><img alt="_images/rsxnRotatedHistograms.png" src="_images/rsxnRotatedHistograms.png" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-text"><img class="math" src="_images/math/ed36570dba39ec302634f8be89575b936df8f323.png" alt="\Delta E"/> and <img class="math" src="_images/math/191fcfafc090f74b575c48c85582cbbbb0882575.png" alt="ConstantE"/> lines to stablish the clusters rotation (left) and histograms of the two energies (center and right).</span></p>
+</div>
+<p>PCA has not yet been implemented as a full-functionality <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-energymethod"><code class="xref std std-option docutils literal"><span class="pre">EnergyMethod</span></code></a> (only for testing and development purposes). For the time being, input FITS files to PCA method must have pulses of two different energies which must be provided as input parameters. If it would be necessary, future developments will be done in order to implement this approach in a real-time software.</p>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="use-of-library-columns-in-the-different-reconstruction-methods">
+<span id="libraryuse"></span><h3>Use of library columns in the different reconstruction methods<a class="headerlink" href="#use-of-library-columns-in-the-different-reconstruction-methods" title="Permalink to this headline">¶</a></h3>
+<p><strong>1) Optimal filtering and NSD</strong></p>
+<blockquote>
+<div><div class="figure align-center">
+<a class="reference internal image-reference" href="_images/OPTFILTNSD.png"><img alt="_images/OPTFILTNSD.png" src="_images/OPTFILTNSD.png" style="width: 90%;" /></a>
+</div>
+</div></blockquote>
+<p><strong>2) Optimal filtering and WEIGHTM</strong></p>
+<blockquote>
+<div><div class="figure align-center">
+<a class="reference internal image-reference" href="_images/OPTFILTWEIGHTM.png"><img alt="_images/OPTFILTWEIGHTM.png" src="_images/OPTFILTWEIGHTM.png" style="width: 40%;" /></a>
+</div>
+</div></blockquote>
+<p><strong>3) Covariance matrices</strong></p>
+<blockquote>
+<div><div class="figure align-center">
+<a class="reference internal image-reference" href="_images/WEIGHT.png"><img alt="_images/WEIGHT.png" src="_images/WEIGHT.png" style="width: 85%;" /></a>
+</div>
+</div></blockquote>
+<p><strong>4) Covariance matrices O(n)</strong></p>
+<blockquote>
+<div><div class="figure align-center">
+<a class="reference internal image-reference" href="_images/WEIGHTN.png"><img alt="_images/WEIGHTN.png" src="_images/WEIGHTN.png" style="width: 99%;" /></a>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="examples">
+<span id="id37"></span><h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic simple">
+<li>Full Energy reconstruction performed with the (F0) optimal filtering algorithm (filters calculated on-the-fly) in the current space (including detection) for the detector described in the XMLFile:</li>
+</ol>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span><span class="n">tesreconstruction</span> <span class="n">Recordfile</span><span class="o">=</span><span class="n">inputEvents</span><span class="o">.</span><span class="n">fits</span> <span class="n">TesEventFile</span><span class="o">=</span><span class="n">outputEvents</span><span class="o">.</span><span class="n">fits</span>
+<span class="n">Rcmethod</span><span class="o">=</span><span class="s1">&#39;SIRENA&#39;</span> <span class="n">OFLib</span><span class="o">=</span><span class="n">no</span> <span class="n">OFStrategy</span><span class="o">=</span><span class="n">FREE</span> <span class="n">PulseLength</span><span class="o">=</span><span class="mi">8192</span>  \
+<span class="n">samplesUp</span><span class="o">=</span><span class="mi">3</span> <span class="n">nSgms</span><span class="o">=</span><span class="mf">3.5</span> <span class="n">samplesDown</span><span class="o">=</span><span class="mi">4</span> <span class="n">LibraryFile</span><span class="o">=</span><span class="n">libraryMultiE</span><span class="o">.</span><span class="n">fits</span>\
+<span class="n">opmode</span><span class="o">=</span><span class="mi">1</span> <span class="n">NoiseFile</span><span class="o">=</span><span class="n">noise8192samplesADC</span><span class="o">.</span><span class="n">fits</span> <span class="n">FilterMethod</span><span class="o">=</span><span class="n">F0</span>\
+<span class="n">clobber</span><span class="o">=</span><span class="n">yes</span> <span class="n">intermediate</span><span class="o">=</span><span class="mi">0</span> <span class="n">EnergyMethod</span><span class="o">=</span><span class="n">OPTFILT</span> \
+<span class="n">XMLFile</span><span class="o">=</span><span class="n">xifu_detector_lpa_75um_AR0</span><span class="o">.</span><span class="mi">5</span><span class="n">_pixoffset_mux40_pitch275um</span><span class="o">.</span><span class="n">xml</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li>Energy reconstruction performed with the (F0) optimal filtering algorithm (filters extracted from the library) in the current space (known event position) for the detector described in the XMLFile:</li>
+</ol>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span><span class="n">tesreconstruction</span> <span class="n">Recordfile</span><span class="o">=</span><span class="n">inputEvents</span><span class="o">.</span><span class="n">fits</span> <span class="n">TesEventFile</span><span class="o">=</span><span class="n">outputEvents</span><span class="o">.</span><span class="n">fits</span> \
+<span class="n">Rcmethod</span><span class="o">=</span><span class="s1">&#39;SIRENA&#39;</span> <span class="n">PulseLength</span><span class="o">=</span><span class="mi">8192</span>  <span class="n">LibraryFile</span><span class="o">=</span><span class="n">libraryMultiE</span><span class="o">.</span><span class="n">fits</span> <span class="n">opmode</span><span class="o">=</span><span class="mi">1</span> \
+<span class="n">OFLib</span><span class="o">=</span><span class="n">yes</span> <span class="n">FilterMethod</span><span class="o">=</span><span class="n">F0</span> <span class="n">clobber</span><span class="o">=</span><span class="n">yes</span> <span class="n">intermediate</span><span class="o">=</span><span class="mi">0</span> <span class="n">EnergyMethod</span><span class="o">=</span><span class="n">OPTFILT</span>\
+<span class="n">tstartPulse1</span><span class="o">=</span><span class="mi">1000</span> <span class="n">tstartPulse2</span><span class="o">=</span><span class="mi">21000</span> \
+<span class="n">XMLFile</span><span class="o">=</span><span class="n">xifu_detector_lpa_75um_AR0</span><span class="o">.</span><span class="mi">5</span><span class="n">_pixoffset_mux40_pitch275um</span><span class="o">.</span><span class="n">xml</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li>Energy reconstruction performed with the Covariance matrices algorithm in the current space (known event position) for the detector described in the XMLFile:</li>
+</ol>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span><span class="n">tesreconstruction</span> <span class="n">Recordfile</span><span class="o">=</span><span class="n">inputEvents</span><span class="o">.</span><span class="n">fits</span> <span class="n">TesEventFile</span><span class="o">=</span><span class="n">outputEvents</span><span class="o">.</span><span class="n">fits</span>
+<span class="n">Rcmethod</span><span class="o">=</span><span class="s1">&#39;SIRENA&#39;</span> <span class="n">PulseLength</span><span class="o">=</span><span class="mi">8192</span> <span class="n">LibraryFile</span><span class="o">=</span><span class="n">libraryMultiE</span><span class="o">.</span><span class="n">fits</span> <span class="n">opmode</span><span class="o">=</span><span class="mi">1</span> \
+<span class="n">NoiseFile</span><span class="o">=</span><span class="n">noise1024samplesADC</span><span class="o">.</span><span class="n">fits</span> <span class="n">clobber</span><span class="o">=</span><span class="n">yes</span> <span class="n">intermediate</span><span class="o">=</span><span class="mi">0</span> \
+<span class="n">EnergyMethod</span><span class="o">=</span><span class="n">WEIGHT</span> <span class="n">tstartPulse1</span><span class="o">=</span><span class="mi">1000</span> <span class="n">tstartPulse2</span><span class="o">=</span><span class="mi">21000</span> \
+<span class="n">XMLFile</span><span class="o">=</span><span class="n">xifu_detector_lpa_75um_AR0</span><span class="o">.</span><span class="mi">5</span><span class="n">_pixoffset_mux40_pitch275um</span><span class="o">.</span><span class="n">xml</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li>Energy reconstruction performed with the (F0) optimal filtering algorithm in the <em>I2R</em> Resistance space (known event position) for the detector described in the XMLFile, with filters calculates for every event:</li>
+</ol>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span><span class="n">tesreconstruction</span> <span class="n">Recordfile</span><span class="o">=</span><span class="n">inputEvents</span><span class="o">.</span><span class="n">fits</span> <span class="n">TesEventFile</span><span class="o">=</span><span class="n">outputEvents</span><span class="o">.</span><span class="n">fits</span> \
+<span class="n">Rcmethod</span><span class="o">=</span><span class="s1">&#39;SIRENA&#39;</span> <span class="n">PulseLength</span><span class="o">=</span><span class="mi">8192</span> <span class="n">LibraryFile</span><span class="o">=</span><span class="n">libraryMultiE</span><span class="o">.</span><span class="n">fits</span> <span class="n">opmode</span><span class="o">=</span><span class="mi">1</span> \
+<span class="n">NoiseFile</span><span class="o">=</span><span class="n">noise8192samplesR</span><span class="o">.</span><span class="n">fits</span> <span class="n">FilterMethod</span><span class="o">=</span><span class="n">F0</span> <span class="n">clobber</span><span class="o">=</span><span class="n">yes</span> <span class="n">intermediate</span><span class="o">=</span><span class="mi">0</span> \
+<span class="n">EnergyMethod</span><span class="o">=</span><span class="n">I2R</span> <span class="n">tstartPulse1</span><span class="o">=</span><span class="mi">1000</span> <span class="n">tstartPulse2</span><span class="o">=</span><span class="mi">21000</span> \
+<span class="n">XMLFile</span><span class="o">=</span><span class="n">xifu_detector_hex_baseline</span><span class="o">.</span><span class="n">xml</span> <span class="n">OFLib</span><span class="o">=</span><span class="n">no</span> <span class="n">OFStrategy</span><span class="o">=</span><span class="n">FREE</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="SIRENAcommandline.html" title="SIRENA Tools CLI"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="SIRENA documentation"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Bea Cobo &amp; Maite Ceballos (IFCA).
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.
+    </div>
+  </body>
+</html>

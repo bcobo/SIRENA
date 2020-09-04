@@ -1,0 +1,17 @@
+.wy-side-nav-search>a:hover {
+         background-image: url(“../_static/SIRENA_black.png”) !important;
+         background-size: 30px 30px;
+         padding-left: 35px;
+         padding-bottom: 10px;
+         padding-top: 6px;
+         background-repeat: no-repeat;
+    }
+
+    .wy-side-nav-search>a {
+         background-image: url(“../_static/SIRENA_black.png”) !important;
+         background-size: 30px 30px;
+         padding-left: 35px;
+         padding-bottom: 10px;
+         padding-top: 6px;
+         background-repeat: no-repeat;
+    }
