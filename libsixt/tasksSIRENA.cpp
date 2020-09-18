@@ -7985,7 +7985,7 @@ resize_mf_lowres = 4;
                 EP_EXIT_ERROR(message,EPFAIL);
             }
             (*pulsesInRecord)->pulses_detected[i].grade1 = resize_mf;
-            resize_mf = resize_mf + preBuffer;
+            //resize_mf = resize_mf + preBuffer;
             log_debug("resize_mf (after pulseGrading): %i",resize_mf);
             
             // Pulse: Load the proper piece of the record in *pulse*
@@ -7999,7 +7999,7 @@ resize_mf_lowres = 4;
             }
             if ((tstartSamplesRecord-preBuffer < 0) ||(tstartSamplesRecord-preBuffer+resize_mf > recordAux->size-1))    
             {
-                sprintf(valERROR,"%d",__LINE__+5);
+                sprintf(valERROR,"%d",__LINE__+6);
                 string str(valERROR);
                 message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
                 str.clear();
@@ -8952,8 +8952,7 @@ resize_mf_lowres = 4;
                 EP_EXIT_ERROR(message,EPFAIL);
             }
             (*pulsesInRecord)->pulses_detected[i].grade1 = resize_mf;
-            resize_mf = resize_mf + preBuffer;
-            
+            //resize_mf = resize_mf + preBuffer;
             
             // Pulse: Load the proper piece of the record in 'pulse'
             if ((pulse = gsl_vector_alloc(resize_mf)) == 0)
@@ -8966,13 +8965,12 @@ resize_mf_lowres = 4;
             }
             if ((tstartSamplesRecord-preBuffer < 0) ||(tstartSamplesRecord-preBuffer+resize_mf > recordAux->size-1))  
             {
-                sprintf(valERROR,"%d",__LINE__+5);
+                sprintf(valERROR,"%d",__LINE__+6);
                 string str(valERROR);
                 message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
                 str.clear();
                 EP_EXIT_ERROR(message,EPFAIL); 
             }
-            
             temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer,resize_mf);
             if (gsl_vector_memcpy(pulse, &temp.vector) != 0)
             {
