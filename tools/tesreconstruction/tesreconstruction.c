@@ -481,7 +481,12 @@ int tesreconstruction_main() {
     reconstruct_init_sirena->grading->ngrades = 0;
     reconstruct_init_sirena->grading->value  = NULL;
     reconstruct_init_sirena->grading->gradeData = NULL;
-    if (det->nrecons == 0)
+    if ((det->nrecons == 0) && (det->npix == 0))
+    {
+        SIXT_ERROR("The provided XMLFile does not have the grading info");
+        return(EXIT_FAILURE);
+    }
+    else if ((det->nrecons == 0) && (det->npix != 0))
     {
         if (det->pix->grades == NULL)
         {
@@ -496,7 +501,7 @@ int tesreconstruction_main() {
             gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post));
         }
     }
-    else
+    else if((det->nrecons != 0) && (det->npix == 0))
     {
         if (det->recons->grades == NULL)
         {
