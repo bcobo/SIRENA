@@ -473,47 +473,50 @@ int tesreconstruction_main() {
     OptimalFilterSIRENA* optimalFilter = newOptimalFilterSIRENA(&status);
     CHECK_STATUS_BREAK(status);// define a second structure for calibration
     
-    // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
-    reconstruct_init_sirena->grading = NULL;
-    //reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
-    reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
-    
-    reconstruct_init_sirena->grading->ngrades = 0;
-    reconstruct_init_sirena->grading->value  = NULL;
-    reconstruct_init_sirena->grading->gradeData = NULL;
-    if ((det->nrecons == 0) && (det->npix == 0))
+    if (par.opmode != 0)    // Grading info is not necessary when building the library
     {
-        SIXT_ERROR("The provided XMLFile does not have the grading info");
-        return(EXIT_FAILURE);
-    }
-    else if ((det->nrecons == 0) && (det->npix != 0))
-    {
-        if (det->pix->grades == NULL)
+        // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
+        reconstruct_init_sirena->grading = NULL;
+        //reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
+        reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
+        
+        reconstruct_init_sirena->grading->ngrades = 0;
+        reconstruct_init_sirena->grading->value  = NULL;
+        reconstruct_init_sirena->grading->gradeData = NULL;
+        if ((det->nrecons == 0) && (det->npix == 0))
         {
             SIXT_ERROR("The provided XMLFile does not have the grading info");
             return(EXIT_FAILURE);
         }
-        reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
-        reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->pix->ngrades,2);
-        for (int i=0;i<det->pix->ngrades;i++)
+        else if ((det->nrecons == 0) && (det->npix != 0))
         {
-            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->pix->grades[i].gradelim_pre));
-            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post));
+            if (det->pix->grades == NULL)
+            {
+                SIXT_ERROR("The provided XMLFile does not have the grading info");
+                return(EXIT_FAILURE);
+            }
+            reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
+            reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->pix->ngrades,2);
+            for (int i=0;i<det->pix->ngrades;i++)
+            {
+                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->pix->grades[i].gradelim_pre));
+                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post));
+            }
         }
-    }
-    else if((det->nrecons != 0) && (det->npix == 0))
-    {
-        if (det->recons->grades == NULL)
+        else if((det->nrecons != 0) && (det->npix == 0))
         {
-            SIXT_ERROR("The provided XMLFile does not have the grading info");
-            return(EXIT_FAILURE);
-        }
-        reconstruct_init_sirena->grading->ngrades=det->recons->ngrades;
-        reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->recons->ngrades,2);
-        for (int i=0;i<det->recons->ngrades;i++)
-        {
-            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->recons->grades[i].gradelim_pre));
-            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->recons->grades[i].gradelim_post));
+            if (det->recons->grades == NULL)
+            {
+                SIXT_ERROR("The provided XMLFile does not have the grading info");
+                return(EXIT_FAILURE);
+            }
+            reconstruct_init_sirena->grading->ngrades=det->recons->ngrades;
+            reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->recons->ngrades,2);
+            for (int i=0;i<det->recons->ngrades;i++)
+            {
+                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->recons->grades[i].gradelim_pre));
+                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->recons->grades[i].gradelim_post));
+            }
         }
     }
     destroyAdvDet(&det);
