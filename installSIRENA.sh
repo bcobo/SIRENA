@@ -11,7 +11,7 @@ else
     echo "SIXTE is set to '$SIXTE'"
     rsync -av libsixt/  $SIXTE/../sixt/libsixt/
     rsync -av tools/ $SIXTE/../sixt/tools/
-    cd $SIXTE/../sixt/libsixt
+    cd $SIXTE/../sixt/
     make install
     echo "SIRENA installation is complete"
 fi
