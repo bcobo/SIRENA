@@ -7155,7 +7155,7 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
  * 
  *      - Conversion according to 'EnergyMethod'=I2R:
  *           DeltaI = I
- *           R/R0 = 1 - (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias) (I_BIAS is a keyword in the events file)
+ *           R/R0 = 1 - (abs(DeltaI)/I_BIAS)/(1+abs(DeltaI)/I_BIAS) (I_BIAS is a keyword in the events file)
  * 
  * If the ADU_CNV keyword is not in the events file and 'invector' contains tha ADC column data:
  *
