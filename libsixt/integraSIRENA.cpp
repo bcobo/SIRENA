@@ -582,7 +582,7 @@
                      }
                      int numberkeywords;
                      char *headerTESPARAM;
-                     fits_hdr2str(reconstruct_init->record_file_fptr, 0, NULL, 0,&headerTESPARAM, &numberkeywords, status);   // Reading thee whole "TESPARAM" HDU and store it in 'headerTESPARAM'
+                     fits_hdr2str(reconstruct_init->record_file_fptr, 0, NULL, 0,&headerTESPARAM, &numberkeywords, status);   // Reading the whole "TESPARAM" HDU and store it in 'headerTESPARAM'
                      char * R0_pointer;
                      R0_pointer = strstr (headerTESPARAM,"R0");    // Pointer to where the text "RO" is
                      // R0_pointer is 0 if R0 is not in TESPARAM

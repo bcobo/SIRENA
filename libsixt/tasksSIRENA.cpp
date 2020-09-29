@@ -7149,31 +7149,43 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
  * convertI2R: This funcion converts the current space into a quasi-resistance space. 
  *             The 'invector' filled in with currents is filled in here with resistances at the output.
  * 
- * If 'invector' contains tha ADC column data and I = Ibias-(invector*ADUCNV+Imin): 
+ * If the ADU_CNV keyword is in the events file and 'invector' contains tha ADC column data:
  * 
- * - Conversion according to 'EnergyMethod'=I2R when ADU_CNV is not in the events file: 
- *       DeltaI = I-Ibias
- *       R = 1 - 1*(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
- * - Conversion according to 'EnergyMethod'=I2R when ADU_CNV is in the events file: 
- *       I = ADU_CNV * (SAMPLE - ADU_BIAS) + I_BIAS
- *       DeltaI = I
- *       R/R0 <- 1 - (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
- * - Conversion according to 'EnergyMethod'=I2RALL: 
- *       R = (V0-IRL-LdI/dt)/I
- * - Conversion according to 'EnergyMethod'=I2RNOL (I2RALL neglecting the circuit inductance): 
- *       R = (V0-IRL)/I    
- * - Conversion according to 'EnergyMethod'=I2RFITTED:
- *       R/V0 = 1/(Ifit+I)
+ *      I = ADU_CNV * (ADC - ADU_BIAS) + I_BIAS (ADU_CNV, ADU_BIAS and I_BIAS are keywords in the events file)
+ * 
+ *      - Conversion according to 'EnergyMethod'=I2R:
+ *           DeltaI = I
+ *           R/R0 = 1 - (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias) (I_BIAS is a keyword in the events file)
+ * 
+ * If the ADU_CNV keyword is not in the events file and 'invector' contains tha ADC column data:
+ *
+ *      aducnv = (IMAX-IMIN)/65534 calculated by using the IMIN and IMAX keywords in the events file
+ *      Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
+ * 
+ *      I = IO_START-(ADC*aducnv+IMIN) (IO_START is a column in the events file)
+ * 
+ *      - Conversion according to 'EnergyMethod'=I2R: 
+ *          DeltaI = I-I0_START
+ *          R = 1 - 1*(abs(DeltaI)/I0_START)/(1+abs(DeltaI)/I0_START)
+ *      - Conversion according to 'EnergyMethod'=I2RALL: 
+ *          R = (V0-IRL-LdI/dt)/I
+ *      - Conversion according to 'EnergyMethod'=I2RNOL (I2RALL neglecting the circuit inductance): 
+ *          R = (V0-IRL)/I    
+ *      - Conversion according to 'EnergyMethod'=I2RFITTED:
+ *          R/V0 = 1/(Ifit+I) being Ifit=I0_START
  * 
  * Parameters:
  * - EnergyMethod: Quasi-resistance energy calculation method (I2R, I2RALL, I2RNOL or I2RFITTED)
  * - R0: Operating point resistance
- * - Ibias: Initial bias current
- * - Imin: Current corresponding to 0 ADU 
- * - Imax: Current corresponding to maximm ADU
- * - TTR: Transformer Turns Ratio
- * - LFILTER: Filter circuit inductance
- * - RPARA: Parasitic resistor value
+ * - Ibias: Initial bias current (I0_START column)
+ * - Imin: Current corresponding to 0 ADU (IMIN keyword)
+ * - Imax: Current corresponding to maximm ADU (IMAX keyword)
+ * - TTR: Transformer Turns Ratio (TTR column)
+ * - LFILTER: Filter circuit inductance (LFILTER column)
+ * - RPARA: Parasitic resistor value (RPARA column)
+ * - ADU_CNV: Conversion factor (A/adu) (ADU_CNV keyword)
+ * - ADU_BIAS: Bias currente (adu) (ADU_BIAS keyword)
+ * - I_BIAS: Bias current (A) (I_BIAS keyword)
  * - samprate: Sampling rate
  * - invector: Input current (ADC) vector & output resistance (I2R, I2RALL, I2RNOL or I2RFITTED) vector
  ******************************************************************************/
@@ -7185,77 +7197,67 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
     double aducnv;		// ADU conversion factor [A/ADU]
     double baseline;
     
-    /*R0 = (*reconstruct_init)->i2rdata->R0;
-     *        Ibias = (*reconstruct_init)->i2rdata->I0_START;
-     *        Imin = (*reconstruct_init)->i2rdata->IMIN;
-     *        Imax = (*reconstruct_init)->i2rdata->IMAX;
-     *        RPARA = (*reconstruct_init)->i2rdata->RPARA;
-     *        TTR = (*reconstruct_init)->i2rdata->TTR;
-     *        LFILTER = (*reconstruct_init)->i2rdata->LFILTER;*/
-    
-    aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
-    
     if ((strcmp(EnergyMethod,"I2R") == 0) && (ADU_CNV == -999))
     {	
-        // DeltaI <- I-Ibias
-        // R <- R0 - R0*(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+        aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
+        
+        // I = ADC*aducnv+IMIN
+        // DeltaI = I-I0_START
+        // R = 1 - (abs(DeltaI)/I0_START)/(1+abs(DeltaI)/I0_START)
         
         // It is not necessary to check the allocation beacuse 'invector' size must be > 0
         gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
-        gsl_vector_scale(*invector,aducnv);             	// invector = I(ADC)*ADUCNV
-        gsl_vector_add_constant(*invector,Imin);		// invector = I(Amp) = I(ADC)*ADUCNV+Imin
-        gsl_vector_add_constant(*invector,-1*Ibias); 		// invector = DeltaI = abs(I(Amp)-Ibias)
+        gsl_vector_scale(*invector,aducnv);             	  // invector = I(adu)*aducnv (I(adu) is the ADC column)
+        gsl_vector_add_constant(*invector,Imin);		      // invector = I(Amp) = I(adu)*aducnv+IMIN
+        gsl_vector_add_constant(*invector,-1*Ibias); 		  // invector = DeltaI = abs(I(Amp)-I0_START)
         for (int i=0;i<(*invector)->size;i++)
         {
-            if (gsl_vector_get(*invector,i)<0) 	gsl_vector_set(*invector,i,(-1.*gsl_vector_get(*invector,i)));
+            if (gsl_vector_get(*invector,i)<0) 	gsl_vector_set(*invector,i,abs(gsl_vector_get(*invector,i)));
         }
-        gsl_vector_scale(*invector,1./Ibias); 			// invector = DeltaI/Ibias = (I(Amp)-Ibias)/Ibias
-        gsl_vector_memcpy(invector_modified,*invector);  	// invector_modified = invector = DeltaI/Ibias
-        gsl_vector_add_constant(invector_modified,+1.0);	// invector_modified = 1 + DeltaI/Ibias
-        gsl_vector_div(*invector,invector_modified);     	// invector = invector/invector_modified = (DeltaI/Ibias)/(1+DeltaI/Ibias)
-        //gsl_vector_scale(*invector,-1.*R0);			// invector = -R0*(DeltaI/Ibias)/(1+DeltaI/Ibias)
-        //gsl_vector_add_constant(*invector,R0); 			// invector = R0 - R0*(DeltaI/Ibias)/(1+DeltaI/Ibias)
-        gsl_vector_scale(*invector,-1);			          // invector = -1.0*(DeltaI/Ibias)/(1+DeltaI/Ibias)
-        gsl_vector_add_constant(*invector,1.0); 			// invector = 1 - *(DeltaI/Ibias)/(1+DeltaI/Ibias)
+        gsl_vector_scale(*invector,1./Ibias); 			      // invector = DeltaI/I0_START = (I(Amp)-I0_START)/I0_START
+        gsl_vector_memcpy(invector_modified,*invector);  	  // invector_modified = invector = DeltaI/I0_START
+        gsl_vector_add_constant(invector_modified,+1.0);	  // invector_modified = 1 + DeltaI/I0_START
+        gsl_vector_div(*invector,invector_modified);     	  // invector = invector/invector_modified = (DeltaI/I0_START)/(1+DeltaI/I0_START)
+        gsl_vector_scale(*invector,-1);			              // invector = -1.0*(DeltaI/I0_START)/(1+DeltaI/I0_START)
+        gsl_vector_add_constant(*invector,1.0); 			  // invector = 1 - *(DeltaI/I0_START)/(1+DeltaI/I0_START)
         
         gsl_vector_free(invector_modified); invector_modified = 0;
     }
     else if ((strcmp(EnergyMethod,"I2R") == 0) && (ADU_CNV != -999))
     {
-        // I = ADU_CNV * (SAMPLE - ADU_BIAS) + I_BIAS
+        // I = ADU_CNV * (ADC - ADU_BIAS) + I_BIAS
         // DeltaI = I
-        // R/R0 <- 1 - (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+        // R/R0 = 1 - (abs(DeltaI)/I_BIAS)/(1+abs(DeltaI)/I_BIAS)
         gsl_vector *deltai = gsl_vector_alloc((*invector)->size);
         gsl_vector *vectoraux = gsl_vector_alloc((*invector)->size);
-        //gsl_vector *Ivector = gsl_vector_alloc((*invector)->size);
         
         gsl_vector_memcpy(deltai,*invector);
         gsl_vector_add_constant(deltai,-1.0*ADU_BIAS);
-        gsl_vector_scale(deltai,ADU_CNV);              // deltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
-        //gsl_vector_memcpy(Ivector,deltai);
-        gsl_vector_add_constant(deltai,I_BIAS);        // deltaI = ADU_CNV * (SAMPLE - ADU_BIAS) + I_BIAS
+        gsl_vector_scale(deltai,ADU_CNV);                     // deltai = ADU_CNV * (I(adu) - ADU_BIAS) (I(adu) is the ADC column)
+        gsl_vector_add_constant(deltai,I_BIAS);               // deltai = ADU_CNV * (I(adu) - ADU_BIAS) + I_BIAS
         
         for (int i=0;i<deltai->size;i++)
         {
             if (gsl_vector_get(deltai,i)<0) 	gsl_vector_set(deltai,i,abs(gsl_vector_get(deltai,i)));
-        }                                              // deltai = abs(deltai)
-        gsl_vector_scale(deltai,1./I_BIAS); 			// deltai = abs(DeltaI)/Ibias
+        }                                                     // deltai = abs(deltai)
+        gsl_vector_scale(deltai,1./I_BIAS); 			      // deltai = abs(deltai)/I_BIAS
         
         gsl_vector_memcpy(vectoraux,deltai);
-        gsl_vector_add_constant(vectoraux,+1.0);       // vectoraux = 1 + abs(DeltaI)/Ibias
-        gsl_vector_div(deltai,vectoraux);              // deltai = (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
-        gsl_vector_scale(deltai,-1.0);                 // deltai = -(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
-        gsl_vector_add_constant(deltai,1.0);           // deltai = 1-(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
+        gsl_vector_add_constant(vectoraux,+1.0);              // vectoraux = 1 + abs(DeltaI)/I_BIAS
+        gsl_vector_div(deltai,vectoraux);                     // deltai = (abs(DeltaI)/I_BIAS)/(1+abs(DeltaI)/I_BIAS)
+        gsl_vector_scale(deltai,-1.0);                        // deltai = -(abs(DeltaI)/I_BIAS)/(1+abs(DeltaI)/I_BIAS)
+        gsl_vector_add_constant(deltai,1.0);                  // deltai = 1-(abs(DeltaI)/I_BIAS)/(1+abs(DeltaI)/I_BIAS)
         
         gsl_vector_memcpy(*invector,deltai);
         
         gsl_vector_free(deltai); deltai = 0;
         gsl_vector_free(vectoraux); vectoraux = 0;
-        //gsl_vector_free(Ivector); Ivector = 0;
     }
     else if (strcmp(EnergyMethod,"I2RALL") == 0)
     {
-        double RL;                                              // Shunt/load resistor value [oHM]
+        aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
+        
+        double RL;                                              // Shunt/load resistor value [Ohm]
         double V0;
         double L;
         
@@ -7270,9 +7272,9 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
         
         // I
         gsl_vector_memcpy(invector_modified,*invector);
-        gsl_vector_scale(*invector,aducnv);                     // invector = I(ADC)*ADUCNV
-        gsl_vector_add_constant(*invector,Imin);                // invector = I(ADC)*ADUCNV+Imin
-        gsl_vector_scale(*invector,-1.0);                       // invector = Ibias-(I(ADC)*ADUCNV+Imin)
+        gsl_vector_scale(*invector,aducnv);                     // invector = I(adu)*aducnv
+        gsl_vector_add_constant(*invector,Imin);                // invector = I(adu)*aducnv+IMIN
+        gsl_vector_scale(*invector,-1.0);                       // invector = I0_START-(I(adu)*aducnv+IMIN)
         gsl_vector_add_constant(*invector,Ibias);
         gsl_vector_memcpy(I,*invector);
         
@@ -7300,7 +7302,9 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
     }
     else if (strcmp(EnergyMethod,"I2RNOL") == 0)
     {
-        double RL;                                      // Shunt/load resistor value [oHM]
+        aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
+        
+        double RL;                                      // Shunt/load resistor value [Ohm]
         double V0;
         // It is not necessary to check the allocation beacuse 'invector' size must be > 0
         gsl_vector *I = gsl_vector_alloc((*invector)->size);
@@ -7311,9 +7315,9 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
         
         // I
         gsl_vector_memcpy(invector_modified,*invector);
-        gsl_vector_scale(*invector,aducnv);             // invector = I(ADC)*ADUCNV
-        gsl_vector_add_constant(*invector,Imin);        // invector = I(ADC)*ADUCNV+Imin
-        gsl_vector_scale(*invector,-1.0);               // invector = Ibias-(I(ADC)*ADUCNV+Imin)
+        gsl_vector_scale(*invector,aducnv);             // invector = I(adu)*aducnv
+        gsl_vector_add_constant(*invector,Imin);        // invector = I(adu)*aducnv+IMIN
+        gsl_vector_scale(*invector,-1.0);               // invector = I0_START-(I(adu)*aducnv+IMIN)
         gsl_vector_add_constant(*invector,Ibias);
         gsl_vector_memcpy(I,*invector);
         
@@ -7328,10 +7332,12 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
     }
     else if (strcmp(EnergyMethod,"I2RFITTED") == 0)
     {
-        double RL;                                      // Shunt/load resistor value [oHM]
+        aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
+        
+        double RL;                                      // Shunt/load resistor value [Ohm]
         double V0;
-        //double Ifit = 1.46e-5;                          // Ifit = 14.6e-6 uA
-        double Ifit = Ibias;
+        //double Ifit = 1.46e-5;                        // Ifit = 14.6e-6 uA
+        double Ifit = Ibias;                            // Ifit = I0_START
         // It is not necessary to check the allocation beacuse 'invector' size must be > 0
         gsl_vector *I = gsl_vector_alloc((*invector)->size);
         gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
@@ -7341,9 +7347,9 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
         
         // I
         gsl_vector_memcpy(invector_modified,*invector);
-        gsl_vector_scale(*invector,aducnv);             // invector = I(ADC)*ADUCNV
-        gsl_vector_add_constant(*invector,Imin);        // invector = I(ADC)*ADUCNV+Imin
-        gsl_vector_scale(*invector,-1.0);               // invector = Ibias-(I(ADC)*ADUCNV+Imin)
+        gsl_vector_scale(*invector,aducnv);             // invector = I(adu)*aducnv
+        gsl_vector_add_constant(*invector,Imin);        // invector = I(adu)*aducnv+IMIN
+        gsl_vector_scale(*invector,-1.0);               // invector = I0_START-(I(adu)*aducnv+IMMIN)
         gsl_vector_add_constant(*invector,Ibias);
         gsl_vector_memcpy(I,*invector);
         
@@ -7351,7 +7357,7 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
         gsl_vector_memcpy(IfitIgsl,I);
         gsl_vector_add_constant(IfitIgsl,Ifit);         // Ifit+I
         gsl_vector_set_all(*invector,1.0);
-        gsl_vector_div(*invector,IfitIgsl);             // V0/(Ifit+I)
+        gsl_vector_div(*invector,IfitIgsl);             // 1/(Ifit+I)
         
         gsl_vector_free(I); I = 0;
         gsl_vector_free(invector_modified); invector_modified = 0;
