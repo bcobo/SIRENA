@@ -771,19 +771,22 @@
      //cout<<"Imax: "<<Imax<<endl;
      if ((((Imin == -999.0) || (Imax == -999.0)) || ((Imin == 0) || (Imax == 0))) && (adu_cnv == -999.0))
      {
+         cout<<"If1"<<endl;
          aducnv = 1.0;
          message = "ADU_CNV not found or Imin or Imax not found or both equal to 0 => Conversion factor ('aducnv' to convert adu into A) is fix to 1";
          EP_PRINT_ERROR(message,-999);	// Only a warning
      }
      else if (adu_cnv != -999.0)
      {
+         cout<<"If2"<<endl;
          aducnv = -1*adu_cnv;
      }
      else if (((Imin != -999.0) && (Imax != -999.0)) && ((Imin != 0) && (Imax != 0)))
      {
+         cout<<"If3"<<endl;
          aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534  // If this calculus changes => Change it also in TASKSSIRENA
      }
-     //cout<<"aducnv: "<<aducnv<<endl;
+     cout<<"aducnv: "<<aducnv<<endl;
      
      asquid = 1.0;
      plspolar = 1.0;
@@ -1341,16 +1344,18 @@
          // Convert to the resistance space if necessary
          if (strcmp(par.I2R,"I") != 0)
          {
-             if (((strcmp(par.I2R,"I2R") == 0) && (adu_cnv_exists == 0)) || (strcmp(par.I2R,"I2R") != 0))
-             {
-                if (convertI2R(par.I2R,R0,Ibias,Imin,Imax,TTR,LFILTER,RPARA,samprate,&ioutgsl))
+             //if (((strcmp(par.I2R,"I2R") == 0) && (adu_cnv_exists == 0)) || (strcmp(par.I2R,"I2R") != 0))
+             //{
+             //    cout<<"Conversion vieja"<<endl;
+                if (convertI2R(par.I2R,R0,Ibias,Imin,Imax,TTR,LFILTER,RPARA,adu_cnv,adu_bias,i_bias, samprate,&ioutgsl))
                 {
                     message = "Cannot run routine convertI2R";
                     EP_EXIT_ERROR(message,EPFAIL);
                 }
-             }
+             /*}
              else
              {
+                 cout<<"Conversion nueva"<<endl;
                  if (i_bias == -999.0)
                  {
                      message = "I_BIAS keyword (to convert to resistance space) not found in the input FITS file";
@@ -1386,10 +1391,12 @@
                 
                  gsl_vector_free(deltai); deltai = 0;
                  gsl_vector_free(vectoraux); vectoraux = 0;
-             }
+             }*/
          }
-         
-         gsl_vector_scale(ioutgsl,aducnv);
+         else
+         {
+            gsl_vector_scale(ioutgsl,aducnv);
+         }
          
          // Assigning positive polarity (by using ASQUID and PLSPOLAR)
          gsl_vector_memcpy(ioutgsl_aux,ioutgsl);
