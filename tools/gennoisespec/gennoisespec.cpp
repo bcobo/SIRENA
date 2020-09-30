@@ -771,22 +771,22 @@
      //cout<<"Imax: "<<Imax<<endl;
      if ((((Imin == -999.0) || (Imax == -999.0)) || ((Imin == 0) || (Imax == 0))) && (adu_cnv == -999.0))
      {
-         cout<<"If1"<<endl;
+         //cout<<"If1"<<endl;
          aducnv = 1.0;
          message = "ADU_CNV not found or Imin or Imax not found or both equal to 0 => Conversion factor ('aducnv' to convert adu into A) is fix to 1";
          EP_PRINT_ERROR(message,-999);	// Only a warning
      }
      else if (adu_cnv != -999.0)
      {
-         cout<<"If2"<<endl;
+         //cout<<"If2"<<endl;
          aducnv = -1*adu_cnv;
      }
      else if (((Imin != -999.0) && (Imax != -999.0)) && ((Imin != 0) && (Imax != 0)))
      {
-         cout<<"If3"<<endl;
+         //cout<<"If3"<<endl;
          aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534  // If this calculus changes => Change it also in TASKSSIRENA
      }
-     cout<<"aducnv: "<<aducnv<<endl;
+     //cout<<"aducnv: "<<aducnv<<endl;
      
      asquid = 1.0;
      plspolar = 1.0;
@@ -1344,54 +1344,11 @@
          // Convert to the resistance space if necessary
          if (strcmp(par.I2R,"I") != 0)
          {
-             //if (((strcmp(par.I2R,"I2R") == 0) && (adu_cnv_exists == 0)) || (strcmp(par.I2R,"I2R") != 0))
-             //{
-             //    cout<<"Conversion vieja"<<endl;
-                if (convertI2R(par.I2R,R0,Ibias,Imin,Imax,TTR,LFILTER,RPARA,adu_cnv,adu_bias,i_bias, samprate,&ioutgsl))
-                {
-                    message = "Cannot run routine convertI2R";
-                    EP_EXIT_ERROR(message,EPFAIL);
-                }
-             /*}
-             else
+             if (convertI2R(par.I2R,R0,Ibias,Imin,Imax,TTR,LFILTER,RPARA,adu_cnv,adu_bias,i_bias, samprate,&ioutgsl))
              {
-                 cout<<"Conversion nueva"<<endl;
-                 if (i_bias == -999.0)
-                 {
-                     message = "I_BIAS keyword (to convert to resistance space) not found in the input FITS file";
-                     EP_EXIT_ERROR(message,EPFAIL);
-                 }
-                 if (adu_bias == -999.0)
-                 {
-                     message = "ADU_BIAS keyword (to convert to resistance space) not found in the input FITS file";
-                     EP_EXIT_ERROR(message,EPFAIL);
-                 }
-                 // DeltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
-                 // R/R0 <- 1 - (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
-                 gsl_vector *deltai = gsl_vector_alloc(ioutgsl->size);
-                 gsl_vector *vectoraux = gsl_vector_alloc(ioutgsl->size);
-                 
-                 gsl_vector_memcpy(deltai,ioutgsl);
-                 gsl_vector_add_constant(deltai,-1.0*adu_bias);
-                 gsl_vector_scale(deltai,adu_cnv);              // deltaI = ADU_CNV * (SAMPLE - ADU_BIAS)
-                 
-                 for (int i=0;i<deltai->size;i++)
-                 {
-                     if (gsl_vector_get(deltai,i)<0) 	gsl_vector_set(deltai,i,(-1.*gsl_vector_get(deltai,i)));
-                 }                                              // deltai = abs(deltai)
-                 gsl_vector_scale(deltai,1./i_bias); 			// deltai = abs(DeltaI)/Ibias
-                 
-                 gsl_vector_memcpy(vectoraux,deltai);
-                 gsl_vector_add_constant(vectoraux,+1.0);       // vectoraux = 1 + abs(DeltaI)/Ibias
-                 gsl_vector_div(deltai,vectoraux);              // deltai = (abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
-                 gsl_vector_scale(deltai,-1.0);                 // deltai = -(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
-                 gsl_vector_add_constant(deltai,1.0);           // deltai = 1-(abs(DeltaI)/Ibias)/(1+abs(DeltaI)/Ibias)
-                 
-                 gsl_vector_memcpy(ioutgsl,deltai);
-                
-                 gsl_vector_free(deltai); deltai = 0;
-                 gsl_vector_free(vectoraux); vectoraux = 0;
-             }*/
+                 message = "Cannot run routine convertI2R";
+                 EP_EXIT_ERROR(message,EPFAIL);
+             }
          }
          else
          {
