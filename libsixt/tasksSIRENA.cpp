@@ -106,14 +106,14 @@
  * - Create intermediate output FITS file if required ('createDetectFile')
  * - (Filter and) differentiate the 'models' of the library (only for the first record in PRODUCTION 'opmode=1') ('filderLibrary')
  * - Store the input record in 'invector' ('loadRecord')
- * - Convert I into R if 'EnergyMethod' = I2R or I2RALL or I2RNOL or I2RFITTED ('convertI2R')
+ * - Convert I into R if 'EnergyMethod' = I2R or I2RFITTED ('convertI2R')
  * - Process each record ('proceRecord')
  * 	- (Low-pass filter and) differentiate
  * 	- Find pulses
  * 	- Load the found pulses data in the input/output 'foundPulses' structure
  * 	- Write test info in intermediate output FITS file if 'reconstruct_init->intermediate'=1 ('writeTestInfo')
  * 	- Write pulses info in intermediate output FITS file if 'reconstruct_init->intermediate'=1 ('writePulses')
- * - From this point forward, I2R, I2RALL, I2RNOL and I2RFITTED are completely equivalent to OPTFILT
+ * - From this point forward, I2R and I2RFITTED is completely equivalent to OPTFILT
  * - If last record in CALIBRATION ('opmode'=0):
  * 	- 'calculateTemplate' (and 'weightMatrix')
  * 	- 'writeLibrary'
@@ -230,14 +230,18 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
     gsl_vector *invectorOriginal = gsl_vector_alloc(invector->size);
     gsl_vector_memcpy(invectorOriginal,invector);
     
-    // Convert I into R if 'EnergyMethod' = I2R or I2RALL or I2RNOL or I2RFITTED
-    if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, (*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS,(*reconstruct_init)->i2rdata->I_BIAS,1/record->delta_t,&invector))
+    
+    // Convert I into R if 'EnergyMethod' = I2R or I2RFITTED
+    if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
     {
-        message = "Cannot run routine convertI2R";
-        EP_EXIT_ERROR(message,EPFAIL);
+        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS,(*reconstruct_init)->i2rdata->I_BIAS,1/record->delta_t,&invector))
+        {
+            message = "Cannot run routine convertI2R";
+            EP_EXIT_ERROR(message,EPFAIL);
+        }
     }
     
-    for (int i=0;i<invector->size;i++)	// Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+    for (int i=0;i<invector->size;i++)	// Because in 'runEnergy' the record (TesRecord) is used => The I2R or I2RFITTED transformed record has to be used
     {
         record->adc_double[i] = gsl_vector_get(invector,i);
     }
@@ -251,11 +255,10 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
     }
     gsl_vector_free(invectorOriginal); invectorOriginal = 0;
     
-    // From this point forward, I2R, I2RALL, I2RNOL and I2RFITTED are completely equivalent to OPTFILT
-    if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
-        || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
+    // From this point forward, I2R and I2RFITTED are completely equivalent to OPTFILT
+    if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
     {
-        strcpy((*reconstruct_init)->EnergyMethod,"OPTFILT"); // From this point forward, I2R, I2RALL, I2RNOL and I2RFITTED are completely equivalent to OPTFILT
+        strcpy((*reconstruct_init)->EnergyMethod,"OPTFILT"); // From this point forward, I2R and I2RFITTED are completely equivalent to OPTFILT
     }
     
     if (((*reconstruct_init)->intermediate == 1) && (lastRecord == 1))
@@ -833,19 +836,19 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
     gsl_vector *invectorOriginal = gsl_vector_alloc(invector->size);
     gsl_vector_memcpy(invectorOriginal,invector);
     
-    if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, (*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS,(*reconstruct_init)->i2rdata->I_BIAS,1/record->delta_t,&invector))
+    if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
     {
-        message = "Cannot run routine convertI2R";
-        EP_EXIT_ERROR(message,EPFAIL);
+        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS,(*reconstruct_init)->i2rdata->I_BIAS,1/record->delta_t,&invector))
+        {
+            message = "Cannot run routine convertI2R";
+            EP_EXIT_ERROR(message,EPFAIL);
+        }
     }
     
-    // Convert I into R if 'EnergyMethod' = I2R or I2RALL or I2RNOL or I2RFITTED
+    // Convert I into R if 'EnergyMethod' = I2R or I2RFITTED
     // It is not necessary to check the allocation because 'invector' 
     // size must be > 0
-    if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) 
-        || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) 
-        || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
-        || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
+    if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) ||(strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0) ) 
     {
         // thread safe
         // Not thread safe for the record_file_ptr
@@ -856,14 +859,14 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
         if (!sc->is_reentrant()){
             std::unique_lock<std::mutex> lk(fits_file_mut);
             
-            if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, (*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS, (*reconstruct_init)->i2rdata->I_BIAS, 1/record->delta_t, &invector))
+            if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS, (*reconstruct_init)->i2rdata->I_BIAS, 1/record->delta_t, &invector))
             {
                 lk.unlock();
                 message = "Cannot run routine convertI2R";
                 EP_EXIT_ERROR(message,EPFAIL);
             }
             
-            for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+            for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R or I2RFITTED transformed record has to be used
             {
                 record->adc_double[i] = gsl_vector_get(invector,i);
             }
@@ -872,13 +875,13 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
         }
         else
         {
-            if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->R0,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->TTR,(*reconstruct_init)->i2rdata->LFILTER,(*reconstruct_init)->i2rdata->RPARA, (*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS, (*reconstruct_init)->i2rdata->I_BIAS, 1/record->delta_t, &invector))
+            if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS, (*reconstruct_init)->i2rdata->I_BIAS, 1/record->delta_t, &invector))
             {
                 message = "Cannot run routine convertI2R";
                 EP_EXIT_ERROR(message,EPFAIL);
             }
             
-            for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R, I2RALL, I2RNOL or I2RFITTED transformed record has to be used
+            for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R or I2RFITTED transformed record has to be used
             {
                 record->adc_double[i] = gsl_vector_get(invector,i);
             }
@@ -895,14 +898,10 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
     }
     gsl_vector_free(invectorOriginal); invectorOriginal = 0;
     
-    if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) 
-        || (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0) 
-        || (strcmp((*reconstruct_init)->EnergyMethod,"I2RNOL") == 0)
-        || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
+    if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
     {
         strcpy((*reconstruct_init)->EnergyMethod,"OPTFILT"); 
-        // From this point forward, I2R, I2RALL, I2RNOL and I2RFITTED 
-        //are completely equivalent to OPTFILT
+        // From this point forward, I2R or I2RFITTED are completely equivalent to OPTFILT
     }
     
     // PCA is used  when pulses are farther than 'PulseLength'!!!!!!!!!!
@@ -1865,9 +1864,8 @@ int createDetectFile(ReconstructInitSIRENA* reconstruct_init, double samprate, f
         if (isNumber(reconstruct_init->tstartPulse1)) // If tstartPulse1 is an intereger number
         {
             char str_tstartPulse1[125];	
-            if (reconstruct_init->tstartPulse1 == 0)			  	        snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1);
-            else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") == 0)		snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1+2);
-            else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") != 0)		snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1+1);
+            if (reconstruct_init->tstartPulse1 == 0)	snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1);
+            else                                		snprintf(str_tstartPulse1,125,"%d",reconstruct_init->tstartPulse1+1);
             strhistory=string("tstartPulse1 = ") + string(str_tstartPulse1);
             strncpy(keyvalstr,strhistory.c_str(),999);
             keyvalstr[999]='\0';
@@ -1882,18 +1880,16 @@ int createDetectFile(ReconstructInitSIRENA* reconstruct_init, double samprate, f
         }
         
         char str_tstartPulse2[125];	
-        if (reconstruct_init->tstartPulse2 == 0)			  	snprintf(str_tstartPulse2,125,"%d",reconstruct_init->tstartPulse2);
-        else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") == 0)		snprintf(str_tstartPulse2,125,"%d",reconstruct_init->tstartPulse2+2);
-        else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") != 0)		snprintf(str_tstartPulse2,125,"%d",reconstruct_init->tstartPulse2+1);
+        if (reconstruct_init->tstartPulse2 == 0)	snprintf(str_tstartPulse2,125,"%d",reconstruct_init->tstartPulse2);
+        else                                		snprintf(str_tstartPulse2,125,"%d",reconstruct_init->tstartPulse2+1);
         strhistory=string("tstartPulse2 = ") + string(str_tstartPulse2);
         strncpy(keyvalstr,strhistory.c_str(),999);
         keyvalstr[999]='\0';
         fits_write_key(*dtcObject,TSTRING,keyname,keyvalstr,NULL,&status);
         
         char str_tstartPulse3[125];	
-        if (reconstruct_init->tstartPulse3 == 0)			  	snprintf(str_tstartPulse3,125,"%d",reconstruct_init->tstartPulse3);
-        else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") == 0)		snprintf(str_tstartPulse3,125,"%d",reconstruct_init->tstartPulse3+2);
-        else if (strcmp(reconstruct_init->EnergyMethod,"I2RALL") != 0)		snprintf(str_tstartPulse3,125,"%d",reconstruct_init->tstartPulse3+1);
+        if (reconstruct_init->tstartPulse3 == 0)	snprintf(str_tstartPulse3,125,"%d",reconstruct_init->tstartPulse3);
+        else                                        snprintf(str_tstartPulse3,125,"%d",reconstruct_init->tstartPulse3+1);
         strhistory=string("tstartPulse3 = ") + string(str_tstartPulse3);
         strncpy(keyvalstr,strhistory.c_str(),999);
         keyvalstr[999]='\0';
@@ -4164,26 +4160,23 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
         }
         else
         {
-            if (atoi((*reconstruct_init)->tstartPulse1) == 0)                         snprintf(str_tstartPulse1,125,"%d",atoi((*reconstruct_init)->tstartPulse1));
-            else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0)	snprintf(str_tstartPulse1,125,"%d",atoi((*reconstruct_init)->tstartPulse1)+2);
-            else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") != 0)	snprintf(str_tstartPulse1,125,"%d",atoi((*reconstruct_init)->tstartPulse1)+1);
+            if (atoi((*reconstruct_init)->tstartPulse1) == 0)   snprintf(str_tstartPulse1,125,"%d",atoi((*reconstruct_init)->tstartPulse1));
+            else                                            	snprintf(str_tstartPulse1,125,"%d",atoi((*reconstruct_init)->tstartPulse1)+1);
             strproc=string("tstartPulse1 = ") + string(str_tstartPulse1);
             strcpy(keyvalstr,strproc.c_str());
             fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
         }
         
         char str_tstartPulse2[125];             
-        if ((*reconstruct_init)->tstartPulse2 == 0)			  	snprintf(str_tstartPulse2,125,"%d",(*reconstruct_init)->tstartPulse2);
-        else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0)	snprintf(str_tstartPulse2,125,"%d",(*reconstruct_init)->tstartPulse2+2);
-        else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") != 0)	snprintf(str_tstartPulse2,125,"%d",(*reconstruct_init)->tstartPulse2+1);
+        if ((*reconstruct_init)->tstartPulse2 == 0)	  	snprintf(str_tstartPulse2,125,"%d",(*reconstruct_init)->tstartPulse2);
+        else                                        	snprintf(str_tstartPulse2,125,"%d",(*reconstruct_init)->tstartPulse2+1);
         strproc=string("tstartPulse2 = ") + string(str_tstartPulse2);
         strcpy(keyvalstr,strproc.c_str());
         fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
         
         char str_tstartPulse3[125];             
-        if ((*reconstruct_init)->tstartPulse3 == 0)			  	snprintf(str_tstartPulse3,125,"%d",(*reconstruct_init)->tstartPulse3);
-        else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") == 0)	snprintf(str_tstartPulse3,125,"%d",(*reconstruct_init)->tstartPulse3+2);
-        else if (strcmp((*reconstruct_init)->EnergyMethod,"I2RALL") != 0)	snprintf(str_tstartPulse3,125,"%d",(*reconstruct_init)->tstartPulse3+1);
+        if ((*reconstruct_init)->tstartPulse3 == 0)		snprintf(str_tstartPulse3,125,"%d",(*reconstruct_init)->tstartPulse3);
+        else                                            snprintf(str_tstartPulse3,125,"%d",(*reconstruct_init)->tstartPulse3+1);
         strproc=string("tstartPulse3 = ") + string(str_tstartPulse3);
         strcpy(keyvalstr,strproc.c_str());
         fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
@@ -6968,41 +6961,33 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
  *
  *      aducnv = (IMAX-IMIN)/65534 calculated by using the IMIN and IMAX keywords in the events file
  *      Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
- * 
- *      I = IO_START-(ADC*aducnv+IMIN) (IO_START is a column in the events file)
- * 
+ *      
  *      - Conversion according to 'EnergyMethod'=I2R: 
+ *          I = IO_START-(ADC*aducnv+IMIN) (IO_START is a column in the events file)
  *          DeltaI = I-I0_START
- *          R = 1 - 1*(abs(DeltaI)/I0_START)/(1+abs(DeltaI)/I0_START)
- *      - Conversion according to 'EnergyMethod'=I2RALL: 
- *          R = (V0-IRL-LdI/dt)/I
- *      - Conversion according to 'EnergyMethod'=I2RNOL (I2RALL neglecting the circuit inductance): 
- *          R = (V0-IRL)/I    
+ *          R/R0 = 1 - 1*(abs(DeltaI)/I0_START)/(1+abs(DeltaI)/I0_START)
+ * 
  *      - Conversion according to 'EnergyMethod'=I2RFITTED:
  *          R/V0 = -1/(Ifit+ADC) being Ifit=I0_START(adu)=I0_START(A)*aducnv(A/adu)
- * 
+ *  
  * Parameters:
- * - EnergyMethod: Quasi-resistance energy calculation method (I2R, I2RALL, I2RNOL or I2RFITTED)
- * - R0: Operating point resistance
  * - Ibias: Initial bias current (I0_START column)
  * - Imin: Current corresponding to 0 ADU (IMIN keyword)
  * - Imax: Current corresponding to maximm ADU (IMAX keyword)
- * - TTR: Transformer Turns Ratio (TTR column)
- * - LFILTER: Filter circuit inductance (LFILTER column)
- * - RPARA: Parasitic resistor value (RPARA column)
  * - ADU_CNV: Conversion factor (A/adu) (ADU_CNV keyword)
  * - ADU_BIAS: Bias currente (adu) (ADU_BIAS keyword)
  * - I_BIAS: Bias current (A) (I_BIAS keyword)
  * - samprate: Sampling rate
  * - invector: Input current (ADC) vector & output resistance (I2R, I2RALL, I2RNOL or I2RFITTED) vector
  ******************************************************************************/
-int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double Imax, double TTR, double LFILTER, double RPARA, double ADU_CNV, double ADU_BIAS, double I_BIAS, double samprate, gsl_vector **invector)
+int convertI2R (char* EnergyMethod,double Ibias, double Imin, double Imax, double ADU_CNV, double ADU_BIAS, double I_BIAS, double samprate, gsl_vector **invector)
 {
     int status = EPOK;
     string message="";
     
     double aducnv;		// ADU conversion factor [A/ADU]
     double baseline;
+    
     
     if ((strcmp(EnergyMethod,"I2R") == 0) && (ADU_CNV == -999))
     {	
@@ -7060,85 +7045,8 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
         gsl_vector_free(deltai); deltai = 0;
         gsl_vector_free(vectoraux); vectoraux = 0;
     }
-    else if (strcmp(EnergyMethod,"I2RALL") == 0)
-    {
-        aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
-        
-        double RL;                                              // Shunt/load resistor value [Ohm]
-        double V0;
-        double L;
-        
-        // It is not necessary to check the allocation beacuse 'invector' size must be > 0
-        gsl_vector *I = gsl_vector_alloc((*invector)->size);
-        gsl_vector *dI = gsl_vector_alloc((*invector)->size);
-        gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
-        
-        RL = RPARA/(pow(TTR,2));                                // RL = RPARA/(TTR)^2
-        V0 = Ibias*(R0+RL)*TTR;                                 // V0 = I0(R0+RL)TTR
-        L = LFILTER/(pow(TTR,2));                               // L = LFILTER/(TTR)^2
-        
-        // I
-        gsl_vector_memcpy(invector_modified,*invector);
-        gsl_vector_scale(*invector,aducnv);                     // invector = I(adu)*aducnv
-        gsl_vector_add_constant(*invector,Imin);                // invector = I(adu)*aducnv+IMIN
-        gsl_vector_scale(*invector,-1.0);                       // invector = I0_START-(I(adu)*aducnv+IMIN)
-        gsl_vector_add_constant(*invector,Ibias);
-        gsl_vector_memcpy(I,*invector);
-        
-        // dI
-        gsl_vector_memcpy(dI,I);
-        if (differentiate (&dI, dI->size))
-        {
-            message = "Cannot run routine differentiate for convertI2R and I2RALL";
-            EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-        }
-        
-        // R = (V0-IRL-LdI/dt)/I
-        gsl_vector_memcpy(*invector,dI);
-        gsl_vector_scale(*invector,samprate);                   // dI/dt
-        gsl_vector_scale(*invector,-L);
-        gsl_vector_add_constant(*invector,V0);                  // V0-dI/dt
-        gsl_vector_memcpy(invector_modified,I);
-        gsl_vector_scale(invector_modified,RL);
-        gsl_vector_sub(*invector,invector_modified);            // V0-dI/dt-IRL
-        gsl_vector_div(*invector,I);                            // (V0-IRL-LdI/dt)/I
-        
-        gsl_vector_free(I); I = 0;
-        gsl_vector_free(dI); dI = 0;
-        gsl_vector_free(invector_modified); invector_modified = 0;
-    }
-    else if (strcmp(EnergyMethod,"I2RNOL") == 0)
-    {
-        aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
-        
-        double RL;                                      // Shunt/load resistor value [Ohm]
-        double V0;
-        // It is not necessary to check the allocation beacuse 'invector' size must be > 0
-        gsl_vector *I = gsl_vector_alloc((*invector)->size);
-        gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
-        
-        RL = RPARA/(pow(TTR,2));                        // RL = RPARA/(TTR)^2
-        V0 = Ibias*(R0+RL)*TTR;                         // V0 = I0(R0+RL)TTR
-        
-        // I
-        gsl_vector_memcpy(invector_modified,*invector);
-        gsl_vector_scale(*invector,aducnv);             // invector = I(adu)*aducnv
-        gsl_vector_add_constant(*invector,Imin);        // invector = I(adu)*aducnv+IMIN
-        gsl_vector_scale(*invector,-1.0);               // invector = I0_START-(I(adu)*aducnv+IMIN)
-        gsl_vector_add_constant(*invector,Ibias);
-        gsl_vector_memcpy(I,*invector);
-        
-        // R = (V0-IRL)/I
-        gsl_vector_memcpy(*invector,I);
-        gsl_vector_scale(*invector,-RL);                // IRL
-        gsl_vector_add_constant(*invector,V0);          // V0-IRL
-        gsl_vector_div(*invector,I);                    // (V0-IRL)/I
-        
-        gsl_vector_free(I); I = 0;
-        gsl_vector_free(invector_modified); invector_modified = 0;
-    }
     else if (strcmp(EnergyMethod,"I2RFITTED") == 0)
-    {
+    {    
         aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
         
         //double Ifit = 1.46e-5;                          // Ifit = 14.6e-6 uA
@@ -7146,17 +7054,17 @@ int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double
         double Ifit;
         if (ADU_CNV != -999.0)  Ifit = ADU_BIAS;
         else                    Ifit = Ibias/aducnv;
-        
+            
         // It is not necessary to check the allocation beacuse 'invector' size must be > 0
         gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
-        
+            
         // R/V0 = -1/(Ifit+I(adu)) = -1/(Ifit+ADC)
         gsl_vector_memcpy(invector_modified,*invector);
         gsl_vector_add_constant(invector_modified,Ifit);    // Ifit+ADC
         gsl_vector_set_all(*invector,1.0);
         gsl_vector_div(*invector,invector_modified);        // 1/(Ifit+ADC)
         gsl_vector_scale(*invector,-1.0);                   // -1/(Ifit+ADC) (*-1 in order to have positive polarity => Derivative with positive polarity => Detection ok)
-    
+            
         gsl_vector_free(invector_modified); invector_modified = 0;
     }
     
@@ -7623,10 +7531,10 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
  * 	- If 'OFIter'=1, in the first iteration ('numiteration'=0) the values of 'maxDER' and 'maxDERs' are used in 'find_matchedfilterDAB', 
  *         'find_optimalfilterDAB' or 'find_Esboundary' getting the values of the 'energies' which straddle the 'maxDER' ('Ealpha' and 'Ebeta'). There will be more
  *         iterations if the calculated 'energy' is out of ['Ealpha','Ebeta']. If 'energy' is in ['Ealpha','Ebeta'] the iterative process stops.
- * 	  	- If OPTFILT (or I2R, I2RALL, I2RNOL, I2RFITTED) and 'OFLib'=0 and 'OFNOise=NSD':
+ * 	  	- If OPTFILT or I2R, and 'OFLib'=0 and 'OFNOise=NSD':
  *	 	    - Ffind the matched filter and load it in 'filter' ('find_matchedfilterDAB')
  * 		    - Calculate the optimal filter
- * 		- If OPTFILT (or I2R, I2RALL, I2RNOL, I2RFITTED) and 'OFLib'=1 and 'OFNOise=NSD':
+ * 		- If OPTFILT or I2R, and 'OFLib'=1 and 'OFNOise=NSD':
  *                   - If it is necessary, choose the base-2 system value closest (lower than or equal) to the pulse length
  *	 	    - Find the optimal filter and load it in 'optimalfilter' ('find_optimalfilterDAB')
  *		- If 'WEIGHT' or 'WEIGHTN':
@@ -7634,7 +7542,7 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
  * 		    - If 'WEIGHTN' and 'OFLib'=1:
  *                       - Choose the base-2 system value closest (lower than or equal) to the pulse length
  * 		        - 'find_prclwn' to find the appropriate values of the PRECALWN HDU ('PRCLx' columns)
- *               - If OPTFILT (or I2R, I2RALL, I2RNOL, I2RFOTTED) and 'OFLib'=1 and 'OFNOise=WEIGHTM':
+ *               - If OPTFILT or I2R,  and 'OFLib'=1 and 'OFNOise=WEIGHTM':
  *                   - Choose the base-2 system value closest (lower than or equal) to the pulse length
  * 		    - 'find_prclofwm' to find the appropriate values of the PRCLOFWM HDU ('OFWx' columns)
  *		- Subtract the sum of the filter if OPTFILT, NSD, T, 0-padding and Sum0Filt=1 
@@ -7689,7 +7597,7 @@ void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** re
         runF0orB0val = 1;
     }
     
-    // I2R, I2RALL, I2RNOL or I2RFITTED methods convert I into R at the beginnig and after that 'I2R', 'I2RALL', 'I2RNOL' or 'I2RFITTED' are equivalent to 'OPTFILT'
+    // I2R method converts I into R at the beginnig and after that 'I2R' is equivalent to 'OPTFILT'
     int runEMethod;
     if (strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0)
     {
@@ -8657,7 +8565,7 @@ void th_runEnergy(TesRecord* record, int trig_reclength,
         runF0orB0val = 1;
     }
     
-    // I2R, I2RALL, I2RNOL or I2RFITTED methods convert I into R at the beginnig and after that 'I2R', 'I2RALL', 'I2RNOL' or 'I2RFITTED' are equivalent to 'OPTFILT'
+    // I2R method converts I into R at the beginnig and after that 'I2R' is equivalent to 'OPTFILT'
     int runEMethod;
     if (strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0)
     {
@@ -11095,7 +11003,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
  * calculateEnergy function: This function calculates the energy of a pulse ('vector') depending on
  *                           the 'EnergyMethod', 'OFNoise' and the 'FilterDomain' basically.
  *
- * OPTFILT (= I2R =I2RALL =I2RNOL =I2RFITTED) and NSD: Optimal filter = Wiener filter
+ * OPTFILT (= I2R) and NSD: Optimal filter = Wiener filter
  *
  *   Once the filter template has been created ('filter' or 'filterFFT'), pulse height analysis is performed by aligning the template
  *   with a pulse and multiplying each point in the template by the corresponding point in the pulse. The sum of these products is the energy.
@@ -11190,9 +11098,6 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
  * - filterFFT: Optimal filter in frequency domain
  * - runEMethod: 'EnergyMethod' = OPTFILT => 'runEMethod' = 0
  * 		'EnergyMethod' = I2R => 'runEMethod' = 0
- * 		'EnergyMethod' = I2RALL => 'runEMethod' = 0
- * 		'EnergyMethod' = I2RNOL => 'runEMethod' = 0
- * 		'EnergyMethod' = I2RFITTED => 'runEMethod' = 0
  * 		'EnergyMethod' = WEIGHT => 'runEMethod' = 1
  * 		'EnergyMethod' = WEIGHTN => 'runEMethod' = 2
  * - indexEalpha: Index of the energy lower than the energy of the pulse which is being analyzed
@@ -11262,7 +11167,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
     else
     {
         if (((runEMethod == 0) && (strcmp(reconstruct_init->OFNoise,"NSD") == 0)) || (LowRes == 1))
-            // OPTFILT	I2R or I2RALL or I2RNOL or I2RFITTED => OPTFILT
+            // OPTFILT	I2R => OPTFILT
         {
             gsl_vector_view temp;
             

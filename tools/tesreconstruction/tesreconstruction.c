@@ -67,8 +67,8 @@
 * - NoiseFile: Noise FITS file with noise spectrum
 * - FilterDomain: Filtering Domain: Time (T) or Frequency (F)
 * - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)
-* - EnergyMethod: Energy calculation Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED or PCA
-* - filtEeV: Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R, I2RALL, I2RNOL and I2RFITTED)
+* - EnergyMethod: Energy calculation Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA
+* - filtEeV: Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED)
 * - OFNoise: Noise to use with Optimal Filtering: NSD or WEIGHTM
 * - LagsOrNot: Lags or no lags (1/0)
 * - nLags: Number of lags (positive odd number)
@@ -523,13 +523,8 @@ int tesreconstruction_main() {
     destroyAdvDet(&det);
     
     // Build up TesEventList to recover the results of the reconstruction
-    // SIRENA method
-    TesEventList* event_list = newTesEventListSIRENA(&status);
+    TesEventList* event_list = newTesEventList(&status);
     allocateTesEventListTrigger(event_list,par.EventListSize,&status);
-    CHECK_STATUS_BREAK(status);
-    // PP method
-    TesEventList* event_listPP = newTesEventList(&status);
-    allocateTesEventListTrigger(event_listPP,par.EventListSize,&status);
     CHECK_STATUS_BREAK(status);
             
     TesTriggerFile* record_file;
@@ -591,7 +586,7 @@ int tesreconstruction_main() {
                     {
                             if(!strcmp(par.Rcmethod,"PP"))
                             {
-                                    reconstructRecord(record,event_listPP,reconstruct_init,0,&status);
+                                    reconstructRecord(record,event_list,reconstruct_init,0,&status);
                             }
                             else
                             {
@@ -599,8 +594,7 @@ int tesreconstruction_main() {
                                     nrecord_filei = nrecord_filei + 1;
                                     if ((nrecord_filei == record_file->nrows) && (j == numfits-1)) lastRecord=1;  // lastRecord of all the FITS files
                                    
-                                    if ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2RALL") == 0) 
-                                        || (strcmp(par.EnergyMethod,"I2RNOL") == 0) || (strcmp(par.EnergyMethod,"I2RFITTED") == 0))
+                                    if ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2RFITTED") == 0))
                                     {
                                             strcpy(reconstruct_init_sirena->EnergyMethod,par.EnergyMethod);
                                     }
@@ -613,13 +607,13 @@ int tesreconstruction_main() {
 
                             if ((strcmp(par.EnergyMethod,"PCA") != 0) || ((strcmp(par.EnergyMethod,"PCA") == 0) && lastRecord == 1))
                             {
-                                    // In THREADING mode, saveEventListToFileSIRENA is not called until finishing with calculus 
+                                    // In THREADING mode, saveEventListToFile is not called until finishing with calculus 
                                     // (ordering is necessary previously)  
                                     if(!is_threading()){    
                                             //printf("\n %p - %f", outfile, record_file->delta_t);
                                             //printf("\nRecord single");
                                             //printf("\n%f - %ld", record->time, record->pixid);
-                                            saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
+                                            saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
                                             CHECK_STATUS_BREAK(status);
                                             //Reinitialize event list
                                             event_list->index=0;//////////////////////!!!!!!!!!!!!!!!!!!!!!OJO!!!!!!!!!!!!!!!!!!! Igual no hay que inicializarlo a 0
@@ -643,8 +637,8 @@ int tesreconstruction_main() {
                                     //printf("%s %e %s","**Threading...event_list->energies[0]: ", event_list->energies[0],"\n"); Energy value
                                     //printf("%s %e %s","**Threading...event_list->energies[1]: ", event_list->energies[1],"\n"); Not error but non relevant value
                                     //printf("%s %e %s","**Threading...event_list->energies[100000]: ", event_list->energies[100000],"\n"); Not error but non relevant value
-                                    saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-                                    //printf("%s","**Threading...after de saveEventListToFileSIRENA \n");
+                                    saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
+                                    //printf("%s","**Threading...after de saveEventListToFile \n");
                                     CHECK_STATUS_BREAK(status);
                                     ++i;
                             }
@@ -746,7 +740,7 @@ int tesreconstruction_main() {
             {
                     if(!strcmp(par.Rcmethod,"PP"))
                     {
-                            reconstructRecord(record,event_listPP,reconstruct_init,0,&status);
+                            reconstructRecord(record,event_list,reconstruct_init,0,&status);
                     }
                     else
                     {
@@ -766,8 +760,7 @@ int tesreconstruction_main() {
                             	status=1;
                                 CHECK_STATUS_BREAK(status);
                             }*/
-                            if ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2RALL") == 0) 
-                                || (strcmp(par.EnergyMethod,"I2RNOL") == 0) || (strcmp(par.EnergyMethod,"I2RFITTED") == 0))
+                            if ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2RFITTED") == 0))
                             {
                                 strcpy(reconstruct_init_sirena->EnergyMethod,par.EnergyMethod);
                             }
@@ -782,7 +775,7 @@ int tesreconstruction_main() {
 
                     if ((strcmp(par.EnergyMethod,"PCA") != 0) || ((strcmp(par.EnergyMethod,"PCA") == 0) && lastRecord == 1))
                     {
-                            // In THREADING mode, saveEventListToFileSIRENA is not called until finishing with calculus 
+                            // In THREADING mode, saveEventListToFile is not called until finishing with calculus 
                             // (ordering is necessary previously)  
                             if(!is_threading()){    
                                     //printf("\n %p - %f", outfile, record_file->delta_t);
@@ -790,8 +783,8 @@ int tesreconstruction_main() {
                                     //printf("\n%f - %ld", record->time, record->pixid);
                                     //printf("%s %d %s","**Before saveEventListToFile \n");
                                     //printf("%s %d %s","status2 = ",status,"\n");
-                                    saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-                                    //printf("%s %d %s","**After saveEventListToFileSIRENA \n");
+                                    saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
+                                    //printf("%s %d %s","**After saveEventListToFile \n");
                                     //printf("%s %d %s","status3 = ",status,"\n");
                                     CHECK_STATUS_BREAK(status);
                                     //Reinitialize event list
@@ -814,8 +807,8 @@ int tesreconstruction_main() {
                             //printf("%s %e %s","**Threading...event_list->energies[0]: ", event_list->energies[0],"\n"); //Energy value
                             //printf("%s %e %s","**Threading...event_list->energies[1]: ", event_list->energies[1],"\n"); //Not error but non relevant value
                             //printf("%s %e %s","**Threading...event_list->energies[100000]: ", event_list->energies[100000],"\n"); Not error but non relevant value
-                            saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-                            //printf("%s","**Threading...after saveEventListToFileSIRENA \n");
+                            saveEventListToFile(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
+                            //printf("%s","**Threading...after saveEventListToFile \n");
                             CHECK_STATUS_BREAK(status);
                             ++i;
                     }
@@ -870,7 +863,6 @@ int tesreconstruction_main() {
     freeOptimalFilterSIRENA(optimalFilter);
     freeTesEventFile(outfile,&status);
     freeTesEventList(event_list);
-    freeTesEventList(event_listPP);
     freeTesRecord(&record);
     freeSixtStdKeywords(keywords);
     CHECK_STATUS_BREAK(status);
@@ -1141,8 +1133,7 @@ int getpar(struct Parameters* const par)
 	MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0),"FilterMethod must be F0 or B0");
 	
 	MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0) ||
-		(strcmp(par->EnergyMethod,"I2R") == 0) || (strcmp(par->EnergyMethod,"I2RALL") == 0) || (strcmp(par->EnergyMethod,"I2RNOL") == 0) || 
-		(strcmp(par->EnergyMethod,"I2RFITTED") == 0) || (strcmp(par->EnergyMethod,"PCA") == 0), "EnergyMethod must be OPTFILT, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED or PCA");
+		(strcmp(par->EnergyMethod,"I2R") == 0) || (strcmp(par->EnergyMethod,"I2RFITTED") == 0) || (strcmp(par->EnergyMethod,"PCA") == 0), "EnergyMethod must be OPTFILT, WEIGHT, WEIGHTN, I2R or PCA");
 	
 	MyAssert((strcmp(par->OFNoise,"NSD") == 0) || (strcmp(par->OFNoise,"WEIGHTM") == 0), "OFNoise must be NSD or WEIGHTM");
         
