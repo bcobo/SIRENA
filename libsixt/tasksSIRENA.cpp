@@ -6968,7 +6968,7 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
  *          R/R0 = 1 - 1*(abs(DeltaI)/I0_START)/(1+abs(DeltaI)/I0_START)
  * 
  *      - Conversion according to 'EnergyMethod'=I2RFITTED:
- *          R/V0 = -1/(Ifit+ADC) being Ifit=I0_START(adu)=I0_START(A)*aducnv(A/adu)
+ *          R/V0 = -1/(Ifit+ADC) being Ifit=I0_START(adu)=I0_START(A)/aducnv(A/adu)
  *  
  * Parameters:
  * - Ibias: Initial bias current (I0_START column)
