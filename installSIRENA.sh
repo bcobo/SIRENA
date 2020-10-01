@@ -2,6 +2,10 @@
 
 # script to install SIRENA under SIXTE distribution
 
+# Last stable functionalities of SIRENA are always inside SIXTE package.
+# However if you want to install a new/experimental feature (only present
+# in this repository) follow these steps:
+
 # check SIXTE environ variable is set
 
 if [ -z ${SIXTE+x} ]; then
