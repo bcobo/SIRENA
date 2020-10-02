@@ -41,7 +41,7 @@ Search functions by name at :ref:`genindex`.
     This function writes the first row of the library (without intermediate AB-related values, because it would be necessary to have at least two rows=energies in the library). It also writes the *FIXFILTT* and *FIXFILTF* HDUs with the optimal filters in the time and frequency domain with fixed legnths (base-2 values) and the *PRCLOFWM* HDU with the precalculated values for optimal filtering and :option:`EnergyMethod` = **WEIGHTM**.
     
     - Declare variables
-    - Write in the first row of the library FITS file some columns with the info provided by the input GSL vectors :cpp:member:`E`, :cpp:member:`PHEIGHT`, :cpp:member:`PULSE`, :cpp:member:`PULSEB0`,             :cpp:member:`MF` and :cpp:member:`MFB0` (and :cpp:member:`COVAR` and :cpp:member:`WEIGHT` if :option:`hduPRCLOFWM` =1) (and :cpp:member:`PULSEMaxLengthFixedFilter` if :option:`largeFilter` > :option:`PulseLength`)
+    - Write in the first row of the library FITS file some columns with the info provided by the input GSL vectors :cpp:member:`E`, :cpp:member:`PHEIGHT`, :cpp:member:`PULSE`, :cpp:member:`PULSEB0`,             :cpp:member:`MF` and :cpp:member:`MFB0` (and :cpp:member:`COVAR` and :cpp:member:`WEIGHT` if :option:`hduPRCLOFWM` = yes) (and :cpp:member:`PULSEMaxLengthFixedFilter` if :option:`largeFilter` > :option:`PulseLength`)
     - Writing HDUs with fixed filters in time (*FIXFILTT*) and frequency (*FIXFILTF*), **Tx** and **Fx** columns respectively (calculating the optimal filters, :cpp:func:`calculus_optimalFilter`).
       In time domain **Tx** columns are real numbers but in frequency domain **Fx** columns are complex numbers (so real parts are written in the first half of the column and imaginary parts in the second one)
     - Calculate and write the pre-calculated values by using the noise weight matrix from noise intervals (M'WM)^{-1}M'W for different lengths, **OFWx** columns in *PRCLOFWM*
@@ -221,13 +221,13 @@ Search functions by name at :ref:`genindex`.
     
     This function calculates the energy of a pulse (:cpp:member:`vector`) depending on the :option:`EnergyMethod`, :option:`OFNoise`, and the :option:`FilterDomain` selected from input parameters.
 
-    a) **OPTFILT** and **NSD** (= **I2R** or **I2RALL**, **I2RNOL** or **I2RFITTED**): Optimal filter = Wiener filter  (see :ref:`optimalFilter_NSD`)
+    a) **OPTFILT** and **NSD** (= **I2R** or **I2RFITTED**): Optimal filter = Wiener filter  (see :ref:`optimalFilter_NSD`)
 
     Once the filter template has been created (:cpp:member:`filter` or :cpp:member:`filterFFT`), pulse height analysis is performed by aligning the template with a pulse and multiplying each point in the template by the corresponding point in the pulse. The sum of these products is the energy.
 
     In the practice, the alignment of the pulse relative to the trigger is not completely accurate, so a number of *n* lags could be used in order to find the peak value of the energy. The *n* peak values are fitted to a parabola to find the most accurate energy (:option:`LagsOrNot`) and a corrected starting time.
     
-    a) **OPTFILT** and **WEIGHTM** (= **I2R** or **I2RALL**, **I2RNOL** or **I2RFITTED**) (see :ref:`optimalFilter_WEIGHTM`)
+    a) **OPTFILT** and **WEIGHTM** (= **I2R** or **I2RFITTED**) (see :ref:`optimalFilter_WEIGHTM`)
 
     c) **WEIGHT** and **WEIGHTN** (see :ref:`covMatrices`)
 
@@ -254,8 +254,6 @@ Search functions by name at :ref:`genindex`.
     
         - :option:`EnergyMethod` = **OPTFILT** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
         - :option:`EnergyMethod` = **I2R** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
-        - :option:`EnergyMethod` = **I2RALL** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
-        - :option:`EnergyMethod` = **I2RNOL** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
         - :option:`EnergyMethod` = **I2RFITTED** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
         - :option:`EnergyMethod` = **WEIGHT** :math:`\Rightarrow` :cpp:member:`runEMethod` = 1
         - :option:`EnergyMethod` = **WEIGHTN** :math:`\Rightarrow` :cpp:member:`runEMethod` = 2
@@ -299,7 +297,7 @@ Search functions by name at :ref:`genindex`.
         
     int **numlags**
     
-        Number of lags (if option:`EnergyMethod` = **OPTFILT** or **I2R** or **I2RALL** or **I2RNOL** or **I2RFITTED** and :option:`OFNoise` = **NSD**)
+        Number of lags (if option:`EnergyMethod` = **OPTFILT** or **I2R** or **I2RFITTED** and :option:`OFNoise` = **NSD**)
         
     double **tstartNewDev**
     
@@ -333,8 +331,6 @@ Search functions by name at :ref:`genindex`.
     
         - :option:`EnergyMethod` = **OPTFILT** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
         - :option:`EnergyMethod` = **I2R** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
-        - :option:`EnergyMethod` = **I2RALL** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
-        - :option:`EnergyMethod` = **I2RNOL** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
         - :option:`EnergyMethod` = **I2RFITTED** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
         - :option:`EnergyMethod` = **WEIGHT** :math:`\Rightarrow` :cpp:member:`runEMethod` = 1
         - :option:`EnergyMethod` = **WEIGHTN** :math:`\Rightarrow` :cpp:member:`runEMethod` = 2
@@ -378,7 +374,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: int numlags
     
-        Number of lags (if option:`EnergyMethod` = **OPTFILT** or **I2R** or **I2RALL** or **I2RNOL** or **I2RFITTED** and :option:`OFNoise` = **NSD**)
+        Number of lags (if option:`EnergyMethod` = **OPTFILT** or **I2R** or **I2RFITTED** and :option:`OFNoise` = **NSD**)
         
     .. cpp:member:: double tstartNewDev
     
@@ -872,64 +868,68 @@ Search functions by name at :ref:`genindex`.
         Optimal filter spectrum (complex values) (output)
         
         
-.. cpp:function:: int convertI2R (char* EnergyMethod, double R0, double Ibias, double Imin, double Imax, double TTR, double LFILTER, double RPARA, double samprate, gsl_vector **invector)
+.. cpp:function:: int convertI2R (char* EnergyMethod, double Ibias, double Imin, double Imax, double ADU_CNV, double ADU_BIAS, double I_BIAS, double samprate, gsl_vector **invector)
     
     Located in file: *tasksSIRENA.cpp*
     
-    This funcion converts the current space into a quasi-resistance space (see :ref:`rSpace` for **I2R**, **I2RALL**, **I2RNOL** and **I2RFITTED** modes). The input :cpp:member:`invector` filled in with current values is filled in here with *I2R*, *I2RALL*, *I2RNOL* or **I2RFITTED** quasi-resistances at the output.
+    This funcion converts the current space into a quasi-resistance space (see :ref:`rSpace` for **I2R** and **I2RFITTED** modes). The input :cpp:member:`invector` filled in with current values is filled in here with *I2R* or **I2RFITTED** quasi-resistances at the output.
 
-    If :cpp:member:`invector` contains the **ADC** column data from the input FITS file and :math:`I = I_{bias}-(invector*ADUCNV+I_{min})`: 
+    If the ``ADU_CNV`` keyword is in the input FITS file and :cpp:member:`invector` contains the **ADC** column data from the input FITS file:
     
-    - Conversion according to :option:`EnergyMethod` = **I2R**:
+        :math:`I(A) = I\_BIAS+ADU\_CNV*(ADC-ADU\_BIAS)` being :math:`ADC=I(adu)` and ``ADU_CNV``, ``ADU_BIAS`` and ``I_BIAS`` are keywords in the input FITS file
         
-        :math:`DeltaI = I-I_{bias}`    :math:`R/R0 = 1 - (abs(DeltaI)/I_{bias})/(1+abs(DeltaI)/I_{bias})`
+        - Conversion according to :option:`EnergyMethod` = **I2R**:
         
-    - Conversion according to :option:`EnergyMethod` = **I2RALL**:
+            :math:`DeltaI = I`    :math:`R/R0 = 1 - (abs(DeltaI)/I\_BIAS)/(1+abs(DeltaI)/I\_BIAS)`
+            
+        - Conversion according to :option:`EnergyMethod` = **I2RFITTED**:
+        
+            :math:`R/V0 = -1/(I_{fit}+ADC)` being :math:`I_{fit}` = ``ADU_BIAS``
+        
     
-        :math:`R = (V_0-I*R_L-LdI/dt)/I`
+    If the ``ADU_CNV`` keyword is NOT in the input FITS file and :cpp:member:`invector` contains the **ADC** column data from the input FITS file:
+    
+        :math:`aducnv = (IMAX-IMIN)/65534` (``IMIN`` and ``IMAX`` are keywords in the input FITS file and 65534 the number of quantification leves)
+        
+        :math:`I(A) = ADC*aducnv+IMIN` being :math:`ADC=I(adu)`
+    
+        - Conversion according to :option:`EnergyMethod` = **I2R**:
+        
+            :math:`DeltaI = I`    :math:`R/R0 = 1 - (abs(DeltaI)/I0\_START)/(1+abs(DeltaI)/I0\_START)`
+    
+        - Conversion according to :option:`EnergyMethod` = **I2RFITTED**  
 
-    - Conversion according to :option:`EnergyMethod` = **I2RNOL** (*I2RALL* neglecting the circuit inductance):
-    
-        :math:`R = (V_0-I*R_L)/I`
-    
-    - Conversion according to :option:`EnergyMethod` = **I2RFITTED**  
-
-        :math:`R = V_0/(I_{fit}+I)`
-    
-    
+            :math:`R/V0 = -1/(I_{fit}+ADC)` being :math:`I_{fit}=I0\_START(adu)=I0\_START(A)/aducnv(A/adu)`
+        
     **Members/Variables**
 
     char* **EnergyMethod**
     
-        Quasi-resistance energy calculation method: **I2R**, **I2RALL**, **I2RNOL** or **I2RFITTED**, :option:`EnergyMethod`
+        Quasi-resistance energy calculation method: **I2R** or **I2RFITTED**, :option:`EnergyMethod`
 
-    double **R0**
-
-        Operating point resistance
-        
     double **Ibias**
 
-        Initial bias current
+        Initial bias current (**I0_START** column)
         
     double **Imin**
 
-        Current corresponding to 0 ADU
+        Current corresponding to 0 ADU (``IMIN`` keyword)
     
     double **Imax**
 
-        Current corresponding to maximum ADU
-        
-    double **TTR**
+        Current corresponding to maximum ADU (``IMAX`` keyword)
+                
+    double **ADU_CNV**
 
-        Transformer Turns Ratio
+        Conversion factor (A/adu) (``ADU_CNV`` keyword)
         
-    double **LFILTER**
+    double **ADU_BIAS**
 
-        Filter circuit inductance
+        Bias current (adu) (``ADU_BIAS`` keyword)
         
-    double **RPARA**
+    double **I_BIAS**
 
-        Parasitic resistor value
+        Bias current (A) (``I_BIAS`` keyword)
         
     double **samprate**
 
@@ -941,35 +941,31 @@ Search functions by name at :ref:`genindex`.
 
     .. cpp:member:: char* EnergyMethod
     
-        Quasi-resistance energy calculation method: **I2R**, **I2RALL**, **I2RNOL** or **I2RFITTED**, :option:`EnergyMethod`
-
-    .. cpp:member:: double R0
-
-        Operating point resistance
+        Quasi-resistance energy calculation method: **I2R** or **I2RFITTED**, :option:`EnergyMethod`
         
     .. cpp:member:: double Ibias
 
-        Initial bias current
+        Initial bias current (**I0_START** column)
         
     .. cpp:member:: double Imin
 
-        Current corresponding to 0 ADU
+        Current corresponding to 0 ADU (``IMIN`` keyword)
     
     .. cpp:member:: double Imax
 
-        Current corresponding to maximum ADU
-        
-    .. cpp:member:: double TTR
+        Current corresponding to maximum ADU (``IMAX`` keyword)
+                
+    .. cpp:member:: double ADU_CNV
 
-        Transformer Turns Ratio
+        Conversion factor (A/adu) (``ADU_CNV`` keyword)
         
-    .. cpp:member:: double LFILTER
+    .. cpp:member:: double ADU_BIAS
 
-        Filter circuit inductance
+        Bias current (adu) (``ADU_BIAS`` keyword)
         
-    .. cpp:member:: double RPARA
+    .. cpp:member:: double I_BIAS
 
-        Parasitic resistor value
+        Bias current (A) (``I_BIAS`` keyword)
         
     .. cpp:member:: double samprate
 
@@ -2721,7 +2717,7 @@ Search functions by name at :ref:`genindex`.
     
     Located in file: *tasksSIRENA.cpp*
     
-    When :option:`EnergyMethod` = **OPTFILT** and :option:`OFNoise` = **WEIGHTM** this function selects the proper precalculated values (**OFWx**) from the calibration *PRCLOFWM* HDU of the library by comparing the maximum value of the pulse derivative (:cpp:member:`maxDER`) to the list of maximums in the library (:cpp:member:`maxDERs`) for the :option:`OFLib` =yes.
+    When :option:`EnergyMethod` = **OPTFILT** and :option:`OFNoise` = **WEIGHTM** this function selects the proper precalculated values (**OFWx**) from the calibration *PRCLOFWM* HDU of the library by comparing the maximum value of the pulse derivative (:cpp:member:`maxDER`) to the list of maximums in the library (:cpp:member:`maxDERs`) for the :option:`OFLib` = yes.
 
     It finds the two embracing :cpp:member:`maxDERs` in the calibration library:
     
@@ -2784,7 +2780,7 @@ Search functions by name at :ref:`genindex`.
     
     Located in file: *tasksSIRENA.cpp*
     
-    When :option:`EnergyMethod` = **WEIGHTN** this function selects the proper precalculated values (**PCLx**) from the *PRECALWN* HDU of the  calibration library by comparing the maximum value of the pulse derivative (:cpp:member:`maxDER`) to the list of maximums in the library (:cpp:member:`maxDERs`) for the :option:`OFLib` =yes. It also selects the proper row from the column **PAB**.
+    When :option:`EnergyMethod` = **WEIGHTN** this function selects the proper precalculated values (**PCLx**) from the *PRECALWN* HDU of the  calibration library by comparing the maximum value of the pulse derivative (:cpp:member:`maxDER`) to the list of maximums in the library (:cpp:member:`maxDERs`) for the :option:`OFLib` = yes. It also selects the proper row from the column **PAB**.
 
     It finds the two embracing :cpp:member:`maxDERs` in the calibration library:
     
@@ -3074,13 +3070,13 @@ Search functions by name at :ref:`genindex`.
     
         Calculate and write the weight matrixes if *weightMS=yes*
         
-    char **I2R** 
+    char **EnergyMethod** 
     
-        Transform to resistance space (I2R, I2RALL, I2RNOL, I2RFITTED) or not (I)
+        Transform to resistance space (I2R, I2RFITTED) or not (OPTFILT)
         
     char **clobber**
     
-        Re-write output files if clobber=yes
+        Re-write output files if *clobber=yes*
         
     int **matrixSize**
     
@@ -3206,11 +3202,11 @@ Search functions by name at :ref:`genindex`.
     
      int **hduPRECALWN**
     
-        Add or not the *PRECALWN* HDU in the library file (1/0) (only for library creation, :option:`opmode` = 0), :option:`hduPRECALWN`
+        Add or not the *PRECALWN* HDU in the library file (yes/no) (only for library creation, :option:`opmode` = 0), :option:`hduPRECALWN`
         
     int **hduPRCLOFWM**
     
-        Add or not the *PRCLOFWM* HDU in the library file (1/0) (only for library creation, :option:`opmode` = 0), :option:`hduPRCLOFWM`
+        Add or not the *PRCLOFWM* HDU in the library file (yes/no) (only for library creation, :option:`opmode` = 0), :option:`hduPRCLOFWM`
         
     int **largeFilter**
     
@@ -3226,7 +3222,7 @@ Search functions by name at :ref:`genindex`.
         
     char* **energy_method**
     
-        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RALL**, **I2RNOL**, **I2RFITTED** or **PCA**, :option:`EnergyMethod`
+        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**, :option:`EnergyMethod`
 
     char* **ofnoise**
     
@@ -3238,7 +3234,7 @@ Search functions by name at :ref:`genindex`.
     
     char **oflib**
     
-        Work or not with a library with optimal filters (1/0), :option:`OFLib`
+        Work or not with a library with optimal filters (1/0), related to :option:`OFLib`
         
     char** **ofinterp**
     
@@ -3247,7 +3243,7 @@ Search functions by name at :ref:`genindex`.
         
     double **filtEev**  
     
-        Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R, I2RALL, I2RNOL and I2RFITTED), :option:`filtEeV`
+        Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED), :option:`filtEeV`
         
     int* const **status**
     
@@ -3263,11 +3259,11 @@ Search functions by name at :ref:`genindex`.
     
      .. cpp:member:: int hduPRECALWN
     
-        Add or not the *PRECALWN* HDU in the library file (1/0) (only for library creation, :option:`opmode` = 0), :option:`hduPRECALWN`
+        Add or not the *PRECALWN* HDU in the library file (yes/no) (only for library creation, :option:`opmode` = 0), :option:`hduPRECALWN`
         
     .. cpp:member:: int hduPRCLOFWM
     
-        Add or not the *PRCLOFWM* HDU in the library file (1/0) (only for library creation, :option:`opmode` = 0), :option:`hduPRCLOFWM`
+        Add or not the *PRCLOFWM* HDU in the library file (yes/no) (only for library creation, :option:`opmode` = 0), :option:`hduPRCLOFWM`
         
     .. cpp:member:: int largeFilter
     
@@ -3283,7 +3279,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: char* energy_method
     
-        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RALL**, **I2RNOL**, **I2RFITTED** or **PCA**, :option:`EnergyMethod`
+        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**, :option:`EnergyMethod`
 
     .. cpp:member:: char* ofnoise
     
@@ -3295,7 +3291,7 @@ Search functions by name at :ref:`genindex`.
     
     .. cpp:member:: char oflib
     
-        Work or not with a library with optimal filters (1/0), :option:`OFLib`
+        Work or not with a library with optimal filters (1/0), related to :option:`OFLib`
         
     .. cpp:member:: char** ofinterp
     
@@ -3304,7 +3300,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: double filtEev  
     
-        Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R, I2RALL, I2RNOL and I2RFITTED), :option:`filtEeV`
+        Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED), :option:`filtEeV`
         
     .. cpp:member:: int* const status
     
@@ -3338,11 +3334,11 @@ Search functions by name at :ref:`genindex`.
         
     int **hduPRCLOFWM**
     
-        Add or not the *PRCLOFWM* HDU in the library file (1/0) (only for library creation, :option:`opmode` = 0), :option:`hduPRCLOFWM`
+        Add or not the *PRCLOFWM* HDU in the library file (yes/no) (only for library creation, :option:`opmode` = 0), :option:`hduPRCLOFWM`
         
     char* **energy_method**
     
-        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RALL**, **I2RNOL**, **I2RFITTED** or **PCA**, :option:`EnergyMethod`
+        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**, :option:`EnergyMethod`
         
     char* **ofnoise**
     
@@ -3366,11 +3362,11 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: int hduPRCLOFWM
     
-        Add or not the *PRCLOFWM* HDU in the library file (1/0) (only for library creation, :option:`opmode` = 0), :option:`hduPRCLOFWM`
+        Add or not the *PRCLOFWM* HDU in the library file (yes/no) (only for library creation, :option:`opmode` = 0), :option:`hduPRCLOFWM`
         
     .. cpp:member:: char* energy_method
     
-        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RALL**, **I2RNOL**, **I2RFITTED** or **PCA**, :option:`EnergyMethod`
+        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**, :option:`EnergyMethod`
         
     .. cpp:member:: char* ofnoise
     
@@ -3826,11 +3822,11 @@ Search functions by name at :ref:`genindex`.
     
     char* **energy_method**
     
-         Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RALL**, **I2RNOL**, **I2RFITTED** or **PCA**, :option:`EnergyMethod`
+         Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**, :option:`EnergyMethod`
          
     double **filtEev**
     
-         Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R, I2RALL, I2RNOL and I2RFITTED), :option:`filtEeV`
+         Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED), :option:`filtEeV`
 
     char* **ofnoise**
     
@@ -3854,7 +3850,7 @@ Search functions by name at :ref:`genindex`.
     
     char **oflib**
     
-        Work or not with a library with optimal filters (1/0), :option:`OFLib`
+        Work or not with a library with optimal filters (1/0), related to :option:`OFLib`
     
     char* **ofinterp**
     
@@ -3879,11 +3875,11 @@ Search functions by name at :ref:`genindex`.
         
     int **hduPRECALWN**
     
-        Add or not the *PRECALWN* HDU in the library file (1/0) (only for library creation, :option:`opmode` = 0), :option:`hduPRECALWN`
+        Add or not the *PRECALWN* HDU in the library file (yes/no) (only for library creation, :option:`opmode` = 0), :option:`hduPRECALWN`
         
     int **hduPRCLOFWM**
     
-        Add or not the *PRCLOFWM* HDU in the library file (1/0) (only for library creation, :option:`opmode` = 0), :option:`hduPRCLOFWM`
+        Add or not the *PRCLOFWM* HDU in the library file (yes/no) (only for library creation, :option:`opmode` = 0), :option:`hduPRCLOFWM`
         
     int **largeFilter**
     
@@ -3907,7 +3903,7 @@ Search functions by name at :ref:`genindex`.
         
     char **clobber**
     
-        Overwrite or not output files if exist (1/0), :option:`clobber`
+        Overwrite or not output files if exist (yes/no), :option:`clobber`
     
     int **maxPulsesPerRecord**
     
@@ -4019,11 +4015,11 @@ Search functions by name at :ref:`genindex`.
     
     .. cpp:member:: char* energy_method
     
-         Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RALL**, **I2RNOL**, **I2RFITTED** or **PCA**, :option:`EnergyMethod`
+         Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**, :option:`EnergyMethod`
          
     .. cpp:member:: double filtEev
     
-         Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R, I2RALL, I2RNOL and I2RFITTED), :option:`filtEeV`
+         Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED), :option:`filtEeV`
 
     .. cpp:member:: char* ofnoise
     
@@ -4047,7 +4043,7 @@ Search functions by name at :ref:`genindex`.
     
     .. cpp:member:: char oflib
     
-        Work or not with a library with optimal filters (1/0), :option:`OFLib`
+        Work or not with a library with optimal filters (1/0), related to :option:`OFLib`
     
     .. cpp:member:: char* ofinterp
     
@@ -4072,11 +4068,11 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: int hduPRECALWN
     
-        Add or not the *PRECALWN* HDU in the library file (1/0) (only for library creation, :option:`opmode` = 0), :option:`hduPRECALWN`
+        Add or not the *PRECALWN* HDU in the library file (yes/no) (only for library creation, :option:`opmode` = 0), :option:`hduPRECALWN`
         
     .. cpp:member:: int hduPRCLOFWM
     
-        Add or not the *PRCLOFWM* HDU in the library file (1/0) (only for library creation, :option:`opmode` = 0), :option:`hduPRCLOFWM`
+        Add or not the *PRCLOFWM* HDU in the library file (yes/no) (only for library creation, :option:`opmode` = 0), :option:`hduPRCLOFWM`
         
     .. cpp:member:: int largeFilter
     
@@ -4100,7 +4096,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: char clobber
     
-        Overwrite or not output files if exist (1/0), :option:`clobber`
+        Overwrite or not output files if exist (yes/no), :option:`clobber`
     
     .. cpp:member:: int maxPulsesPerRecord
     
@@ -4849,15 +4845,13 @@ Search functions by name at :ref:`genindex`.
     
     - Find the maximum of each pulse: *amax*
     - Baseline of each pulse: *abase*
-    - Find the first sample in the rising part above the 50% (*amax/2*): *t2*
-        - Previous and post sample to *t2*: *t1* and *t3*
-        - Line by using 3 points: *(t1,a1)*, *(t2,a2)* and *(t3,a3)*
+    - Find the first sample in the rising part above the 10% and 50%: *t10* and *t50*
+        - Line by using 2 points: *(t10,a10)* and *(t50,a50)*
         - *t0 (t0,abase)*
         - *tmax (tmax,amax)*
         - Rise time = *tmax-t0*
-    - Find the previous sample in the decreasing part to the first sample below the 50% (*amax/2*): *t2*
-        - Previous and post sample to *t2*: *t3* and *t1*
-        - Line by using 3 points: *(t1,a1)*, *(t2,a2)* and *(t3,a3)*
+    - Find the first sample in the decreasing part below the 50% and 10%: *t50* and *t10*
+        - Line by using 2 points: *(t50,a50)* and *(t10,a10)*
         - *t0 (t0,abase)*
         - *tmax (tmax,amax)*
         - Fall time = *t0-tmax*
@@ -5648,7 +5642,7 @@ Search functions by name at :ref:`genindex`.
 
         4) Store the input record in *invector* (:cpp:func:`loadRecord`)
 
-        5) Convert *I* into *R* if :option:`EnergyMethod` = **I2R**, **I2RALL**, **I2RNOL** or **I2RFITTED** (:cpp:func:`convertI2R`)
+        5) Convert *I* into *R* if :option:`EnergyMethod` = **I2R** or **I2RFITTED** (:cpp:func:`convertI2R`)
         
         6) Process each record (:cpp:func:`proceRecord`): 
 
@@ -5658,7 +5652,7 @@ Search functions by name at :ref:`genindex`.
                 - Write test info in intermediate output FITS file if :option:`intermediate` = 1 (:cpp:func:`writeTestInfo`)                            
                 - Write pulses info in intermediate output FITS file if :option:`intermediate` = 1 (:cpp:func:`writePulses`)
                 
-        **From this point forward, I2R, I2RALL, I2RNOL and I2RFITTED are completely equivalent to OPTFILT**     
+        **From this point forward, I2R and I2RFITTED are completely equivalent to OPTFILT**     
            
         7) If last record in :option:`opmode` = 0 run:                                         
 
@@ -5754,12 +5748,12 @@ Search functions by name at :ref:`genindex`.
         - If :option:`OFIter` = 1, in the first iteration ( *numiteration* = 0) the values of *maxDER* and *maxDERs* are used in 
           :cpp:func:`find_matchedfilterDAB`, :cpp:func:`find_optimalfilterDAB` or :cpp:func:`find_Esboundary` getting the values of the *energies* which straddle the *maxDER* (*Ealpha* and *Ebeta*). It will have more iterations if the calculated *energy* is out of *[Ealpha, Ebeta]*. If *energy* is in *[Ealpha, Ebeta]* the iterative process stops.
             
-                - If :option:`EnergyMethod` = **OPTFILT** (or **I2R**, **I2RALL**, **I2RNOL**, **I2RFITTED**) and :option:`OFLib` = 0 and :option:`OFNoise` = **NSD**:
+                - If :option:`EnergyMethod` = **OPTFILT** (or **I2R**, **I2RFITTED**) and :option:`OFLib` = no and :option:`OFNoise` = **NSD**:
                 
                     - Find the matched filter and load it in *filter* (:cpp:func:`find_matchedfilterDAB`) 
                     - Calculate the optimal filter
                     
-                - If :option:`EnergyMethod` = **OPTFILT** (or **I2R**, **I2RALL**, **I2RNOL**, **I2RFITTED**) and :option:`OFLib` = 1 and :option:`OFNoise` = **NSD**:
+                - If :option:`EnergyMethod` = **OPTFILT** (or **I2R**, **I2RFITTED**) and :option:`OFLib` = yes and :option:`OFNoise` = **NSD**:
                 
                     - If it is necessary, choose the base-2 system value closest (lower than or equal) to the pulse length
                     - Find the optimal filter and load it in *filter* (:cpp:func:`find_optimalfilterDAB`)
@@ -5767,12 +5761,12 @@ Search functions by name at :ref:`genindex`.
                 - If :option:`EnergyMethod` = **WEIGHT** or **WEIGHTN**:
                 
                     - Get the indexes of the two energies which straddle the pulse (:cpp:func:`find_Esboundary`)
-                    - If :option:`EnergyMethod` = **WEIGHTN** and :option:`OFLib` = 1:
+                    - If :option:`EnergyMethod` = **WEIGHTN** and :option:`OFLib` = yes:
                     
                        - Choose the base-2 system value closest (lower than or equal) to the pulse length
                        - :cpp:func:`find_prclwn` to find the appropriate values of the *PRECALWN* HDU (**PCLx** columns)
                 
-                - If :option:`EnergyMethod` = **OPTFILT** (or **I2R**, **I2RALL**, **I2RNOL**, **I2RFITTED**) and :option:`OFLib` = 1 and :option:`OFNoise` = **WEIGHTM**:
+                - If :option:`EnergyMethod` = **OPTFILT** (or **I2R**, **I2RFITTED**) and :option:`OFLib` = yes and :option:`OFNoise` = **WEIGHTM**:
                 
                     - Choose the base-2 system value closest (lower than or equal) to the pulse length
                     - :cpp:func:`find_prclofwm` to find the appropriate values of the *PRCLOFWM* HDU (**OFWx** columns)
@@ -5992,7 +5986,7 @@ Search functions by name at :ref:`genindex`.
         
     char **clobber**
     
-        Overwrite or not output files if exist (1/0)
+        Overwrite or not output files if exist (yes/no)
         
     char **history**
     
@@ -6068,11 +6062,11 @@ Search functions by name at :ref:`genindex`.
 
     char **hduPRECALWN**
     
-        Add or not the PRECALWN HDU in the library file (1/0) (only for library creation)
+        Add or not the PRECALWN HDU in the library file (yes/no) (only for library creation)
 
     char **hduPRCLOFWM**
     
-        Add or not the PRCLOFWM HDU in the library file (1/0) (only for library creation)
+        Add or not the PRCLOFWM HDU in the library file (yes/no) (only for library creation)
         
     int **largeFilter**
     
@@ -6100,11 +6094,11 @@ Search functions by name at :ref:`genindex`.
         
     char **EnergyMethod**
     
-        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RALL**, **I2RNOL**, **I2RFITTED** or **PCA**
+        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**
         
     double **filtEeV**
     
-        Energy of the filters of the library to be used to calculate energy (only for **OPTFILT**, **I2R**, **I2RALL**, **I2RNOL** and **I2RFITTED**)
+        Energy of the filters of the library to be used to calculate energy (only for **OPTFILT**, **I2R** and **I2RFITTED**)
         
     char **OFNoise**
     
@@ -6128,7 +6122,7 @@ Search functions by name at :ref:`genindex`.
     
     int **OFLib**
     
-        Work or not with a library with optimal filters (1/0)
+        Work or not with a library with optimal filters (yes/no)
         
     char **OFStrategy** 
     
@@ -6205,7 +6199,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: char clobber
     
-        Overwrite or not output files if exist (1/0)
+        Overwrite or not output files if exist (yes/no)
         
     .. cpp:member:: char history
     
@@ -6281,11 +6275,11 @@ Search functions by name at :ref:`genindex`.
 
     .. cpp:member:: char hduPRECALWN
     
-        Add or not the PRECALWN HDU in the library file (1/0) (only for library creation)
+        Add or not the PRECALWN HDU in the library file (yes/no) (only for library creation)
 
     .. cpp:member:: char hduPRCLOFWM
     
-        Add or not the PRCLOFWM HDU in the library file (1/0) (only for library creation)
+        Add or not the PRCLOFWM HDU in the library file (yes/no) (only for library creation)
         
     .. cpp:member:: int largeFilter
     
@@ -6313,11 +6307,11 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: char EnergyMethod
     
-        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RALL**, **I2RNOL**, **I2RFITTED** or **PCA**
+        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**
         
     .. cpp:member:: double filtEeV
     
-        Energy of the filters of the library to be used to calculate energy (only for **OPTFILT**, **I2R**, **I2RALL**, **I2RNOL** and **I2RFITTED**)
+        Energy of the filters of the library to be used to calculate energy (only for **OPTFILT**, **I2R** and **I2RFITTED**)
         
     .. cpp:member:: char OFNoise
     
@@ -6341,7 +6335,7 @@ Search functions by name at :ref:`genindex`.
     
     .. cpp:member:: int OFLib
     
-        Work or not with a library with optimal filters (1/0)
+        Work or not with a library with optimal filters (yes/no)
         
     .. cpp:member:: char OFStrategy 
     

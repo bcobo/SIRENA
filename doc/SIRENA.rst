@@ -11,8 +11,10 @@ SIRENA description
 Purpose
 ********
 
-SIRENA (*Software Ifca for Reconstruction of EveNts for Athena X-IFU*) is a software package developed to reconstruct the energy of the incoming X-ray photons after their detection in the `X-IFU <http://x-ifu.irap.omp.eu/>`_ TES detector. It is integrated in the `SIXTE <http://www.sternwarte.uni-erlangen.de/research/sixte>`_ end-to-end simulations environment where it currently runs over SIXTE or XIFUSIM (available for the XIFU consortium members upon request at `sixte-xifusim@lists.fau.de <sixte-xifusim@lists.fau.de>`_ ) simulated data. This is done by means of a tool called :ref:`tesreconstruction`, which is mainly a wrapper to pass a data file to the SIRENA tasks. 
+SIRENA (*Software Ifca for Reconstruction of EveNts for Athena X-IFU*) is a software package developed to reconstruct the energy of the incoming X-ray photons after their detection in the `X-IFU <http://x-ifu.irap.omp.eu/>`_ TES detector. This is done by means of a tool called :ref:`tesreconstruction`, which is mainly a wrapper to pass a data file to the SIRENA tasks.
 
+SIRENA is integrated in the `SIXTE <http://www.sternwarte.uni-erlangen.de/research/sixte>`_ end-to-end simulations environment where it currently runs over SIXTE or XIFUSIM (available for the XIFU consortium members upon request at `sixte-xifusim@lists.fau.de <sixte-xifusim@lists.fau.de>`_) simulated data. In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a straightforward SIRENA tutorial and a set of scripts can be found with the aim of providing the user with a first approach running SIRENA. 
+ 
 ******
 Files
 ******
@@ -191,25 +193,36 @@ Once the calibration files (for all the 1..N calibration energies) have been cre
 
 ::
 
-  > tesreconstruction Recordfile=calib.fits TesEventFile=evtcal.fits Rcmethod=SIRENA \
-  PulseLength=pulseLength LibraryFile=library.fits opmode=0 clobber=yes monoenergy=monoEeV_1 \
-  EventListSize=1000 NoiseFile=noiseSpec.fits scaleFactor=sF samplesUp=sU nSgms=nS \
-  XMLfilename=myfileXF.xml hduPRECALWN=yes/no hduPRCLOFWM=yes/no
+  > tesreconstruction Recordfile=calib.fits TesEventFile=evtcal.fits PulseLength=pulseLength \
+  LibraryFile=library.fits opmode=0 clobber=yes monoenergy=monoEeV_1 EventListSize=1000\
+  NoiseFile=noiseSpec.fits scaleFactor=sF samplesUp=sU nSgms=nS XMLfilename=myfileXF.xml\
+  hduPRECALWN=yes/no hduPRCLOFWM=yes/no
                 
   [.....]
   
-  > tesreconstruction Recordfile=calib.fits TesEventFile=evtcal.fits Rcmethod=SIRENA \
-  PulseLength=pulseLength LibraryFile=library.fits opmode=0 clobber=yes monoenergy=monoEeV_N \
-  EventListSize=1000 NoiseFile=noiseSpec.fits scaleFactor=sF samplesUp=sU nSgms=nS \
-  XMLfilename=myfileXF.xml hduPRECALWN=yes/no hduPRCLOFWM=yes/no
+  > tesreconstruction Recordfile=calib.fits TesEventFile=evtcal.fits PulseLength=pulseLength\
+  LibraryFile=library.fits opmode=0 clobber=yes monoenergy=monoEeV_N EventListSize=1000\
+  NoiseFile=noiseSpec.fits scaleFactor=sF samplesUp=sU nSgms=nS XMLfilename=myfileXF.xml\
+  hduPRECALWN=yes/no hduPRCLOFWM=yes/no
   
-The relevant parameters of ``tesreconstruction``  for the library creation process are:
+The parameters of ``tesreconstruction``  for the library creation process are:
 
-* :option:`opmode`: should be set to **0** if tool is used for library creation
-* :option:`PulseLength`:  length of the pulses to create the pulse templates. If the pulse length used to create the noise is larger that this value, noise will be decimated accordingly when used to pre-calculate the optimal filters or the covariance matrices. If it is shorter, an error will be raised.
-* :option:`monoenergy`: the monochromatic energy of the calibration pulses used to create the current row in the library
+* :option:`opmode`: should be set to 0 if tool is used for library creation.
+* :option:`RecordFile`: record FITS file.
+* :option:`TesEventFile`: output event list FITS file.
+* :option:`NoiseFile`: noise spectrum FITS file.
+* :option:`XMLFile`: XML input FITS file with instrument definition.
+* :option:`LibraryFile`: calibration library FITS file.
 * :option:`scaleFactor`, :option:`samplesUp` and :option:`nSgms`: parameters involved in the pulse detection process.
+* :option:`PulseLength`:  length of the pulses to create the pulse template. If the pulse length used to create the noise is larger that this value, noise will be decimated accordingly when used to pre-calculate the optimal filters or the covariance matrices. If it is shorter, an error will be raised.
+* :option:`largeFilter`: length (in samples) of the longest fixed filter.
+* :option:`preBuffer`: some samples added before the starting time of a pulse.
+* :option:`EnergyMethod`: energy calculation Method: OPTFILT (Optimal filtering), WEIGHT (Covariance matrices), WEIGHTN (Covariance matrices, first order), I2R and I2RFITTED (Linear Transformations), or PCA (Principal Component Analysis).
+* :option:`monoenergy`: the monochromatic energy of the calibration pulses used to create the current row in the library.
 * :option:`hduPRECALWN` and :option:`hduPRCLOFWM`: parameters to create or not the corresponding HDUs.
+* :option:`LrsT` and :option:`LbT`: running sum filter length and baseline averaging length.
+* :option:`tstartPulse1` and :option:`tstartPulse2` and :option:`tstartPulse3`: start time (in samples) of the first, second and third pulse in the record (0 if detection should be performed by the system; greater than 0 if provided by the user).
+* :option:`intermediate` and :option:`detectFile`: write intermediate file and name of this intermediate file.
 
 .. _libraryColumns:
 
@@ -226,15 +239,15 @@ The library FITS file has 3 HDUs called *LIBRARY*, *FIXFILTT*, *FIXFILTF* which 
 * **PULSEB0**: baseline subtracted templates
 * **MF**: matched filters (energy normalized templates)
 * **MFB0**: baseline subtracted matched filters
-* **COVARM**: :ref:`covariance matrices<covMatrices>` ( :option:`PulseLength` x :option:`PulseLength` in shape ) stored in the FITS column as vectors of size :option:`PulseLength` * :option:`PulseLength`. It appears if :option:`hduPRECALWN` =yes
-* **WEIGHTM**: :ref:`weight matrices<covMatrices>` ( :option:`PulseLength` x :option:`PulseLength` in shape) stored in the FITS column as vectors of size :option:`PulseLength` * :option:`PulseLength`. It appears if :option:`hduPRECALWN` =yes
-* **WAB**: matrices :math:`(W_\alpha + W_\beta)/2` stored as vectors ( :option:`PulseLength` * :option:`PulseLength` ), being :math:`\mathit{W}` weight matrixes and :math:`\alpha` and :math:`\beta` two consecutive energies in the library. It appears if :option:`hduPRECALWN` =yes
-* **TV**: vectors :math:`S_{\beta}-S_{\alpha}` being :math:`S_i` the template at :math:`\mathit{i}` energy. It appears if :option:`hduPRECALWN` =yes
-* **tE**: scalars :math:`T \cdot W_{\alpha} \cdot T`. It appears if :option:`hduPRECALWN` =yes
-* **XM**: matrices :math:`(W_\beta + W_\alpha)/t` stored as vectors ( :option:`PulseLength` * :option:`PulseLength` ). It appears if :option:`hduPRECALWN` =yes
-* **YV**: vectors :math:`(W_\alpha \cdot T)/t`. It appears if :option:`hduPRECALWN` =yes
-* **ZV**: vectors :math:`\mathit{X \cdot T}`. It appears if :option:`hduPRECALWN` =yes
-* **rE**: scalars :math:`\mathit{1/(Z \cdot T)}`. It appears if :option:`hduPRECALWN` =yes
+* **COVARM**: :ref:`covariance matrices<covMatrices>` ( :option:`PulseLength` x :option:`PulseLength` in shape ) stored in the FITS column as vectors of size :option:`PulseLength` * :option:`PulseLength`. It appears if :option:`hduPRECALWN` = yes
+* **WEIGHTM**: :ref:`weight matrices<covMatrices>` ( :option:`PulseLength` x :option:`PulseLength` in shape) stored in the FITS column as vectors of size :option:`PulseLength` * :option:`PulseLength`. It appears if :option:`hduPRECALWN` = yes
+* **WAB**: matrices :math:`(W_\alpha + W_\beta)/2` stored as vectors ( :option:`PulseLength` * :option:`PulseLength` ), being :math:`\mathit{W}` weight matrixes and :math:`\alpha` and :math:`\beta` two consecutive energies in the library. It appears if :option:`hduPRECALWN` = yes
+* **TV**: vectors :math:`S_{\beta}-S_{\alpha}` being :math:`S_i` the template at :math:`\mathit{i}` energy. It appears if :option:`hduPRECALWN` = yes
+* **tE**: scalars :math:`T \cdot W_{\alpha} \cdot T`. It appears if :option:`hduPRECALWN` = yes
+* **XM**: matrices :math:`(W_\beta + W_\alpha)/t` stored as vectors ( :option:`PulseLength` * :option:`PulseLength` ). It appears if :option:`hduPRECALWN` = yes
+* **YV**: vectors :math:`(W_\alpha \cdot T)/t`. It appears if :option:`hduPRECALWN` = yes
+* **ZV**: vectors :math:`\mathit{X \cdot T}`. It appears if :option:`hduPRECALWN` = yes
+* **rE**: scalars :math:`\mathit{1/(Z \cdot T)}`. It appears if :option:`hduPRECALWN` = yes
 * **PAB**: vectors :math:`S_{\alpha}- E_{\alpha}(S_{\beta}-S_{\alpha})/(E_{\beta}-E_{\alpha})`, :math:`P(t)_{\alpha\beta}` in :ref:`first order approach <optimalFilter_NSD>`. It appears if there are several calibration energies (not only one) included in the library
 * **PABMXLFF**: **PAB** according to :option:`largeFilter`. If :option:`largeFilter` is equal to :option:`PulseLength` it does not appear (although several calibration energies are included in the library)
 * **DAB**: vectors :math:`(S_{\beta}-S_{\alpha})/(E_{\beta}-E_{\alpha})`, :math:`D(t)_{\alpha\beta}` in :ref:`first order approach <optimalFilter_NSD>`. It appears if there are several calibration energies (not only one) included in the library.
@@ -448,7 +461,7 @@ Event Energy Determination: methods
 
 Once the input events have been detected and graded, their energy content can be determined. Currently all the events (independently of their grade) are processed with the same reconstruction method, but in the future, a different approach could be taken, for example simplifying the reconstruction for the lowest resolution events.
 
-The SIRENA input parameter that controls the reconstruction method applied is :option:`EnergyMethod` that should take values of *OPTFILT* for Optimal Filtering in Current space, *WEIGHT* for Covariance Matrices, *WEIGHTN* for first order approach of Covariance matrices method and *I2R*, *I2RALL*, *I2RNOL* or *I2RFITTED* for Optimal Filtering implementation in (quasi)Resistance space. If optimal filtering and :option:`OFNoise` is *WEIGHTM* tthe noise weightt matrix from noise intervals is employed instead the noise spectral density (:option:`OFNoise` is *NSD*).
+The SIRENA input parameter that controls the reconstruction method applied is :option:`EnergyMethod` that should take values of *OPTFILT* for Optimal Filtering in Current space, *WEIGHT* for Covariance Matrices, *WEIGHTN* for first order approach of Covariance matrices method and *I2R* or *I2RFITTED* for Optimal Filtering implementation in (quasi)Resistance space. If optimal filtering and :option:`OFNoise` is *WEIGHTM* tthe noise weightt matrix from noise intervals is employed instead the noise spectral density (:option:`OFNoise` is *NSD*).
 
 .. _optimalFilter_NSD:
 
@@ -492,11 +505,11 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
 
      	**As the X-IFU detector is a non-linear one, the energy estimation after any filtering method has been applied, has to be transformed to an unbiased estimation by the application of a gain scale obtained by the application of the same method to pulse templates at different energies (not done inside SIRENA)**.
      	
-	In SIRENA, optimal filters can be calculated *on-the-fly* or read as pre-calculated values from the calibration library. This option is selected with the input parameter :option:`OFLib`. If :option:`OFLib` =1, fixed-length pre-calculated optimal filters (**Tx** or **Fx**) will be read from the library (the length selected **x** will be the base-2 system value closest -lower than or equal- to that of the event being reconstructed or :option:`largeFilter`). If :option:`OFLib` =0, optimal filters will be calculated specifically for the pulse length of the event under study. This length calculation is determined by the parameter :option:`OFStrategy`. This way :option:`OFStrategy` = *FREE* will optimize the length of the filter to the maximum length available (let's call this value *fltmaxlength*), given by the position of the following pulse, or the pulse length if this is shorter (it should be noticed that if :option:`OFStrategy` = *FREE* and :option:`OFLib` =1, the base-2 system value closest -lower than or equal- to *fltmaxlength* will be chosen as the optimal filter length). :option:`OFStrategy` = *BYGRADE* will choose the filter length to use, according to the :ref:`grade <grade>` of the pulse (currently read from the :option:`XMLFile`) and :option:`OFStrategy` = *FIXED* will take a fixed length (given by the parameter :option:`OFLength`) for all the pulses. These last 2 options are only for checking and development purposes; a normal run with *on-the-fly* calculations with be done with :option:`OFStrategy` = *FREE*. Note that if :option:`OFLib` =0, a noise file must be provided through parameter :option:`NoiseFile` (not in the case of :option:`OFLib` =1), since in this case the optimal filter must be computed for each pulse at the required length.
+	In SIRENA, optimal filters can be calculated *on-the-fly* or read as pre-calculated values from the calibration library. This option is selected with the input parameter :option:`OFLib`. If :option:`OFLib` = yes, fixed-length pre-calculated optimal filters (**Tx** or **Fx**) will be read from the library (the length selected **x** will be the base-2 system value closest -lower than or equal- to that of the event being reconstructed or :option:`largeFilter`). If :option:`OFLib` = no, optimal filters will be calculated specifically for the pulse length of the event under study. This length calculation is determined by the parameter :option:`OFStrategy`. This way :option:`OFStrategy` = *FREE* will optimize the length of the filter to the maximum length available (let's call this value *fltmaxlength*), given by the position of the following pulse, or the pulse length if this is shorter (it should be noticed that if :option:`OFStrategy` = *FREE* and :option:`OFLib` = yes, the base-2 system value closest -lower than or equal- to *fltmaxlength* will be chosen as the optimal filter length). :option:`OFStrategy` = *BYGRADE* will choose the filter length to use, according to the :ref:`grade <grade>` of the pulse (currently read from the :option:`XMLFile`) and :option:`OFStrategy` = *FIXED* will take a fixed length (given by the parameter :option:`OFLength`) for all the pulses. These last 2 options are only for checking and development purposes; a normal run with *on-the-fly* calculations with be done with :option:`OFStrategy` = *FREE*. Note that if :option:`OFLib` = no, a noise file must be provided through parameter :option:`NoiseFile` (not in the case of :option:`OFLib` = yes), since in this case the optimal filter must be computed for each pulse at the required length.
 
         .. 
-            OFLib=0 (On-the-fly): Matched Filter MF(t) with the closest (>=) length to the pulse length, is read from the library ==> cut to the required length ==> NORMFACTOR is calculated from trimmed MF and the decimated noise ==> short OF is calculated ==> energy :  NOISE file required
-            OFLib=1 : OF(t) with the closest (>=) length to the pulse length (NORMFACTOR included) is read from the library ==> energy : NOISE file not required
+            OFLib=no (On-the-fly): Matched Filter MF(t) with the closest (>=) length to the pulse length, is read from the library ==> cut to the required length ==> NORMFACTOR is calculated from trimmed MF and the decimated noise ==> short OF is calculated ==> energy :  NOISE file required
+            OFLib=yes : OF(t) with the closest (>=) length to the pulse length (NORMFACTOR included) is read from the library ==> energy : NOISE file not required
 
             OPTIMAL filters saved in the library already contain the NORMFACTOR
             
@@ -525,7 +538,7 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
 	
 	This expression resembles the one above for the optimal filtering if now the data :math:`P(t)` is given by :math:`P(t,E) - P(t)_{\alpha\beta}` and the role of normalized template :math:`S(f)` is played by :math:`D(t)_{\alpha\beta}`. This way, the optimal filters can be built over :math:`D(t)_{\alpha\beta}`. 
 	
-	Again, :option:`OFLib` will control whether the required (*interpolated*) optimal filter (built from :math:`D(t)_{\alpha\beta}`) is read from the library (at any of the several fixed lengths stored, **Fx** or **Tx** if only one energy included in the library, or **ABFx** or **ABTx** if several energies included in the library) or whether an adequate filter is calculated *on-the-fly* (:option:`OFLib` = *0*).
+	Again, :option:`OFLib` will control whether the required (*interpolated*) optimal filter (built from :math:`D(t)_{\alpha\beta}`) is read from the library (at any of the several fixed lengths stored, **Fx** or **Tx** if only one energy included in the library, or **ABFx** or **ABTx** if several energies included in the library) or whether an adequate filter is calculated *on-the-fly* (:option:`OFLib` = *no*).
 	
         .. figure:: images/OPTloop_new.png
             :align: center
@@ -559,34 +572,6 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
 
     A new approach aimed at dealing with the non-linearity of the signals, is the transformation of the current signal before the reconstruction process to a (quasi) resistance space (:cite:`Bandler2006`, :cite:`Lee2015`). It should improve the linearity by removing the non-linearity due to the bias circuit, although the non-linearity from the R-T transition still remains. A potential additional benefit could also be a more uniform noise across the pulse. 
 
-    This type of transformations are currently implemented in SIRENA and can be accessed through the :option:`EnergyMethod` command line option. Some of them, considers linearization as a linear scale in the height of the pulses with energy (*I2RALL*, *I2RNOL*, *I2R*) while the last one is also able to get a linear  gain scale when the signal is reconstructed with a simple filter (*I2RFITTED*).
-
-    Let's see first some definitions given by columns and keywords in simulated data files to make the transformation to the (quasi) resistance space possible:
-	
-	:ADC: Data signal in current space [ADU (arbitrary data units)] (column)
-	
-	*Group 1*:
-	
-	:``ADU_CNV``: ADU conversion factor [Amp/ADU] (keyword)
-	:``I_BIAS``: Bias current [A] (keyword)
-	:``ADU_BIAS``: Bias current [ADU] (keyword)
-	
-	*Group 2*: 
-	
-	:I0_START: Bias current [A] (column)
-	:TTR: Transformer Turns Ratio (column)
-	:LFILTER: Filter circuit inductance [H] (column)
-	:RPARA: Parasitic resistor value [Ohm] (column)
-	:``IMIN``: Current corresponding to lowest ADU value [Amp] (keyword)
-	:``IMAX``: Current corresponding to largest ADU value [Amp] (keyword)
-	:R0: Operating point resistance [Ohm] (column) 
-	
-	or
-	
-	:V0: Operating point voltage [V] (column)
-	
-* **I2RALL** transformation
-
     ``tessim`` (:cite:`Wilms2016`) is based on a generic model of the TES/absorber pixel with a first stage read-out circuit. The overall setup of this model is presented in the figure below. ``tessim`` performs the numerical solution of the differential equations for the time-dependent temperature, :math:`T(t)`, and the current, :math:`I(t)`, in the TES using :cite:`Irwin2005` :
                 
     .. figure:: images/Physicsmodel_equivalentcircuit.png
@@ -601,16 +586,7 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
             
             L \frac{dI}{dt} = V_0 - IR_L - IR(T,I) + Noise
 						
-    In this transformation, the *Group 2* of info is needed. In this case the ADU conversion factor must be calculated taking into account the number of quantification levels (65534):  
-        
-        :math:`aducnv =` (``IMAX`` - ``IMIN``) / 65534 
-        
-        Therefore, the current data signal in Amp unit is:
-        
-        :math:`I = ADC * aducnv` + ``IMIN``
-        
-        
-    In the electrical equation, :math:`L` is the effective inductance of the readout circuit, :math:`R_L` is the effective load resistor and :math:`V_0` is the constant voltage bias (it must be calculated if it is not provided in the input FITS file but :math:`R_0`). Under AC bias conditions, 
+    In the electrical equation, :math:`L` is the effective inductance of the readout circuit, :math:`R_L` is the effective load resistor and :math:`V_0` is the constant voltage bias. Under AC bias conditions, 
                 
         :math:`L =` ``LFILTER`` / ``TTR²``
 
@@ -618,52 +594,79 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
                 
         :math:`\mathit{V0} =` ``I0_START`` ( ``R0`` :math:`+ \mathit{R_L} )`
                 
-    and thus the transformation to resistance space is:
+    and thus the transformation to resistance space would be:
                 
         .. math::
                 
             R = \frac{(\mathit{V0} - I \cdot R_L - L \cdot dI/dt)}{I}
 
-
-* **I2RNOL** transformation
-
-    In the previous transformation *I2RALL*, the addition of a derivative term increases the noise and thus degrades the resolution. Therefore, a new transformation *I2RNOL* is done where the circuit inductance is neglected ( :cite:`Lee2015` ), thus suppressing the main source on non-linearity of the detector that comes from the first stage read-out circuit:
+    In the previous transformation, the addition of a derivative term increases the noise and thus degrades the resolution. Therefore, a new transformation could be done where the circuit inductance  neglected ( :cite:`Lee2015` ), thus suppressing the main source on non-linearity of the detector that comes from the first stage read-out circuit:
 		
 	.. math::
 
 		R = \frac{(\mathit{V0} - I \cdot R_L)}{I}
 		
-    As in the previous transformation, the *Group 2* of info is needed.
+    These previous transformations were supported by SIRENA in the past. Nevertheless, SIRENA at this time implements two transformations that can be accessed through the :option:`EnergyMethod` command line option. The *I2R* transformation considers linearization as a linear scale in the height of the pulses with energy, while the *I2RFITTED* transformation is also able to get a linear gain scale when the signal is reconstructed with a simple filter.
+    
+    Let's see first some definitions given by columns and keywords in simulated data files to make the transformation to the (quasi) resistance space possible:
 	
+	:ADC: Data signal in current space [adu (arbitrary data units)] (column)
+	
+	*Group 1*:
+	
+	:``ADU_CNV``: ADU conversion factor [A/adu] (keyword)
+	:``I_BIAS``: Bias current [A] (keyword)
+	:``ADU_BIAS``: Bias current [adu] (keyword)
+	
+	*Group 2*: 
+	
+	:I0_START: Bias current [A] (column)
+	:``IMIN``: Current corresponding to lowest adu value [A] (keyword)
+	:``IMAX``: Current corresponding to largest adu value [A] (keyword)
+    
 * **I2R** transformation
 
-    A different linearization (in the sense of pulse height vs. energy) has been implemented in SIRENA for developing purposes.
+    A linearization (in the sense of pulse height vs. energy) has been implemented in SIRENA.
         
-    If the *Group 1* of info is available in the input FITS file:
+    If the *Group 1* info is available in the input FITS file:
 		
-        :math:`\Delta I=` ``ADU_CNV`` * :math:`(\mathit{ADC}`-``ADU_BIAS``:math:`)`
-		
+        :math:`\Delta I=` ``I_BIAS`` + ``ADU_CNV`` * :math:`(\mathit{ADC}`-``ADU_BIAS``:math:`)`
+        
         .. math::
 
-            \frac{R}{R0} = \mathit{1} - \left(\frac{abs(\Delta I)/\mathit{I0\_START}}{1 + abs(\Delta I)/\mathit{I0\_START}}\right)
+            \frac{R}{R0} = \mathit{1} - \left(\frac{abs(\Delta I)/\mathit{I\_BIAS}}{1 + abs(\Delta I)/\mathit{I\_BIAS}}\right)
              
-    If the *Group 1* of info is not available in the input FITS file, the *Group 2* is used. The :math:`R/R0` expression is the same but:
+    If the *Group 1* info is not available in the input FITS file, the *Group 2* is used. In this case the ADU conversion factor must be calculated taking into account the number of quantification levels (65534):
+        
+        :math:`aducnv =` (``IMAX`` - ``IMIN``) / 65534 
         
         :math:`I = ADC * aducnv` + ``IMIN``
         
-        :math:`\Delta I= \mathit{I}` - ``ADU_BIAS``
+        :math:`\Delta I= \mathit{I}` - ``I0_START``
+        
+        .. math::
+
+            \frac{R}{R0} = \mathit{1} - \left(\frac{abs(\Delta I)/\mathit{I0\_START}}{1 + abs(\Delta I)/\mathit{I0\_START}}\right)
         
 * **I2RFITTED** transformation
 
-    Looking for a simple transformation that would produce also a linear gain scale, a new transformation *I2RFITTED* has been proposed in :cite:`Peille2016`: 
+    Looking for a simple transformation that would produce also a linear gain scale, a new transformation *I2RFITTED* has been proposed in :cite:`Peille2016`.
 		
 	.. math::
 	
-		R = \frac{\mathit{V0}}{(I_{fit}+I)}
+		\frac{R}{V0} = -\frac{1}{(I_{fit} + ADC)}
+		
+    If the *Group 1* info is available in the input FITS file:
+    
+        :math:`I_{fit} =` ``ADU_BIAS``
+        
+    If the *Group 1* info is not available in the input FITS file and the *Group 2* info is used:
+    
+        :math:`I_{fit} =` ``I0_START`` :math:`/ aducnv`
                                         
-    *The optimal* :math:`I_{fit}` was found to be  :math:`45.3\mu A`.*
+    These values for :math:`I_{fit}` are a first approach, although it should be confirmed after the instrument calibration.
 
-    The *Group 2* of info is used to get :math:`I` as in the **I2RALL** and **I2RNOL** cases.
+    
 	
 
         .. Let's see first some definitions given by columns and keywords in ``tessim`` simulated data files [#]_:
@@ -844,7 +847,7 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
 	
                
 
-	Energy reconstruction with *Covariance Matrices 0(n)* is selected with input option :option:`EnergyMethod` = **WEIGHTN**. If parameter :option:`OFLib` =1, some components can be used from the precalculated values at the :ref:`libraryColumns <library>` (*PRECALWN* HDU).
+	Energy reconstruction with *Covariance Matrices 0(n)* is selected with input option :option:`EnergyMethod` = **WEIGHTN**. If parameter :option:`OFLib` = yes, some components can be used from the precalculated values at the :ref:`libraryColumns <library>` (*PRECALWN* HDU).
 			
 .. _PCA:
 
@@ -952,15 +955,16 @@ Use of library columns in the different reconstruction methods
 Examples
 =========
 
+In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a straightforward SIRENA tutorial and a set of scripts can be found with the aim of providing the user with a first approach running SIRENA. Moreover, some examples to run SIRENA with different purposes are shown:
+
 1) Full Energy reconstruction performed with the (F0) optimal filtering algorithm (filters calculated on-the-fly) in the current space (including detection) for the detector described in the XMLFile:
 
 ::
 
    >tesreconstruction Recordfile=inputEvents.fits TesEventFile=outputEvents.fits 
-   Rcmethod='SIRENA' OFLib=no OFStrategy=FREE PulseLength=8192  \
-   samplesUp=3 nSgms=3.5 samplesDown=4 LibraryFile=libraryMultiE.fits\
-   opmode=1 NoiseFile=noise8192samplesADC.fits FilterMethod=F0\
-   clobber=yes intermediate=0 EnergyMethod=OPTFILT \
+   OFLib=no OFStrategy=FREE PulseLength=8192 samplesUp=3 nSgms=3.5 samplesDown=4\
+   LibraryFile=libraryMultiE.fits opmode=1 NoiseFile=noise8192samplesADC.fits\
+   FilterMethod=F0 clobber=yes intermediate=0 EnergyMethod=OPTFILT \
    XMLFile=xifu_detector_lpa_75um_AR0.5_pixoffset_mux40_pitch275um.xml 
 
 2) Energy reconstruction performed with the (F0) optimal filtering algorithm (filters extracted from the library) in the current space (known event position) for the detector described in the XMLFile:
@@ -968,9 +972,8 @@ Examples
 ::
 
    >tesreconstruction Recordfile=inputEvents.fits TesEventFile=outputEvents.fits \
-   Rcmethod='SIRENA' PulseLength=8192  LibraryFile=libraryMultiE.fits opmode=1 \
-   OFLib=yes FilterMethod=F0 clobber=yes intermediate=0 EnergyMethod=OPTFILT\
-   tstartPulse1=1000 tstartPulse2=21000 \
+   PulseLength=8192  LibraryFile=libraryMultiE.fits opmode=1 OFLib=yes\
+   FilterMethod=F0 clobber=yes intermediate=0 EnergyMethod=OPTFILT\
    XMLFile=xifu_detector_lpa_75um_AR0.5_pixoffset_mux40_pitch275um.xml
 
 3) Energy reconstruction performed with the Covariance matrices algorithm in the current space (known event position) for the detector described in the XMLFile:
@@ -978,20 +981,18 @@ Examples
 ::
 
    >tesreconstruction Recordfile=inputEvents.fits TesEventFile=outputEvents.fits 
-   Rcmethod='SIRENA' PulseLength=8192 LibraryFile=libraryMultiE.fits opmode=1 \
+   PulseLength=8192 LibraryFile=libraryMultiE.fits opmode=1 \
    NoiseFile=noise1024samplesADC.fits clobber=yes intermediate=0 \
-   EnergyMethod=WEIGHT tstartPulse1=1000 tstartPulse2=21000 \
-   XMLFile=xifu_detector_lpa_75um_AR0.5_pixoffset_mux40_pitch275um.xml
+   EnergyMethod=WEIGHT XMLFile=xifu_detector_lpa_75um_AR0.5_pixoffset_mux40_pitch275um.xml
 
 4) Energy reconstruction performed with the (F0) optimal filtering algorithm in the *I2R* Resistance space (known event position) for the detector described in the XMLFile, with filters calculates for every event:
 
 ::
 
    >tesreconstruction Recordfile=inputEvents.fits TesEventFile=outputEvents.fits \
-   Rcmethod='SIRENA' PulseLength=8192 LibraryFile=libraryMultiE.fits opmode=1 \
+   PulseLength=8192 LibraryFile=libraryMultiE.fits opmode=1 \
    NoiseFile=noise8192samplesR.fits FilterMethod=F0 clobber=yes intermediate=0 \
-   EnergyMethod=I2R tstartPulse1=1000 tstartPulse2=21000 \
-   XMLFile=xifu_detector_hex_baseline.xml OFLib=no OFStrategy=FREE
+   EnergyMethod=I2R XMLFile=xifu_detector_hex_baseline.xml OFLib=no OFStrategy=FREE
 
 
 
