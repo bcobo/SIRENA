@@ -111,6 +111,14 @@ The user must supply the following input parameters:
 
 	Default: *no*
 	
+.. _EnergyMethod_gennoisespec:
+
+.. option:: EnergyMethod=<OPTFILT|I2R|I2RFITTED> 
+	
+	Transform to resistance space (I2R or I2RFITTED) or not (OPTFILT). 
+
+	Default: *OPTFILT*
+	
 .. option:: namelog=<str>
 
 	Output log file name. 
@@ -192,39 +200,53 @@ To run SIRENA implementation, the user must supply the following input parameter
 .. _tesreconPars:
 
 
-.. option:: Rcmethod=<SIRENA>
+.. option:: Rcmethod=<PP|SIRENA>
 
-	SIRENA Reconstruction method.
+	Reconstruction method.
+	
+	Default: *SIRENA*
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  RecordFile=<str>
 
 	Input record FITS file.
 	
 	Default: *record.fits*
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  TesEventFile=<str>
 
 	Output event list FITS file.
 	
 	Default: *event.fits*
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  PulseLength=<int>
 
 	Pulse length in samples.
 	
 	Default: 8192
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  EventListSize=<str> 
 
 	Default size of the event list. 
  
 	Default: 1000
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  LibraryFile=<str>
 
 	FITS file with calibration library. 
 
 	Default: *library.fits*
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  scaleFactor=<real> 
 	
@@ -233,24 +255,32 @@ To run SIRENA implementation, the user must supply the following input parameter
 	If the :option:`scaleFactor` makes the box-car length :math:`\leq 1` is equivalent to not filter (cut-off frequency of the low-pass filter is too high). If the :option:`scaleFactor` is too large, the low-pass filter band is too narrow, and not only noise is rejected during the filtering, but also the signal.
 	
 	Default: 0
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  samplesUp=<int> 
 
-	Number of consecutive samples up for threshold trespassing (only used in calibration run, and in production run with STC detection mode).
+	Number of consecutive samples up for threshold trespassing.
 
 	Default: 3
+	
+    Used in calibration run (:option:`opmode` = 0) and in production run with STC detection mode (:option:`opmode` = 1 and :option:`detectionMode` = STC).
 	
 .. option::  samplesDown=<int> 
 
 	Number of consecutive samples below the threshold to look for other pulse (only used in production run with STC detection mode).
 
 	Default: 4
+	
+	Only used in production run (:option:`opmode` = 1).
 
 .. option::  nSgms=<real> 
 
 	Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm.
 
 	Default: 3.5
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  detectSP=<0|1>
 
@@ -258,39 +288,55 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 	Default: 1
 	
+	Only used in production run (:option:`opmode` = 1).
+	
 .. option::  LrsT=<secs>
 
-	Running sum (RS) length for the RS raw energy estimation, in seconds (only used in calibration run).
+	Running sum (RS) length for the RS raw energy estimation, in seconds.
 	
 	Default: 30E-6
+	
+	Only used in calibration run (:option:`opmode` = 0).
 
 .. option::  LbT=<secs>
 
 	Baseline averaging length, in seconds.
 
 	Default: 1.E-3
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  monoenergy=<eV>
 
-	Monochromatic energy of the pulses in the input FITS file in eV (only used in calibration run).
+	Monochromatic energy of the pulses in the input FITS file in eV.
+	
+	Default: 6000.0
+	
+	Only used in calibration run (:option:`opmode` = 0).
 	
 .. option::  hduPRECALWN=<yes|no>
 
-	Add or not the *PRECALWN* HDU in the library file (only used in calibration run).
+	Add or not the *PRECALWN* HDU in the library file.
 
 	Default: *no*	
+	
+	Only used in calibration run (:option:`opmode` = 0).
 
 .. option::  hduPRCLOFWM=<yes|no>
 
-	Add or not the *PRCLOFWM* HDU in the library file (only used in calibration run).
+	Add or not the *PRCLOFWM* HDU in the library file.
 
 	Default: *no*	
 	
+	Only used in calibration run (:option:`opmode` = 0).
+	
 .. option::  largeFilter=<int>
 
-	Length (in samples) of the longest fixed filter (only used in calibration run).
+	Length (in samples) of the longest fixed filter.
 	
 	Default: -999
+	
+	Only used in calibration run (:option:`opmode` = 0).
 	
 .. option:: opmode=<0|1>
 
@@ -298,104 +344,137 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 	Default: 1
 	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
+	
 .. option:: detectionMode=<AD | STC>
 
 	Adjusted Derivative (AD) or Single Threshold Crossing (STC). Not used in library creation mode (:option:`opmode` = 0).
 
-	Default: STC
+	Default: *STC*
+	
+	Only used in production run (:option:`opmode` = 1).
 
 .. option::  NoiseFile=<str>
 
 	Noise FITS file with noise spectrum. 
 
 	Default: *noise.fits*
+	
+	Only used in calibration run (:option:`opmode` = 0).
 
 .. option::  FilterDomain=<T | F> 
 
 	Filtering Domain: Time(T) or Frequency(F). Not used in library creation mode (:option:`opmode` = 0).
 
 	Default: *T*
+	
+	Only used in production run (:option:`opmode` = 1).
 
 .. option::  FilterMethod=<F0 | B0>
 	
 	Filtering Method: *F0* (deleting the zero frequency bin) or *B0* (deleting the baseline). 
 
 	Default: *F0*
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
-.. option::  EnergyMethod=<OPTFILT | WEIGHT | WEIGHTN | I2R | I2RALL | I2RNOL | IRFITTED | PCA>
+.. option::  EnergyMethod=<OPTFILT | WEIGHT | WEIGHTN | I2R | IRFITTED | PCA>
 
-	:ref:`reconMethods` Energy calculation Method: OPTFILT (Optimal filtering), WEIGHT (Covariance matrices), WEIGHTN (Covariance matrices, first order), I2R, I2RALL, I2RNOL and I2RFITTED (Linear Transformations), or PCA (Principal Component Analysis). Not used in library creation mode (:option:`opmode` = 0).
+	:ref:`reconMethods` Energy calculation Method: OPTFILT (Optimal filtering), WEIGHT (Covariance matrices), WEIGHTN (Covariance matrices, first order), I2R and I2RFITTED (Linear Transformations), or PCA (Principal Component Analysis). 
 	
 	If :option:`EnergyMethod` = OPTFILT and :option:`PulseLength` < :option:`OFLength`, 0-padding is applied (:option:`OFLength` length filters will be used but padding with 0's from :option:`PulseLength`).
 
 	Default: *OPTFILT*
 	
+	Only used in production run (:option:`opmode` = 1).
+	
 .. option::  filtEeV=<eV>
 
-	Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R, I2RALL, I2RNOL and I2RFITTED).
+	Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED).
 
 	Default: 6000
+	
+	Only used in production run (:option:`opmode` = 1).
 	
 .. option::  OFNoise=<NSD | WEIGHTM>
 
 	It has only sense if :option:`EnergyMethod` = OPTFILT and it means to use the noise spectrum density (NSD) or the noise weight matrix (WEIGHTM).
 
 	Default: *NSD*
+	
+	Only used in production run (:option:`opmode` = 1).
 
 .. option::  LagsOrNot=<0|1> 
 
-	Use LAGS == 1 or NOLAGS == 0 to indicate whether subsampling pulse arrival time is required. Currently only implemented for :option:`EnergyMethod` =OPTFILT, and :option:`EnergyMethod` =WEIGHTN combined with :option:`OFLib` =yes.
+	Use LAGS == 1 or NOLAGS == 0 to indicate whether subsampling pulse arrival time is required. Currently only implemented for :option:`EnergyMethod` = OPTFILT, and :option:`EnergyMethod` = WEIGHTN combined with :option:`OFLib` = yes.
 
 	Default: 1
+	
+	Only used in production run (:option:`opmode` = 1).
 
 .. option::  nLags=<int> 
 
-	Number of lags (samples) to be used if :option:`LagsOrNot` =1. It has to be a positive odd number.
+	Number of lags (samples) to be used if :option:`LagsOrNot` = 1. It has to be a positive odd number.
 
 	Default: 9
+	
+	Only used in production run (:option:`opmode` = 1).
 
 .. option::  Fitting35=<3|5> 
 
 	Number of lags to analytically calculate a parabola (3) or to fit a parabola (5).
 
 	Default: 3
+	
+	Only used in production run (:option:`opmode` = 1).
 
 .. option::  OFIter=<0|1>
 
 	Iterate (1) or not iterate (0) to look for the closest energy interval. When iterations are activated, there will be more iterations if the calculated energy is out of the interval [Ealpha, Ebeta] straddling the predicted energy according the pulse shape.   
 
 	Default: 0
+	
+	Only used in production run (:option:`opmode` = 1).
 
 .. option::  OFLib=<yes|no>  
 
-	Work with a library with optimal filters (OFLib=yes) or instead do Optimal Filter calculation on-the-fly (OFLib=no).
+	Work with a library with optimal filters (:option:`OFLib` = yes) or instead do Optimal Filter calculation on-the-fly (:option:`OFLib` = no).
 	
-	Default: yes 
+	Default: *yes* 
+	
+	Only used in production run (:option:`opmode` = 1).
 
 .. option::  OFStrategy=<FREE | BYGRADE | FIXED> 
 
 	Optimal Filter length Strategy: FREE (no length restriction), BYGRADE (length according to event grading) or FIXED (fixed length). These last 2 options are only for checking and development purposes; a normal run with *on-the-fly* calculations will be done with :option:`OFStrategy` = *FREE*.
-	Only used if :option:`OFLib` =no. Not used in library creation mode (:option:`opmode` = 0). 
 
 	Default: *BYGRADE*
+	
+	Only used in production run (:option:`opmode` = 1) when :option:`OFLib` = no.
 
 .. option::  OFLength=<int> 
 
-	Fixed Optimal Filter length (only if :option:`OFStrategy` = **FIXED**,  :option:`opmode` = 1 and :option:`OFLib` =no).
+	Fixed Optimal Filter length.
 
 	Default: 8192
+	
+	Only used in production run (:option:`opmode` = 1) when :option:`OFLib` = no and :option:`OFStrategy` = **FIXED**.
 	
 .. option::  preBuffer=<int> 
 
 	Some samples added before the starting time of a pulse.
 
 	Default: 0
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  intermediate=<0|1>  
 
-	Write intermediate files: Y(1), N(0)? 
+	Write intermediate files: yes(1), no(0)? 
 
 	Default: 0
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  detectFile=<str>
 
@@ -403,29 +482,39 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 	Default: *detections.fits*
 	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
+	
 .. option::  errorT=<int> 
 
 	Additional error (in samples) added to the detected time. Logically, it changes the reconstructed energies. For deveplopment purposes.
 
 	Default: 0
 	
+	Only used in production run (:option:`opmode` = 1).
+	
 .. option::  Sum0Filt=<0|1>  
 
 	If 0-padding, subtract (1) or not subtract (0) the sum of the filter. For deveplopment purposes. 
 
 	Default: 0
+	
+	Only used in production run (:option:`opmode` = 1).
 
 .. option::  tstartPulse1=<str> 
 	
-	Start time (in samples) of the first pulse (0  if detection should be performed by the system; greater than 0 if provided by the user) or file name containing the tstart (in seconds) of every pulse. For development purposes.
+	Start time (in samples) of the first pulse (0 if detection should be performed by the system; greater than 0 if provided by the user) or file name containing the tstart (in seconds) of every pulse. For development purposes.
 
 	Default: 0
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  tstartPulse2=<int>  
 
-	Start time (in samples) of the second pulse in the record (0  if detection should be performed by the system; greater than 0 if provided by the user). For development purposes.
+	Start time (in samples) of the second pulse in the record (0 if detection should be performed by the system; greater than 0 if provided by the user). For development purposes.
 
 	Default: 0
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  tstartPulse3=<int> 
 	
@@ -433,11 +522,15 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 	Default: 0
 	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
+	
 .. option::  energyPCA1=<real>
 
 	First energy (in eV) (only for PCA).
 	
 	Default: 500
+	
+	Only used in production run (:option:`opmode` = 1) and :option:`EnergyMethod` = PCA.
 
 .. option::  energyPCA2=<real>
 
@@ -445,23 +538,31 @@ To run SIRENA implementation, the user must supply the following input parameter
 	
 	Default: 1000
 	
+	Only used in production run (:option:`opmode` = 1) and :option:`EnergyMethod` = PCA.
+	
 .. option::  XMLFile=<str>
 
 	XML input FITS file with instrument definition.
 
 	Default: *xifu_pipeline.xml*
 	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
+	
 .. option::  clobber=<yes|no> 
 	
 	Overwrite output files if they exist.
 
 	Default: *no*
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  history=<yes|no> 
 
 	Write program parameters into output FITS file.
 
 	Default: *yes*
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 The sampling rate is calculated by using some keywords in the input FITS file. In case of ``tessim`` simulated data files, using the ``DELTAT`` keyword *samplingRate=1/deltat*. In case of ``xifusim`` simulated data files, every detector type defines a master clock-rate ``TCLOCK`` and the sampling rate is calculated either from a given decimation factor ``DEC_FAC`` (FDM and NOMUX) as *samplingRate=1/(tclock·dec_fac)*, or from the row period  ``P_ROW`` and the number of rows ``NUMROW`` (TDM) as *samplingRate=1/(tclock·numrow·p_row)*. In case of old simulated files, the sampling rate could be read from the ``HISTORY`` keyword in the *Primary* HDU or even from the input XML file. If the sampling frequency can not be get from the input files after all, a message will ask the user to include the ``DELTAT`` keyword (inverse of the sampling rate) in the input FITS file before running again.
 
