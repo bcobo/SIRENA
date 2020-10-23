@@ -234,7 +234,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
     // Convert I into R if 'EnergyMethod' = I2R or I2RFITTED
     if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
     {
-        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS,(*reconstruct_init)->i2rdata->I_BIAS,1/record->delta_t,&invector))
+        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS,(*reconstruct_init)->i2rdata->I_BIAS, (*reconstruct_init)->i2rdata->Ifit,1/record->delta_t,&invector))
         {
             message = "Cannot run routine convertI2R";
             EP_EXIT_ERROR(message,EPFAIL);
@@ -838,7 +838,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
     
     if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
     {
-        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS,(*reconstruct_init)->i2rdata->I_BIAS,1/record->delta_t,&invector))
+        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS,(*reconstruct_init)->i2rdata->I_BIAS,(*reconstruct_init)->i2rdata->Ifit,1/record->delta_t,&invector))
         {
             message = "Cannot run routine convertI2R";
             EP_EXIT_ERROR(message,EPFAIL);
@@ -859,7 +859,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
         if (!sc->is_reentrant()){
             std::unique_lock<std::mutex> lk(fits_file_mut);
             
-            if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS, (*reconstruct_init)->i2rdata->I_BIAS, 1/record->delta_t, &invector))
+            if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS, (*reconstruct_init)->i2rdata->I_BIAS, (*reconstruct_init)->i2rdata->Ifit, 1/record->delta_t, &invector))
             {
                 lk.unlock();
                 message = "Cannot run routine convertI2R";
@@ -875,7 +875,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
         }
         else
         {
-            if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS, (*reconstruct_init)->i2rdata->I_BIAS, 1/record->delta_t, &invector))
+            if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS, (*reconstruct_init)->i2rdata->I_BIAS, (*reconstruct_init)->i2rdata->Ifit, 1/record->delta_t, &invector))
             {
                 message = "Cannot run routine convertI2R";
                 EP_EXIT_ERROR(message,EPFAIL);
@@ -6980,7 +6980,7 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
  * - samprate: Sampling rate
  * - invector: Input current (ADC) vector & output resistance (I2R, I2RALL, I2RNOL or I2RFITTED) vector
  ******************************************************************************/
-int convertI2R (char* EnergyMethod,double Ibias, double Imin, double Imax, double ADU_CNV, double ADU_BIAS, double I_BIAS, double samprate, gsl_vector **invector)
+int convertI2R (char* EnergyMethod,double Ibias, double Imin, double Imax, double ADU_CNV, double ADU_BIAS, double I_BIAS, double Ifit, double samprate, gsl_vector **invector)
 {
     int status = EPOK;
     string message="";
@@ -7049,11 +7049,9 @@ int convertI2R (char* EnergyMethod,double Ibias, double Imin, double Imax, doubl
     {    
         aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
         
-        //double Ifit = 1.46e-5;                          // Ifit = 14.6e-6 uA
-        //double Ifit = Ibias;                            // Ifit = I0_START
-        double Ifit;
-        if (ADU_CNV != -999.0)  Ifit = ADU_BIAS;
-        else                    Ifit = Ibias/aducnv;
+        //double Ifit;
+        //if (ADU_CNV != -999.0)  Ifit = ADU_BIAS;
+        //else                    Ifit = Ibias/aducnv;
             
         // It is not necessary to check the allocation beacuse 'invector' size must be > 0
         gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);

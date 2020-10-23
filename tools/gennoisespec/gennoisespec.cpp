@@ -1247,7 +1247,7 @@
          // Convert to the resistance space if necessary
          if (strcmp(par.EnergyMethod,"OPTFILT") != 0)
          {
-             if (convertI2R(par.EnergyMethod,Ibias,Imin,Imax,adu_cnv,adu_bias,i_bias,samprate,&ioutgsl))
+             if (convertI2R(par.EnergyMethod,Ibias,Imin,Imax,adu_cnv,adu_bias,i_bias,par.Ifit,samprate,&ioutgsl))
              {
                  message = "Cannot run routine convertI2R";
                  EP_EXIT_ERROR(message,EPFAIL);
@@ -2669,6 +2669,12 @@
      }
      strcpy(par->EnergyMethod, sbuffer);
      free(sbuffer);
+     
+     status=ape_trad_query_double("Ifit", &par->Ifit);
+     if (EXIT_SUCCESS!=status) {
+         message = "failed reading the Ifit parameter";
+         EP_EXIT_ERROR(message,EPFAIL);
+     }
      
      status=ape_trad_query_bool("clobber", &par->clobber);
      if (EXIT_SUCCESS!=status) {

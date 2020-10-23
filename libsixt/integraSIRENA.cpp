@@ -105,6 +105,7 @@
   * - filter_method: Filtering Method: F0 (deleting the zero frequency bin) or F0 (deleting the baseline)
   * - energy_method: Energy calculation Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA
   * - filtEev: Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED)
+  * - Ifit: Constant to apply the I2RFITTED conversion
   * - ofnoise: Noise to use with Optimal Filtering: NSD or WEIGHTM
   * - lagsornot: Lags (1) or no lags (0)
   * - nLags: Number of lags (positive odd number)
@@ -141,7 +142,7 @@
  extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init, char* const record_file, fitsfile *fptr,
                                                 char* const library_file, char* const event_file, int pulse_length, double scaleFactor, int samplesUp, int samplesDown,
                                                 double nSgms, int detectSP, int opmode, char *detectionMode, double LrsT, double LbT, char* const noise_file, char* filter_domain, char* filter_method, 
-                                                char* energy_method, double filtEev, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
+                                                char* energy_method, double filtEev, double Ifit, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
                                                 char* oflength_strategy, int oflength, int preBuffer,
                                                 double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, int errorT,
                                                 int Sum0Filt,
@@ -349,6 +350,7 @@
      strcpy(reconstruct_init->FilterMethod,filter_method);
      strcpy(reconstruct_init->EnergyMethod,energy_method);
      reconstruct_init->filtEev     = filtEev;
+     reconstruct_init->Ifit     = Ifit;
      strcpy(reconstruct_init->OFNoise,ofnoise);
      reconstruct_init->LagsOrNot = lagsornot;
      reconstruct_init->nLags = nLags;

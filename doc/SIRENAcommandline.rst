@@ -103,7 +103,7 @@ The user must supply the following input parameters:
 
 	Baseline averaging length, in seconds. 
 
-	Default: 1.E-3
+	Default: 6.4E-3
 	
 .. option:: weightMS=<yes|no> 
 
@@ -118,6 +118,12 @@ The user must supply the following input parameters:
 	Transform to resistance space (I2R or I2RFITTED) or not (OPTFILT). 
 
 	Default: *OPTFILT*
+	
+.. option:: Ifit=<adu> 
+
+	Constant to apply the I2RFITTED conversion. 
+
+	Default: 7000.0
 	
 .. option:: namelog=<str>
 
@@ -302,7 +308,7 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 	Baseline averaging length, in seconds.
 
-	Default: 1.E-3
+	Default: 6.4E-3
 	
 	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
@@ -395,6 +401,14 @@ To run SIRENA implementation, the user must supply the following input parameter
 	Default: 6000
 	
 	Only used in production run (:option:`opmode` = 1).
+	
+.. option::  Ifit=<adu>
+
+	Constant to apply the I2RFITTED conversion.
+
+	Default: 7000.0
+	
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1) if :option:`EnergyMethod` = I2RFITTED.
 	
 .. option::  OFNoise=<NSD | WEIGHTM>
 
@@ -546,7 +560,7 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 	Default: *xifu_pipeline.xml*
 	
-	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
+	Only used in production run (:option:`opmode` = 1).
 	
 .. option::  clobber=<yes|no> 
 	

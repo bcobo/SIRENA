@@ -195,14 +195,14 @@ Once the calibration files (for all the 1..N calibration energies) have been cre
 
   > tesreconstruction Recordfile=calib.fits TesEventFile=evtcal.fits PulseLength=pulseLength \
   LibraryFile=library.fits opmode=0 clobber=yes monoenergy=monoEeV_1 EventListSize=1000\
-  NoiseFile=noiseSpec.fits scaleFactor=sF samplesUp=sU nSgms=nS XMLfilename=myfileXF.xml\
+  NoiseFile=noiseSpec.fits scaleFactor=sF samplesUp=sU nSgms=nS \
   hduPRECALWN=yes/no hduPRCLOFWM=yes/no
                 
   [.....]
   
   > tesreconstruction Recordfile=calib.fits TesEventFile=evtcal.fits PulseLength=pulseLength\
   LibraryFile=library.fits opmode=0 clobber=yes monoenergy=monoEeV_N EventListSize=1000\
-  NoiseFile=noiseSpec.fits scaleFactor=sF samplesUp=sU nSgms=nS XMLfilename=myfileXF.xml\
+  NoiseFile=noiseSpec.fits scaleFactor=sF samplesUp=sU nSgms=nS \
   hduPRECALWN=yes/no hduPRCLOFWM=yes/no
   
 The parameters of ``tesreconstruction``  for the library creation process are:
@@ -211,13 +211,13 @@ The parameters of ``tesreconstruction``  for the library creation process are:
 * :option:`RecordFile`: record FITS file.
 * :option:`TesEventFile`: output event list FITS file.
 * :option:`NoiseFile`: noise spectrum FITS file.
-* :option:`XMLFile`: XML input FITS file with instrument definition.
 * :option:`LibraryFile`: calibration library FITS file.
 * :option:`scaleFactor`, :option:`samplesUp` and :option:`nSgms`: parameters involved in the pulse detection process.
 * :option:`PulseLength`:  length of the pulses to create the pulse template. If the pulse length used to create the noise is larger that this value, noise will be decimated accordingly when used to pre-calculate the optimal filters or the covariance matrices. If it is shorter, an error will be raised.
 * :option:`largeFilter`: length (in samples) of the longest fixed filter.
 * :option:`preBuffer`: some samples added before the starting time of a pulse.
 * :option:`EnergyMethod`: energy calculation Method: OPTFILT (Optimal filtering), WEIGHT (Covariance matrices), WEIGHTN (Covariance matrices, first order), I2R and I2RFITTED (Linear Transformations), or PCA (Principal Component Analysis).
+* :option:`Ifit`: constant to apply the I2RFITTED conversion 
 * :option:`monoenergy`: the monochromatic energy of the calibration pulses used to create the current row in the library.
 * :option:`hduPRECALWN` and :option:`hduPRCLOFWM`: parameters to create or not the corresponding HDUs.
 * :option:`LrsT` and :option:`LbT`: running sum filter length and baseline averaging length.
@@ -656,15 +656,16 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
 	
 		\frac{R}{V0} = -\frac{1}{(I_{fit} + ADC)}
 		
-    If the *Group 1* info is available in the input FITS file:
+    .. If the *Group 1* info is available in the input FITS file:
     
-        :math:`I_{fit} =` ``ADU_BIAS``
+    ..    :math:`I_{fit} =` ``ADU_BIAS``
         
-    If the *Group 1* info is not available in the input FITS file and the *Group 2* info is used:
+    .. If the *Group 1* info is not available in the input FITS file and the *Group 2* info is used:
     
-        :math:`I_{fit} =` ``I0_START`` :math:`/ aducnv`
+    ..     :math:`I_{fit} =` ``I0_START`` :math:`/ aducnv`
                                         
-    These values for :math:`I_{fit}` are a first approach, although it should be confirmed after the instrument calibration.
+    .. These values for :math:`I_{fit}` are a first approach, although it should be confirmed after the instrument calibration.
+    The :math:`I_{fit}` value is tunable for the moment as an input parameter. 
 
     
 	
