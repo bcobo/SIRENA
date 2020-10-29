@@ -230,7 +230,6 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
     gsl_vector *invectorOriginal = gsl_vector_alloc(invector->size);
     gsl_vector_memcpy(invectorOriginal,invector);
     
-    
     // Convert I into R if 'EnergyMethod' = I2R or I2RFITTED
     if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
     {
