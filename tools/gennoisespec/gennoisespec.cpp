@@ -353,7 +353,7 @@
      
      
      // Read info to transform to resistance space
-     if ((adu_cnv_exists == 0) && ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2R") == 0)))
+     if ((adu_cnv_exists == 0) && ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2RFITTED") == 0)))
      {
          strcpy(extname,"RECORDS");
          fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
@@ -1737,6 +1737,15 @@
      
      string str_energymethod (string("EnergyMethod = ") + string(par.EnergyMethod));
      strcpy(keyvalstr,str_energymethod.c_str());
+     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+     {
+         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+         EP_PRINT_ERROR(message,status); return(EPFAIL);
+     }
+     
+     char str_Ifit[125];			sprintf(str_Ifit,"%f",par.Ifit);
+     strhistory=string("Ifit = ") + string(str_Ifit);
+     strcpy(keyvalstr,strhistory.c_str());
      if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
      {
          message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
