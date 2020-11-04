@@ -6987,7 +6987,6 @@ int convertI2R (char* EnergyMethod,double Ibias, double Imin, double Imax, doubl
     double aducnv;		// ADU conversion factor [A/ADU]
     double baseline;
     
-    
     if ((strcmp(EnergyMethod,"I2R") == 0) && (ADU_CNV == -999))
     {	
         aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC

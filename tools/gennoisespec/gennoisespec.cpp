@@ -147,6 +147,12 @@
          EP_EXIT_ERROR(message,status); 
      }
      
+     if ((strcmp(par.EnergyMethod,"I2RFITTED") == 0) && (par.Ifit == 0.0))
+     {
+         message = "Ifit value must be provided";
+         EP_EXIT_ERROR(message,status); 
+     }
+     
      char str_stat[8];
      char str_stat1[8];
      double cutFreq = 0.;
@@ -2678,6 +2684,9 @@
      }
      strcpy(par->EnergyMethod, sbuffer);
      free(sbuffer);
+     
+     MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0), 
+              "EnergyMethod must be OPTFILT, I2R, I2RFITTED or PCA");
      
      status=ape_trad_query_double("Ifit", &par->Ifit);
      if (EXIT_SUCCESS!=status) {
