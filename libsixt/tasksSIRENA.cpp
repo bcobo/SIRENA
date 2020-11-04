@@ -230,11 +230,10 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
     gsl_vector *invectorOriginal = gsl_vector_alloc(invector->size);
     gsl_vector_memcpy(invectorOriginal,invector);
     
-    
     // Convert I into R if 'EnergyMethod' = I2R or I2RFITTED
     if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
     {
-        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS,(*reconstruct_init)->i2rdata->I_BIAS,1/record->delta_t,&invector))
+        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS,(*reconstruct_init)->i2rdata->I_BIAS, (*reconstruct_init)->i2rdata->Ifit,1/record->delta_t,&invector))
         {
             message = "Cannot run routine convertI2R";
             EP_EXIT_ERROR(message,EPFAIL);
@@ -838,7 +837,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
     
     if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
     {
-        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS,(*reconstruct_init)->i2rdata->I_BIAS,1/record->delta_t,&invector))
+        if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS,(*reconstruct_init)->i2rdata->I_BIAS,(*reconstruct_init)->i2rdata->Ifit,1/record->delta_t,&invector))
         {
             message = "Cannot run routine convertI2R";
             EP_EXIT_ERROR(message,EPFAIL);
@@ -859,7 +858,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
         if (!sc->is_reentrant()){
             std::unique_lock<std::mutex> lk(fits_file_mut);
             
-            if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS, (*reconstruct_init)->i2rdata->I_BIAS, 1/record->delta_t, &invector))
+            if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS, (*reconstruct_init)->i2rdata->I_BIAS, (*reconstruct_init)->i2rdata->Ifit, 1/record->delta_t, &invector))
             {
                 lk.unlock();
                 message = "Cannot run routine convertI2R";
@@ -875,7 +874,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
         }
         else
         {
-            if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS, (*reconstruct_init)->i2rdata->I_BIAS, 1/record->delta_t, &invector))
+            if (convertI2R((*reconstruct_init)->EnergyMethod,(*reconstruct_init)->i2rdata->I0_START,(*reconstruct_init)->i2rdata->IMIN,(*reconstruct_init)->i2rdata->IMAX,(*reconstruct_init)->i2rdata->ADU_CNV, (*reconstruct_init)->i2rdata->ADU_BIAS, (*reconstruct_init)->i2rdata->I_BIAS, (*reconstruct_init)->i2rdata->Ifit, 1/record->delta_t, &invector))
             {
                 message = "Cannot run routine convertI2R";
                 EP_EXIT_ERROR(message,EPFAIL);
@@ -6980,14 +6979,13 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
  * - samprate: Sampling rate
  * - invector: Input current (ADC) vector & output resistance (I2R, I2RALL, I2RNOL or I2RFITTED) vector
  ******************************************************************************/
-int convertI2R (char* EnergyMethod,double Ibias, double Imin, double Imax, double ADU_CNV, double ADU_BIAS, double I_BIAS, double samprate, gsl_vector **invector)
+int convertI2R (char* EnergyMethod,double Ibias, double Imin, double Imax, double ADU_CNV, double ADU_BIAS, double I_BIAS, double Ifit, double samprate, gsl_vector **invector)
 {
     int status = EPOK;
     string message="";
     
     double aducnv;		// ADU conversion factor [A/ADU]
     double baseline;
-    
     
     if ((strcmp(EnergyMethod,"I2R") == 0) && (ADU_CNV == -999))
     {	
@@ -7047,25 +7045,55 @@ int convertI2R (char* EnergyMethod,double Ibias, double Imin, double Imax, doubl
     }
     else if (strcmp(EnergyMethod,"I2RFITTED") == 0)
     {    
-        aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
+        //aducnv = (Imax-Imin)/65534;    // Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
         
-        //double Ifit = 1.46e-5;                          // Ifit = 14.6e-6 uA
-        //double Ifit = Ibias;                            // Ifit = I0_START
-        double Ifit;
-        if (ADU_CNV != -999.0)  Ifit = ADU_BIAS;
-        else                    Ifit = Ibias/aducnv;
+        //double Ifit;
+        //if (ADU_CNV != -999.0)  Ifit = ADU_BIAS;
+        //else                    Ifit = Ibias/aducnv;
             
         // It is not necessary to check the allocation beacuse 'invector' size must be > 0
         gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
-            
+        
         // R/V0 = -1/(Ifit+I(adu)) = -1/(Ifit+ADC)
         gsl_vector_memcpy(invector_modified,*invector);
         gsl_vector_add_constant(invector_modified,Ifit);    // Ifit+ADC
-        gsl_vector_set_all(*invector,1.0);
-        gsl_vector_div(*invector,invector_modified);        // 1/(Ifit+ADC)
-        gsl_vector_scale(*invector,-1.0);                   // -1/(Ifit+ADC) (*-1 in order to have positive polarity => Derivative with positive polarity => Detection ok)
+        gsl_vector_set_all(*invector,-1.0);
+        gsl_vector_div(*invector,invector_modified);        // -1/(Ifit+ADC) (*-1 in order to have positive polarity => Derivative with positive polarity => Detection ok)
             
         gsl_vector_free(invector_modified); invector_modified = 0;
+        
+        /*// It is not necessary to check the allocation beacuse 'invector' size must be > 0
+        gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
+        
+        // I = ADU_CNV * (ADC - ADU_BIAS) + I_BIAS
+        gsl_vector *I_A = gsl_vector_alloc((*invector)->size);
+        gsl_vector_memcpy(deltai,*invector);
+        gsl_vector_add_constant(deltai,-1.0*ADU_BIAS);
+        gsl_vector_scale(deltai,ADU_CNV);                     // deltai = ADU_CNV * (I(adu) - ADU_BIAS) (I(adu) is the ADC column)
+        gsl_vector_add_constant(deltai,I_BIAS);               // deltai = ADU_CNV * (I(adu) - ADU_BIAS) + I_BIAS
+        
+        // R/V0 = -1/(Ifit+I(A)) = -1/(Ifit+I(A))
+        gsl_vector_memcpy(invector_modified,deltai);
+        gsl_vector_add_constant(invector_modified,Ifit);    // Ifit+ADC
+        gsl_vector_set_all(*invector,1.0);
+        gsl_vector_div(*invector,invector_modified);        // -1/(Ifit+ADC) (*-1 in order to have positive polarity => Derivative with positive polarity => Detection ok)
+            
+        gsl_vector_free(invector_modified); invector_modified = 0;
+        gsl_vector_free(deltai); deltai = 0;*/
+        
+        /*// I = ADU_CNV * (ADC - ADU_BIAS) + I_BIAS
+        // ADC = ADU_BIAS+(I-I_BIAS)/ADU_CNV
+        double ADCfit = ADU_BIAS + (Ifit-I_BIAS)/ADU_CNV;
+        cout<<"Ifit: "<<Ifit<<" ADCfit: "<<ADCfit<<endl;
+        
+        // R/V0 = -1/(Ifit+I(A)) ~ -1/(ADCfit+I(adu))  I(adu) = ADCfit
+        gsl_vector *invector_modified = gsl_vector_alloc((*invector)->size);
+        gsl_vector_memcpy(invector_modified,*invector);
+        gsl_vector_add_constant(invector_modified,ADCfit);    // ADCfit+ADC
+        gsl_vector_set_all(*invector,-1.0);
+        gsl_vector_div(*invector,invector_modified);
+        
+        gsl_vector_free(invector_modified); invector_modified = 0;*/
     }
     
     message.clear();

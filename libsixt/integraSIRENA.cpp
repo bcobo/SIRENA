@@ -104,7 +104,8 @@
   * - filter_domain: Filtering Domain: Time(T) or Frequency(F)
   * - filter_method: Filtering Method: F0 (deleting the zero frequency bin) or F0 (deleting the baseline)
   * - energy_method: Energy calculation Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA
-  * - filtEev: Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED)
+  * - filtEeV: Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED)
+  * - Ifit: Constant to apply the I2RFITTED conversion
   * - ofnoise: Noise to use with Optimal Filtering: NSD or WEIGHTM
   * - lagsornot: Lags (1) or no lags (0)
   * - nLags: Number of lags (positive odd number)
@@ -141,7 +142,7 @@
  extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init, char* const record_file, fitsfile *fptr,
                                                 char* const library_file, char* const event_file, int pulse_length, double scaleFactor, int samplesUp, int samplesDown,
                                                 double nSgms, int detectSP, int opmode, char *detectionMode, double LrsT, double LbT, char* const noise_file, char* filter_domain, char* filter_method, 
-                                                char* energy_method, double filtEev, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
+                                                char* energy_method, double filtEev, double Ifit, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
                                                 char* oflength_strategy, int oflength, int preBuffer,
                                                 double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, int errorT,
                                                 int Sum0Filt,
@@ -349,6 +350,7 @@
      strcpy(reconstruct_init->FilterMethod,filter_method);
      strcpy(reconstruct_init->EnergyMethod,energy_method);
      reconstruct_init->filtEev     = filtEev;
+     reconstruct_init->Ifit     = Ifit;
      strcpy(reconstruct_init->OFNoise,ofnoise);
      reconstruct_init->LagsOrNot = lagsornot;
      reconstruct_init->nLags = nLags;
@@ -448,6 +450,7 @@
          reconstruct_init->i2rdata->ADU_CNV = -999;
          reconstruct_init->i2rdata->I_BIAS = -999;
          reconstruct_init->i2rdata->ADU_BIAS = -999;
+         reconstruct_init->i2rdata->Ifit = reconstruct_init->Ifit;
          if (strcmp(reconstruct_init->EnergyMethod,"OPTFILT") != 0)  
          {
              char extname[20];
@@ -1029,7 +1032,7 @@
   * - oflib: Work or not with a library with optimal filters (1/0)
   * - ofinterp: Optimal Filter by using the Matched Filter or the DAB as matched filter (MF/DAB) 
   * 	      It has been fixed in 'tesreconstruction' as 'DAB' (but it would be possible to work with 'MF')
-  * - filtEev: Energy of the filters of the library to be used to calculate energy
+  * - filtEeV: Energy of the filters of the library to be used to calculate energy
   * - lagsornot: Lags (1) or no lags (0)
   * - status: Input/output status
   ******************************************************************************/
@@ -2931,6 +2934,7 @@
  LrsT(0.0f),
  LbT(0.0f),
  filtEev(0.0f),
+ Ifit(0.0f),
  LagsOrNot(0),
  nLags(0),
  Fitting35(0),
@@ -2974,6 +2978,7 @@
  LbT(other.LbT),
  largeFilter(other.largeFilter),
  filtEev(other.filtEev),
+ Ifit(other.Ifit),
  LagsOrNot(other.LagsOrNot),
  nLags(other.nLags),
  Fitting35(other.Fitting35),
@@ -3098,6 +3103,8 @@
          
          filtEev = other.filtEev;
          
+         Ifit = other.Ifit;
+         
          strcpy(OFNoise, other.OFNoise);
          
          LagsOrNot = other.LagsOrNot;
@@ -3216,6 +3223,8 @@
      strcpy(ret->EnergyMethod, this->EnergyMethod);
      
      ret->filtEev = this->filtEev;
+     
+     ret->Ifit = this->Ifit;
      
      strcpy(ret->OFNoise, this->OFNoise);
      
