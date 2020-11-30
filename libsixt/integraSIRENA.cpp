@@ -162,11 +162,26 @@
          EP_EXIT_ERROR("Error checking if library file exists",*status);
      }
      
-     if ((opmode == 0) && (largeFilter == -999)) largeFilter = pulse_length;
+     //if ((opmode == 0) && (largeFilter == -999)) largeFilter = pulse_length;
+     if (opmode == 0) 
+     {
+         pulse_length = pow(2,floor(log2(largeFilter)));
+         //EP_PRINT_ERROR("Pulse length not provided => Fixed as the base-2 value equal or lower than largeFilter",-999); // Only a warning
+     }
+     
      
      if (exists)
      {	
-         if (opmode == 1)		largeFilter = pulse_length;
+         if (opmode == 1)		
+         {
+            
+             if (pulse_length == -999)  
+             {
+                 pulse_length = oflength;
+                 EP_PRINT_ERROR("Pulse length not provided => Fixed as OFLength (provide a different PulseLength value if 0-padding)",-999); // Only a warning
+             }
+             largeFilter = pulse_length;
+         }
          
          reconstruct_init->library_collection = getLibraryCollection(library_file, opmode, hduPRECALWN, hduPRCLOFWM, largeFilter, filter_domain, pulse_length, energy_method, ofnoise, filter_method, oflib, &ofinterp, filtEev, lagsornot, preBuffer, status);
          if (*status)
@@ -183,14 +198,15 @@
          
          if ((opmode == 1) && (pulse_length > reconstruct_init->library_collection->pulse_templates[0].template_duration))
          {
-             if ((oflib == 1) 
+             /*if ((oflib == 1) 
                  && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RFITTED") == 0))
                  && (pulse_length != reconstruct_init->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration) 
                  && (reconstruct_init->library_collection->pulse_templatesMaxLengthFixedFilter[0].template_duration != -999))
              {
                  EP_EXIT_ERROR("Templates length in the library file must be at least as the pulse length or equal to largeFilter",EPFAIL);
              }
-             else if ((oflib == 0) 
+             else if ((oflib == 0)*/
+             if ((oflib == 0)
                  && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RFITTED") == 0)))
              {
                  EP_EXIT_ERROR("It is not possible PulseLength>PULSE_column_length and OFLib=no",EPFAIL);
@@ -367,7 +383,6 @@
      reconstruct_init->intermediate  = interm;
      reconstruct_init->SaturationValue  = SaturationValue;
      
-     
      strncpy(reconstruct_init->tstartPulse1,tstartPulse1,255);
      reconstruct_init->tstartPulse1[255]='\0';
      
@@ -436,7 +451,14 @@
      if(reconstruct_init->pulse_length > record->trigger_size)
      {
          //EP_EXIT_ERROR("Warning: pulse length is larger than record size. Pulse length set to maximum value (record size)",EPFAIL);
-         EP_EXIT_ERROR("Pulse length is larger than record size",EPFAIL);
+         if (reconstruct_init->opmode == 0)
+         {
+             EP_EXIT_ERROR("largeFilter is larger than record size",EPFAIL);
+         }
+         else 
+         {
+            EP_EXIT_ERROR("Pulse length is larger than record size",EPFAIL);
+         }
      }
      
      // If first record, read the necessary keywords and columns from the input file in order to convert from current to quasi-resistance space

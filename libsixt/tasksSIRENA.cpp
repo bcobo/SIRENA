@@ -181,7 +181,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
     // Create library if it is necessary
     if (((*reconstruct_init)->opmode == 0) && (lastRecord == 1))
     {
-        if (createLibrary(*reconstruct_init, &appendToLibrary, &inLibObject, inputPulseLength))
+        if (createLibrary(*reconstruct_init, &appendToLibrary, &inLibObject))
         {
             message = "Cannot run routine createLibrary to create pulses library";
             EP_EXIT_ERROR(message,EPFAIL);
@@ -311,7 +311,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
         gsl_matrix_set_zero(weight);
         gsl_matrix_set_zero(covariance);
         
-        if (calculateTemplate (*reconstruct_init, pulsesAll, *pulsesInRecord, 1/record->delta_t, &pulsetemplate, &pulseheighttemplate, &covariance, &weight, inputPulseLength, &pulsetemplateMaxLengthFixedFilter))
+        if (calculateTemplate (*reconstruct_init, pulsesAll, *pulsesInRecord, 1/record->delta_t, &pulsetemplate, &pulseheighttemplate, &covariance, &weight, &pulsetemplateMaxLengthFixedFilter))
         {
             message = "Cannot run routine calculateTemplate in CALIBRATION mode";
             EP_EXIT_ERROR(message,EPFAIL);
@@ -1372,9 +1372,8 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
  *                     info in the Primary HDU of the library file
  * - appendToLibrary: Used by the function 'writeLibrary'
  * - inLibObject: Object which contains information of the library FITS file (used also by 'writeLibrary') 
- * - inputPulseLength: PulseLength input parameter
  ****************************************************************************/
-int createLibrary(ReconstructInitSIRENA* reconstruct_init, bool *appendToLibrary, fitsfile **inLibObject, int inputPulseLength)
+int createLibrary(ReconstructInitSIRENA* reconstruct_init, bool *appendToLibrary, fitsfile **inLibObject)
 {
     int status = EPOK;
     string message = "";
@@ -2440,6 +2439,7 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
     foundPulses->ndetpulses = numPulses;
     foundPulses->pulses_detected = new PulseDetected[numPulses];
     log_debug("**numPulses: %i",numPulses);
+    //cout<<"numPulses : "<<numPulses<<endl;
     for (int i=0;i<numPulses;i++)
     {
         //foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i));
@@ -2920,10 +2920,9 @@ int writeTestInfo(ReconstructInitSIRENA* reconstruct_init, gsl_vector *recordDER
  * - pulseaverageHeight: Height value of the pulseaverage
  * - covariance: GSL matrix with covariance matrix
  * - weight: GSL matrix with weight matrix (inverse of covariance matrix)
- * - inputPulseLength: Pulse length
  * - pulseaverageMaxLengthFixedFilter: GSL vector with the pulseaverage (template) whose length is largeFilter of the non piled-up pulses
  ******************************************************************************/
-int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection *pulsesAll, PulsesCollection *pulsesInRecord, double samprate, gsl_vector **pulseaverage, double *pulseaverageHeight, gsl_matrix **covariance, gsl_matrix **weight, int inputPulseLength, gsl_vector **pulseaverageMaxLengthFixedFilter)
+int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection *pulsesAll, PulsesCollection *pulsesInRecord, double samprate, gsl_vector **pulseaverage, double *pulseaverageHeight, gsl_matrix **covariance, gsl_matrix **weight, gsl_vector **pulseaverageMaxLengthFixedFilter)
 {
     // Declare and initialize variables
     string message = "";
@@ -3059,13 +3058,11 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
             // It is note necessary to check 'memcpy' because it is the non pile-up case
             if (i < pulsesAll->ndetpulses)
             {
-                //temp = gsl_vector_subvector(pulsesAll->pulses_detected[i].pulse_adc_preBuffer,0,inputPulseLength);
                 temp = gsl_vector_subvector(pulsesAll->pulses_detected[i].pulse_adc_preBuffer,0,pulseLengthCT);
                 gsl_vector_memcpy(pulse,&temp.vector);
             }
             else
             {
-                //temp = gsl_vector_subvector(pulsesInRecord->pulses_detected[i-pulsesAll->ndetpulses].pulse_adc_preBuffer,0,inputPulseLength);
                 temp = gsl_vector_subvector(pulsesInRecord->pulses_detected[i-pulsesAll->ndetpulses].pulse_adc_preBuffer,0,pulseLengthCT);
                 gsl_vector_memcpy(pulse,&temp.vector);
             }
@@ -3095,11 +3092,6 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
     //gsl_vector_scale(*pulseaverage,1.0/(nonpileupPulses));
     gsl_vector_scale(pulseaverageCT,1.0/(nonpileupPulses));
     
-    /*gsl_vector_memcpy(*pulseaverageMaxLengthFixedFilter, *pulseaverage);
-    gsl_vector_free(*pulseaverage);
-    *pulseaverage = gsl_vector_alloc(inputPulseLength);
-    temp = gsl_vector_subvector(*pulseaverageMaxLengthFixedFilter,0,inputPulseLength);
-    gsl_vector_memcpy(*pulseaverage,&temp.vector);*/
     gsl_vector_memcpy(*pulseaverageMaxLengthFixedFilter, pulseaverageCT);
     temp = gsl_vector_subvector(pulseaverageCT,0,reconstruct_init->pulse_length);
     gsl_vector_memcpy(*pulseaverage,&temp.vector);
@@ -11275,6 +11267,7 @@ int calculateEnergy (gsl_vector *vector, int pulseGrade, gsl_vector *filter, gsl
                                 
                                 // Because of the FFT and FFTinverse normalization factors
                                 gsl_vector_set(calculatedEnergy_vector,j,fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size);
+                                //if (j==1) cout<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
                                 
                                 //cout<<gsl_vector_get(lags_vector,j)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
                             }

@@ -85,7 +85,7 @@ The user must supply the following input parameters:
 
 .. option:: pulse_length=<int> 
 
-	Pulse length in samples. 
+	Pulse length in samples (to establish which part of the record is rejected due to a found pulse). 
 
 	Default: 8192
 
@@ -232,11 +232,11 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 .. option::  PulseLength=<int>
 
-	Pulse length in samples.
+	Pulse length in samples. Only to be used if 0-padding is going to be used (different from -999 and lowewr than :option:`OFLength`).
 	
-	Default: 8192
+	Default: -999
 	
-	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
+	Used in production run (:option:`opmode` = 1).
 
 .. option::  EventListSize=<str> 
 
@@ -338,9 +338,9 @@ To run SIRENA implementation, the user must supply the following input parameter
 	
 .. option::  largeFilter=<int>
 
-	Length (in samples) of the longest fixed filter.
+	Length (in samples) of the longest fixed filter. 
 	
-	Default: -999
+	Default: 8192
 	
 	Only used in calibration run (:option:`opmode` = 0).
 	
@@ -590,9 +590,9 @@ The output file will also be a FITS file storing one event per row with the foll
 
 * **ELOWRES**: energy provided by a low resolution energy estimator filtering with a 4-samples-length filter (in keV)
 
-* **GRADE1**: length of the filter used, i.e., the distance to the following pulse (in samples) or the :option:`PulseLength` if the next event is further than this value or if there are no more events in the same record
+* **GRADE1**: length of the filter used, i.e., the distance to the following pulse (in samples) or the pulse length if the next event is further than this value or if there are no more events in the same record
 
-* **GRADE2**: distance to the end of the preceding pulse (in samples). If pulse is the first event in the record, this is fixed to the :option:`PulseLength` value
+* **GRADE2**: distance to the end of the preceding pulse (in samples). If pulse is the first event in the record, this is fixed to the pulse length value
 
 * **PHI**: arrival phase (offset relative to the central point of the parabola) (in samples) 
 

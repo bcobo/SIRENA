@@ -586,7 +586,7 @@ Search functions by name at :ref:`genindex`.
         Input/output intermediate parameter
 
 
-.. cpp:function:: int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection *pulsesAll, PulsesCollection *pulsesInRecord, double samprate, gsl_vector **pulseaverage, double *pulseaverageHeight, gsl_matrix **covariance, gsl_matrix **weight, int inputPulseLength, gsl_vector **pulseaverageMaxLengthFixedFilter)    
+.. cpp:function:: int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection *pulsesAll, PulsesCollection *pulsesInRecord, double samprate, gsl_vector **pulseaverage, double *pulseaverageHeight, gsl_matrix **covariance, gsl_matrix **weight, gsl_vector **pulseaverageMaxLengthFixedFilter)    
     
     Located in file: *tasksSIRENA.cpp*
     
@@ -642,10 +642,6 @@ Search functions by name at :ref:`genindex`.
     gsl_matrix** **weight**
 
         GSL matrix with weight matrix (inverse of covariance matrix) 
-        
-    int **inputPulseLength**
-
-        :option:`PulseLength` input parameter
     
     gsl_vector** **pulseaverageMaxLengthFixedFilter**
 
@@ -682,10 +678,6 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: gsl_matrix** weight
 
         GSL matrix with weight matrix (inverse of covariance matrix) 
-        
-    .. cpp:member: int inputPulseLength
-
-        :option:`PulseLength` input parameter
 	
     .. cpp:member:: gsl_vector** pulseaverageMaxLengthFixedFilter
 
@@ -1084,7 +1076,7 @@ Search functions by name at :ref:`genindex`.
         GSL vector with output histogram y-axis
             
                             
-.. cpp:function:: int createLibrary(ReconstructInitSIRENA* reconstruct_init, bool *appendToLibrary, fitsfile **inLibObject, int inputPulseLength)
+.. cpp:function:: int createLibrary(ReconstructInitSIRENA* reconstruct_init, bool *appendToLibrary, fitsfile **inLibObject)
     
     Located in file: *tasksSIRENA.cpp*
 
@@ -1110,10 +1102,6 @@ Search functions by name at :ref:`genindex`.
     fitsfile** **inLibObject**
 
         Object which contains information of the library FITS file (used also by :cpp:func:`writeLibrary`)
-	
-    int **inputPulseLength**
-        
-        :option:`PulseLength` input parameter
         
     .. cpp:member:: ReconstructInitSIRENA** reconstruct_init
     
@@ -1126,10 +1114,6 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: fitsfile** inLibObject
 
         Object which contains information of the library FITS file (used also by :cpp:func:`writeLibrary`)
-	
-    .. cpp:member:: int inputPulseLength
-        
-        :option:`PulseLength` input parameter
         
 .. cpp:function:: int createTPSreprFile ()
 

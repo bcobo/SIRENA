@@ -14,6 +14,8 @@ Purpose
 SIRENA (*Software Ifca for Reconstruction of EveNts for Athena X-IFU*) is a software package developed to reconstruct the energy of the incoming X-ray photons after their detection in the `X-IFU <http://x-ifu.irap.omp.eu/>`_ TES detector. This is done by means of a tool called :ref:`tesreconstruction`, which is mainly a wrapper to pass a data file to the SIRENA tasks.
 
 SIRENA is integrated in the `SIXTE <http://www.sternwarte.uni-erlangen.de/research/sixte>`_ end-to-end simulations environment where it currently runs over SIXTE or XIFUSIM (available for the XIFU consortium members upon request at `sixte-xifusim@lists.fau.de <sixte-xifusim@lists.fau.de>`_) simulated data. In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a straightforward SIRENA tutorial and a set of scripts can be found with the aim of providing the user with a first approach running SIRENA. 
+
+The SIRENA software is regularly updated in the SIXTE environment and beta versions are often uploaded to a (`SIRENA GitHub repository <https://github.com/bcobo/SIRENA>`_).
  
 ******
 Files
@@ -43,8 +45,7 @@ The first step is creating a photon list (not required if is already available o
 ::
 
     > tesconstpileup PixImpList=noise.piximpact XMLFile=tes.XML tstop=simulationTime energy=0 \
-    pulseDistance=1 triggersize=10000 prebuffer=0
-    
+    pulseDistance=1 triggersize=10000
     
 .. _pixImpactFig:
 
@@ -90,7 +91,7 @@ The second step is simulating the noise stream. This can be done by choosing eit
    
 **2) Noise spectrum and weight matrices generation**
 
-In :ref:`gennoisespec`, the data is analysed record by record: if there are events present, this tool :ref:`finds <detect>` and rejects them, keeping only the pulse-free intervals of a size given by the input parameter :option:`intervalMinSamples`. If no events are present, the record is divided into pulse-free intervals sized also by this parameter.
+In :ref:`gennoisespec`, the data is analysed record by record: if there are events present, this tool :ref:`finds <detect>` and rejects them, keeping only the pulse-free intervals of a size given by the input parameter :option:`intervalMinSamples` (the hidden :option:`pulse_length` input parameter establishes which part of the record is rejected due to a found pulse). If no events are present, the record is divided into pulse-free intervals sized also by this parameter.
 
 Once the pulse-free intervals have been defined, a long noise interval is built by putting together these pulse-free intervals in order to calculate the noise baseline. Moreover, if :option:`rmNoiseInterval` = yes the noise intervals whose standard deviation is too high are discarded.
 
@@ -193,14 +194,14 @@ Once the calibration files (for all the 1..N calibration energies) have been cre
 
 ::
 
-  > tesreconstruction Recordfile=calib.fits TesEventFile=evtcal.fits PulseLength=pulseLength \
+  > tesreconstruction Recordfile=calib.fits TesEventFile=evtcal.fits largeFilter=8192 \
   LibraryFile=library.fits opmode=0 clobber=yes monoenergy=monoEeV_1 EventListSize=1000\
   NoiseFile=noiseSpec.fits scaleFactor=sF samplesUp=sU nSgms=nS \
   hduPRECALWN=yes/no hduPRCLOFWM=yes/no
                 
   [.....]
   
-  > tesreconstruction Recordfile=calib.fits TesEventFile=evtcal.fits PulseLength=pulseLength\
+  > tesreconstruction Recordfile=calib.fits TesEventFile=evtcal.fits largeFile=8192\
   LibraryFile=library.fits opmode=0 clobber=yes monoenergy=monoEeV_N EventListSize=1000\
   NoiseFile=noiseSpec.fits scaleFactor=sF samplesUp=sU nSgms=nS \
   hduPRECALWN=yes/no hduPRCLOFWM=yes/no
@@ -213,8 +214,8 @@ The parameters of ``tesreconstruction``  for the library creation process are:
 * :option:`NoiseFile`: noise spectrum FITS file.
 * :option:`LibraryFile`: calibration library FITS file.
 * :option:`scaleFactor`, :option:`samplesUp` and :option:`nSgms`: parameters involved in the pulse detection process.
-* :option:`PulseLength`:  length of the pulses to create the pulse template. If the pulse length used to create the noise is larger that this value, noise will be decimated accordingly when used to pre-calculate the optimal filters or the covariance matrices. If it is shorter, an error will be raised.
-* :option:`largeFilter`: length (in samples) of the longest fixed filter.
+.. * :option:`PulseLength`:  length of the pulses to create the pulse template. If the pulse length used to create the noise is larger that this value, noise will be decimated accordingly when used to pre-calculate the optimal filters or the covariance matrices. If it is shorter, an error will be raised.
+* :option:`largeFilter`: length (in samples) of the longest fixed filter. If the interval size (:option:`intervalMinSamples`) used to create the noise is larger that this value, noise will be decimated accordingly when used to pre-calculate the optimal filters or the covariance matrices. If it is shorter, an error will be raised.
 * :option:`preBuffer`: some samples added before the starting time of a pulse.
 * :option:`EnergyMethod`: energy calculation Method: OPTFILT (Optimal filtering), WEIGHT (Covariance matrices), WEIGHTN (Covariance matrices, first order), I2R and I2RFITTED (Linear Transformations), or PCA (Principal Component Analysis).
 * :option:`Ifit`: constant to apply the I2RFITTED conversion 
@@ -234,11 +235,12 @@ The library FITS file has 3 HDUs called *LIBRARY*, *FIXFILTT*, *FIXFILTF* which 
 
 * **ENERGY**: energies (in eV) in the library 
 * **PHEIGHT**: pulse heights of the templates
-* **PLSMXLFF**: long templates according to :option:`largeFilter` (obtained averaging many signals) with baseline. If :option:`largeFilter` is equal to :option:`PulseLength` it does not appear
-* **PULSE**: templates (obtained averaging many signals) with baseline
-* **PULSEB0**: baseline subtracted templates
-* **MF**: matched filters (energy normalized templates)
-* **MFB0**: baseline subtracted matched filters
+.. * **PLSMXLFF**: long templates according to :option:`largeFilter` (obtained averaging many signals) with baseline. If :option:`largeFilter` is equal to :option:`PulseLength` it does not appear
+* **PULSE**: templates (obtained averaging many signals) with baseline. Its length is the base-2 value closest-lower than or equal-to the :option:`largeFilter`
+* **PLSMXLFF**: long templates according to :option:`largeFilter` (obtained averaging many signals) with baseline. If :option:`largeFilter` is a base-2, it does not appear (it only appears **PULSE**)
+* **PULSEB0**: baseline subtracted templates (from **PULSE**)
+* **MF**: matched filters (energy normalized templates) (from **PULSE**)
+* **MFB0**: baseline subtracted matched filters ((from **MFB0**))
 * **COVARM**: :ref:`covariance matrices<covMatrices>` ( :option:`PulseLength` x :option:`PulseLength` in shape ) stored in the FITS column as vectors of size :option:`PulseLength` * :option:`PulseLength`. It appears if :option:`hduPRECALWN` = yes
 * **WEIGHTM**: :ref:`weight matrices<covMatrices>` ( :option:`PulseLength` x :option:`PulseLength` in shape) stored in the FITS column as vectors of size :option:`PulseLength` * :option:`PulseLength`. It appears if :option:`hduPRECALWN` = yes
 * **WAB**: matrices :math:`(W_\alpha + W_\beta)/2` stored as vectors ( :option:`PulseLength` * :option:`PulseLength` ), being :math:`\mathit{W}` weight matrixes and :math:`\alpha` and :math:`\beta` two consecutive energies in the library. It appears if :option:`hduPRECALWN` = yes
@@ -249,16 +251,16 @@ The library FITS file has 3 HDUs called *LIBRARY*, *FIXFILTT*, *FIXFILTF* which 
 * **ZV**: vectors :math:`\mathit{X \cdot T}`. It appears if :option:`hduPRECALWN` = yes
 * **rE**: scalars :math:`\mathit{1/(Z \cdot T)}`. It appears if :option:`hduPRECALWN` = yes
 * **PAB**: vectors :math:`S_{\alpha}- E_{\alpha}(S_{\beta}-S_{\alpha})/(E_{\beta}-E_{\alpha})`, :math:`P(t)_{\alpha\beta}` in :ref:`first order approach <optimalFilter_NSD>`. It appears if there are several calibration energies (not only one) included in the library
-* **PABMXLFF**: **PAB** according to :option:`largeFilter`. If :option:`largeFilter` is equal to :option:`PulseLength` it does not appear (although several calibration energies are included in the library)
+* **PABMXLFF**: **PAB** according to :option:`largeFilter`. If :option:`largeFilter` is a base-2, it does not appear (although several calibration energies are included in the library)
 * **DAB**: vectors :math:`(S_{\beta}-S_{\alpha})/(E_{\beta}-E_{\alpha})`, :math:`D(t)_{\alpha\beta}` in :ref:`first order approach <optimalFilter_NSD>`. It appears if there are several calibration energies (not only one) included in the library.
 
-The *FIXFILTT* HDU contains pre-calculated optimal filters in the time domain for different lengths, calculated from the matched filters (*MF* or *MFB0* columns) in **Tx** columns, or from the *DAB* column, in the **ABTx** columns. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the pulse length decreasing until 2. Moreover, **Txmax** and **ABTxmax** columns being *xmax* = :option:`largeFilter` are added. The *FIXFILTT* HDU always contains **Tx** columns but **ABTx** columns only appear if there are several calibration energies (not only one) included in the library. 
+The *FIXFILTT* HDU contains pre-calculated optimal filters in the time domain for different lengths, calculated from the matched filters (*MF* or *MFB0* columns) in **Tx** columns, or from the *DAB* column, in the **ABTx** columns. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the :option:`largeFilter` decreasing until 2. Moreover, **Txmax** and **ABTxmax** columns being *xmax* = :option:`largeFilter` are added if :option:`largeFilter` is not a base-2 value. The *FIXFILTT* HDU always contains **Tx** columns but **ABTx** columns only appear if there are several calibration energies (not only one) included in the library. 
 
-The *FIXFILTF* HDU contains pre-calculated optimal filters in frequency domain for different lengths calculated from the matched filters (*MF* or *MFB0* columns), in columns **Fx**, or from the *DAB* column, in **ABFx** columns. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the pulse length decreasing until 2. Moreover, **Fxmax** and **ABFxmax** columns being *xmax* = :option:`largeFilter` are added. The *FIXFILTF* HDU always contains **Fx** columns but **ABFx** columns only appear if there are several calibration energies (not only one) included in the library.
+The *FIXFILTF* HDU contains pre-calculated optimal filters in frequency domain for different lengths calculated from the matched filters (*MF* or *MFB0* columns), in columns **Fx**, or from the *DAB* column, in **ABFx** columns. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the :option:`largeFilter` decreasing until 2. Moreover, **Fxmax** and **ABFxmax** columns being *xmax* = :option:`largeFilter` are added if :option:`largeFilter` is not a base-2 value. The *FIXFILTF* HDU always contains **Fx** columns but **ABFx** columns only appear if there are several calibration energies (not only one) included in the library.
 
-The *PRECALWN* HDU contains :ref:`pre-calculated values by using the noise weight matrix from the subtraction of model from pulses <WEIGHTN>` :math:`(X'WX)^{-1}X'W` for different lengths, **PCLx**. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the pulse length decreasing until 2.
+The *PRECALWN* HDU contains :ref:`pre-calculated values by using the noise weight matrix from the subtraction of model from pulses <WEIGHTN>` :math:`(X'WX)^{-1}X'W` for different lengths, **PCLx**. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the :option:`largeFilter` decreasing until 2.
 
-The *PRCLOFWM* HDU contains :ref:`pre-calculated values by using the noise weight matrix from noise intervals <optimalFilter_WEIGHTM>` :math:`(M'WM)^{-1}M'W` for different lengths, **OFWx**. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the  decreasing :option:`largeFilter` until 2.
+The *PRCLOFWM* HDU contains :ref:`pre-calculated values by using the noise weight matrix from noise intervals <optimalFilter_WEIGHTM>` :math:`(M'WM)^{-1}M'W` for different lengths, **OFWx**. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the :option:`largeFilter` decreasing until 2.
 
 
 .. _inputFiles:
@@ -295,9 +297,9 @@ The reconstructed energies for all the detected events are saved into an output 
 
 * **ELOWRES**: energy provided by a low resolution energy estimator filtering with a 4-samples-length filter (in keV).
 
-* **GRADE1**: length of the filter used, i.e., the distance to the following pulse (in samples) or the :option:`PulseLength` if the next event is further than this value or if there are no more events in the same record.
+* **GRADE1**: length of the filter used, i.e., the distance to the following pulse (in samples) or the pulse length if the next event is further than this value or if there are no more events in the same record.
 
-* **GRADE2**: distance to the end of the preceding pulse (in samples). If pulse is the first event in the record, this is fixed to the :option:`PulseLength` value.
+* **GRADE2**: distance to the end of the preceding pulse (in samples). If pulse is the first event in the record, this is fixed to the pulse length value.
 
 * **PHI**: arrival phase (offset relative to the central point of the parabola) (in samples).
 
@@ -963,7 +965,7 @@ In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a 
 ::
 
    >tesreconstruction Recordfile=inputEvents.fits TesEventFile=outputEvents.fits 
-   OFLib=no OFStrategy=FREE PulseLength=8192 samplesUp=3 nSgms=3.5 samplesDown=4\
+   OFLib=no OFStrategy=FREE samplesUp=3 nSgms=3.5 samplesDown=4\
    LibraryFile=libraryMultiE.fits opmode=1 NoiseFile=noise8192samplesADC.fits\
    FilterMethod=F0 clobber=yes intermediate=0 EnergyMethod=OPTFILT \
    XMLFile=xifu_detector_lpa_75um_AR0.5_pixoffset_mux40_pitch275um.xml 
@@ -973,7 +975,7 @@ In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a 
 ::
 
    >tesreconstruction Recordfile=inputEvents.fits TesEventFile=outputEvents.fits \
-   PulseLength=8192  LibraryFile=libraryMultiE.fits opmode=1 OFLib=yes\
+   LibraryFile=libraryMultiE.fits opmode=1 OFLib=yes\
    FilterMethod=F0 clobber=yes intermediate=0 EnergyMethod=OPTFILT\
    XMLFile=xifu_detector_lpa_75um_AR0.5_pixoffset_mux40_pitch275um.xml
 
@@ -982,7 +984,7 @@ In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a 
 ::
 
    >tesreconstruction Recordfile=inputEvents.fits TesEventFile=outputEvents.fits 
-   PulseLength=8192 LibraryFile=libraryMultiE.fits opmode=1 \
+   LibraryFile=libraryMultiE.fits opmode=1 \
    NoiseFile=noise1024samplesADC.fits clobber=yes intermediate=0 \
    EnergyMethod=WEIGHT XMLFile=xifu_detector_lpa_75um_AR0.5_pixoffset_mux40_pitch275um.xml
 
@@ -991,7 +993,7 @@ In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a 
 ::
 
    >tesreconstruction Recordfile=inputEvents.fits TesEventFile=outputEvents.fits \
-   PulseLength=8192 LibraryFile=libraryMultiE.fits opmode=1 \
+   LibraryFile=libraryMultiE.fits opmode=1 \
    NoiseFile=noise8192samplesR.fits FilterMethod=F0 clobber=yes intermediate=0 \
    EnergyMethod=I2R XMLFile=xifu_detector_hex_baseline.xml OFLib=no OFStrategy=FREE
 
