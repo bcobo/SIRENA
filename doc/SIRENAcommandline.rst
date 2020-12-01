@@ -232,9 +232,9 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 .. option::  PulseLength=<int>
 
-	Pulse length in samples. Only to be used if 0-padding is going to be used (different from -999 and lowewr than :option:`OFLength`).
+	Pulse length in samples. Only to be used if 0-padding is going to be used (lowewr than :option:`OFLength`).
 	
-	Default: -999
+	Default: 8192
 	
 	Used in production run (:option:`opmode` = 1).
 

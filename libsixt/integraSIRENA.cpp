@@ -174,11 +174,18 @@
      {	
          if (opmode == 1)		
          {
-            
-             if (pulse_length == -999)  
+             /*if (pulse_length == -999)  
              {
                  pulse_length = oflength;
                  EP_PRINT_ERROR("Pulse length not provided => Fixed as OFLength (provide a different PulseLength value if 0-padding)",-999); // Only a warning
+             }*/
+             if ((pulse_length < oflength) && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RFITTED") == 0)))
+             {
+                 EP_PRINT_ERROR("0-padding is going to be used)",-999); // Only a warning
+             }
+             else if ((pulse_length > oflength) && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RFITTED") == 0)))
+             {
+                 pulse_length = oflength;
              }
              largeFilter = pulse_length;
          }

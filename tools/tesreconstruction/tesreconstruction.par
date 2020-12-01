@@ -1,7 +1,7 @@
 Rcmethod,s,h,"SIRENA",,,"Reconstruction method (PP or SIRENA)"
 RecordFile,s,lq,"record.fits",,,"Record FITS file"
 TesEventFile,s,lq,"event.fits",,,"Output event list file"
-PulseLength,i,h,-999,,,"Pulse length (only necessary when reconstructing with 0-padding)"
+PulseLength,i,h,8192,,,"Pulse length (only necessary when reconstructing with 0-padding)"
 EventListSize,i,h,1000,,,"Default size of the event list"
 clobber,b,h,yes,,,"Overwrite or not output files if exist (yes/no)"
 history,b,h,yes,,,"write program parameters into output file?"
