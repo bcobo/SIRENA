@@ -1,35 +1,28 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SIRENA Tools CLI &#8212; SIRENA 4.0 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/_themes/themes_overrides.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/_themes/themes_overrides.css" />
     <link rel="stylesheet" href="_static/style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '4.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="SIRENA functions" href="SIRENAfunctions.html" />
     <link rel="prev" title="SIRENA description" href="SIRENA.html" /> 
-  </head>
-  <body>
+  </head><body>
 
 <div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
 <a href="index.html"><img src="_static/SIRENA_black.png" border="0" alt="py4sci"/></a>
@@ -49,7 +42,8 @@
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
- 
+
+        <li class="nav-item nav-item-this"><a href="">SIRENA Tools CLI</a></li> 
       </ul>
     </div>
 
@@ -58,7 +52,7 @@
             <p class="logo"><a href="index.html">
               <img class="logo" src="_static/SIRENA_black.png" alt="Logo"/>
             </a></p>
-  <h3><a href="index.html">Table Of Contents</a></h3>
+  <h3><a href="index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">SIRENA Tools CLI</a><ul>
 <li><a class="reference internal" href="#gennoisespec">gennoisespec</a></li>
@@ -83,15 +77,15 @@
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
 
@@ -102,505 +96,579 @@
             
   <div class="section" id="sirena-tools-cli">
 <span id="sirenatools"></span><h1>SIRENA Tools CLI<a class="headerlink" href="#sirena-tools-cli" title="Permalink to this headline">¶</a></h1>
-<p>Here we describe the command line options for the tools run for SIRENA reconstruction (<code class="docutils literal"><span class="pre">gennoisespec</span></code> and <code class="docutils literal"><span class="pre">tesreconstruction</span></code>).
-At the end, links to the documentation of other SIXTE tools required for the simulation of data files are provided (<code class="docutils literal"><span class="pre">tesconstpileup</span></code>) and XIFUSIM.</p>
+<p>Here we describe the command line options for the tools run for SIRENA reconstruction (<code class="docutils literal notranslate"><span class="pre">gennoisespec</span></code> and <code class="docutils literal notranslate"><span class="pre">tesreconstruction</span></code>).
+At the end, links to the documentation of other SIXTE tools required for the simulation of data files are provided (<code class="docutils literal notranslate"><span class="pre">tesconstpileup</span></code>) and XIFUSIM.</p>
 <div class="section" id="gennoisespec">
 <span id="id1"></span><h2>gennoisespec<a class="headerlink" href="#gennoisespec" title="Permalink to this headline">¶</a></h2>
-<p>The goal of the <code class="docutils literal"><span class="pre">gennoisespec</span></code> tool is to calculate the current noise spectral density and the noise weight matrixes.
+<p>The goal of the <code class="docutils literal notranslate"><span class="pre">gennoisespec</span></code> tool is to calculate the current noise spectral density and the noise weight matrixes.
 The input data from which it would be calculated should be a FITS file with the data splitted into records (see <a class="reference internal" href="SIRENA.html#noise-records"><span class="std std-ref">noise-records</span></a>) with or without photon events (pulses).</p>
 <p>The user must supply the following input parameters:</p>
-<span class="target" id="gennoisepars"></span><dl class="option">
-<dt id="cmdoption-arg-infile">
-<code class="descname">inFile</code><code class="descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-infile" title="Permalink to this definition">¶</a></dt>
+<span class="target" id="gennoisepars"></span><dl class="std option">
+<dt id="cmdoption-arg-inFile">
+<span id="cmdoption-arg-infile"></span><code class="sig-name descname">inFile</code><code class="sig-prename descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-inFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Name of the input FITS file (stream splitted into records).</p>
 <p>Default: <em>a.fits</em></p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-outfile">
-<code class="descname">outFile</code><code class="descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-outfile" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-outFile">
+<span id="cmdoption-arg-outfile"></span><code class="sig-name descname">outFile</code><code class="sig-prename descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-outFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Name of the output FITS file with the current noise spectral density.</p>
 <p>Default: <em>a_noisespec.fits</em></p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-intervalminsamples">
-<code class="descname">intervalMinSamples</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-intervalminsamples" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-intervalMinSamples">
+<span id="cmdoption-arg-intervalminsamples"></span><code class="sig-name descname">intervalMinSamples</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-intervalMinSamples" title="Permalink to this definition">¶</a></dt>
 <dd><p>Minimum length (in samples) of a pulse-free interval to use.</p>
-<p>It will be redefined as the base-2 system value closest-lower than or equal than <a class="reference internal" href="#cmdoption-arg-intervalminsamples"><code class="xref std std-option docutils literal"><span class="pre">intervalMinSamples</span></code></a>.</p>
+<p>It will be redefined as the base-2 system value closest-lower than or equal than <a class="reference internal" href="#cmdoption-arg-intervalMinSamples"><code class="xref std std-option docutils literal notranslate"><span class="pre">intervalMinSamples</span></code></a>.</p>
 <p>Default: 8192</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-nplpf">
-<code class="descname">nplPF</code><code class="descclassname">=&lt;real&gt;</code><a class="headerlink" href="#cmdoption-arg-nplpf" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-nplPF">
+<span id="cmdoption-arg-nplpf"></span><code class="sig-name descname">nplPF</code><code class="sig-prename descclassname">=&lt;real&gt;</code><a class="headerlink" href="#cmdoption-arg-nplPF" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of pulse lengths after the end of the pulse to start the pulse-free interval searching (only relevant if pulse detection in the stream has to be performed).</p>
 <p>Default: 0</p>
 </dd></dl>
 
-<dl class="option">
+<dl class="std option">
 <dt id="cmdoption-arg-nintervals">
-<code class="descname">nintervals</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-nintervals" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">nintervals</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-nintervals" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of pulse-free intervals to use for the noise average.</p>
 <p>Default: 1000</p>
 </dd></dl>
 
-<span class="target" id="scalefactor-gennoisespec"></span><dl class="option">
-<dt id="cmdoption-arg-scalefactor">
-<code class="descname">scaleFactor</code><code class="descclassname">=&lt;real&gt;</code><a class="headerlink" href="#cmdoption-arg-scalefactor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Scale factor to apply to make possible a variable cut-off frequency of the low-pass filter. In fact, the cut-off frequency of the filter is <img class="math" src="_images/math/16ceb1b69116e97955e3928ae4a04c7cc9995bc6.png" alt="1/(\pi \cdot sF)"/> and therefore, the box-car length is <img class="math" src="_images/math/3dc1b253d80bc6333ede8496cc34108bb4a9430d.png" alt="\pi \cdot sF \cdot samprate"/> (see <a class="reference internal" href="SIRENA.html#lpf"><span class="std std-ref">Low-Pass filtering</span></a>).</p>
-<p>If the <a class="reference internal" href="#id3"><code class="xref std std-option docutils literal"><span class="pre">scaleFactor</span></code></a> makes the box-car length <img class="math" src="_images/math/9605f25f3219e92ba554f5603bfb8fdada6ffe91.png" alt="\leq 1"/> is equivalent to not filter (cut-off frequency of the low-pass filter is too high). If the <a class="reference internal" href="#id3"><code class="xref std std-option docutils literal"><span class="pre">scaleFactor</span></code></a> is too large, the low-pass filter band is too narrow, and not only noise is rejected during the filtering, but also the signal.</p>
+<span class="target" id="scalefactor-gennoisespec"></span><dl class="std option">
+<dt id="cmdoption-arg-scaleFactor">
+<span id="cmdoption-arg-scalefactor"></span><code class="sig-name descname">scaleFactor</code><code class="sig-prename descclassname">=&lt;real&gt;</code><a class="headerlink" href="#cmdoption-arg-scaleFactor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scale factor to apply to make possible a variable cut-off frequency of the low-pass filter. In fact, the cut-off frequency of the filter is <img class="math" src="_images/math/1e5345dc083338f7aa6e0a9e0966a72970bc15f2.png" alt="1/(\pi \cdot sF)"/> and therefore, the box-car length is <img class="math" src="_images/math/6146c7d0b22f4ccf6a6562c2beb7887a99344545.png" alt="\pi \cdot sF \cdot samprate"/> (see <a class="reference internal" href="SIRENA.html#lpf"><span class="std std-ref">Low-Pass filtering</span></a>).</p>
+<p>If the <a class="reference internal" href="#cmdoption-arg-0"><code class="xref std std-option docutils literal notranslate"><span class="pre">scaleFactor</span></code></a> makes the box-car length <img class="math" src="_images/math/1237dffe831bfc3548386dca265d5d8160d736dc.png" alt="\leq 1"/> is equivalent to not filter (cut-off frequency of the low-pass filter is too high). If the <a class="reference internal" href="#cmdoption-arg-0"><code class="xref std std-option docutils literal notranslate"><span class="pre">scaleFactor</span></code></a> is too large, the low-pass filter band is too narrow, and not only noise is rejected during the filtering, but also the signal.</p>
 <p>Default: 0</p>
 </dd></dl>
 
-<span class="target" id="samplesup-gennoisespec"></span><dl class="option">
-<dt id="cmdoption-arg-samplesup">
-<code class="descname">samplesUp</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-samplesup" title="Permalink to this definition">¶</a></dt>
+<span class="target" id="samplesup-gennoisespec"></span><dl class="std option">
+<dt id="cmdoption-arg-samplesUp">
+<span id="cmdoption-arg-samplesup"></span><code class="sig-name descname">samplesUp</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-samplesUp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Consecutive samples that the signal must cross over the threshold to trigger a pulse detection (only relevant if pulse detection in the stream has to be performed).</p>
 <p>Default: 3</p>
 </dd></dl>
 
-<span class="target" id="nsgms-gennoisespec"></span><dl class="option">
-<dt id="cmdoption-arg-nsgms">
-<code class="descname">nSgms</code><code class="descclassname">=&lt;real&gt;</code><a class="headerlink" href="#cmdoption-arg-nsgms" title="Permalink to this definition">¶</a></dt>
+<span class="target" id="nsgms-gennoisespec"></span><dl class="std option">
+<dt id="cmdoption-arg-nSgms">
+<span id="cmdoption-arg-nsgms"></span><code class="sig-name descname">nSgms</code><code class="sig-prename descclassname">=&lt;real&gt;</code><a class="headerlink" href="#cmdoption-arg-nSgms" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of quiescent-signal standard deviations to establish the threshold through the <em>kappa-clipping</em> algorithm (only relevant if pulse detection in the stream has to be performed).</p>
 <p>Default: 3.5</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-pulse-length">
-<code class="descname">pulse_length</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-pulse-length" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pulse length in samples.</p>
+<dl class="std option">
+<dt id="cmdoption-arg-pulse_length">
+<span id="cmdoption-arg-pulse-length"></span><code class="sig-name descname">pulse_length</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-pulse_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pulse length in samples (to establish which part of the record is rejected due to a found pulse).</p>
 <p>Default: 8192</p>
 </dd></dl>
 
-<span class="target" id="lrst-gennoisespec"></span><dl class="option">
-<dt id="cmdoption-arg-lrst">
-<code class="descname">LrsT</code><code class="descclassname">=&lt;secs&gt;</code><a class="headerlink" href="#cmdoption-arg-lrst" title="Permalink to this definition">¶</a></dt>
+<span class="target" id="lrst-gennoisespec"></span><dl class="std option">
+<dt id="cmdoption-arg-LrsT">
+<span id="cmdoption-arg-lrst"></span><code class="sig-name descname">LrsT</code><code class="sig-prename descclassname">=&lt;secs&gt;</code><a class="headerlink" href="#cmdoption-arg-LrsT" title="Permalink to this definition">¶</a></dt>
 <dd><p>Running sum (RS) length for the RS-filtering for raw energy estimation, in seconds.</p>
 <p>Default: 3.E-5</p>
 </dd></dl>
 
-<span class="target" id="lbt-gennoisespec"></span><dl class="option">
-<dt id="cmdoption-arg-lbt">
-<code class="descname">LbT</code><code class="descclassname">=&lt;secs&gt;</code><a class="headerlink" href="#cmdoption-arg-lbt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Baseline averaging length for the RS-filtering for raw energy estimation, in seconds.</p>
-<p>Default: 1.E-3</p>
+<span class="target" id="lbt-gennoisespec"></span><dl class="std option">
+<dt id="cmdoption-arg-LbT">
+<span id="cmdoption-arg-lbt"></span><code class="sig-name descname">LbT</code><code class="sig-prename descclassname">=&lt;secs&gt;</code><a class="headerlink" href="#cmdoption-arg-LbT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Baseline averaging length, in seconds.</p>
+<p>Default: 6.4E-3</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-weightms">
-<code class="descname">weightMS</code><code class="descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-weightms" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-weightMS">
+<span id="cmdoption-arg-weightms"></span><code class="sig-name descname">weightMS</code><code class="sig-prename descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-weightMS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate and write the weight matrixes if <em>yes</em>.</p>
 <p>Default: <em>no</em></p>
 </dd></dl>
 
-<dl class="option">
+<span class="target" id="energymethod-gennoisespec"></span><dl class="std option">
+<dt id="cmdoption-arg-EnergyMethod">
+<span id="cmdoption-arg-energymethod"></span><code class="sig-name descname">EnergyMethod</code><code class="sig-prename descclassname">=&lt;OPTFILT|I2R|I2RFITTED&gt;</code><a class="headerlink" href="#cmdoption-arg-EnergyMethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform to resistance space (I2R or I2RFITTED) or not (OPTFILT).</p>
+<p>Default: <em>OPTFILT</em></p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-arg-Ifit">
+<span id="cmdoption-arg-ifit"></span><code class="sig-name descname">Ifit</code><code class="sig-prename descclassname">=&lt;adu&gt;</code><a class="headerlink" href="#cmdoption-arg-Ifit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constant to apply the I2RFITTED conversion.</p>
+<p>Default: 7000.0</p>
+</dd></dl>
+
+<dl class="std option">
 <dt id="cmdoption-arg-namelog">
-<code class="descname">namelog</code><code class="descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-namelog" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">namelog</code><code class="sig-prename descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-namelog" title="Permalink to this definition">¶</a></dt>
 <dd><p>Output log file name.</p>
 <p>Default: <em>noise_log.txt</em></p>
 </dd></dl>
 
-<span class="target" id="clobber-gennoisespec"></span><dl class="option">
+<span class="target" id="clobber-gennoisespec"></span><dl class="std option">
 <dt id="cmdoption-arg-clobber">
-<code class="descname">clobber</code><code class="descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-clobber" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">clobber</code><code class="sig-prename descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-clobber" title="Permalink to this definition">¶</a></dt>
 <dd><p>Overwrite output files if they exist.</p>
 <p>Default: <em>no</em></p>
 </dd></dl>
 
-<dl class="option">
+<dl class="std option">
 <dt id="cmdoption-arg-verbosity">
-<code class="descname">verbosity</code><code class="descclassname">=&lt;1|2|3&gt;</code><a class="headerlink" href="#cmdoption-arg-verbosity" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">verbosity</code><code class="sig-prename descclassname">=&lt;1|2|3&gt;</code><a class="headerlink" href="#cmdoption-arg-verbosity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Verbosity level of the output log file.</p>
 <p>Default: 3</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-matrixsize">
-<code class="descname">matrixSize</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-matrixsize" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-matrixSize">
+<span id="cmdoption-arg-matrixsize"></span><code class="sig-name descname">matrixSize</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-matrixSize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Size of noise matrix if only one to be calculated, in samples.</p>
 <p>Default: 0</p>
 </dd></dl>
 
-<p>At the current status, <code class="docutils literal"><span class="pre">gennoisespec</span></code> parameter structure is not integrated into the SIXTE parameter handling, so the tool input parameters are read by the C++ standard <code class="docutils literal"><span class="pre">getopt_long</span></code> module.</p>
+<dl class="std option">
+<dt id="cmdoption-arg-rmNoiseInterval">
+<span id="cmdoption-arg-rmnoiseinterval"></span><code class="sig-name descname">rmNoiseInterval</code><code class="sig-prename descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-rmNoiseInterval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove some noise intervals before calculating the noise spectrum if <em>yes</em>.</p>
+<p>Default: <em>no</em></p>
+</dd></dl>
+
 <p>A typical command line run of this tool would be:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">gennoisespec</span> <span class="n">inFile</span><span class="o">=</span><span class="n">noise</span><span class="o">.</span><span class="n">fits</span> <span class="n">outFile</span><span class="o">=</span><span class="n">noiseSpec</span><span class="o">.</span><span class="n">fits</span> <span class="n">intervalMinSamples</span><span class="o">=</span><span class="n">pulseLength</span> \
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">gennoisespec</span> <span class="n">inFile</span><span class="o">=</span><span class="n">noise</span><span class="o">.</span><span class="n">fits</span> <span class="n">outFile</span><span class="o">=</span><span class="n">noiseSpec</span><span class="o">.</span><span class="n">fits</span> <span class="n">intervalMinSamples</span><span class="o">=</span><span class="n">pulseLength</span> \
         <span class="n">pulse_length</span><span class="o">=</span><span class="n">pulseLength</span> <span class="n">nintervals</span><span class="o">=</span><span class="mi">1000</span>
 </pre></div>
 </div>
+<p>The sampling rate is calculated by using some keywords in the input FITS file. In case of <code class="docutils literal notranslate"><span class="pre">tessim</span></code> simulated data files, using the <code class="docutils literal notranslate"><span class="pre">DELTAT</span></code> keyword <em>samplingRate=1/deltat</em>. In case of <code class="docutils literal notranslate"><span class="pre">xifusim</span></code> simulated data files, every detector type defines a master clock-rate <code class="docutils literal notranslate"><span class="pre">TCLOCK</span></code> and the sampling rate is calculated either from a given decimation factor <code class="docutils literal notranslate"><span class="pre">DEC_FAC</span></code> (FDM and NOMUX) as <em>samplingRate=1/(tclock·dec_fac)</em>, or from the row period  <code class="docutils literal notranslate"><span class="pre">P_ROW</span></code> and the number of rows <code class="docutils literal notranslate"><span class="pre">NUMROW</span></code> (TDM) as <em>samplingRate=1/(tclock·numrow·p_row)</em>. In case of old simulated files, the sampling rate could be read from the <code class="docutils literal notranslate"><span class="pre">HISTORY</span></code> keyword in the <em>Primary</em> HDU. If the sampling frequency can not be get from the input file after all, a message will ask the user to include the <code class="docutils literal notranslate"><span class="pre">DELTAT</span></code> keyword (inverse of the sampling rate) in the input FITS file before running again.</p>
 <p id="outnoise">The output FITS file contains three HDUs, <em>NOISE</em>, <em>NOISEALL</em> and <em>WEIGHTMS</em>.
 The <em>NOISE</em> HDU contains three columns:</p>
 <ul class="simple">
-<li><strong>FREQ</strong>: Noise positive frequencies in Hz</li>
-<li><strong>CSD</strong>: Current noise spectral density. Amount of current per unit of frequency (spectral density) in <img class="math" src="_images/math/7115e24b1734f709a9a7b685f8f91673e139daa6.png" alt="A/\sqrt(Hz)"/></li>
-<li><strong>SIGMACSD</strong>: CSD Standard error of the mean in <img class="math" src="_images/math/7115e24b1734f709a9a7b685f8f91673e139daa6.png" alt="A/\sqrt(Hz)"/> (not filled yet)</li>
+<li><p><strong>FREQ</strong>: Noise positive frequencies in Hz</p></li>
+<li><p><strong>CSD</strong>: Current noise spectral density. Amount of current per unit of frequency (spectral density) in <img class="math" src="_images/math/4c5c2a723271f8a1eb6f7002dd479b79b0526647.png" alt="A/\sqrt(Hz)"/></p></li>
+<li><p><strong>SIGMACSD</strong>: CSD Standard error of the mean in <img class="math" src="_images/math/4c5c2a723271f8a1eb6f7002dd479b79b0526647.png" alt="A/\sqrt(Hz)"/> (not filled yet)</p></li>
 </ul>
 <p>The <em>NOISE</em> HDU contains two keywords:</p>
 <ul class="simple">
-<li><code class="docutils literal"><span class="pre">BSLN0</span></code>: Noise baseline (it will be propagated to the library as <code class="docutils literal"><span class="pre">BASELINE</span></code> in the <em>Library</em> HDU when building the library FITS file)</li>
-<li><code class="docutils literal"><span class="pre">NOISESTD</span></code>: Noise standard deviation</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BSLN0</span></code>: Noise baseline (it will be propagated to the library as <code class="docutils literal notranslate"><span class="pre">BASELINE</span></code> in the <em>Library</em> HDU when building the library FITS file)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NOISESTD</span></code>: Noise standard deviation</p></li>
 </ul>
 <p>The <em>NOISEALL</em> HDU contains <strong>FREQ</strong> and <strong>CSD</strong> columns for positive and negative frequencies.</p>
-<p>If <a class="reference internal" href="#cmdoption-arg-weightms"><code class="xref std std-option docutils literal"><span class="pre">weightMS</span></code></a> = <em>yes</em>, the <em>WEIGHTMS</em> HDU contains <strong>Wx</strong> columns. The lengths <em>x</em> will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the <a class="reference internal" href="#cmdoption-arg-intervalminsamples"><code class="xref std std-option docutils literal"><span class="pre">intervalMinSamples</span></code></a> decreasing until 2. If <a class="reference internal" href="#cmdoption-arg-matrixsize"><code class="xref std std-option docutils literal"><span class="pre">matrixSize</span></code></a> is different from 0, only the <strong>Wx</strong> column being <em>x</em> equals to <a class="reference internal" href="#cmdoption-arg-matrixsize"><code class="xref std std-option docutils literal"><span class="pre">matrixSize</span></code></a> is calculated (although the rest columns appear in the HDU, they are filled with 0’s).</p>
+<p>If <a class="reference internal" href="#cmdoption-arg-weightMS"><code class="xref std std-option docutils literal notranslate"><span class="pre">weightMS</span></code></a> = <em>yes</em>, the <em>WEIGHTMS</em> HDU contains <strong>Wx</strong> columns. The lengths <em>x</em> will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the <a class="reference internal" href="#cmdoption-arg-intervalMinSamples"><code class="xref std std-option docutils literal notranslate"><span class="pre">intervalMinSamples</span></code></a> decreasing until 2. If <a class="reference internal" href="#cmdoption-arg-matrixSize"><code class="xref std std-option docutils literal notranslate"><span class="pre">matrixSize</span></code></a> is different from 0, only the <strong>Wx</strong> column being <em>x</em> equals to <a class="reference internal" href="#cmdoption-arg-matrixSize"><code class="xref std std-option docutils literal notranslate"><span class="pre">matrixSize</span></code></a> is calculated (although the rest columns appear in the HDU, they are filled with 0’s).</p>
 </div>
 <div class="section" id="tesreconstruction">
 <span id="id2"></span><h2>tesreconstruction<a class="headerlink" href="#tesreconstruction" title="Permalink to this headline">¶</a></h2>
-<p>The <code class="docutils literal"><span class="pre">tesreconstruction</span></code> tool is a wrapper to perform the energy reconstruction of the photon events by means of two different implementations: <code class="docutils literal"><span class="pre">Rcmethod=PP</span></code> runs the preliminary branch developed by Philippe Peille and <code class="docutils literal"><span class="pre">Rcmethod=SIRENA</span></code> runs the SIRENA code in this documentation.</p>
-<p>SIRENA code takes a FITS input file of data, optionally performs the detection of the events, then grades them and finally reconstructs their energy following the algorithm selected by the user in the input command line of <code class="docutils literal"><span class="pre">tesreconstruction</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">tesreconstruction</span></code> tool is a wrapper to perform the energy reconstruction of the photon events by means of two different implementations: <code class="docutils literal notranslate"><span class="pre">Rcmethod=PP</span></code> runs the preliminary branch developed by Philippe Peille and <code class="docutils literal notranslate"><span class="pre">Rcmethod=SIRENA</span></code> runs the SIRENA code in this documentation.</p>
+<p>SIRENA code takes a FITS input file of data, optionally performs the detection of the events, then grades them and finally reconstructs their energy following the algorithm selected by the user in the input command line of <code class="docutils literal notranslate"><span class="pre">tesreconstruction</span></code>.</p>
 <p>The <a class="reference internal" href="SIRENA.html#inputfiles"><span class="std std-ref">input data</span></a> should be a FITS file with the data splitted into <a class="reference internal" href="SIRENA.html#records"><span class="std std-ref">records</span></a>.</p>
 <p>To run SIRENA implementation, the user must supply the following input parameters (see <a class="reference internal" href="SIRENA.html#reconmethods"><span class="std std-ref">Event Energy Determination: methods</span></a> for a detailed description in the context of the reconstruction methods to which they apply):</p>
-<span class="target" id="tesreconpars"></span><dl class="option">
-<dt id="cmdoption-arg-rcmethod">
-<code class="descname">Rcmethod</code><code class="descclassname">=&lt;SIRENA&gt;</code><a class="headerlink" href="#cmdoption-arg-rcmethod" title="Permalink to this definition">¶</a></dt>
-<dd><p>SIRENA Reconstruction method.</p>
+<span class="target" id="tesreconpars"></span><dl class="std option">
+<dt id="cmdoption-arg-Rcmethod">
+<span id="cmdoption-arg-rcmethod"></span><code class="sig-name descname">Rcmethod</code><code class="sig-prename descclassname">=&lt;PP|SIRENA&gt;</code><a class="headerlink" href="#cmdoption-arg-Rcmethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reconstruction method.</p>
+<p>Default: <em>SIRENA</em></p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-recordfile">
-<code class="descname">RecordFile</code><code class="descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-recordfile" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-RecordFile">
+<span id="cmdoption-arg-recordfile"></span><code class="sig-name descname">RecordFile</code><code class="sig-prename descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-RecordFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Input record FITS file.</p>
 <p>Default: <em>record.fits</em></p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-teseventfile">
-<code class="descname">TesEventFile</code><code class="descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-teseventfile" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-TesEventFile">
+<span id="cmdoption-arg-teseventfile"></span><code class="sig-name descname">TesEventFile</code><code class="sig-prename descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-TesEventFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Output event list FITS file.</p>
 <p>Default: <em>event.fits</em></p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-pulselength">
-<code class="descname">PulseLength</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-pulselength" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pulse length in samples.</p>
-<p>Default: 8192</p>
+<dl class="std option">
+<dt id="cmdoption-arg-PulseLength">
+<span id="cmdoption-arg-pulselength"></span><code class="sig-name descname">PulseLength</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-PulseLength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pulse length in samples. Only to be used if 0-padding is going to be used (different from -999 and lowewr than <a class="reference internal" href="#cmdoption-arg-OFLength"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFLength</span></code></a>).</p>
+<p>Default: -999</p>
+<p>Used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-eventlistsize">
-<code class="descname">EventListSize</code><code class="descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-eventlistsize" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-EventListSize">
+<span id="cmdoption-arg-eventlistsize"></span><code class="sig-name descname">EventListSize</code><code class="sig-prename descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-EventListSize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Default size of the event list.</p>
 <p>Default: 1000</p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-libraryfile">
-<code class="descname">LibraryFile</code><code class="descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-libraryfile" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-LibraryFile">
+<span id="cmdoption-arg-libraryfile"></span><code class="sig-name descname">LibraryFile</code><code class="sig-prename descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-LibraryFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>FITS file with calibration library.</p>
 <p>Default: <em>library.fits</em></p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="id3">
-<code class="descname">scaleFactor</code><code class="descclassname">=&lt;real&gt;</code><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
-<dd><p>Scale factor to apply to the fall time of the pulses to make possible a varying cut-off frequency of the low-pass filter (see <a class="reference internal" href="SIRENA.html#lpf"><span class="std std-ref">Low-Pass filtering</span></a>).</p>
-<p>If this parameter is very small, this is equivalent to avoid filtering (cut-off frequency of the low-pass filter is too high). If the parameter is too large, the low-pass filter band is too narrow, and not only noise is rejected during the filtering, but also the signal.</p>
-<p>Default: 0.0</p>
+<dl class="std option">
+<dt id="cmdoption-arg-0">
+<code class="sig-name descname">scaleFactor</code><code class="sig-prename descclassname">=&lt;real&gt;</code><a class="headerlink" href="#cmdoption-arg-0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scale factor to apply to make possible a variable cut-off frequency of the low-pass filter. In fact, the cut-off frequency of the filter is <img class="math" src="_images/math/1e5345dc083338f7aa6e0a9e0966a72970bc15f2.png" alt="1/(\pi \cdot sF)"/> and therefore, the box-car length is <img class="math" src="_images/math/6146c7d0b22f4ccf6a6562c2beb7887a99344545.png" alt="\pi \cdot sF \cdot samprate"/> (see <a class="reference internal" href="SIRENA.html#lpf"><span class="std std-ref">Low-Pass filtering</span></a>).</p>
+<p>If the <a class="reference internal" href="#cmdoption-arg-0"><code class="xref std std-option docutils literal notranslate"><span class="pre">scaleFactor</span></code></a> makes the box-car length <img class="math" src="_images/math/1237dffe831bfc3548386dca265d5d8160d736dc.png" alt="\leq 1"/> is equivalent to not filter (cut-off frequency of the low-pass filter is too high). If the <a class="reference internal" href="#cmdoption-arg-0"><code class="xref std std-option docutils literal notranslate"><span class="pre">scaleFactor</span></code></a> is too large, the low-pass filter band is too narrow, and not only noise is rejected during the filtering, but also the signal.</p>
+<p>Default: 0</p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="id4">
-<code class="descname">samplesUp</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#id4" title="Permalink to this definition">¶</a></dt>
-<dd><p>Number of consecutive samples up for threshold trespassing (only used in calibration run, and in production run with STC detection mode).</p>
+<dl class="std option">
+<dt id="cmdoption-arg-1">
+<code class="sig-name descname">samplesUp</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-1" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Number of consecutive samples up for threshold trespassing.</p>
 <p>Default: 3</p>
+</div></blockquote>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run with STC detection mode (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1 and <a class="reference internal" href="#cmdoption-arg-detectionMode"><code class="xref std std-option docutils literal notranslate"><span class="pre">detectionMode</span></code></a> = STC).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-samplesdown">
-<code class="descname">samplesDown</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-samplesdown" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-samplesDown">
+<span id="cmdoption-arg-samplesdown"></span><code class="sig-name descname">samplesDown</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-samplesDown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of consecutive samples below the threshold to look for other pulse (only used in production run with STC detection mode).</p>
 <p>Default: 4</p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="id5">
-<code class="descname">nSgms</code><code class="descclassname">=&lt;real&gt;</code><a class="headerlink" href="#id5" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-2">
+<code class="sig-name descname">nSgms</code><code class="sig-prename descclassname">=&lt;real&gt;</code><a class="headerlink" href="#cmdoption-arg-2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm.</p>
 <p>Default: 3.5</p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-detectsp">
-<code class="descname">detectSP</code><code class="descclassname">=&lt;0|1&gt;</code><a class="headerlink" href="#cmdoption-arg-detectsp" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-detectSP">
+<span id="cmdoption-arg-detectsp"></span><code class="sig-name descname">detectSP</code><code class="sig-prename descclassname">=&lt;0|1&gt;</code><a class="headerlink" href="#cmdoption-arg-detectSP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Detect secondary pulses (1) or not (0).</p>
 <p>Default: 1</p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="id6">
-<code class="descname">LrsT</code><code class="descclassname">=&lt;secs&gt;</code><a class="headerlink" href="#id6" title="Permalink to this definition">¶</a></dt>
-<dd><p>Running sum (RS) length for the RS raw energy estimation, in seconds (only used in calibration run).</p>
+<dl class="std option">
+<dt id="cmdoption-arg-3">
+<code class="sig-name descname">LrsT</code><code class="sig-prename descclassname">=&lt;secs&gt;</code><a class="headerlink" href="#cmdoption-arg-3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Running sum (RS) length for the RS raw energy estimation, in seconds.</p>
 <p>Default: 30E-6</p>
+<p>Only used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="id7">
-<code class="descname">LbT</code><code class="descclassname">=&lt;secs&gt;</code><a class="headerlink" href="#id7" title="Permalink to this definition">¶</a></dt>
-<dd><p>Baseline averaging length for the RS raw energy estimation, in seconds (only used in calibration run).</p>
-<p>Default: 1.E-3</p>
+<dl class="std option">
+<dt id="cmdoption-arg-4">
+<code class="sig-name descname">LbT</code><code class="sig-prename descclassname">=&lt;secs&gt;</code><a class="headerlink" href="#cmdoption-arg-4" title="Permalink to this definition">¶</a></dt>
+<dd><p>Baseline averaging length, in seconds.</p>
+<p>Default: 6.4E-3</p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
+<dl class="std option">
 <dt id="cmdoption-arg-monoenergy">
-<code class="descname">monoenergy</code><code class="descclassname">=&lt;eV&gt;</code><a class="headerlink" href="#cmdoption-arg-monoenergy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Monochromatic energy of the pulses in the input FITS file in eV (only used in calibration run).</p>
+<code class="sig-name descname">monoenergy</code><code class="sig-prename descclassname">=&lt;eV&gt;</code><a class="headerlink" href="#cmdoption-arg-monoenergy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Monochromatic energy of the pulses in the input FITS file in eV.</p>
+<p>Default: 6000.0</p>
+<p>Only used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-hduprecalwn">
-<code class="descname">hduPRECALWN</code><code class="descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-hduprecalwn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add or not the <em>PRECALWN</em> HDU in the library file (only used in calibration run).</p>
+<dl class="std option">
+<dt id="cmdoption-arg-hduPRECALWN">
+<span id="cmdoption-arg-hduprecalwn"></span><code class="sig-name descname">hduPRECALWN</code><code class="sig-prename descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-hduPRECALWN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add or not the <em>PRECALWN</em> HDU in the library file.</p>
 <p>Default: <em>no</em></p>
+<p>Only used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-hduprclofwm">
-<code class="descname">hduPRCLOFWM</code><code class="descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-hduprclofwm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add or not the <em>PRCLOFWM</em> HDU in the library file (only used in calibration run).</p>
+<dl class="std option">
+<dt id="cmdoption-arg-hduPRCLOFWM">
+<span id="cmdoption-arg-hduprclofwm"></span><code class="sig-name descname">hduPRCLOFWM</code><code class="sig-prename descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-hduPRCLOFWM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add or not the <em>PRCLOFWM</em> HDU in the library file.</p>
 <p>Default: <em>no</em></p>
+<p>Only used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-largefilter">
-<code class="descname">largeFilter</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-largefilter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Length (in samples) of the longest fixed filter (only used in calibration run).</p>
-<p>Default: -999</p>
+<dl class="std option">
+<dt id="cmdoption-arg-largeFilter">
+<span id="cmdoption-arg-largefilter"></span><code class="sig-name descname">largeFilter</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-largeFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Length (in samples) of the longest fixed filter.</p>
+<p>Default: 8192</p>
+<p>Only used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0).</p>
 </dd></dl>
 
-<dl class="option">
+<dl class="std option">
 <dt id="cmdoption-arg-opmode">
-<code class="descname">opmode</code><code class="descclassname">=&lt;0|1&gt;</code><a class="headerlink" href="#cmdoption-arg-opmode" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">opmode</code><code class="sig-prename descclassname">=&lt;0|1&gt;</code><a class="headerlink" href="#cmdoption-arg-opmode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calibration run for library creation (0) or energy reconstruction run (1).</p>
 <p>Default: 1</p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-detectionmode">
-<code class="descname">detectionMode</code><code class="descclassname">=&lt;AD | STC&gt;</code><a class="headerlink" href="#cmdoption-arg-detectionmode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adjusted Derivative (AD) or Single Threshold Crossing (STC). Not used in library creation mode (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal"><span class="pre">opmode</span></code></a> = 0).</p>
-<p>Default: STC</p>
+<dl class="std option">
+<dt id="cmdoption-arg-detectionMode">
+<span id="cmdoption-arg-detectionmode"></span><code class="sig-name descname">detectionMode</code><code class="sig-prename descclassname">=&lt;AD | STC&gt;</code><a class="headerlink" href="#cmdoption-arg-detectionMode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjusted Derivative (AD) or Single Threshold Crossing (STC). Not used in library creation mode (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0).</p>
+<p>Default: <em>STC</em></p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-noisefile">
-<code class="descname">NoiseFile</code><code class="descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-noisefile" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-NoiseFile">
+<span id="cmdoption-arg-noisefile"></span><code class="sig-name descname">NoiseFile</code><code class="sig-prename descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-NoiseFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Noise FITS file with noise spectrum.</p>
 <p>Default: <em>noise.fits</em></p>
+<p>Only used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-filterdomain">
-<code class="descname">FilterDomain</code><code class="descclassname">=&lt;T | F&gt;</code><a class="headerlink" href="#cmdoption-arg-filterdomain" title="Permalink to this definition">¶</a></dt>
-<dd><p>Filtering Domain: Time(T) or Frequency(F). Not used in library creation mode (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal"><span class="pre">opmode</span></code></a> = 0).</p>
+<dl class="std option">
+<dt id="cmdoption-arg-FilterDomain">
+<span id="cmdoption-arg-filterdomain"></span><code class="sig-name descname">FilterDomain</code><code class="sig-prename descclassname">=&lt;T | F&gt;</code><a class="headerlink" href="#cmdoption-arg-FilterDomain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filtering Domain: Time(T) or Frequency(F). Not used in library creation mode (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0).</p>
 <p>Default: <em>T</em></p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-filtermethod">
-<code class="descname">FilterMethod</code><code class="descclassname">=&lt;F0 | B0&gt;</code><a class="headerlink" href="#cmdoption-arg-filtermethod" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-FilterMethod">
+<span id="cmdoption-arg-filtermethod"></span><code class="sig-name descname">FilterMethod</code><code class="sig-prename descclassname">=&lt;F0 | B0&gt;</code><a class="headerlink" href="#cmdoption-arg-FilterMethod" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filtering Method: <em>F0</em> (deleting the zero frequency bin) or <em>B0</em> (deleting the baseline).</p>
 <p>Default: <em>F0</em></p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-energymethod">
-<code class="descname">EnergyMethod</code><code class="descclassname">=&lt;OPTFILT | WEIGHT | WEIGHTN | I2R | I2RALL | I2RNOL | IRFITTED | PCA&gt;</code><a class="headerlink" href="#cmdoption-arg-energymethod" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="SIRENA.html#reconmethods"><span class="std std-ref">Event Energy Determination: methods</span></a> Energy calculation Method: OPTFILT (Optimal filtering), WEIGHT (Covariance matrices), WEIGHTN (Covariance matrices, first order), I2R, I2RALL, I2RNOL and I2RFITTED (Linear Transformations), or PCA (Principal Component Analysis). Not used in library creation mode (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal"><span class="pre">opmode</span></code></a> = 0).</p>
-<p>If <a class="reference internal" href="#cmdoption-arg-energymethod"><code class="xref std std-option docutils literal"><span class="pre">EnergyMethod</span></code></a> = OPTFILT and <a class="reference internal" href="#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> &lt; <a class="reference internal" href="#cmdoption-arg-oflength"><code class="xref std std-option docutils literal"><span class="pre">OFLength</span></code></a>, 0-padding is applied (<a class="reference internal" href="#cmdoption-arg-oflength"><code class="xref std std-option docutils literal"><span class="pre">OFLength</span></code></a> length filters will be used but padding with 0’s from <a class="reference internal" href="#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a>).</p>
+<dl class="std option">
+<dt id="cmdoption-arg-5">
+<code class="sig-name descname">EnergyMethod</code><code class="sig-prename descclassname">=&lt;OPTFILT | WEIGHT | WEIGHTN | I2R | IRFITTED | PCA&gt;</code><a class="headerlink" href="#cmdoption-arg-5" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="SIRENA.html#reconmethods"><span class="std std-ref">Event Energy Determination: methods</span></a> Energy calculation Method: OPTFILT (Optimal filtering), WEIGHT (Covariance matrices), WEIGHTN (Covariance matrices, first order), I2R and I2RFITTED (Linear Transformations), or PCA (Principal Component Analysis).</p>
+<p>If <a class="reference internal" href="#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = OPTFILT and <a class="reference internal" href="#cmdoption-arg-PulseLength"><code class="xref std std-option docutils literal notranslate"><span class="pre">PulseLength</span></code></a> &lt; <a class="reference internal" href="#cmdoption-arg-OFLength"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFLength</span></code></a>, 0-padding is applied (<a class="reference internal" href="#cmdoption-arg-OFLength"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFLength</span></code></a> length filters will be used but padding with 0’s from <a class="reference internal" href="#cmdoption-arg-PulseLength"><code class="xref std std-option docutils literal notranslate"><span class="pre">PulseLength</span></code></a>).</p>
 <p>Default: <em>OPTFILT</em></p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-filteev">
-<code class="descname">filtEeV</code><code class="descclassname">=&lt;eV&gt;</code><a class="headerlink" href="#cmdoption-arg-filteev" title="Permalink to this definition">¶</a></dt>
-<dd><p>Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R, I2RALL, I2RNOL and I2RFITTED).</p>
+<dl class="std option">
+<dt id="cmdoption-arg-filtEeV">
+<span id="cmdoption-arg-filteev"></span><code class="sig-name descname">filtEeV</code><code class="sig-prename descclassname">=&lt;eV&gt;</code><a class="headerlink" href="#cmdoption-arg-filtEeV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED).</p>
 <p>Default: 6000</p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-ofnoise">
-<code class="descname">OFNoise</code><code class="descclassname">=&lt;NSD | WEIGHTM&gt;</code><a class="headerlink" href="#cmdoption-arg-ofnoise" title="Permalink to this definition">¶</a></dt>
-<dd><p>It has only sense if <a class="reference internal" href="#cmdoption-arg-energymethod"><code class="xref std std-option docutils literal"><span class="pre">EnergyMethod</span></code></a> = OPTFILT and it means to use the noise spectrum density (NSD) or the noise weight matrix (WEIGHTM).</p>
+<dl class="std option">
+<dt id="cmdoption-arg-6">
+<code class="sig-name descname">Ifit</code><code class="sig-prename descclassname">=&lt;adu&gt;</code><a class="headerlink" href="#cmdoption-arg-6" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constant to apply the I2RFITTED conversion.</p>
+<p>Default: 7000.0</p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1) if <a class="reference internal" href="#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = I2RFITTED.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-arg-OFNoise">
+<span id="cmdoption-arg-ofnoise"></span><code class="sig-name descname">OFNoise</code><code class="sig-prename descclassname">=&lt;NSD | WEIGHTM&gt;</code><a class="headerlink" href="#cmdoption-arg-OFNoise" title="Permalink to this definition">¶</a></dt>
+<dd><p>It has only sense if <a class="reference internal" href="#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = OPTFILT and it means to use the noise spectrum density (NSD) or the noise weight matrix (WEIGHTM).</p>
 <p>Default: <em>NSD</em></p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-lagsornot">
-<code class="descname">LagsOrNot</code><code class="descclassname">=&lt;0|1&gt;</code><a class="headerlink" href="#cmdoption-arg-lagsornot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Use LAGS == 1 or NOLAGS == 0 to indicate whether subsampling pulse arrival time is required. Currently only implemented for <a class="reference internal" href="#cmdoption-arg-energymethod"><code class="xref std std-option docutils literal"><span class="pre">EnergyMethod</span></code></a> =OPTFILT, and <a class="reference internal" href="#cmdoption-arg-energymethod"><code class="xref std std-option docutils literal"><span class="pre">EnergyMethod</span></code></a> =WEIGHTN combined with <a class="reference internal" href="#cmdoption-arg-oflib"><code class="xref std std-option docutils literal"><span class="pre">OFLib</span></code></a> =yes.</p>
+<dl class="std option">
+<dt id="cmdoption-arg-LagsOrNot">
+<span id="cmdoption-arg-lagsornot"></span><code class="sig-name descname">LagsOrNot</code><code class="sig-prename descclassname">=&lt;0|1&gt;</code><a class="headerlink" href="#cmdoption-arg-LagsOrNot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use LAGS == 1 or NOLAGS == 0 to indicate whether subsampling pulse arrival time is required. Currently only implemented for <a class="reference internal" href="#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = OPTFILT, and <a class="reference internal" href="#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = WEIGHTN combined with <a class="reference internal" href="#cmdoption-arg-OFLib"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFLib</span></code></a> = yes.</p>
 <p>Default: 1</p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-nlags">
-<code class="descname">nLags</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-nlags" title="Permalink to this definition">¶</a></dt>
-<dd><p>Number of lags (samples) to be used if <a class="reference internal" href="#cmdoption-arg-lagsornot"><code class="xref std std-option docutils literal"><span class="pre">LagsOrNot</span></code></a> =1. It has to be a positive odd number.</p>
+<dl class="std option">
+<dt id="cmdoption-arg-nLags">
+<span id="cmdoption-arg-nlags"></span><code class="sig-name descname">nLags</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-nLags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of lags (samples) to be used if <a class="reference internal" href="#cmdoption-arg-LagsOrNot"><code class="xref std std-option docutils literal notranslate"><span class="pre">LagsOrNot</span></code></a> = 1. It has to be a positive odd number.</p>
 <p>Default: 9</p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-fitting35">
-<code class="descname">Fitting35</code><code class="descclassname">=&lt;3|5&gt;</code><a class="headerlink" href="#cmdoption-arg-fitting35" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-Fitting35">
+<span id="cmdoption-arg-fitting35"></span><code class="sig-name descname">Fitting35</code><code class="sig-prename descclassname">=&lt;3|5&gt;</code><a class="headerlink" href="#cmdoption-arg-Fitting35" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of lags to analytically calculate a parabola (3) or to fit a parabola (5).</p>
 <p>Default: 3</p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-ofiter">
-<code class="descname">OFIter</code><code class="descclassname">=&lt;0|1&gt;</code><a class="headerlink" href="#cmdoption-arg-ofiter" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-OFIter">
+<span id="cmdoption-arg-ofiter"></span><code class="sig-name descname">OFIter</code><code class="sig-prename descclassname">=&lt;0|1&gt;</code><a class="headerlink" href="#cmdoption-arg-OFIter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterate (1) or not iterate (0) to look for the closest energy interval. When iterations are activated, there will be more iterations if the calculated energy is out of the interval [Ealpha, Ebeta] straddling the predicted energy according the pulse shape.</p>
 <p>Default: 0</p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-oflib">
-<code class="descname">OFLib</code><code class="descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-oflib" title="Permalink to this definition">¶</a></dt>
-<dd><p>Work with a library with optimal filters (OFLib=yes) or instead do Optimal Filter calculation on-the-fly (OFLib=no).</p>
-<p>Default: yes</p>
+<dl class="std option">
+<dt id="cmdoption-arg-OFLib">
+<span id="cmdoption-arg-oflib"></span><code class="sig-name descname">OFLib</code><code class="sig-prename descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-OFLib" title="Permalink to this definition">¶</a></dt>
+<dd><p>Work with a library with optimal filters (<a class="reference internal" href="#cmdoption-arg-OFLib"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFLib</span></code></a> = yes) or instead do Optimal Filter calculation on-the-fly (<a class="reference internal" href="#cmdoption-arg-OFLib"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFLib</span></code></a> = no).</p>
+<p>Default: <em>yes</em></p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-ofstrategy">
-<code class="descname">OFStrategy</code><code class="descclassname">=&lt;FREE | BYGRADE | FIXED&gt;</code><a class="headerlink" href="#cmdoption-arg-ofstrategy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Optimal Filter length Strategy: FREE (no length restriction), BYGRADE (length according to event grading) or FIXED (fixed length). These last 2 options are only for checking and development purposes; a normal run with <em>on-the-fly</em> calculations will be done with <a class="reference internal" href="#cmdoption-arg-ofstrategy"><code class="xref std std-option docutils literal"><span class="pre">OFStrategy</span></code></a> = <em>FREE</em>.
-Only used if <a class="reference internal" href="#cmdoption-arg-oflib"><code class="xref std std-option docutils literal"><span class="pre">OFLib</span></code></a> =no. Not used in library creation mode (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal"><span class="pre">opmode</span></code></a> = 0).</p>
+<dl class="std option">
+<dt id="cmdoption-arg-OFStrategy">
+<span id="cmdoption-arg-ofstrategy"></span><code class="sig-name descname">OFStrategy</code><code class="sig-prename descclassname">=&lt;FREE | BYGRADE | FIXED&gt;</code><a class="headerlink" href="#cmdoption-arg-OFStrategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optimal Filter length Strategy: FREE (no length restriction), BYGRADE (length according to event grading) or FIXED (fixed length). These last 2 options are only for checking and development purposes; a normal run with <em>on-the-fly</em> calculations will be done with <a class="reference internal" href="#cmdoption-arg-OFStrategy"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFStrategy</span></code></a> = <em>FREE</em>.</p>
 <p>Default: <em>BYGRADE</em></p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1) when <a class="reference internal" href="#cmdoption-arg-OFLib"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFLib</span></code></a> = no.</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-oflength">
-<code class="descname">OFLength</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-oflength" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fixed Optimal Filter length (only if <a class="reference internal" href="#cmdoption-arg-ofstrategy"><code class="xref std std-option docutils literal"><span class="pre">OFStrategy</span></code></a> = <strong>FIXED</strong>,  <a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal"><span class="pre">opmode</span></code></a> = 1 and <a class="reference internal" href="#cmdoption-arg-oflib"><code class="xref std std-option docutils literal"><span class="pre">OFLib</span></code></a> =no).</p>
+<dl class="std option">
+<dt id="cmdoption-arg-OFLength">
+<span id="cmdoption-arg-oflength"></span><code class="sig-name descname">OFLength</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-OFLength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fixed Optimal Filter length.</p>
 <p>Default: 8192</p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1) when <a class="reference internal" href="#cmdoption-arg-OFLib"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFLib</span></code></a> = no and <a class="reference internal" href="#cmdoption-arg-OFStrategy"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFStrategy</span></code></a> = <strong>FIXED</strong>.</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-prebuffer">
-<code class="descname">preBuffer</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-prebuffer" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-preBuffer">
+<span id="cmdoption-arg-prebuffer"></span><code class="sig-name descname">preBuffer</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-preBuffer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Some samples added before the starting time of a pulse.</p>
 <p>Default: 0</p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
+<dl class="std option">
 <dt id="cmdoption-arg-intermediate">
-<code class="descname">intermediate</code><code class="descclassname">=&lt;0|1&gt;</code><a class="headerlink" href="#cmdoption-arg-intermediate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write intermediate files: Y(1), N(0)?</p>
+<code class="sig-name descname">intermediate</code><code class="sig-prename descclassname">=&lt;0|1&gt;</code><a class="headerlink" href="#cmdoption-arg-intermediate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write intermediate files: yes(1), no(0)?</p>
 <p>Default: 0</p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-detectfile">
-<code class="descname">detectFile</code><code class="descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-detectfile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Intermediate detections FITS file (if <a class="reference internal" href="#cmdoption-arg-intermediate"><code class="xref std std-option docutils literal"><span class="pre">intermediate</span></code></a> = 1).</p>
+<dl class="std option">
+<dt id="cmdoption-arg-detectFile">
+<span id="cmdoption-arg-detectfile"></span><code class="sig-name descname">detectFile</code><code class="sig-prename descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-detectFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Intermediate detections FITS file (if <a class="reference internal" href="#cmdoption-arg-intermediate"><code class="xref std std-option docutils literal notranslate"><span class="pre">intermediate</span></code></a> = 1).</p>
 <p>Default: <em>detections.fits</em></p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-filterfile">
-<code class="descname">filterFile</code><code class="descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-filterfile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Intermediate filters FITS file (if <a class="reference internal" href="#cmdoption-arg-intermediate"><code class="xref std std-option docutils literal"><span class="pre">intermediate</span></code></a> = 1).</p>
-<p>Default: <em>filters.fits</em></p>
-</dd></dl>
-
-<dl class="option">
-<dt id="cmdoption-arg-errort">
-<code class="descname">errorT</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-errort" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-errorT">
+<span id="cmdoption-arg-errort"></span><code class="sig-name descname">errorT</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-errorT" title="Permalink to this definition">¶</a></dt>
 <dd><p>Additional error (in samples) added to the detected time. Logically, it changes the reconstructed energies. For deveplopment purposes.</p>
 <p>Default: 0</p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-sum0filt">
-<code class="descname">Sum0Filt</code><code class="descclassname">=&lt;0|1&gt;</code><a class="headerlink" href="#cmdoption-arg-sum0filt" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-Sum0Filt">
+<span id="cmdoption-arg-sum0filt"></span><code class="sig-name descname">Sum0Filt</code><code class="sig-prename descclassname">=&lt;0|1&gt;</code><a class="headerlink" href="#cmdoption-arg-Sum0Filt" title="Permalink to this definition">¶</a></dt>
 <dd><p>If 0-padding, subtract (1) or not subtract (0) the sum of the filter. For deveplopment purposes.</p>
 <p>Default: 0</p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-tstartpulse1">
-<code class="descname">tstartPulse1</code><code class="descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-tstartpulse1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Start time (in samples) of the first pulse (0  if detection should be performed by the system; greater than 0 if provided by the user) or file name containing the tstart (in seconds) of every pulse. For development purposes.</p>
+<dl class="std option">
+<dt id="cmdoption-arg-tstartPulse1">
+<span id="cmdoption-arg-tstartpulse1"></span><code class="sig-name descname">tstartPulse1</code><code class="sig-prename descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-tstartPulse1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start time (in samples) of the first pulse (0 if detection should be performed by the system; greater than 0 if provided by the user) or file name containing the tstart (in seconds) of every pulse. For development purposes.</p>
 <p>Default: 0</p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-tstartpulse2">
-<code class="descname">tstartPulse2</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-tstartpulse2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Start time (in samples) of the second pulse in the record (0  if detection should be performed by the system; greater than 0 if provided by the user). For development purposes.</p>
+<dl class="std option">
+<dt id="cmdoption-arg-tstartPulse2">
+<span id="cmdoption-arg-tstartpulse2"></span><code class="sig-name descname">tstartPulse2</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-tstartPulse2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start time (in samples) of the second pulse in the record (0 if detection should be performed by the system; greater than 0 if provided by the user). For development purposes.</p>
 <p>Default: 0</p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-tstartpulse3">
-<code class="descname">tstartPulse3</code><code class="descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-tstartpulse3" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-tstartPulse3">
+<span id="cmdoption-arg-tstartpulse3"></span><code class="sig-name descname">tstartPulse3</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-tstartPulse3" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start time (in samples) of the third pulse in the record (0  if detection should be performed by the system; greater than 0 if provided by the user). For development purposes.</p>
 <p>Default: 0</p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-energypca1">
-<code class="descname">energyPCA1</code><code class="descclassname">=&lt;real&gt;</code><a class="headerlink" href="#cmdoption-arg-energypca1" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-energyPCA1">
+<span id="cmdoption-arg-energypca1"></span><code class="sig-name descname">energyPCA1</code><code class="sig-prename descclassname">=&lt;real&gt;</code><a class="headerlink" href="#cmdoption-arg-energyPCA1" title="Permalink to this definition">¶</a></dt>
 <dd><p>First energy (in eV) (only for PCA).</p>
 <p>Default: 500</p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1) and <a class="reference internal" href="#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = PCA.</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-energypca2">
-<code class="descname">energyPCA2</code><code class="descclassname">=&lt;real&gt;</code><a class="headerlink" href="#cmdoption-arg-energypca2" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-energyPCA2">
+<span id="cmdoption-arg-energypca2"></span><code class="sig-name descname">energyPCA2</code><code class="sig-prename descclassname">=&lt;real&gt;</code><a class="headerlink" href="#cmdoption-arg-energyPCA2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Second energy (in eV) (only for PCA).</p>
 <p>Default: 1000</p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1) and <a class="reference internal" href="#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = PCA.</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="cmdoption-arg-xmlfile">
-<code class="descname">XMLFile</code><code class="descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-xmlfile" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-XMLFile">
+<span id="cmdoption-arg-xmlfile"></span><code class="sig-name descname">XMLFile</code><code class="sig-prename descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-XMLFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>XML input FITS file with instrument definition.</p>
 <p>Default: <em>xifu_pipeline.xml</em></p>
+<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
-<dt id="id8">
-<code class="descname">clobber</code><code class="descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#id8" title="Permalink to this definition">¶</a></dt>
+<dl class="std option">
+<dt id="cmdoption-arg-7">
+<code class="sig-name descname">clobber</code><code class="sig-prename descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-7" title="Permalink to this definition">¶</a></dt>
 <dd><p>Overwrite output files if they exist.</p>
 <p>Default: <em>no</em></p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
-<dl class="option">
+<dl class="std option">
 <dt id="cmdoption-arg-history">
-<code class="descname">history</code><code class="descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-history" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">history</code><code class="sig-prename descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-history" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write program parameters into output FITS file.</p>
 <p>Default: <em>yes</em></p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
+<p>The sampling rate is calculated by using some keywords in the input FITS file. In case of <code class="docutils literal notranslate"><span class="pre">tessim</span></code> simulated data files, using the <code class="docutils literal notranslate"><span class="pre">DELTAT</span></code> keyword <em>samplingRate=1/deltat</em>. In case of <code class="docutils literal notranslate"><span class="pre">xifusim</span></code> simulated data files, every detector type defines a master clock-rate <code class="docutils literal notranslate"><span class="pre">TCLOCK</span></code> and the sampling rate is calculated either from a given decimation factor <code class="docutils literal notranslate"><span class="pre">DEC_FAC</span></code> (FDM and NOMUX) as <em>samplingRate=1/(tclock·dec_fac)</em>, or from the row period  <code class="docutils literal notranslate"><span class="pre">P_ROW</span></code> and the number of rows <code class="docutils literal notranslate"><span class="pre">NUMROW</span></code> (TDM) as <em>samplingRate=1/(tclock·numrow·p_row)</em>. In case of old simulated files, the sampling rate could be read from the <code class="docutils literal notranslate"><span class="pre">HISTORY</span></code> keyword in the <em>Primary</em> HDU or even from the input XML file. If the sampling frequency can not be get from the input files after all, a message will ask the user to include the <code class="docutils literal notranslate"><span class="pre">DELTAT</span></code> keyword (inverse of the sampling rate) in the input FITS file before running again.</p>
 <p>The output file will also be a FITS file storing one event per row with the following information in the HDU named <em>EVENTS</em>:</p>
 <ul class="simple">
-<li><strong>TIME</strong>: arrival time of the event (in s)</li>
-<li><strong>SIGNAL</strong>: energy of the event (in keV)</li>
-<li><strong>AVG4SD</strong>: average of the first 4 samples of the derivative of the pulse</li>
-<li><strong>ELOWRES</strong>: energy provided by a low resolution energy estimator filtering with a 4-samples-length filter (in keV)</li>
-<li><strong>GRADE1</strong>: length of the filter used, i.e., the distance to the following pulse (in samples) or the <a class="reference internal" href="#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> if the next event is further than this value or if there are no more events in the same record</li>
-<li><strong>GRADE2</strong>: distance to the end of the preceding pulse (in samples). If pulse is the first event in the record, this is fixed to the <a class="reference internal" href="#cmdoption-arg-pulselength"><code class="xref std std-option docutils literal"><span class="pre">PulseLength</span></code></a> value</li>
-<li><strong>PHI</strong>: arrival phase (offset relative to the central point of the parabola) (in samples)</li>
-<li><strong>LAGS</strong>: number of samples shifted to find the maximum of the parabola</li>
-<li><strong>BSLN</strong>: mean value of the baseline in general ‘before’ a pulse (according the value in samples of <a class="reference internal" href="#id7"><code class="xref std std-option docutils literal"><span class="pre">LbT</span></code></a>)</li>
-<li><strong>RMSBSLN</strong>: standard deviation of the baseline in general ‘before’ a pulse (according the value in samples of <a class="reference internal" href="#id7"><code class="xref std std-option docutils literal"><span class="pre">LbT</span></code></a>)</li>
-<li><strong>PIX_ID</strong>: pixel number</li>
-<li><strong>PH_ID</strong>: photon number identification for cross matching with the impact list</li>
-<li><strong>GRADING</strong>: Pulse grade (HighRes=1, MidRes=2, LimRes=3, LowRes=4, Rejected=-1, Pileup=-2)</li>
+<li><p><strong>TIME</strong>: arrival time of the event (in s)</p></li>
+<li><p><strong>SIGNAL</strong>: energy of the event (in keV)</p></li>
+<li><p><strong>AVG4SD</strong>: average of the first 4 samples of the derivative of the pulse</p></li>
+<li><p><strong>ELOWRES</strong>: energy provided by a low resolution energy estimator filtering with a 4-samples-length filter (in keV)</p></li>
+<li><p><strong>GRADE1</strong>: length of the filter used, i.e., the distance to the following pulse (in samples) or the pulse length if the next event is further than this value or if there are no more events in the same record</p></li>
+<li><p><strong>GRADE2</strong>: distance to the end of the preceding pulse (in samples). If pulse is the first event in the record, this is fixed to the pulse length value</p></li>
+<li><p><strong>PHI</strong>: arrival phase (offset relative to the central point of the parabola) (in samples)</p></li>
+<li><p><strong>LAGS</strong>: number of samples shifted to find the maximum of the parabola</p></li>
+<li><p><strong>BSLN</strong>: mean value of the baseline in general ‘before’ a pulse (according the value in samples of <a class="reference internal" href="#cmdoption-arg-4"><code class="xref std std-option docutils literal notranslate"><span class="pre">LbT</span></code></a>)</p></li>
+<li><p><strong>RMSBSLN</strong>: standard deviation of the baseline in general ‘before’ a pulse (according the value in samples of <a class="reference internal" href="#cmdoption-arg-4"><code class="xref std std-option docutils literal notranslate"><span class="pre">LbT</span></code></a>)</p></li>
+<li><p><strong>PIX_ID</strong>: pixel number</p></li>
+<li><p><strong>PH_ID</strong>: photon number identification for cross matching with the impact list</p></li>
+<li><p><strong>RISETIME</strong>: rise time of the event (in s)</p></li>
+<li><p><strong>FALLTIME</strong>: fall time of the event (in s)</p></li>
+<li><p><strong>GRADING</strong>: Pulse grade (HighRes=1, MidRes=2, LimRes=3, LowRes=4, Rejected=-1, Pileup=-2)</p></li>
 </ul>
 </div>
 <div class="section" id="xifusim">
-<span id="id9"></span><h2>xifusim<a class="headerlink" href="#xifusim" title="Permalink to this headline">¶</a></h2>
+<span id="id3"></span><h2>xifusim<a class="headerlink" href="#xifusim" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference external" href="http://www.sternwarte.uni-erlangen.de/research/sixte/">http://www.sternwarte.uni-erlangen.de/research/sixte/</a></p>
 </div>
 <div class="section" id="tesconstpileup">
-<span id="id10"></span><h2>tesconstpileup<a class="headerlink" href="#tesconstpileup" title="Permalink to this headline">¶</a></h2>
+<span id="id4"></span><h2>tesconstpileup<a class="headerlink" href="#tesconstpileup" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference external" href="http://www.sternwarte.uni-erlangen.de/research/sixte/">http://www.sternwarte.uni-erlangen.de/research/sixte/</a></p>
 </div>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -620,12 +688,13 @@ Only used if <a class="reference internal" href="#cmdoption-arg-oflib"><code cla
              >previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
- 
+
+        <li class="nav-item nav-item-this"><a href="">SIRENA Tools CLI</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2020, Bea Cobo &amp; Maite Ceballos (IFCA).
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
     </div>
   </body>
 </html>

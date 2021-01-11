@@ -876,7 +876,9 @@ Search functions by name at :ref:`genindex`.
             
         - Conversion according to :option:`EnergyMethod` = **I2RFITTED**:
         
-            :math:`R/V0 = -1/(I_{fit}+ADC)` being :math:`I_{fit}` = ``ADU_BIAS``
+        ..    :math:`R/V0 = -1/(I_{fit}+ADC)` being :math:`I_{fit}` = ``ADU_BIAS``
+        
+            :math:`R/V0 = -1/(I_{fit}+ADC)` being :math:`I_{fit}` value an input parameter
         
     
     If the ``ADU_CNV`` keyword is NOT in the input FITS file and :cpp:member:`invector` contains the **ADC** column data from the input FITS file:
@@ -891,7 +893,9 @@ Search functions by name at :ref:`genindex`.
     
         - Conversion according to :option:`EnergyMethod` = **I2RFITTED**  
 
-            :math:`R/V0 = -1/(I_{fit}+ADC)` being :math:`I_{fit}=I0\_START(adu)=I0\_START(A)/aducnv(A/adu)`
+            .. :math:`R/V0 = -1/(I_{fit}+ADC)` being :math:`I_{fit}=I0\_START(adu)=I0\_START(A)/aducnv(A/adu)`
+            
+            :math:`R/V0 = -1/(I_{fit}+ADC)` being :math:`I_{fit}` value an input parameter
         
     **Members/Variables**
 
