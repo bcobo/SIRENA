@@ -7807,7 +7807,7 @@ resize_mf_lowres = 4;
                 str.clear();
                 EP_EXIT_ERROR(message,EPFAIL);
             }
-            if ((tstartSamplesRecord-preBuffer < 0) ||(tstartSamplesRecord-preBuffer+resize_mf > recordAux->size-1))    
+            if ((tstartSamplesRecord-preBuffer < 0) ||(tstartSamplesRecord-preBuffer+resize_mf > recordAux->size))    
             {
                 sprintf(valERROR,"%d",__LINE__+6);
                 string str(valERROR);
@@ -8776,7 +8776,7 @@ resize_mf_lowres = 4;
                 str.clear();
                 EP_EXIT_ERROR(message,EPFAIL);
             }
-            if ((tstartSamplesRecord-preBuffer < 0) ||(tstartSamplesRecord-preBuffer+resize_mf > recordAux->size-1))  
+            if ((tstartSamplesRecord-preBuffer < 0) ||(tstartSamplesRecord-preBuffer+resize_mf > recordAux->size))  
             {
                 sprintf(valERROR,"%d",__LINE__+6);
                 string str(valERROR);
