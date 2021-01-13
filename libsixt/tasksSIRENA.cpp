@@ -238,6 +238,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
             message = "Cannot run routine convertI2R";
             EP_EXIT_ERROR(message,EPFAIL);
         }
+        gsl_vector_scale(invector,100000);
     }
     
     for (int i=0;i<invector->size;i++)	// Because in 'runEnergy' the record (TesRecord) is used => The I2R or I2RFITTED transformed record has to be used
@@ -253,6 +254,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
         EP_EXIT_ERROR(message,EPFAIL);
     }
     gsl_vector_free(invectorOriginal); invectorOriginal = 0;
+    log_trace("After detecting...");
     
     // From this point forward, I2R and I2RFITTED are completely equivalent to OPTFILT
     if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
@@ -2161,6 +2163,9 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
     double scaleFactor = (*reconstruct_init)->scaleFactor;
     //int sizePulse_b = (*reconstruct_init)->pulse_length;
     int sizePulse_b = ((*reconstruct_init)->pulse_length,(*reconstruct_init)->largeFilter);
+    //cout<<"(*reconstruct_init)->pulse_length: "<<(*reconstruct_init)->pulse_length<<endl;
+    //cout<<"(*reconstruct_init)->largeFilter: "<<(*reconstruct_init)->largeFilter<<endl;
+    //cout<<"sizePulse_b: "<<sizePulse_b<<endl;
     int samplesUp = (*reconstruct_init)->samplesUp;
     double nSgms = (*reconstruct_init)->nSgms;
     double Lrs = (int) ((*reconstruct_init)->LrsT*samprate);	// Running sum length (in the RS filter case): 'LrsT' in samples
@@ -2328,6 +2333,7 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
         }
     }
     (*reconstruct_init)->threshold = threshold;
+    log_debug("procRecord: After finding pulses");
     
     // Write test info
     if ((*reconstruct_init)->intermediate == 1)
@@ -2341,6 +2347,7 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
     gsl_vector_free(recordDERIVATIVEOriginal); recordDERIVATIVEOriginal = 0;
     
     //cout<<"numPulses: "<<numPulses<<endl;
+    log_debug("**numPulses: %i",numPulses);
     
     // Calculate the tend of the found pulses and check if the pulse is saturated
     // 0 => Standard (good) pulses
@@ -2397,6 +2404,7 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
     }
     }*/
     }
+    log_debug("procRecord: After calculating tend");
     
     // Calculate the baseline before a pulse (in general 'before') => To be written in BSLN column in the output FITS file
     gsl_vector *Lbgsl = gsl_vector_alloc((*reconstruct_init)->maxPulsesPerRecord);	// If there is no free-pulses segments longer than Lb=>
@@ -2422,6 +2430,7 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
         }
         //}
     }
+    log_debug("procRecord: After calculating the baseline");
     
     // Obtain the approximate rise and fall times of each pulse
     // It is not necessary to check the allocation because '(*reconstruct_init)->maxPulsesPerRecord'='EventListSize'(input parameter) must already be > 0
@@ -2434,11 +2443,11 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
         message = "Cannot run routine obtainRiseFallTimes to calculate rise and fall times";
         EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
     }
+    log_debug("procRecord: After obtaining rise and fall times");
     
     // Load the found pulses data in the input/output 'foundPulses' structure
     foundPulses->ndetpulses = numPulses;
     foundPulses->pulses_detected = new PulseDetected[numPulses];
-    log_debug("**numPulses: %i",numPulses);
     //cout<<"numPulses : "<<numPulses<<endl;
     for (int i=0;i<numPulses;i++)
     {
@@ -2576,10 +2585,10 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
         //log_debug("Pulse %i tstart=%f maxDER=%f samp1DER=%f pulse_duration=%i quality=%f lags=%f",i,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].maxDER,gsl_vector_get(samp1DERgsl,i),foundPulses->pulses_detected[i].pulse_duration,foundPulses->pulses_detected[i].quality,gsl_vector_get(lagsgsl,i));
         //cout<<"Bgsl = "<<foundPulses->pulses_detected[i].bsln<<endl;
         //cout<<"rmsBgsl = "<<foundPulses->pulses_detected[i].rmsbsln<<endl;
-        log_debug("Pulse %d", i);
-        log_debug("tstart= %f", gsl_vector_get(tstartgsl,i));
-        log_debug("tend= %f", gsl_vector_get(tendgsl,i));
-        log_debug("pulse duration %d", foundPulses->pulses_detected[i].pulse_duration);
+        log_debug("Pulse %d tstart= %f tend= %f pulse duration= %d quality= %i", i, gsl_vector_get(tstartgsl,i), gsl_vector_get(tendgsl,i), foundPulses->pulses_detected[i].pulse_duration, foundPulses->pulses_detected[i].quality);
+        //log_debug("tstart= %f", gsl_vector_get(tstartgsl,i));
+        //log_debug("tend= %f", gsl_vector_get(tendgsl,i));
+        //log_debug("pulse duration %d", foundPulses->pulses_detected[i].pulse_duration);
     }
     
     
@@ -3028,6 +3037,7 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
         str.clear();
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
+    
     yhisto = gsl_vector_alloc(nBins);	// Y-axis of the pulseheights histogram
     //cout<<gsl_vector_get(pulseheightAUX2,0)<<" "<<gsl_vector_get(pulseheightAUX2,1)<<" "<<gsl_vector_get(pulseheightAUX2,2)<<endl;
     if (createHisto(pulseheightAUX2, nBins, &xhisto, &yhisto))
@@ -3048,6 +3058,7 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
         else 				tstartnext = gsl_vector_get(tstart,i+1);
         
         // Check if the pulse is piled-up or not
+        //if ((gsl_vector_get(pulseheight,i) < maximumpulseheight-0.1*maximumpulseheight) || (gsl_vector_get(pulseheight,i) > maximumpulseheight+0.1*maximumpulseheight) || (tstartnext-gsl_vector_get(tstart,i) <= reconstruct_init->pulse_length) || ((gsl_vector_get(quality,i) != 0) && (gsl_vector_get(quality,i) != 10)))
         if ((gsl_vector_get(pulseheight,i) < maximumpulseheight-0.1*maximumpulseheight) || (gsl_vector_get(pulseheight,i) > maximumpulseheight+0.1*maximumpulseheight) || (tstartnext-gsl_vector_get(tstart,i) <= pulseLengthCT) || ((gsl_vector_get(quality,i) != 0) && (gsl_vector_get(quality,i) != 10)))
         {
             gsl_vector_set(nonpileup,i,0);
@@ -6946,7 +6957,7 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
  *           R/R0 = 1 - (abs(DeltaI)/I_BIAS)/(1+abs(DeltaI)/I_BIAS) (I_BIAS is a keyword in the events file)
  * 
  *      - Conversion according to 'EnergyMethod'=I2RFITTED:
- *          R/V0 = -1/(Ifit+ADC) being Ifit=ADU_BIAS
+ *          R/V0 = -1/(Ifit+ADC) being Ifit an input parameter
  * 
  * If the ADU_CNV keyword is not in the events file and 'invector' contains tha ADC column data:
  *
@@ -6959,7 +6970,7 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
  *          R/R0 = 1 - 1*(abs(DeltaI)/I0_START)/(1+abs(DeltaI)/I0_START)
  * 
  *      - Conversion according to 'EnergyMethod'=I2RFITTED:
- *          R/V0 = -1/(Ifit+ADC) being Ifit=I0_START(adu)=I0_START(A)/aducnv(A/adu)
+ *          R/V0 = -1/(Ifit+ADC) being Ifit an input parameter
  *  
  * Parameters:
  * - Ibias: Initial bias current (I0_START column)
@@ -7429,6 +7440,7 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
     
     for (int i=0;i<numPulses;i++)
     {
+        //cout<<"*************PULSE "<<i<<endl;
         providingRiseTime = false;
         providingFallTime = false;
         
@@ -7450,80 +7462,85 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
         
         //cout<<"index_maxTOTAL: "<<gsl_vector_max_index(recordNOTFILTERED)<<endl;
         //cout<<"index_max: "<<indexmax<<endl;
-        for (int k=0;k<(&temp.vector)->size;k++)
+        //cout<<"(&temp.vector)->size: "<<(&temp.vector)->size<<endl;
+        if (abase < amax)
         {
-            //cout<<"gsl_vector_get(&temp.vector,k): "<<k<<" "<<gsl_vector_get(&temp.vector,k)<<endl;
-            if (gsl_vector_get(&temp.vector,k) < threshold10)      providingRiseTime = true;
-            if ((gsl_vector_get(&temp.vector,k) > threshold10) && (index10 == -999))      index10 = k;
-            if (gsl_vector_get(&temp.vector,k) > threshold50)      
-            {    
-                index50 = k;
-                break;
+            for (int k=0;k<(&temp.vector)->size;k++)
+            {
+                //cout<<"gsl_vector_get(&temp.vector,k): "<<k<<" "<<gsl_vector_get(&temp.vector,k)<<endl;
+                if (gsl_vector_get(&temp.vector,k) < threshold10)      providingRiseTime = true;
+                if ((gsl_vector_get(&temp.vector,k) > threshold10) && (index10 == -999))      index10 = k;
+                if (gsl_vector_get(&temp.vector,k) > threshold50)      
+                {    
+                    index50 = k;
+                    break;
+                }
             }
-        }
-        //cout<<"providingRiseTime: "<<providingRiseTime<<endl;
-        //cout<<"index10: "<<index10<<endl;
-        //cout<<"index50: "<<index50<<endl;
-        if (providingRiseTime == true)
-        {
-            t10 = index10/samprate;
-            t50 = index50/samprate;
-            a10 = gsl_vector_get(&temp.vector,index10);
-            a50 = gsl_vector_get(&temp.vector,index50);
-            //cout<<"(t10,a10): "<<t10<<","<<a10<<endl;
-            //cout<<"(t50,a50): "<<t50<<","<<a50<<endl;
             
-            m = (a50-a10)/(t50-t10);
-            b = a50-m*t50;
-            //cout<<"m: "<<m<<endl;
-            //cout<<"b: "<<b<<endl;
-            
-            t0 = (abase-b)/m;
-            tmax = (amax-b)/m;
-            //cout<<"t0Rise: "<<t0<<endl;
-            //cout<<"tmaxRise: "<<tmax<<endl;
-            
-            gsl_vector_set(*tauRisegsl,i,tmax-t0);
-            //cout<<"Rise time: "<<gsl_vector_get(*tauRisegsl,i)<<endl;
-        }
-        
-        index10 = -999;
-        index50 = -999; 
-        for (int k=indexmax;k<(&temp.vector)->size;k++)
-        {
-            //cout<<"gsl_vector_get(&temp.vector,k): "<<k<<" "<<gsl_vector_get(&temp.vector,k)<<endl;
-            if ((gsl_vector_get(&temp.vector,k) < threshold50) && (index50 == -999))     index50 = k;
-            if (gsl_vector_get(&temp.vector,k) < threshold10)      
-            {    
-                index10 = k;
-                providingFallTime = true;
-                break;
+            //cout<<"providingRiseTime: "<<providingRiseTime<<endl;
+            //cout<<"index10: "<<index10<<endl;
+            //cout<<"index50: "<<index50<<endl;
+            if (providingRiseTime == true)
+            {
+                t10 = index10/samprate;
+                t50 = index50/samprate;
+                a10 = gsl_vector_get(&temp.vector,index10);
+                a50 = gsl_vector_get(&temp.vector,index50);
+                //cout<<"(t10,a10): "<<t10<<","<<a10<<endl;
+                //cout<<"(t50,a50): "<<t50<<","<<a50<<endl;
+                
+                m = (a50-a10)/(t50-t10);
+                b = a50-m*t50;
+                //cout<<"m: "<<m<<endl;
+                //cout<<"b: "<<b<<endl;
+                
+                t0 = (abase-b)/m;
+                tmax = (amax-b)/m;
+                //cout<<"t0Rise: "<<t0<<endl;
+                //cout<<"tmaxRise: "<<tmax<<endl;
+                
+                gsl_vector_set(*tauRisegsl,i,tmax-t0);
+                //cout<<"Rise time: "<<gsl_vector_get(*tauRisegsl,i)<<endl;
             }
-        }
-        //cout<<"providingFallTime: "<<providingFallTime<<endl;
-        //cout<<"index10: "<<index10<<endl;
-        //cout<<"index50: "<<index50<<endl;
-        if (providingFallTime == true)
-        {
-            t10 = index10/samprate;
-            t50 = index50/samprate;
-            a10 = gsl_vector_get(&temp.vector,index10);
-            a50 = gsl_vector_get(&temp.vector,index50);
-            //cout<<"(t10,a10): "<<t10<<","<<a10<<endl;
-            //cout<<"(t50,a50): "<<t50<<","<<a50<<endl;
             
-            m = (a10-a50)/(t10-t50);
-            b = a50-m*t50;
-            //cout<<"m: "<<m<<endl;
-            //cout<<"b: "<<b<<endl;
-            
-            t0 = (abase-b)/m;
-            tmax = (amax-b)/m;
-            //cout<<"t0Fall: "<<t0<<endl;
-            //cout<<"tmaxFall: "<<tmax<<endl;
-            
-            gsl_vector_set(*tauFallgsl,i,t0-tmax);
-            //cout<<"Fall time: "<<gsl_vector_get(*tauFallgsl,i)<<endl;
+            index10 = -999;
+            index50 = -999; 
+            for (int k=indexmax;k<(&temp.vector)->size;k++)
+            {
+                //cout<<"gsl_vector_get(&temp.vector,k): "<<k<<" "<<gsl_vector_get(&temp.vector,k)<<endl;
+                if ((gsl_vector_get(&temp.vector,k) < threshold50) && (index50 == -999))     index50 = k;
+                if (gsl_vector_get(&temp.vector,k) < threshold10)      
+                {    
+                    index10 = k;
+                    providingFallTime = true;
+                    break;
+                }
+            }
+            //cout<<"providingFallTime: "<<providingFallTime<<endl;
+            //cout<<"index10: "<<index10<<endl;
+            //cout<<"index50: "<<index50<<endl;
+            if (providingFallTime == true)
+            {
+                t10 = index10/samprate;
+                t50 = index50/samprate;
+                a10 = gsl_vector_get(&temp.vector,index10);
+                a50 = gsl_vector_get(&temp.vector,index50);
+                //cout<<"(t10,a10): "<<t10<<","<<a10<<endl;
+                //cout<<"(t50,a50): "<<t50<<","<<a50<<endl;
+                
+                m = (a10-a50)/(t10-t50);
+                b = a50-m*t50;
+                //cout<<"m: "<<m<<endl;
+                //cout<<"b: "<<b<<endl;
+                
+                t0 = (abase-b)/m;
+                tmax = (amax-b)/m;
+                //cout<<"t0Fall: "<<t0<<endl;
+                //cout<<"tmaxFall: "<<tmax<<endl;
+                
+                gsl_vector_set(*tauFallgsl,i,t0-tmax);
+                //cout<<"Fall time: "<<gsl_vector_get(*tauFallgsl,i)<<endl;
+            }
         }
     }
     
@@ -7807,6 +7824,7 @@ resize_mf_lowres = 4;
                 str.clear();
                 EP_EXIT_ERROR(message,EPFAIL);
             }
+            //if ((tstartSamplesRecord-preBuffer < 0) ||(tstartSamplesRecord-preBuffer+resize_mf > recordAux->size-1))
             if ((tstartSamplesRecord-preBuffer < 0) ||(tstartSamplesRecord-preBuffer+resize_mf > recordAux->size))    
             {
                 sprintf(valERROR,"%d",__LINE__+6);
@@ -10980,11 +10998,11 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int grade1, int grade
     else if (OFlength_strategy == 3)
     {
         *OFlength = min(reconstruct_init->OFLength,grade1);
-        if (reconstruct_init->OFLength > grade1)
+        /*if (reconstruct_init->OFLength > grade1)
         {
             message = "OFLength provided as input parameter > Pulse duration (there can be a pulse in its tail) => OFLength=Pulse duration";
             EP_PRINT_ERROR(message,-999);	// Only a warning
-        }
+        }*/
     }
     
     if (grade1 >= H1)	// High res

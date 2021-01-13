@@ -786,7 +786,7 @@
          }
      }
      
-     log_debug("pulsesAll: %i",(*pulsesAll)->ndetpulses);
+     log_trace("pulsesAll: %i",(*pulsesAll)->ndetpulses);
      //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
      //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
      
