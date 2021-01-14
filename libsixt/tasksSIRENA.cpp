@@ -238,7 +238,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesColl
             message = "Cannot run routine convertI2R";
             EP_EXIT_ERROR(message,EPFAIL);
         }
-        gsl_vector_scale(invector,100000);
+        //gsl_vector_scale(invector,100000);
     }
     
     for (int i=0;i<invector->size;i++)	// Because in 'runEnergy' the record (TesRecord) is used => The I2R or I2RFITTED transformed record has to be used
@@ -844,6 +844,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
             message = "Cannot run routine convertI2R";
             EP_EXIT_ERROR(message,EPFAIL);
         }
+        //gsl_vector_scale(invector,100000);
     }
     
     // Convert I into R if 'EnergyMethod' = I2R or I2RFITTED
@@ -866,6 +867,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
                 message = "Cannot run routine convertI2R";
                 EP_EXIT_ERROR(message,EPFAIL);
             }
+            //gsl_vector_scale(invector,100000);
             
             for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R or I2RFITTED transformed record has to be used
             {
@@ -881,6 +883,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesC
                 message = "Cannot run routine convertI2R";
                 EP_EXIT_ERROR(message,EPFAIL);
             }
+           // gsl_vector_scale(invector,100000);
             
             for (int i=0;i<invector->size;i++)		     // Because in 'runEnergy' the record (TesRecord) is used => The I2R or I2RFITTED transformed record has to be used
             {
@@ -7098,6 +7101,7 @@ int convertI2R (char* EnergyMethod,double Ibias, double Imin, double Imax, doubl
         
         gsl_vector_free(invector_modified); invector_modified = 0;*/
     }
+    gsl_vector_scale(*invector,100000);
     
     message.clear();
     

@@ -915,6 +915,10 @@
      
      // Extra normalization (further than the FFT normalization factor,1/n) in order 
      // to get the apropriate noise level provided by Peille (54 pA/rHz)
+     /*if (strcmp(par.EnergyMethod,"OPTFILT") == 0)
+     {
+        gsl_vector_scale(EventSamplesFFTMean,sqrt(2*intervalMinBins/samprate));
+     }*/
      gsl_vector_scale(EventSamplesFFTMean,sqrt(2*intervalMinBins/samprate));
      
      // Load in noiseIntervals only those intervals with a proper sigma and NumMeanSamples = cnt
@@ -1258,7 +1262,7 @@
                  message = "Cannot run routine convertI2R";
                  EP_EXIT_ERROR(message,EPFAIL);
              }
-             gsl_vector_scale(ioutgsl,aducnv);
+             //gsl_vector_scale(ioutgsl,100000);
          }
          else
          {
@@ -1352,6 +1356,7 @@
          if (nIntervals != 0)
          {
              findMeanSigma (intervalsWithoutPulsesTogether, &baselineIntervalFreeOfPulses, &sigmaIntervalFreeOfPulses);
+             //cout<<"baselineIntervalFreeOfPulses: "<<baselineIntervalFreeOfPulses<<endl;
              gsl_vector_set(baseline,indexBaseline,baselineIntervalFreeOfPulses);
              gsl_vector_set(sigma,indexBaseline,sigmaIntervalFreeOfPulses);
              indexBaseline++;
@@ -1892,7 +1897,15 @@
      strcpy(obj.nameCol,"CSD");
      obj.type = TDOUBLE;
      obj.unit = new char [255];
-     strcpy(obj.unit,"A/sqrt(Hz)");
+     if (strcmp(par.EnergyMethod,"OPTFILT") == 0)
+     {
+         strcpy(obj.unit,"A/sqrt(Hz)");
+     }
+     else
+     {
+         strcpy(obj.unit,"adu/sqrt(Hz)");
+     }
+     //strcpy(obj.unit,"A/sqrt(Hz)");
      if (writeFitsSimple(obj, csdgsl))
      {	
          message = "Cannot run routine writeFitsSimple for csdgsl";
@@ -1910,7 +1923,14 @@
      strcpy(obj.nameCol,"SIGMACSD");
      obj.type = TDOUBLE;	
      obj.unit = new char [255];
-     strcpy(obj.unit,"A/sqrt(Hz)");
+     if (strcmp(par.EnergyMethod,"OPTFILT") == 0)
+     {
+         strcpy(obj.unit,"A/sqrt(Hz)");
+     }
+     else
+     {
+         strcpy(obj.unit,"adu/sqrt(Hz)");
+     }
      if (writeFitsSimple(obj, sigmacsdgslnew))
      {
          message = "Cannot run routine writeFitsSimple for sigmacsdgsl";
@@ -1923,7 +1943,16 @@
      gsl_vector_Sumsubvector(baseline, 0, indexBaseline, &sumBaseline);
      double keyvaldouble;
      //keyvaldouble = sumBaseline/indexBaseline;
-     keyvaldouble = (sumBaseline/indexBaseline)/aducnv;
+     //cout<<"sumBaseline/indexBaseline: "<<sumBaseline/indexBaseline<<endl;
+     if (strcmp(par.EnergyMethod,"OPTFILT") == 0)
+     {
+        keyvaldouble = (sumBaseline/indexBaseline)/aducnv;
+     }
+     else
+     {
+         keyvaldouble = (sumBaseline/indexBaseline);
+     }
+     //cout<<"(sumBaseline/indexBaseline)/aducnv: "<<(sumBaseline/indexBaseline)/aducnv<<endl;
      if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
      {
          message = "Cannot write keyword " + string(keyname) + " in file " + string(par.outFile);
@@ -1966,7 +1995,15 @@
      gsl_vector_free(freqALLgsl); freqALLgsl = 0;
      
      strcpy(obj.nameCol,"CSD");
-     strcpy(obj.unit,"A/sqrt(Hz)");
+     if (strcmp(par.EnergyMethod,"OPTFILT") == 0)
+     {
+        strcpy(obj.unit,"A/sqrt(Hz)");
+     }
+     else
+     {
+         strcpy(obj.unit,"adu/sqrt(Hz)");
+     }
+     //strcpy(obj.unit,"A/sqrt(Hz)");
      if(writeFitsSimple(obj, csdALLgsl))
      {
          message = "Cannot run routine writeFitsSimple for csdALLgsl";
