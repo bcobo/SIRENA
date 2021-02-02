@@ -574,7 +574,7 @@ L \frac{dI}{dt} = V_0 - IR_L - IR(T,I) + Noise"/></p>
 <p><img class="math" src="_images/math/afd60a99c7f643fa1b80c04c025d2cdc811ebede.png" alt="I = ADC * aducnv"/> + <code class="docutils literal notranslate"><span class="pre">IMIN</span></code></p>
 <p><img class="math" src="_images/math/703f80b0165258f418d07ab0c95ff789172a633f.png" alt="\Delta I= \mathit{I}"/> - <code class="docutils literal notranslate"><span class="pre">I0_START</span></code></p>
 <div class="math">
-<p><img src="_images/math/1149326f852e41709678fd177678ce8d86dc4d33.png" alt="\frac{R}{R0} = \mathit{1} - \left(\frac{abs(\Delta I)/\mathit{I0\_START}}{1 + abs(\Delta I)/\mathit{I0\_START}}\right)"/></p>
+<p><img src="_images/math/3822f13b5e326ff1f2bfb8436e8c2fc1f6f12cc5.png" alt="\frac{R}{R0} = {\mathit{1} - \left(\frac{abs(\Delta I)/\mathit{I0\_START}}{1 + abs(\Delta I)/\mathit{I0\_START}}\right)}·10^5"/></p>
 </div></div></blockquote>
 </div></blockquote>
 </li>
@@ -583,9 +583,13 @@ L \frac{dI}{dt} = V_0 - IR_L - IR(T,I) + Noise"/></p>
 <div><p>Looking for a simple transformation that would produce also a linear gain scale, a new transformation <em>I2RFITTED</em> has been proposed in <a class="bibtex reference internal" href="zreferences.html#peille2016" id="id26">[Peille+16]</a>.</p>
 <blockquote>
 <div><div class="math">
-<p><img src="_images/math/3942fff594f4b566cad850c037d7ec72d0829708.png" alt="\frac{R}{V0} = -\frac{1}{(I_{fit} + ADC)}"/></p>
+<p><img src="_images/math/d6455a97dd29a4780fd62eccb0a1ed946027444a.png" alt="\frac{R}{V0} = -10^5\frac{1}{(I_{fit} + ADC)}"/></p>
 </div></div></blockquote>
 <p>The <img class="math" src="_images/math/fd0179dc927022f51d9a8abdb0acfd9f4e91f5ba.png" alt="I_{fit}"/> value is tunable for the moment as an input parameter.</p>
+</div></blockquote>
+</li>
+</ul>
+<p>The <img class="math" src="_images/math/1005d5cba0257915abbd43381cee3bfa5eda67e3.png" alt="10^5"/> scaling factor has been included in the quasi resistance space (both <strong>I2R</strong> and <strong>I2RFITTED</strong> transformations) to avoid rounding errors when working with very small numbers.</p>
 <blockquote>
 <div><blockquote>
 <div><blockquote>
@@ -594,9 +598,6 @@ L \frac{dI}{dt} = V_0 - IR_L - IR(T,I) + Noise"/></p>
 </div></blockquote>
 </div></blockquote>
 </div></blockquote>
-</div></blockquote>
-</li>
-</ul>
 </div>
 <div class="section" id="two-experimental-approaches-adding-a-prebuffer-or-0-padding">
 <span id="prebuffer-or-0-padding"></span><h4><span class="pageblue">Two experimental approaches: adding a preBuffer or 0-padding</span><a class="headerlink" href="#two-experimental-approaches-adding-a-prebuffer-or-0-padding" title="Permalink to this headline">¶</a></h4>

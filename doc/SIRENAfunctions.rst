@@ -872,13 +872,11 @@ Search functions by name at :ref:`genindex`.
         
         - Conversion according to :option:`EnergyMethod` = **I2R**:
         
-            :math:`DeltaI = I`    :math:`R/R0 = 1 - (abs(DeltaI)/I\_BIAS)/(1+abs(DeltaI)/I\_BIAS)`
+            :math:`DeltaI = I`    :math:`R/R0 = [1 - (abs(DeltaI)/I\_BIAS)/(1+abs(DeltaI)/I\_BIAS)]\cdot10^5`
             
         - Conversion according to :option:`EnergyMethod` = **I2RFITTED**:
         
-        ..    :math:`R/V0 = -1/(I_{fit}+ADC)` being :math:`I_{fit}` = ``ADU_BIAS``
-        
-            :math:`R/V0 = -1/(I_{fit}+ADC)` being :math:`I_{fit}` value an input parameter
+            :math:`R/V0 = -10^5/(I_{fit}+ADC)` being :math:`I_{fit}` value an input parameter
         
     
     If the ``ADU_CNV`` keyword is NOT in the input FITS file and :cpp:member:`invector` contains the **ADC** column data from the input FITS file:
@@ -889,13 +887,13 @@ Search functions by name at :ref:`genindex`.
     
         - Conversion according to :option:`EnergyMethod` = **I2R**:
         
-            :math:`DeltaI = I`    :math:`R/R0 = 1 - (abs(DeltaI)/I0\_START)/(1+abs(DeltaI)/I0\_START)`
+            :math:`DeltaI = I`    :math:`R/R0 = {1 - (abs(DeltaI)/I0\_START)/(1+abs(DeltaI)/I0\_START)}\cdot10^5`
     
         - Conversion according to :option:`EnergyMethod` = **I2RFITTED**  
-
-            .. :math:`R/V0 = -1/(I_{fit}+ADC)` being :math:`I_{fit}=I0\_START(adu)=I0\_START(A)/aducnv(A/adu)`
             
-            :math:`R/V0 = -1/(I_{fit}+ADC)` being :math:`I_{fit}` value an input parameter
+            :math:`R/V0 = -10^5/(I_{fit}+ADC)` being :math:`I_{fit}` value an input parameter
+            
+    The :math:`10^5` scaling factor has been included in the quasi resistance space (both **I2R** and **I2RFITTED** transformations) to avoid rounding errors when working with very small numbers.
         
     **Members/Variables**
 

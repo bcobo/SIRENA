@@ -653,10 +653,14 @@ to be minimized:</p>
 <ul>
 <li><p>Conversion according to <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>I2R</strong>:</p>
 <blockquote>
-<div><p><img class="math" src="_images/math/e515bb519c3d970f7969d907715c9ff934b14f30.png" alt="DeltaI = I"/>    <img class="math" src="_images/math/74ef2c5cb718f28a5df594997d91fcefed187d4e.png" alt="R/R0 = 1 - (abs(DeltaI)/I\_BIAS)/(1+abs(DeltaI)/I\_BIAS)"/></p>
+<div><p><img class="math" src="_images/math/e515bb519c3d970f7969d907715c9ff934b14f30.png" alt="DeltaI = I"/>    <img class="math" src="_images/math/23e57ccecc638a557496cc94f9d5fc0effbe93f6.png" alt="R/R0 = [1 - (abs(DeltaI)/I\_BIAS)/(1+abs(DeltaI)/I\_BIAS)]\cdot10^5"/></p>
 </div></blockquote>
 </li>
-<li><p>Conversion according to <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>I2RFITTED</strong>:</p></li>
+<li><p>Conversion according to <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>I2RFITTED</strong>:</p>
+<blockquote>
+<div><p><img class="math" src="_images/math/2e891283e4e6eb35d9f250aa2e57ec642a5d06c9.png" alt="R/V0 = -10^5/(I_{fit}+ADC)"/> being <img class="math" src="_images/math/fd0179dc927022f51d9a8abdb0acfd9f4e91f5ba.png" alt="I_{fit}"/> value an input parameter</p>
+</div></blockquote>
+</li>
 </ul>
 </div></blockquote>
 <p>If the <code class="docutils literal notranslate"><span class="pre">ADU_CNV</span></code> keyword is NOT in the input FITS file and <a class="reference internal" href="#_CPPv410convertI2RPcddddddddPP10gsl_vector" title="convertI2R::invector"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">invector</span></code></a> contains the <strong>ADC</strong> column data from the input FITS file:</p>
@@ -666,16 +670,17 @@ to be minimized:</p>
 <ul>
 <li><p>Conversion according to <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>I2R</strong>:</p>
 <blockquote>
-<div><p><img class="math" src="_images/math/e515bb519c3d970f7969d907715c9ff934b14f30.png" alt="DeltaI = I"/>    <img class="math" src="_images/math/8dbf2e0eeba92c2bdd50f2c8629812c9f3f086ea.png" alt="R/R0 = 1 - (abs(DeltaI)/I0\_START)/(1+abs(DeltaI)/I0\_START)"/></p>
+<div><p><img class="math" src="_images/math/e515bb519c3d970f7969d907715c9ff934b14f30.png" alt="DeltaI = I"/>    <img class="math" src="_images/math/578ae88198ed227b42f810e14641db8562e1d7ee.png" alt="R/R0 = {1 - (abs(DeltaI)/I0\_START)/(1+abs(DeltaI)/I0\_START)}\cdot10^5"/></p>
 </div></blockquote>
 </li>
 <li><p>Conversion according to <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>I2RFITTED</strong></p>
 <blockquote>
-<div><p><img class="math" src="_images/math/6ce13246d1bc4ada931b0e3b3206fe178815e0d7.png" alt="R/V0 = -1/(I_{fit}+ADC)"/> being <img class="math" src="_images/math/fd0179dc927022f51d9a8abdb0acfd9f4e91f5ba.png" alt="I_{fit}"/> value an input parameter</p>
+<div><p><img class="math" src="_images/math/2e891283e4e6eb35d9f250aa2e57ec642a5d06c9.png" alt="R/V0 = -10^5/(I_{fit}+ADC)"/> being <img class="math" src="_images/math/fd0179dc927022f51d9a8abdb0acfd9f4e91f5ba.png" alt="I_{fit}"/> value an input parameter</p>
 </div></blockquote>
 </li>
 </ul>
 </div></blockquote>
+<p>The <img class="math" src="_images/math/1005d5cba0257915abbd43381cee3bfa5eda67e3.png" alt="10^5"/> scaling factor has been included in the quasi resistance space (both <strong>I2R</strong> and <strong>I2RFITTED</strong> transformations) to avoid rounding errors when working with very small numbers.</p>
 <p><strong>Members/Variables</strong></p>
 <p>char* <strong>EnergyMethod</strong></p>
 <blockquote>
