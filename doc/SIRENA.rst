@@ -648,7 +648,7 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
         
         .. math::
 
-            \frac{R}{R0} = {\mathit{1} - \left(\frac{abs(\Delta I)/\mathit{I0\_START}}{1 + abs(\Delta I)/\mathit{I0\_START}}\right)}·10^5
+            \frac{R}{R0} = {\mathit{1} - \left(\frac{abs(\Delta I)/\mathit{I0\_START}}{1 + abs(\Delta I)/\mathit{I0\_START}}\right)}\cdot10^5
         
 * **I2RFITTED** transformation
 

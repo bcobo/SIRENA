@@ -872,7 +872,9 @@ Search functions by name at :ref:`genindex`.
         
         - Conversion according to :option:`EnergyMethod` = **I2R**:
         
-            :math:`DeltaI = I`    :math:`R/R0 = [1 - (abs(DeltaI)/I\_BIAS)/(1+abs(DeltaI)/I\_BIAS)]\cdot10^5`
+            :math:`DeltaI = I`    
+            
+            :math:`R/R0 = [1 - (abs(DeltaI)/I\_BIAS)/(1+abs(DeltaI)/I\_BIAS)]\cdot10^5`
             
         - Conversion according to :option:`EnergyMethod` = **I2RFITTED**:
         
@@ -887,7 +889,9 @@ Search functions by name at :ref:`genindex`.
     
         - Conversion according to :option:`EnergyMethod` = **I2R**:
         
-            :math:`DeltaI = I`    :math:`R/R0 = {1 - (abs(DeltaI)/I0\_START)/(1+abs(DeltaI)/I0\_START)}\cdot10^5`
+            :math:`DeltaI = I`
+            
+            :math:`R/R0 = [1 - (abs(DeltaI)/I0\_START)/(1+abs(DeltaI)/I0\_START)]\cdot10^5`
     
         - Conversion according to :option:`EnergyMethod` = **I2RFITTED**  
             
