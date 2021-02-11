@@ -5616,7 +5616,7 @@ Search functions by name at :ref:`genindex`.
         Pulseheight of the input pulse    
         
         
-.. cpp:function:: void runDetect(TesRecord* record, int trig_reclength, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
+.. cpp:function:: void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
      
     Located in file: *tasksSIRENA.cpp*
 
@@ -5643,10 +5643,12 @@ Search functions by name at :ref:`genindex`.
         3) (Filter and) differentiate the *models* of the library (only for the first record in :option:`opmode` = 1). Run  (:cpp:func:`filderLibrary`)
 
         4) Store the input record in *invector* (:cpp:func:`loadRecord`)
-
-        5) Convert *I* into *R* if :option:`EnergyMethod` = **I2R** or **I2RFITTED** (:cpp:func:`convertI2R`)
         
-        6) Process each record (:cpp:func:`proceRecord`): 
+        5) Detect weird oscillations in some GSFC records
+
+        6) Convert *I* into *R* if :option:`EnergyMethod` = **I2R** or **I2RFITTED** (:cpp:func:`convertI2R`)
+        
+        7) Process each record (:cpp:func:`proceRecord`): 
 
                 - (Low-pass filter and) differentiate                          
                 - Find pulses                                                           
@@ -5656,12 +5658,12 @@ Search functions by name at :ref:`genindex`.
                 
         **From this point forward, I2R and I2RFITTED are completely equivalent to OPTFILT**     
            
-        7) If last record in :option:`opmode` = 0 run:                                         
+        8) If last record in :option:`opmode` = 0 run:                                         
 
                 * :cpp:func:`calculateTemplate` (and :cpp:func:`weightMatrix`)
                 * :cpp:func:`writeLibrary`
                 
-        8) If last record and PCA:
+        9) If last record and PCA:
         
                 - In order to not have restrictions when providing (\*reconstruct_init)->energyPCAx
                 - Covariance data
@@ -5674,7 +5676,7 @@ Search functions by name at :ref:`genindex`.
                 - Conversion factor from arbitrary unit to eV
                 - Energy calculation
 
-        9) Close intermediate output FITS file if it is necessary   
+        10) Close intermediate output FITS file if it is necessary   
 
     **Members/Variables**
 
@@ -5713,6 +5715,10 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: int lastRecord
 
         Integer to verify whether *record* is the last one (=1) to be read (and thus if library file will be created)
+        
+    .. cpp:member:: int nrecord
+
+        Current record index (to know the particular record where there is a weird oscillation)
         
     .. cpp:member:: PulsesCollection* pulsesAll
 
@@ -6400,7 +6406,7 @@ Search functions by name at :ref:`genindex`.
         XML input FITS file with instrument definition
         
     
-.. cpp:function:: int th_runDetect (TesRecord* record, int trig_reclength, int lastRecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
+.. cpp:function:: int th_runDetect (TesRecord* record, int trig_reclength, int lastRecord, int nrecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
      
     Located in file: *tasksSIRENA.cpp*
 
