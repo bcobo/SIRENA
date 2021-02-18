@@ -3457,14 +3457,15 @@ S_{(x,x^2)}=\sum{{x_i}^3}-\frac{\sum{x_i}\cdot\sum{{x_i}^2}}{N} &amp; \\
 </dd></dl>
 
 <dl class="cpp function">
-<dt id="_CPPv410procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollection">
-<span id="_CPPv310procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollection"></span><span id="_CPPv210procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollection"></span><span id="procRecord__ReconstructInitSIRENAPP.double.double.fitsfileP.gsl_vectorP.gsl_vectorP.PulsesCollectionP"></span>int <code class="sig-name descname">procRecord</code><span class="sig-paren">(</span>ReconstructInitSIRENA **<em>reconstruct_init</em>, double <em>tstartRecord</em>, double <em>samprate</em>, fitsfile *<em>dtcObject</em>, gsl_vector *<em>record</em>, gsl_vector *<em>recordWithoutConvert2R</em>, PulsesCollection *<em>foundPulses</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv410procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollection" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv410procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectioni">
+<span id="_CPPv310procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectioni"></span><span id="_CPPv210procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectioni"></span><span id="procRecord__ReconstructInitSIRENAPP.double.double.fitsfileP.gsl_vectorP.gsl_vectorP.PulsesCollectionP.i"></span>int <code class="sig-name descname">procRecord</code><span class="sig-paren">(</span>ReconstructInitSIRENA **<em>reconstruct_init</em>, double <em>tstartRecord</em>, double <em>samprate</em>, fitsfile *<em>dtcObject</em>, gsl_vector *<em>record</em>, gsl_vector *<em>recordWithoutConvert2R</em>, PulsesCollection *<em>foundPulses</em>, int <em>oscillations</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv410procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectioni" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Located in file: <em>tasksSIRENA.cpp</em></p>
 <p>This function processes the input record (detecting the pulses):</p>
 <ol class="arabic">
 <li><p>Declare and initialize variables</p></li>
 <li><p>Allocate GSL vectors</p></li>
 <li><p>(Low-pass filtering and) differentiation</p></li>
+<li><p>If there are weird oscillations in the record, it is not processed =&gt; numPulses = 0</p></li>
 <li><p>Find the events (pulses) in the record</p>
 <ul>
 <li><p>If production mode (<a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1):</p>
@@ -3533,6 +3534,10 @@ S_{(x,x^2)}=\sum{{x_i}^3}-\frac{\sum{x_i}\cdot\sum{{x_i}^2}}{N} &amp; \\
 <p>int <strong>phid</strong></p>
 <blockquote>
 <div><p>Photon ID (from the input file) to be propagated</p>
+</div></blockquote>
+<p>int oscillations</p>
+<blockquote>
+<div><p>1 (there are weird oscillations in the record) or 0 (record without weird oscillations)</p>
 </div></blockquote>
 </dd></dl>
 
@@ -3664,7 +3669,7 @@ S_{(x,x^2)}=\sum{{x_i}^3}-\frac{\sum{x_i}\cdot\sum{{x_i}^2}}{N} &amp; \\
 <li><p>Check consistency of some input parameters</p></li>
 <li><p>If first record, read the necessary keywords and columns from the input file in order to convert from current to quasi-resistance space</p></li>
 <li><p>In case of running with threading</p></li>
-<li><p>Detect pulses in input record (<a class="reference internal" href="#_CPPv49runDetectP9TesRecordiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection" title="runDetect"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">runDetect()</span></code></a>).</p></li>
+<li><p>Detect pulses in input record (<a class="reference internal" href="#_CPPv49runDetectP9TesRecordiiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection" title="runDetect"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">runDetect()</span></code></a>).</p></li>
 <li><dl class="simple">
 <dt>If reconstruction (<a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1) and not PCA:</dt><dd><ul>
 <li><p>Filter and calculate energy of pulses (<a class="reference internal" href="#_CPPv49runEnergyP9TesRecordiPP21ReconstructInitSIRENAPP16PulsesCollectionPP19OptimalFilterSIRENA" title="runEnergy"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">runEnergy()</span></code></a>)</p></li>
@@ -3749,8 +3754,8 @@ is scaled with <a class="reference internal" href="#_CPPv49RS_filterP10gsl_vecto
 </dd></dl>
 
 <dl class="cpp function">
-<dt id="_CPPv49runDetectP9TesRecordiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection">
-<span id="_CPPv39runDetectP9TesRecordiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection"></span><span id="_CPPv29runDetectP9TesRecordiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection"></span><span id="runDetect__TesRecordP.i.i.PulsesCollectionP.ReconstructInitSIRENAPP.PulsesCollectionPP"></span>void <code class="sig-name descname">runDetect</code><span class="sig-paren">(</span>TesRecord *<em>record</em>, int <em>trig_reclength</em>, int <em>lastRecord</em>, PulsesCollection *<em>pulsesAll</em>, ReconstructInitSIRENA **<em>reconstruct_init</em>, PulsesCollection **<em>pulsesInRecord</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49runDetectP9TesRecordiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv49runDetectP9TesRecordiiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection">
+<span id="_CPPv39runDetectP9TesRecordiiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection"></span><span id="_CPPv29runDetectP9TesRecordiiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection"></span><span id="runDetect__TesRecordP.i.i.i.PulsesCollectionP.ReconstructInitSIRENAPP.PulsesCollectionPP"></span>void <code class="sig-name descname">runDetect</code><span class="sig-paren">(</span>TesRecord *<em>record</em>, int <em>trig_reclength</em>, int <em>lastRecord</em>, int <em>nrecord</em>, PulsesCollection *<em>pulsesAll</em>, ReconstructInitSIRENA **<em>reconstruct_init</em>, PulsesCollection **<em>pulsesInRecord</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49runDetectP9TesRecordiiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Located in file: <em>tasksSIRENA.cpp</em></p>
 <p>This function is responsible for the <strong>detection</strong> in SIRENA, record by record. It is used both for library creation (<a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and energy reconstruction (<a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1) runnings.</p>
 <p>Conditions:</p>
@@ -3770,6 +3775,7 @@ is scaled with <a class="reference internal" href="#_CPPv49RS_filterP10gsl_vecto
 <li><p>Create intermediate output FITS file if required (<a class="reference internal" href="#_CPPv416createDetectFileP21ReconstructInitSIRENAdPP8fitsfilei" title="createDetectFile"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">createDetectFile()</span></code></a>)</p></li>
 <li><p>(Filter and) differentiate the <em>models</em> of the library (only for the first record in <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1). Run  (<a class="reference internal" href="#_CPPv413filderLibraryPP21ReconstructInitSIRENAd" title="filderLibrary"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">filderLibrary()</span></code></a>)</p></li>
 <li><p>Store the input record in <em>invector</em> (<a class="reference internal" href="#_CPPv410loadRecordP9TesRecordPdPP10gsl_vector" title="loadRecord"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">loadRecord()</span></code></a>)</p></li>
+<li><p>Detect weird oscillations in some GSFC records providing a warning (no pulses detected in that record)</p></li>
 <li><p>Convert <em>I</em> into <em>R</em> if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>I2R</strong> or <strong>I2RFITTED</strong> (<a class="reference internal" href="#_CPPv410convertI2RPcddddddddPP10gsl_vector" title="convertI2R"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">convertI2R()</span></code></a>)</p></li>
 <li><p>Process each record (<code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">proceRecord()</span></code>):</p>
 <blockquote>
@@ -3784,7 +3790,7 @@ is scaled with <a class="reference internal" href="#_CPPv49RS_filterP10gsl_vecto
 </li>
 </ol>
 <p><strong>From this point forward, I2R and I2RFITTED are completely equivalent to OPTFILT</strong></p>
-<ol class="arabic" start="7">
+<ol class="arabic" start="8">
 <li><p>If last record in <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0 run:</p>
 <blockquote>
 <div><ul class="simple">
@@ -4320,10 +4326,10 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 </dd></dl>
 
 <dl class="cpp function">
-<dt id="_CPPv412th_runDetectP9TesRecordiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection">
-<span id="_CPPv312th_runDetectP9TesRecordiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection"></span><span id="_CPPv212th_runDetectP9TesRecordiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection"></span><span id="th_runDetect__TesRecordP.i.i.PulsesCollectionP.ReconstructInitSIRENAPP.PulsesCollectionPP"></span>int <code class="sig-name descname">th_runDetect</code><span class="sig-paren">(</span>TesRecord *<em>record</em>, int <em>trig_reclength</em>, int <em>lastRecord</em>, PulsesCollection *<em>pulsesAll</em>, ReconstructInitSIRENA **<em>reconstruct_init</em>, PulsesCollection **<em>pulsesInRecord</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv412th_runDetectP9TesRecordiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv412th_runDetectP9TesRecordiiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection">
+<span id="_CPPv312th_runDetectP9TesRecordiiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection"></span><span id="_CPPv212th_runDetectP9TesRecordiiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection"></span><span id="th_runDetect__TesRecordP.i.i.i.PulsesCollectionP.ReconstructInitSIRENAPP.PulsesCollectionPP"></span>int <code class="sig-name descname">th_runDetect</code><span class="sig-paren">(</span>TesRecord *<em>record</em>, int <em>trig_reclength</em>, int <em>lastRecord</em>, int <em>nrecord</em>, PulsesCollection *<em>pulsesAll</em>, ReconstructInitSIRENA **<em>reconstruct_init</em>, PulsesCollection **<em>pulsesInRecord</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv412th_runDetectP9TesRecordiiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Located in file: <em>tasksSIRENA.cpp</em></p>
-<p>This function is responsible for the <strong>detection</strong> in SIRENA (instead of <a class="reference internal" href="#_CPPv49runDetectP9TesRecordiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection" title="runDetect"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">runDetect()</span></code></a>) when the <strong>THREADING</strong> running option has been chosen (hardcoded at this moment). It is used both for library creation (<a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and energy reconstruction (<a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1) runnings.</p>
+<p>This function is responsible for the <strong>detection</strong> in SIRENA (instead of <a class="reference internal" href="#_CPPv49runDetectP9TesRecordiiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection" title="runDetect"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">runDetect()</span></code></a>) when the <strong>THREADING</strong> running option has been chosen (hardcoded at this moment). It is used both for library creation (<a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and energy reconstruction (<a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1) runnings.</p>
 </dd></dl>
 
 <dl class="cpp function">

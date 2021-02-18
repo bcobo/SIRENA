@@ -5146,7 +5146,7 @@ Search functions by name at :ref:`genindex`.
         Status
 
         
-.. cpp:function:: int procRecord (ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, gsl_vector *recordWithoutConvert2R, PulsesCollection *foundPulses)
+.. cpp:function:: int procRecord (ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, gsl_vector *recordWithoutConvert2R, PulsesCollection *foundPulses, int oscillations)
         
     Located in file: *tasksSIRENA.cpp*
     
@@ -5158,7 +5158,9 @@ Search functions by name at :ref:`genindex`.
     
     3) (Low-pass filtering and) differentiation
     
-    4) Find the events (pulses) in the record
+    4) If there are weird oscillations in the record, it is not processed => numPulses = 0
+    
+    5) Find the events (pulses) in the record
     
        - If production mode (:option:`opmode` = 1):
        
@@ -5170,19 +5172,19 @@ Search functions by name at :ref:`genindex`.
                 
        - If calibration mode (:option:`opmode` = 0): 'findPulsesCAL'
     
-    5) Calculate the end time of the found pulses and check if the pulse is saturated
+    6) Calculate the end time of the found pulses and check if the pulse is saturated
     
-    6) Calculate the baseline (mean and standard deviation) before a pulse (in general *before*) :math:`\Rightarrow` To be written in **BSLN** and **RMSBSLN** columns in the output FITS file
+    7) Calculate the baseline (mean and standard deviation) before a pulse (in general *before*) :math:`\Rightarrow` To be written in **BSLN** and **RMSBSLN** columns in the output FITS file
     
-    7) Obtain the approximate rise and fall times of each pulse 
+    8) Obtain the approximate rise and fall times of each pulse 
     
-    8) Load the found pulses data in the input/output *foundPulses* structure
+    9) Load the found pulses data in the input/output *foundPulses* structure
     
-    9) Write test info (if *reconstruct_init->intermediate* = 1)
+    10) Write test info (if *reconstruct_init->intermediate* = 1)
     
-    10) Write pulses info in intermediate output FITS file (if *reconstruct_init->intermediate* = 1)
+    11) Write pulses info in intermediate output FITS file (if *reconstruct_init->intermediate* = 1)
     
-    11) Free allocated GSL vectors
+    12) Free allocated GSL vectors
 
     **Members/Variables**
     
@@ -5226,6 +5228,10 @@ Search functions by name at :ref:`genindex`.
 
         Photon ID (from the input file) to be propagated
     
+    int oscillations
+    
+        1 (there are weird oscillations in the record) or 0 (record without weird oscillations)  
+    
     .. cpp:member:: ReconstructInitSIRENA** reconstruct_init
 
         Member of *ReconstructInitSIRENA* structure to initialize the reconstruction parameters (pointer and values)
@@ -5266,6 +5272,9 @@ Search functions by name at :ref:`genindex`.
 
         Photon ID (from the input file) to be propagated
         
+    .. cpp:member:: int oscillations
+
+        1 (there are weird oscillations in the record) or 0 (record without weird oscillations)  
                 
 .. cpp:function:: int pulseGrading(ReconstructInitSIRENA *reconstruct_init, int grade1, int grade2, int OFlength_strategy, int *pulseGrade, long *OFlength)
     
@@ -5644,7 +5653,7 @@ Search functions by name at :ref:`genindex`.
 
         4) Store the input record in *invector* (:cpp:func:`loadRecord`)
         
-        5) Detect weird oscillations in some GSFC records
+        5) Detect weird oscillations in some GSFC records providing a warning (no pulses detected in that record)
 
         6) Convert *I* into *R* if :option:`EnergyMethod` = **I2R** or **I2RFITTED** (:cpp:func:`convertI2R`)
         
