@@ -535,6 +535,12 @@ typedef struct ReconstructInitSIRENA
   
   //0-padding filter if 0 (from pulseLength to OFLength filter filled in with 0's) or filter with a filter+preBuffer if different from 0
   int preBuffer;
+  int preBuffer_min_value;
+  int preBuffer_max_value;
+  
+  // Values from the grading info in the XML file
+  int post_min_value;
+  int post_max_value;
 
   /** Write intermediate files **/
   int intermediate;
@@ -633,7 +639,7 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     double filtEev, double Ifit, char* ofnoise, 
                                     int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, 
                                     char *ofinterp, char* oflength_strategy, 
-                                    int oflength, int preBuffer,
+                                    int oflength, char preBuffer,
                                     double monoenergy, char hduPRECALWN, 
                                     char hduPRCLOFWM, int largeFilter, 
                                     int interm, char* detectFile, 
@@ -671,8 +677,7 @@ extern "C"
 #endif
 void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, TesEventList* event_list, ReconstructInitSIRENA* reconstruct_init, int lastRecord, int nRecord, PulsesCollection **pulsesAll, OptimalFilterSIRENA **optimalFilter, int* const status);
 
-
-LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char *filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int preBuffer, int* const status);
+LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char *filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int preBuffer, gsl_vector *pBi, gsl_vector *posti, int* const status);
 
 NoiseSpec* getNoiseSpec(const char* const filename,int opmode,int hduPRCLOFWM,char *energy_method,char *ofnoise,char *filter_method,int* const status);
 

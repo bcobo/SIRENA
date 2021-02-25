@@ -3167,7 +3167,7 @@ Search functions by name at :ref:`genindex`.
          
         In general, rms of the baseline related to a pulse-free interval immediately before the current pulse
     
-.. cpp:function:: LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char* filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int* const status)
+.. cpp:function:: LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char* filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int preBuffer, gsl_vector *pBi, gsl_vector *posti, int* const status)
     
     Located in file: *integraSIRENA.cpp*
     
@@ -3239,6 +3239,22 @@ Search functions by name at :ref:`genindex`.
     
         Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED), :option:`filtEeV`
         
+    int **lagsornot**
+    
+        Lags (1) or no lags (0)
+        
+    int **preBuffer**
+    
+        Using preBuffer (1) or not using preBuffer (0)
+    
+    gsl_vector **pBi**
+    
+        Vector with the preBuffer values read from the XML file
+    
+    gsl_vector **posti**
+    
+        Vector with the post values read from the XML file
+        
     int* const **status**
     
         Input/output status
@@ -3295,6 +3311,22 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: double filtEev  
     
         Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED), :option:`filtEeV`
+        
+    .. cpp:member:: int lagsornot
+    
+        Lags (1) or no lags (0), :option:`LagsOrNot`
+        
+    .. cpp:member:: int preBuffer
+    
+        Using preBuffer (1) or not using preBuffer (0), :option:`preBuffer`
+        
+    .. cpp:member:: gsl_vector pBi
+    
+        Vector with the preBuffer values read from the XML file
+        
+     .. cpp:member:: gsl_vector posti
+    
+        Vector with the post values read from the XML file
         
     .. cpp:member:: int* const status
     
@@ -3729,7 +3761,7 @@ Search functions by name at :ref:`genindex`.
     
         This is a user supplied pointer that can be used to pass ancillary information from the driver routine to the work function. It may point to a single number, an array, or to a structure containing an arbitrary set of parameters
 
-.. cpp:function:: extern_C_void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init, char* const record_file, fitsfile *fptr, char* const library_file, char* const event_file, int pulse_length, double scaleFactor, int samplesUp, int samplesDown, double nSgms, int detectSP, int opmode, char *detectionMode, double LrsT, double LbT, char* const noise_file, char* filter_domain, char* filter_method, char* energy_method, double filtEev, double Ifit, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp, char* oflength_strategy, int oflength, int preBuffer, double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, int errorT, int Sum0Filt, char clobber, int maxPulsesPerRecord, double SaturationValue, char* const tstartPulse1, int tstartPulse2, int tstartPulse3, double energyPCA1, double energyPCA2, char * const XMLFile, int* const status)
+.. cpp:function:: extern_C_void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init, char* const record_file, fitsfile *fptr, char* const library_file, char* const event_file, int pulse_length, double scaleFactor, int samplesUp, int samplesDown, double nSgms, int detectSP, int opmode, char *detectionMode, double LrsT, double LbT, char* const noise_file, char* filter_domain, char* filter_method, char* energy_method, double filtEev, double Ifit, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp, char* oflength_strategy, int oflength, char preBuffer, double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, int errorT, int Sum0Filt, char clobber, int maxPulsesPerRecord, double SaturationValue, char* const tstartPulse1, int tstartPulse2, int tstartPulse3, double energyPCA1, double energyPCA2, char * const XMLFile, int* const status)
     
     Located in file: *integraSIRENA.cpp*
     
@@ -3863,9 +3895,9 @@ Search functions by name at :ref:`genindex`.
     
         Optimal Filter length (taken into account if :option:`OFStrategy` = **FIXED**), :option:`OFLength`
         
-    int **preBuffer**
+    char **preBuffer**
     
-        Some samples added before the starting time of a pulse
+        Some samples added or not before the starting time of a pulse (number of added samples read from the xml file)
     
     double **monoenergy**
     
@@ -4060,9 +4092,9 @@ Search functions by name at :ref:`genindex`.
     
         Optimal Filter length (taken into account if :option:`OFStrategy` = **FIXED**), :option:`OFLength`
         
-    .. cpp:member:: int preBuffer
+    .. cpp:member:: char preBuffer
     
-        Some samples added before the starting time of a pulse
+        Some samples added or not before the starting time of a pulse (number of added samples read from the xml file)
     
     .. cpp:member:: double monoenergy
     
@@ -5756,9 +5788,9 @@ Search functions by name at :ref:`genindex`.
     - Check Quality
     - For each pulse:
 
-        - Establish the pulse grade (HighRes=1, MidRes=2, LimRes=3, LowRes=4, Rejected=-1, Pileup=-2) and the optimal filter length
+        - Establish the pulse grade (for example VeryHighRes=1, HighRes=2, IntRes=3, MedRes=4, LimRes=5, LowRes=6, Rejected=-1, Pileup=-2) and the optimal filter length
         - Pulse: Load the proper piece of the record in *pulse*
-        - Get the low resolution energy estimator by filtering with a 4-samples-length filter:
+        - Get the low resolution energy estimator by filtering with a 8-samples-length filter:
             - Load the low resolution pulse in *pulse_lowres*
             - Get the filter
             - Calculate the low resolution estimator
@@ -5937,7 +5969,11 @@ Search functions by name at :ref:`genindex`.
     - Register HEATOOL
     - Reading all programm parameters by using PIL
     - Read XML info
-    - Read the grading info from the input XML file
+    - Sixt standard keywords structure
+    - Open output FITS file
+    - Initialize PP data structures needed for pulse filtering
+    - Initialize SIRENA data structures needed for pulse filtering
+    - Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
     - Obtain the samplig rate and the 'trig_reclength':
         - If Rcmethod starts with '@' :math:`\Rightarrow` List of record input FITS files. For every FITS file:
             - Open FITS file
@@ -5949,11 +5985,6 @@ Search functions by name at :ref:`genindex`.
             - Check if input FITS file have been simulated with TESSIM or XIFUSIM
             - If it is a xifusim simulated file
                 - Obtain 'trig_reclength' from the ``HISTORY`` block
-    - Sixt standard keywords structure
-    - Open output FITS file
-    - Initialize PP data structures needed for pulse filtering
-    - Initialize SIRENA data structures needed for pulse filtering
-    - Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
     - Build up TesEventList to recover the results of the reconstruction
     - Reconstruct the input record FITS file:
         - If Rcmethod starts with '@' :math:`\Rightarrow` List of record input FITS files. For every FITS file:
@@ -6153,9 +6184,9 @@ Search functions by name at :ref:`genindex`.
     
         Optimal Filter length (taken into account if :option:`OFStrategy` = **FIXED**)
         
-    int **preBuffer**
+    char **preBuffer**
     
-        Some samples added before the starting time of a pulse
+        Some samples added or not before the starting time of a pulse (number of added samples read from the xml file)
         
     int **intermediate**
     
@@ -6370,9 +6401,9 @@ Search functions by name at :ref:`genindex`.
     
         Optimal Filter length (taken into account if :option:`OFStrategy` = **FIXED**)
         
-    .. cpp:member:: int preBuffer
+    .. cpp:member:: char preBuffer
     
-        Some samples added before the starting time of a pulse
+        Some samples added or not before the starting time of a pulse (number of added samples read from the xml file)
         
     .. cpp:member:: int intermediate
     

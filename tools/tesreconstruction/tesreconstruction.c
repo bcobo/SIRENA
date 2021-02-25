@@ -78,7 +78,7 @@
 * - OFLib: Work or not with a library with optimal filters (1/0)
 * - OFStrategy: Optimal Filter length Strategy: FREE, BYGRADE or FIXED
 * - OFLength: Optimal Filter length (taken into account if OFStrategy=FIXED)
-* - preBuffer: Some samples added before the starting time of a pulse
+* - preBuffer: Some samples added before the starting time of a pulse (number of samples added read from the xml file)
 * - intermediate: Write or not intermediate files (1/0)
 * - detectFile: Intermediate detections file (if intermediate=1)
 * - errorT: Additional error (in samples) added to the detected time (Logically, it changes the reconstructed energies )
@@ -95,7 +95,11 @@
 * - Register HEATOOL
 * - Reading all programm parameters by using PIL
 * - Read XML info
-* - Read the grading info from the input XML file
+* - Sixt standard keywords structure
+* - Open output FITS file
+* - Initialize PP data structures needed for pulse filtering
+* - Initialize SIRENA data structures needed for pulse filtering
+* - Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
 * - Obtain the 'trig_reclength' and the sampling rate:
 *   - If Rcmethod starts with '@' => List of record input FITS files. For every FITS file:
 *       - Open FITS file
@@ -109,11 +113,6 @@
 *       - Get the sampling rate from the HISTORY keyword from the input FITS file
 *       - If it is a xifusim simulated file
 *           - Obtain 'trig_reclength' from the HISTORY block
-* - Sixt standard keywords structure
-* - Open output FITS file
-* - Initialize PP data structures needed for pulse filtering
-* - Initialize SIRENA data structures needed for pulse filtering
-* - Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
 * - Build up TesEventList to recover the results of the reconstruction
 * - Reconstruct the input record FITS file:
 *   - If Rcmethod starts with '@' => List of record input FITS files. For every FITS file:
@@ -164,19 +163,111 @@ int tesreconstruction_main() {
         return(EXIT_FAILURE);
    }
     
+    // Sixt standard keywords structure
+    //----------------------------------
+    SixtStdKeywords* keywords = newSixtStdKeywords(&status);
+    CHECK_STATUS_BREAK(status);
+    
+    //Open outfile 
+    //------------
+    TesEventFile * outfile = opennewTesEventFileSIRENA(par.TesEventFile,
+                                                 keywords,
+                                                 SIRENA_VERSION,
+                                                 par.clobber,
+                                                 &status);
+    CHECK_STATUS_BREAK(status);
+    
+    // Initialize PP data structures needed for pulse filtering
+    //---------------------------------------------------------
+    ReconstructInit* reconstruct_init = newReconstructInit(&status);
+    CHECK_STATUS_BREAK(status);
+    
+    // Initialize SIRENA data structures needed for pulse filtering
+    //-------------------------------------------------------------
+    ReconstructInitSIRENA* reconstruct_init_sirena = newReconstructInitSIRENA(&status);
+    CHECK_STATUS_BREAK(status);
+    PulsesCollection* pulsesAll = newPulsesCollection(&status);
+    CHECK_STATUS_BREAK(status);  
+    OptimalFilterSIRENA* optimalFilter = newOptimalFilterSIRENA(&status);
+    CHECK_STATUS_BREAK(status);// define a second structure for calibration
+    
     double sf = -999.; 
     double sampling_rate = -999.0;
     AdvDet *det = newAdvDet(&status);
-    if (par.opmode != 0)
+    
+    // Read XML info
+    //--------------
+    CHECK_STATUS_BREAK(status);
+    det = loadAdvDet(par.XMLFile, &status);
+    CHECK_STATUS_BREAK(status);
+    
+    sf = det->SampleFreq;
+    
+    // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
+    reconstruct_init_sirena->grading = NULL;
+    reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
+    
+    reconstruct_init_sirena->grading->ngrades = 0;
+    reconstruct_init_sirena->grading->value  = NULL;
+    reconstruct_init_sirena->grading->gradeData = NULL;
+    
+    if ((det->nrecons == 0) && (det->npix == 0))
     {
-        // Read XML info
-        //--------------
-        CHECK_STATUS_BREAK(status);
-        det = loadAdvDet(par.XMLFile, &status);
-        CHECK_STATUS_BREAK(status);
-        
-        sf = det->SampleFreq;
+        SIXT_ERROR("The provided XMLFile does not have the grading info");
+        return(EXIT_FAILURE);
     }
+    else if ((det->nrecons == 0) && (det->npix != 0))
+    {
+        if (det->pix->grades == NULL)
+        {
+            SIXT_ERROR("The provided XMLFile does not have the grading info");
+            return(EXIT_FAILURE);
+        }
+        reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
+        reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->pix->ngrades,3);
+        for (int i=0;i<det->pix->ngrades;i++)
+        {
+            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->pix->grades[i].gradelim_pre));
+            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post));
+            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,2,(int) (det->pix->grades[i].grade_preBuffer));
+        }
+    }
+    else if(((det->nrecons != 0) && (det->npix == 0)) || ((det->nrecons == 1) && (det->npix == 1)))
+    {
+        if (det->recons->grades == NULL)
+        {
+            SIXT_ERROR("The provided XMLFile does not have the grading info");
+            return(EXIT_FAILURE);
+        }
+        reconstruct_init_sirena->grading->ngrades=det->recons->ngrades;
+        reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->recons->ngrades,3);
+        for (int i=0;i<det->recons->ngrades;i++)
+        {
+            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->recons->grades[i].gradelim_pre));
+            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->recons->grades[i].gradelim_post));
+            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,2,(int) (det->recons->grades[i].grade_preBuffer));
+        }
+    }
+    
+    int OFlengthvsposti = 0;
+    if ((par.preBuffer == 1) && (par.opmode == 1))
+    {
+        for (int i=0;i<reconstruct_init_sirena->grading->ngrades;i++) 
+        {
+            if (par.OFLength == gsl_matrix_get(reconstruct_init_sirena->grading->gradeData,i,1))
+            {
+                OFlengthvsposti = 1;
+                break;
+            }
+        }
+        if (OFlengthvsposti == 0)
+        {
+            SIXT_ERROR("The grading/preBuffer info of the XML file does not match the OFLength input parameter");
+            return(EXIT_FAILURE);
+        }
+    }
+    
+    destroyAdvDet(&det);
     
     int trig_reclength = -999;
     
@@ -454,84 +545,7 @@ int tesreconstruction_main() {
             fits_close_file(fptr,&status);
             CHECK_STATUS_BREAK(status);
     }
-    
-    // Sixt standard keywords structure
-    //----------------------------------
-    SixtStdKeywords* keywords = newSixtStdKeywords(&status);
-    CHECK_STATUS_BREAK(status);
-    
-    //Open outfile 
-    //------------
-    TesEventFile * outfile = opennewTesEventFileSIRENA(par.TesEventFile,
-                                                 keywords,
-                                                 SIRENA_VERSION,
-                                                 par.clobber,
-                                                 &status);
-    CHECK_STATUS_BREAK(status);
-    
-    // Initialize PP data structures needed for pulse filtering
-    //---------------------------------------------------------
-    ReconstructInit* reconstruct_init = newReconstructInit(&status);
-    CHECK_STATUS_BREAK(status);
-    
-    // Initialize SIRENA data structures needed for pulse filtering
-    //-------------------------------------------------------------
-    ReconstructInitSIRENA* reconstruct_init_sirena = newReconstructInitSIRENA(&status);
-    CHECK_STATUS_BREAK(status);
-    PulsesCollection* pulsesAll = newPulsesCollection(&status);
-    CHECK_STATUS_BREAK(status);  
-    OptimalFilterSIRENA* optimalFilter = newOptimalFilterSIRENA(&status);
-    CHECK_STATUS_BREAK(status);// define a second structure for calibration
-    
-    if (par.opmode != 0)    // Grading info is not necessary when building the library
-    {
-        // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
-        reconstruct_init_sirena->grading = NULL;
-        //reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
-        reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
-        
-        reconstruct_init_sirena->grading->ngrades = 0;
-        reconstruct_init_sirena->grading->value  = NULL;
-        reconstruct_init_sirena->grading->gradeData = NULL;
-        
-        if ((det->nrecons == 0) && (det->npix == 0))
-        {
-            SIXT_ERROR("The provided XMLFile does not have the grading info");
-            return(EXIT_FAILURE);
-        }
-        else if ((det->nrecons == 0) && (det->npix != 0))
-        {
-            if (det->pix->grades == NULL)
-            {
-                SIXT_ERROR("The provided XMLFile does not have the grading info");
-                return(EXIT_FAILURE);
-            }
-            reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
-            reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->pix->ngrades,2);
-            for (int i=0;i<det->pix->ngrades;i++)
-            {
-                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->pix->grades[i].gradelim_pre));
-                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post));
-            }
-        }
-        else if(((det->nrecons != 0) && (det->npix == 0)) || ((det->nrecons == 1) && (det->npix == 1)))
-        {
-            if (det->recons->grades == NULL)
-            {
-                SIXT_ERROR("The provided XMLFile does not have the grading info");
-                return(EXIT_FAILURE);
-            }
-            reconstruct_init_sirena->grading->ngrades=det->recons->ngrades;
-            reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->recons->ngrades,2);
-            for (int i=0;i<det->recons->ngrades;i++)
-            {
-                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->recons->grades[i].gradelim_pre));
-                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->recons->grades[i].gradelim_post));
-            }
-        }
-    }
-    destroyAdvDet(&det);
-    
+
     // Build up TesEventList to recover the results of the reconstruction
     // SIRENA method
     TesEventList* event_list = newTesEventListSIRENA(&status);
@@ -1095,7 +1109,7 @@ int getpar(struct Parameters* const par)
 	
 	status=ape_trad_query_int("OFLength", &par->OFLength);
         
-    status=ape_trad_query_int("preBuffer", &par->preBuffer);
+    status=ape_trad_query_bool("preBuffer", &par->preBuffer);
         
     status=ape_trad_query_int("errorT", &par->errorT);
         
@@ -1222,14 +1236,14 @@ int getpar(struct Parameters* const par)
 	MyAssert((strcmp(par->OFStrategy,"FREE") == 0) || (strcmp(par->OFStrategy,"BYGRADE") == 0) || (strcmp(par->OFStrategy,"FIXED") == 0), 
 		 "OFStrategy must be FREE, BYGRADE or FIXED");
 	
-        MyAssert(par->OFLength > 0, "OFLength must be greater than 0");
+    MyAssert(par->OFLength > 0, "OFLength must be greater than 0");
         
-        MyAssert(par->preBuffer >= 0, "preBuffer must be 0 or greater than 0");
+    //MyAssert(par->preBuffer >= 0, "preBuffer must be 0 or greater than 0");
 	
 	MyAssert(par->energyPCA1 > 0, "energyPCA1 must be greater than 0");
-        MyAssert(par->energyPCA2 > 0, "energyPCA2 must be greater than 0");
+    MyAssert(par->energyPCA2 > 0, "energyPCA2 must be greater than 0");
         
-        MyAssert(par->LbT > 0, "LbT must be greater than 0");
+    MyAssert(par->LbT > 0, "LbT must be greater than 0");
 	
   } else {
 	SIXT_ERROR("failed reading the Rcmethod parameter");
