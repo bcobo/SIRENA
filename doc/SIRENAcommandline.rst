@@ -604,7 +604,7 @@ The output file will also be a FITS file storing one event per row with the foll
 
 * **PIX_ID**: pixel number
 
-* **PH_ID**: photon number identification for cross matching with the impact list
+* **PH_ID**: photon number identification of the first three photons in the corresponding record for cross matching with the impact list
 
 * **RISETIME**: rise time of the event (in s)
 

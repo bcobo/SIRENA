@@ -86,7 +86,7 @@ The second step is simulating the noise stream. This can be done by choosing eit
    
    Noise file triggered into records of 10000 samples by using ``tessim`` [#]_ .
    
-.. [#] If ``xifusim`` (XIFUSIM) is used, the noise records are in the *TESRECORDS* HDU (Header Data Unit) among others HDUs such as *GEOCHANNELPARAM*, *TESPARAM*, *SQUIDPARAM*,... 
+.. [#] If ``xifusim`` (XIFUSIM) is used, the noise records are in the *TESRECORDS* HDU (Header Data Unit) among others HDUs such as *GEOCHANNELPARAM*, *TESPARAM*, *SQUIDPARAM*,...
    
    
 **2) Noise spectrum and weight matrices generation**
@@ -178,7 +178,7 @@ where *suppress* is the time (in samples) after the triggering of an event, duri
    
 .. [#] Previous figure is equivalent in ``xifusim`` replacing *triggerSize*, *suppress* and *PreBufferSize* by *trig_reclength*, *trig_n_suppress* and *trig_n_pre* respectively. 
   
-The SIXTE simulated calibration files are now FITS files with only one HDU called *RECORDS* [#]_ populated with four columns: **TIME** (arrival time of the event), **ADC** (digitized current), **PIXID** (pixel identification) and **PH_ID** (photon identification, for debugging purposes only).
+The SIXTE simulated calibration files are now FITS files with only one HDU called *RECORDS* [#]_ populated with four columns: **TIME** (arrival time of the event), **ADC** (digitized current), **PIXID** (pixel identification) and **PH_ID** (photon identification, for debugging purposes only). 
 
 .. figure:: images/records.png
    :align:  center
@@ -186,7 +186,7 @@ The SIXTE simulated calibration files are now FITS files with only one HDU calle
 
    Records in calibration file by using ``tessim``.
    
-.. [#] If XIFUSIM is used, the calibration files have not only the *TESRECORDS* HDU with the events records but also others such as *GEOCHANNELPARAM*, *TESPARAM*, *SQUIDPARAM*, *WFEEPARAM*, *DREPARAM*, *ADCPARAM* and *TRIGGERPARAM*.    
+.. [#] If XIFUSIM is used, the calibration files have not only the *TESRECORDS* HDU with the events records but also others such as *GEOCHANNELPARAM*, *TESPARAM*, *SQUIDPARAM*, *WFEEPARAM*, *DREPARAM*, *ADCPARAM* and *TRIGGERPARAM*. The latest XIFUSIM version adds an **EXTEND** column to indicate that there is more data in a record which needs to be read from the next line(s) to complete it. Depending on the simulator version the PH_ID column can be a fixed-length or variable-length column with different dimensions; the latest XIFUSIM simulated files have a 3-length column, each row filled with the identifiers of the first three photons in the corresponding record.
    
 **2) Library construction**
 
@@ -314,7 +314,7 @@ The reconstructed energies for all the detected events are saved into an output 
 
 * **PIX_ID**: pixel number
 
-* **PH_ID**: photon number identification for cross matching with the impact list.
+* **PH_ID**: photon number identification of the first three photons in the corresponding record for cross matching with the impact list.
 
 * **RISETIME**: rise time of the event (in s).
 

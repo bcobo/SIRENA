@@ -558,7 +558,7 @@ int tesreconstruction_main() {
             
     TesTriggerFile* record_file;
     TesRecord* record;
-    int lastRecord = 0, nrecord = 0, nrecord_filei = 0;    //last record required for SIRENA library creation
+    int lastRecord = 0, nrecord = 0, startRecordGroup = 0,nrecord_filei = 0;    //last record required for SIRENA library creation
     
     if (strcmp(firstchar2,"@") == 0)
     {
@@ -611,7 +611,7 @@ int tesreconstruction_main() {
                     // Iterate of records and do the reconstruction
                     //int lastRecord = 0, nrecord = 0;    //last record required for SIRENA library creation
                     nrecord_filei = 0;
-                    while(getNextRecord(record_file,record,&status))
+                    while(getNextRecord(record_file,record,&lastRecord,&startRecordGroup,&status))
                     {
                             if(!strcmp(par.Rcmethod,"PP"))
                             {
@@ -631,7 +631,7 @@ int tesreconstruction_main() {
                                 
                                     //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
                                     reconstructRecordSIRENA(record,trig_reclength,event_list,reconstruct_init_sirena,
-                                                            lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
+                                                            lastRecord, startRecordGroup, &pulsesAll, &optimalFilter, &status);
                             }
                             CHECK_STATUS_BREAK(status);
 
@@ -640,9 +640,6 @@ int tesreconstruction_main() {
                                     // In THREADING mode, saveEventListToFileSIRENA is not called until finishing with calculus 
                                     // (ordering is necessary previously)  
                                     if(!is_threading()){    
-                                            //printf("\n %p - %f", outfile, record_file->delta_t);
-                                            //printf("\nRecord single");
-                                            //printf("\n%f - %ld", record->time, record->pixid);
                                             saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
                                             CHECK_STATUS_BREAK(status);
                                             //Reinitialize event list
@@ -654,21 +651,12 @@ int tesreconstruction_main() {
                     } // while getNextRecord
                     if(is_threading()) 
                     {
-                            //printf("%s","**Threading...waiting \n");
                             th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
-                            //printf("%s %d %s","**Threading...after th_end: pulsesAll->ndetpulses", pulsesAll->ndetpulses,"\n");
-                            //printf("%s %d %s","**Threading...after th_end: pulsesAll->size", pulsesAll->size,"\n");
                             int i = 1;
                             int aux = 1;
                             while((aux = th_get_event_list(&event_list, &record)) == 1)
                             {
-                                    //printf("%s %d %s","**Threading...i: ", i,"\n");
-                                    //printf("%s %d %s","**Threading...event_list->size_energy: ", event_list->size_energy,"\n"); Always 0
-                                    //printf("%s %e %s","**Threading...event_list->energies[0]: ", event_list->energies[0],"\n"); Energy value
-                                    //printf("%s %e %s","**Threading...event_list->energies[1]: ", event_list->energies[1],"\n"); Not error but non relevant value
-                                    //printf("%s %e %s","**Threading...event_list->energies[100000]: ", event_list->energies[100000],"\n"); Not error but non relevant value
                                     saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-                                    //printf("%s","**Threading...after de saveEventListToFileSIRENA \n");
                                     CHECK_STATUS_BREAK(status);
                                     ++i;
                             }
@@ -743,12 +731,6 @@ int tesreconstruction_main() {
             }
             CHECK_STATUS_BREAK(status);
             
-            //printf("%s %d %s","record_file->trigger_size0: ", record_file->trigger_size,"\n");
-            //printf("%s %d %s","trig_reclength: ", trig_reclength,"\n");
-            //if (record_file->trigger_size > trig_reclength)
-            //{
-            //    record_file->trigger_size = trig_reclength;
-            //}
             // Build up TesRecord to read the file
             record = newTesRecord(&status);
             if ((record_file->delta_t == -999) && (sampling_rate == -999))
@@ -761,12 +743,10 @@ int tesreconstruction_main() {
             //allocateTesRecord(record,record_file->trigger_size,record_file->delta_t,0,&status);
             allocateTesRecord(record,trig_reclength,record_file->delta_t,0,&status);
             CHECK_STATUS_BREAK(status);
-            //printf("%s %f %s","record_file->delta_t = ",record_file->delta_t,"\n");
-            //printf("%s %f %s","samprate = ",1.0/(record_file->delta_t),"\n");
                 
             // Iterate of records and do the reconstruction
             lastRecord = 0, nrecord = 0;    //last record required for SIRENA library creation
-            while(getNextRecord(record_file,record,&status))
+            while(getNextRecord(record_file,record,&lastRecord,&startRecordGroup,&status))
             {
                     if(!strcmp(par.Rcmethod,"PP"))
                     {
@@ -775,7 +755,7 @@ int tesreconstruction_main() {
                     else
                     {
                             nrecord = nrecord + 1;
-                            if(nrecord == record_file->nrows) lastRecord=1;
+                            //if(nrecord == record_file->nrows) lastRecord=1;
                             /*if(nrecord < 7) 
                             {
                               continue;
@@ -797,10 +777,8 @@ int tesreconstruction_main() {
                             }
                         
                             //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
-                            //printf("%s %d %s", "pixid: ",record->pixid,"\n");
-                            //printf("%s %d %s","ph_id: ",record->phid_list->phid_array[0],"\n");
                             reconstructRecordSIRENA(record,trig_reclength, event_list,reconstruct_init_sirena,
-                                                    lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
+                                                    lastRecord, startRecordGroup, &pulsesAll, &optimalFilter, &status);
                     }
                     CHECK_STATUS_BREAK(status);
 
@@ -809,14 +787,7 @@ int tesreconstruction_main() {
                             // In THREADING mode, saveEventListToFileSIRENA is not called until finishing with calculus 
                             // (ordering is necessary previously)  
                             if(!is_threading()){    
-                                    //printf("\n %p - %f", outfile, record_file->delta_t);
-                                    //printf("\nRecord single");
-                                    //printf("\n%f - %ld", record->time, record->pixid);
-                                    //printf("%s %d %s","**Before saveEventListToFileSIRENA \n");
-                                    //printf("%s %d %s","status2 = ",status,"\n");
                                     saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-                                    //printf("%s %d %s","**After saveEventListToFileSIRENA \n");
-                                    //printf("%s %d %s","status3 = ",status,"\n");
                                     CHECK_STATUS_BREAK(status);
                                     //Reinitialize event list
                                     event_list->index=0;
@@ -828,18 +799,11 @@ int tesreconstruction_main() {
             {
                     //printf("%s","**Threading...waiting \n");
                     th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
-                    //printf("%s %d %s","**Threading...after th_end: pulsesAll->ndetpulses", pulsesAll->ndetpulses,"\n");
-                    //printf("%s %d %s","**Threading...after th_end: pulsesAll->size", pulsesAll->size,"\n");
                     int i = 1;
                     int aux = 1;
                     while((aux = th_get_event_list(&event_list, &record)) == 1)
                     {
-                            //printf("%s %d %s","**Threading...event_list->size_energy: ", event_list->size_energy,"\n"); //Always 0
-                            //printf("%s %e %s","**Threading...event_list->energies[0]: ", event_list->energies[0],"\n"); //Energy value
-                            //printf("%s %e %s","**Threading...event_list->energies[1]: ", event_list->energies[1],"\n"); //Not error but non relevant value
-                            //printf("%s %e %s","**Threading...event_list->energies[100000]: ", event_list->energies[100000],"\n"); Not error but non relevant value
                             saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-                            //printf("%s","**Threading...after saveEventListToFileSIRENA \n");
                             CHECK_STATUS_BREAK(status);
                             ++i;
                     }

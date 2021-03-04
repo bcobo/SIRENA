@@ -764,6 +764,8 @@
          if (event_list->grades2 != NULL) 	delete [] event_list->grades2;
          if (event_list->pulse_heights != NULL) 	delete [] event_list->pulse_heights;
          if (event_list->ph_ids != NULL) 	delete [] event_list->ph_ids;
+         if (event_list->ph_ids2 != NULL) 	delete [] event_list->ph_ids2;
+         if (event_list->ph_ids3 != NULL) 	delete [] event_list->ph_ids3;
          if (event_list->pix_ids != NULL) 	delete [] event_list->pix_ids;
          if (event_list->tstarts != NULL) 	delete [] event_list->tstarts;
          if (event_list->tends != NULL) 	        delete [] event_list->tends;
@@ -826,6 +828,8 @@
      event_list->grades2  = new int[event_list->index];
      event_list->pulse_heights  = new double[event_list->index];
      event_list->ph_ids   = new long[event_list->index];
+     event_list->ph_ids2   = new long[event_list->index];
+     event_list->ph_ids3   = new long[event_list->index];
      event_list->pix_ids   = new long[event_list->index];
      event_list->tends   = new double[event_list->index];
      event_list->tstarts   = new double[event_list->index];
@@ -861,6 +865,8 @@
              event_list->pulse_heights[ip]  = pulsesInRecord->pulses_detected[ip].pulse_height;
              event_list->pix_ids[ip]  = pulsesInRecord->pulses_detected[ip].pixid;
              event_list->ph_ids[ip]  = pulsesInRecord->pulses_detected[ip].phid;
+             event_list->ph_ids2[ip]  = pulsesInRecord->pulses_detected[ip].phid2;
+             event_list->ph_ids3[ip]  = pulsesInRecord->pulses_detected[ip].phid3;
              event_list->tstarts[ip]  = pulsesInRecord->pulses_detected[ip].Tstart;
              event_list->tends[ip]  = pulsesInRecord->pulses_detected[ip].Tend;
              event_list->risetimes[ip]  = pulsesInRecord->pulses_detected[ip].riseTime;
@@ -883,7 +889,7 @@
              }
              
              gsl_vector_free(numLagsUsed_vector);
-         }                   
+         }           
      }
      else
      {
@@ -4284,6 +4290,8 @@
  grade2_1(0),
  pixid(0),
  phid(0),
+ phid2(0),
+ phid3(0),
  pulse_adc(0),
  pulse_adc_preBuffer(0),
  Tstart(0.0f),
@@ -4315,6 +4323,8 @@
  grade2_1(other.grade2_1),
  pixid(other.pixid),
  phid(other.phid),
+ phid2(other.phid2),
+ phid3(other.phid3),
  pulse_adc(0),
  pulse_adc_preBuffer(0),
  Tstart(other.Tstart),
@@ -4356,6 +4366,8 @@
          grade2_1 = other.grade2_1;
          pixid = other.pixid;
          phid = other.phid;
+         phid2 = other.phid2;
+         phid3 = other.phid3;
          if(pulse_adc) {
              gsl_vector_free(pulse_adc); pulse_adc = 0;
          }

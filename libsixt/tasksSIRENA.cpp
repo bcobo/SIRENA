@@ -215,6 +215,10 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
         message = "Cannot run routine loadRecord";
         EP_EXIT_ERROR(message,EPFAIL);
     }
+    /*for (int i=0;i<invector->size;i++)
+    {
+        cout<<i<<" "<<gsl_vector_get(invector,i)<<endl;
+    }*/
     gsl_vector_view temp;
     // Just in case threading and input files with different 'ADC' lengths but the same record size indeed
     if (record->trigger_size > trig_reclength)
@@ -276,12 +280,16 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
     
     log_trace("Detecting...");
     // Process each record
-    if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, invectorOriginal,*pulsesInRecord, pulsesAll->ndetpulses, record->pixid,record->phid_list->phid_array[0], oscillations))
+    //if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, invectorOriginal,*pulsesInRecord, pulsesAll->ndetpulses, record->pixid,record->phid_list->phid_array[0], oscillations))
+    gsl_vector *phid = gsl_vector_alloc(3);
+    for (int i=0;i<phid->size;i++)  gsl_vector_set(phid,i,record->phid_list->phid_array[i]);
+    if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, invectorOriginal,*pulsesInRecord, pulsesAll->ndetpulses, record->pixid, phid, oscillations))
     {
         message = "Cannot run routine procRecord for record processing";
         EP_EXIT_ERROR(message,EPFAIL);
     }
     gsl_vector_free(invectorOriginal); invectorOriginal = 0;
+    gsl_vector_free(phid); phid = 0;
     log_trace("After detecting...");
     
     // From this point forward, I2R and I2RFITTED are completely equivalent to OPTFILT
@@ -952,13 +960,18 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
     
     // Process each record
     // thread safe
+    gsl_vector *phid = gsl_vector_alloc(3);
+    for (int i=0;i<phid->size;i++)  gsl_vector_set(phid,i,record->phid_list->phid_array[i]);
+    //if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, 
+    //    invector, invectorOriginal, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid,record->phid_list->phid_array[0], oscillations))
     if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, 
-        invector, invectorOriginal, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid,record->phid_list->phid_array[0], oscillations))
+        invector, invectorOriginal, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid,phid, oscillations))
     {
         message = "Cannot run routine procRecord for record processing";
         EP_EXIT_ERROR(message,EPFAIL);
     }
     gsl_vector_free(invectorOriginal); invectorOriginal = 0;
+    gsl_vector_free(phid); phid = 0;
     
     if ((strcmp((*reconstruct_init)->EnergyMethod,"I2R") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"I2RFITTED") == 0))
     {
@@ -2201,10 +2214,10 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
  * - foundPulses: Input/output structure where the found pulses info is stored 
  * - num_previousDetectedPulses: Number of previous detected pulses (to know the index to get the proper element from tstartPulse1_i in case tstartPulse1=nameFile)
  * - pixid: Pixel ID (from the input file) to be propagated 
- * - phid: Photon ID (from the input file) to be propagated
+ * - phid: Photon ID (from the input file) to be propagated 
  * - oscillations: 1 (there are weird oscillations in the record) or 0 (record without weird oscillations)
  ****************************************************************************/
-int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, gsl_vector *recordWithoutConvert2R, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, int phid, int oscillations)
+int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, gsl_vector *recordWithoutConvert2R, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, gsl_vector *phid, int oscillations)
 {
     int status = EPOK;
     string message = "";
@@ -2689,7 +2702,9 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
         foundPulses->pulses_detected[i].quality = gsl_vector_get(qualitygsl,i);
         foundPulses->pulses_detected[i].numLagsUsed = gsl_vector_get(lagsgsl,i);
         foundPulses->pulses_detected[i].pixid = pixid;
-        foundPulses->pulses_detected[i].phid = phid;
+        foundPulses->pulses_detected[i].phid = gsl_vector_get(phid,0);
+        foundPulses->pulses_detected[i].phid2 = gsl_vector_get(phid,1);
+        foundPulses->pulses_detected[i].phid3 = gsl_vector_get(phid,2);
         if (gsl_vector_get(Bgsl,i) != -999.0)
         {
             foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);

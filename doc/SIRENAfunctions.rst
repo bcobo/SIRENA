@@ -5178,7 +5178,7 @@ Search functions by name at :ref:`genindex`.
         Status
 
         
-.. cpp:function:: int procRecord (ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, gsl_vector *recordWithoutConvert2R, PulsesCollection *foundPulses, int oscillations)
+.. cpp:function:: int procRecord (ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, gsl_vector *recordWithoutConvert2R, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, gsl_vector *phid, int oscillations)
         
     Located in file: *tasksSIRENA.cpp*
     
@@ -5256,7 +5256,7 @@ Search functions by name at :ref:`genindex`.
 
         Pixel ID (from the input file) to be propagated
     
-    int **phid**
+    gsl_vector* **phid**
 
         Photon ID (from the input file) to be propagated
     
@@ -5300,7 +5300,7 @@ Search functions by name at :ref:`genindex`.
 
         Pixel ID (from the input file) to be propagated
     
-    .. cpp:member:: int phid
+    .. cpp:member:: gsl_vector* phid
 
         Photon ID (from the input file) to be propagated
         

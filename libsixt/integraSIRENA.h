@@ -316,24 +316,26 @@ typedef struct PulseDetected
 	/** tstart(i)-tstart(i-1)*/
 	int grade2;
 
-        int grade2_1;
+    int grade2_1;
 
 	/** PIX_ID of the detected pulse*/
 	int pixid;
         
-        /** PH_ID of the detected pulse*/
+    ///** PH_IDs corresponding to the record where is the detected pulse*/
 	int phid;
+    int phid2;
+    int phid3;
 	
 	/** Vector containing the pulse adc values */
 	gsl_vector *pulse_adc;
         
-        /** Vector containing the pulse adc values and the preBuffer*/
+    /** Vector containing the pulse adc values and the preBuffer*/
 	gsl_vector *pulse_adc_preBuffer;
 
 	/** Start time of the Pulse */
 	double Tstart;
         
-        /** Start time of the Pulse in samples */
+    /** Start time of the Pulse in samples */
 	double TstartSamples;
 
 	/** End time of the Pulse */
@@ -357,32 +359,32 @@ typedef struct PulseDetected
 	/** Energy (KeV) of the Pulse */
 	double energy;
         
-        /** Pulse grade */
+    /** Pulse grade */
 	int grading;
 
-        /** Average of the first 4 samples of the derivative of the Pulse */
+    /** Average of the first 4 samples of the derivative of the Pulse */
 	double avg_4samplesDerivative;
         
-        /** Low resolution energy estimator (4 samples-long filter) */
+    /** Low resolution energy estimator (4 samples-long filter) */
 	double E_lowres;
         
-        /** Offset relative to the central point of the parabola */
-        double phi;
+    /** Offset relative to the central point of the parabola */
+    double phi;
         
-        /** Number of samples shifted to find the maximum of the parabola  */
-        int lagsShift;
+    /** Number of samples shifted to find the maximum of the parabola  */
+    int lagsShift;
         
 	/** Quality of the Pulse */
 	double quality;
         
-        /**Number of lags used in detection*/
-        int numLagsUsed;
+    /**Number of lags used in detection*/
+    int numLagsUsed;
         
-        /** Baseline calculated, in general, by using the previous Lb samples to the pulse */
-        double bsln;
+    /** Baseline calculated, in general, by using the previous Lb samples to the pulse */
+    double bsln;
         
-        /** Rms of the baseline calculated, in general, by using the previous Lb samples to the pulse */
-        double rmsbsln;
+    /** Rms of the baseline calculated, in general, by using the previous Lb samples to the pulse */
+    double rmsbsln;
 #ifdef __cplusplus
   PulseDetected();
   PulseDetected(const PulseDetected& other);
