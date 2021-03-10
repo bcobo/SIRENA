@@ -62,7 +62,7 @@ void energy_worker()
     if(energy_queue.wait_and_pop(data)){
       //log_trace("Extracting energy data from queue...");
       //log_debug("Energy data in record %i",data->n_record);
-      th_runEnergy(data->rec, data->trig_reclength,
+      th_runEnergy(data->rec, data->n_record, data->trig_reclength,
                    &(data->rec_init),
                    &(data->record_pulses),
                    //&(data->optimal_filter));
@@ -89,7 +89,7 @@ void energy_worker_v2()
     if(detected_queue.wait_and_pop(data)){
       //log_trace("Extracting energy data from queue...");
       //log_debug("Energy data in record %i",data->n_record);
-      th_runEnergy(data->rec, data->trig_reclength,
+      th_runEnergy(data->rec, data->n_record, data->trig_reclength,
                    &(data->rec_init),
                    &(data->record_pulses),
                    //&(data->optimal_filter);
@@ -156,12 +156,13 @@ void scheduler::push_detection(TesRecord* record, int trig_reclength,
   input->event_list->grades2 = new int[event_list->size];
   input->event_list->pulse_heights = new double[event_list->size];
   input->event_list->ph_ids = new long[event_list->size];
+  input->event_list->ph_ids2 = new long[event_list->size];
+  input->event_list->ph_ids3 = new long[event_list->size];
   input->event_list->grading = new int[event_list->size];
   input->event_list->phis = new double[event_list->size];
   input->event_list->lagsShifts = new int[event_list->size];
   input->event_list->bsln = new double[event_list->size];
   input->event_list->pix_ids = new long[event_list->size];
-  input->event_list->ph_ids = new long[event_list->size];
   log_trace("push_detection 3");
   detection_queue.push(input);
   log_trace("push_detection 4");
@@ -316,12 +317,14 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
         event_list->grades1[ip]  = record_pulses->pulses_detected[ip].grade1;
         event_list->grades2[ip]  = record_pulses->pulses_detected[ip].grade2;
         event_list->pulse_heights[ip]  = record_pulses->pulses_detected[ip].pulse_height;
-        event_list->ph_ids[ip]   = 0;
+        //event_list->ph_ids[ip]   = 0;
         event_list->phis[ip] = record_pulses->pulses_detected[ip].phi;
         event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
         event_list->bsln[ip] = record_pulses->pulses_detected[ip].bsln;
         event_list->pix_ids[ip] = record_pulses->pulses_detected[ip].pixid;
         event_list->ph_ids[ip] = record_pulses->pulses_detected[ip].phid;
+        event_list->ph_ids2[ip] = record_pulses->pulses_detected[ip].phid2;
+        event_list->ph_ids3[ip] = record_pulses->pulses_detected[ip].phid3;
       }
       if (data_array[i]->last_record == 1) {
         //log_debug("eventlist last record");
@@ -362,12 +365,14 @@ void scheduler::finish_reconstruction(ReconstructInitSIRENA* reconstruct_init,
           event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
           event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
           event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
-          event_list->ph_ids[ip]   = 0;    
+          //event_list->ph_ids[ip]   = 0;    
           event_list->phis[ip] = record_pulses->pulses_detected[ip].phi;
           event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
           event_list->bsln[ip] = record_pulses->pulses_detected[ip].bsln;
           event_list->pix_ids[ip] = record_pulses->pulses_detected[ip].pixid;
           event_list->ph_ids[ip] = record_pulses->pulses_detected[ip].phid;
+          event_list->ph_ids2[ip] = record_pulses->pulses_detected[ip].phid2;
+          event_list->ph_ids3[ip] = record_pulses->pulses_detected[ip].phid3;
         }
       }
     }
@@ -538,12 +543,14 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
         event_list->grades1[ip]  = record_pulses->pulses_detected[ip].grade1;
         event_list->grades2[ip]  = record_pulses->pulses_detected[ip].grade2;
         event_list->pulse_heights[ip]  = record_pulses->pulses_detected[ip].pulse_height;
-        event_list->ph_ids[ip]   = 0;
+        //event_list->ph_ids[ip]   = 0;
         event_list->phis[ip] = record_pulses->pulses_detected[ip].phi;
         event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
         event_list->bsln[ip] = record_pulses->pulses_detected[ip].bsln;
         event_list->pix_ids[ip] = record_pulses->pulses_detected[ip].pixid;
         event_list->ph_ids[ip] = record_pulses->pulses_detected[ip].phid;
+        event_list->ph_ids2[ip] = record_pulses->pulses_detected[ip].phid2;
+        event_list->ph_ids3[ip] = record_pulses->pulses_detected[ip].phid3;
       }
       if (data_array[i]->last_record == 1) {
         //log_debug("eventlist last record");
@@ -584,12 +591,14 @@ void scheduler::finish_reconstruction_v2(ReconstructInitSIRENA* reconstruct_init
           event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
           event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
           event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
-          event_list->ph_ids[ip]   = 0;    
+          //event_list->ph_ids[ip]   = 0;    
           event_list->phis[ip] = record_pulses->pulses_detected[ip].phi;
           event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
           event_list->bsln[ip] = record_pulses->pulses_detected[ip].bsln;
           event_list->pix_ids[ip] = record_pulses->pulses_detected[ip].pixid;
           event_list->ph_ids[ip] = record_pulses->pulses_detected[ip].phid;
+          event_list->ph_ids2[ip] = record_pulses->pulses_detected[ip].phid2;
+          event_list->ph_ids3[ip] = record_pulses->pulses_detected[ip].phid3;
         }
       }
     }

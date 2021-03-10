@@ -78,7 +78,7 @@
 * - OFLib: Work or not with a library with optimal filters (1/0)
 * - OFStrategy: Optimal Filter length Strategy: FREE, BYGRADE or FIXED
 * - OFLength: Optimal Filter length (taken into account if OFStrategy=FIXED)
-* - preBuffer: Some samples added before the starting time of a pulse
+* - preBuffer: Some samples added before the starting time of a pulse (number of samples added read from the xml file)
 * - intermediate: Write or not intermediate files (1/0)
 * - detectFile: Intermediate detections file (if intermediate=1)
 * - errorT: Additional error (in samples) added to the detected time (Logically, it changes the reconstructed energies )
@@ -95,7 +95,11 @@
 * - Register HEATOOL
 * - Reading all programm parameters by using PIL
 * - Read XML info
-* - Read the grading info from the input XML file
+* - Sixt standard keywords structure
+* - Open output FITS file
+* - Initialize PP data structures needed for pulse filtering
+* - Initialize SIRENA data structures needed for pulse filtering
+* - Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
 * - Obtain the 'trig_reclength' and the sampling rate:
 *   - If Rcmethod starts with '@' => List of record input FITS files. For every FITS file:
 *       - Open FITS file
@@ -109,11 +113,6 @@
 *       - Get the sampling rate from the HISTORY keyword from the input FITS file
 *       - If it is a xifusim simulated file
 *           - Obtain 'trig_reclength' from the HISTORY block
-* - Sixt standard keywords structure
-* - Open output FITS file
-* - Initialize PP data structures needed for pulse filtering
-* - Initialize SIRENA data structures needed for pulse filtering
-* - Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
 * - Build up TesEventList to recover the results of the reconstruction
 * - Reconstruct the input record FITS file:
 *   - If Rcmethod starts with '@' => List of record input FITS files. For every FITS file:
@@ -164,19 +163,111 @@ int tesreconstruction_main() {
         return(EXIT_FAILURE);
    }
     
+    // Sixt standard keywords structure
+    //----------------------------------
+    SixtStdKeywords* keywords = newSixtStdKeywords(&status);
+    CHECK_STATUS_BREAK(status);
+    
+    //Open outfile 
+    //------------
+    TesEventFile * outfile = opennewTesEventFileSIRENA(par.TesEventFile,
+                                                 keywords,
+                                                 SIRENA_VERSION,
+                                                 par.clobber,
+                                                 &status);
+    CHECK_STATUS_BREAK(status);
+    
+    // Initialize PP data structures needed for pulse filtering
+    //---------------------------------------------------------
+    ReconstructInit* reconstruct_init = newReconstructInit(&status);
+    CHECK_STATUS_BREAK(status);
+    
+    // Initialize SIRENA data structures needed for pulse filtering
+    //-------------------------------------------------------------
+    ReconstructInitSIRENA* reconstruct_init_sirena = newReconstructInitSIRENA(&status);
+    CHECK_STATUS_BREAK(status);
+    PulsesCollection* pulsesAll = newPulsesCollection(&status);
+    CHECK_STATUS_BREAK(status);  
+    OptimalFilterSIRENA* optimalFilter = newOptimalFilterSIRENA(&status);
+    CHECK_STATUS_BREAK(status);// define a second structure for calibration
+    
     double sf = -999.; 
     double sampling_rate = -999.0;
     AdvDet *det = newAdvDet(&status);
-    if (par.opmode != 0)
+    
+    // Read XML info
+    //--------------
+    CHECK_STATUS_BREAK(status);
+    det = loadAdvDet(par.XMLFile, &status);
+    CHECK_STATUS_BREAK(status);
+    
+    sf = det->SampleFreq;
+    
+    // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
+    reconstruct_init_sirena->grading = NULL;
+    reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
+    
+    reconstruct_init_sirena->grading->ngrades = 0;
+    reconstruct_init_sirena->grading->value  = NULL;
+    reconstruct_init_sirena->grading->gradeData = NULL;
+    
+    if ((det->nrecons == 0) && (det->npix == 0))
     {
-        // Read XML info
-        //--------------
-        CHECK_STATUS_BREAK(status);
-        det = loadAdvDet(par.XMLFile, &status);
-        CHECK_STATUS_BREAK(status);
-        
-        sf = det->SampleFreq;
+        SIXT_ERROR("The provided XMLFile does not have the grading info");
+        return(EXIT_FAILURE);
     }
+    else if ((det->nrecons == 0) && (det->npix != 0))
+    {
+        if (det->pix->grades == NULL)
+        {
+            SIXT_ERROR("The provided XMLFile does not have the grading info");
+            return(EXIT_FAILURE);
+        }
+        reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
+        reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->pix->ngrades,3);
+        for (int i=0;i<det->pix->ngrades;i++)
+        {
+            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->pix->grades[i].gradelim_pre));
+            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post));
+            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,2,(int) (det->pix->grades[i].grade_preBuffer));
+        }
+    }
+    else if(((det->nrecons != 0) && (det->npix == 0)) || ((det->nrecons == 1) && (det->npix == 1)))
+    {
+        if (det->recons->grades == NULL)
+        {
+            SIXT_ERROR("The provided XMLFile does not have the grading info");
+            return(EXIT_FAILURE);
+        }
+        reconstruct_init_sirena->grading->ngrades=det->recons->ngrades;
+        reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->recons->ngrades,3);
+        for (int i=0;i<det->recons->ngrades;i++)
+        {
+            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->recons->grades[i].gradelim_pre));
+            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->recons->grades[i].gradelim_post));
+            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,2,(int) (det->recons->grades[i].grade_preBuffer));
+        }
+    }
+    
+    int OFlengthvsposti = 0;
+    if ((par.preBuffer == 1) && (par.opmode == 1))
+    {
+        for (int i=0;i<reconstruct_init_sirena->grading->ngrades;i++) 
+        {
+            if (par.OFLength == gsl_matrix_get(reconstruct_init_sirena->grading->gradeData,i,1))
+            {
+                OFlengthvsposti = 1;
+                break;
+            }
+        }
+        if (OFlengthvsposti == 0)
+        {
+            SIXT_ERROR("The grading/preBuffer info of the XML file does not match the OFLength input parameter");
+            return(EXIT_FAILURE);
+        }
+    }
+    
+    destroyAdvDet(&det);
     
     int trig_reclength = -999;
     
@@ -454,84 +545,7 @@ int tesreconstruction_main() {
             fits_close_file(fptr,&status);
             CHECK_STATUS_BREAK(status);
     }
-    
-    // Sixt standard keywords structure
-    //----------------------------------
-    SixtStdKeywords* keywords = newSixtStdKeywords(&status);
-    CHECK_STATUS_BREAK(status);
-    
-    //Open outfile 
-    //------------
-    TesEventFile * outfile = opennewTesEventFileSIRENA(par.TesEventFile,
-                                                 keywords,
-                                                 SIRENA_VERSION,
-                                                 par.clobber,
-                                                 &status);
-    CHECK_STATUS_BREAK(status);
-    
-    // Initialize PP data structures needed for pulse filtering
-    //---------------------------------------------------------
-    ReconstructInit* reconstruct_init = newReconstructInit(&status);
-    CHECK_STATUS_BREAK(status);
-    
-    // Initialize SIRENA data structures needed for pulse filtering
-    //-------------------------------------------------------------
-    ReconstructInitSIRENA* reconstruct_init_sirena = newReconstructInitSIRENA(&status);
-    CHECK_STATUS_BREAK(status);
-    PulsesCollection* pulsesAll = newPulsesCollection(&status);
-    CHECK_STATUS_BREAK(status);  
-    OptimalFilterSIRENA* optimalFilter = newOptimalFilterSIRENA(&status);
-    CHECK_STATUS_BREAK(status);// define a second structure for calibration
-    
-    if (par.opmode != 0)    // Grading info is not necessary when building the library
-    {
-        // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
-        reconstruct_init_sirena->grading = NULL;
-        //reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
-        reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
-        
-        reconstruct_init_sirena->grading->ngrades = 0;
-        reconstruct_init_sirena->grading->value  = NULL;
-        reconstruct_init_sirena->grading->gradeData = NULL;
-        
-        if ((det->nrecons == 0) && (det->npix == 0))
-        {
-            SIXT_ERROR("The provided XMLFile does not have the grading info");
-            return(EXIT_FAILURE);
-        }
-        else if ((det->nrecons == 0) && (det->npix != 0))
-        {
-            if (det->pix->grades == NULL)
-            {
-                SIXT_ERROR("The provided XMLFile does not have the grading info");
-                return(EXIT_FAILURE);
-            }
-            reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
-            reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->pix->ngrades,2);
-            for (int i=0;i<det->pix->ngrades;i++)
-            {
-                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->pix->grades[i].gradelim_pre));
-                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post));
-            }
-        }
-        else if(((det->nrecons != 0) && (det->npix == 0)) || ((det->nrecons == 1) && (det->npix == 1)))
-        {
-            if (det->recons->grades == NULL)
-            {
-                SIXT_ERROR("The provided XMLFile does not have the grading info");
-                return(EXIT_FAILURE);
-            }
-            reconstruct_init_sirena->grading->ngrades=det->recons->ngrades;
-            reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->recons->ngrades,2);
-            for (int i=0;i<det->recons->ngrades;i++)
-            {
-                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->recons->grades[i].gradelim_pre));
-                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->recons->grades[i].gradelim_post));
-            }
-        }
-    }
-    destroyAdvDet(&det);
-    
+
     // Build up TesEventList to recover the results of the reconstruction
     // SIRENA method
     TesEventList* event_list = newTesEventListSIRENA(&status);
@@ -544,7 +558,7 @@ int tesreconstruction_main() {
             
     TesTriggerFile* record_file;
     TesRecord* record;
-    int lastRecord = 0, nrecord = 0, nrecord_filei = 0;    //last record required for SIRENA library creation
+    int lastRecord = 0, nrecord = 0, startRecordGroup = 0,nrecord_filei = 0;    //last record required for SIRENA library creation
     
     if (strcmp(firstchar2,"@") == 0)
     {
@@ -597,7 +611,7 @@ int tesreconstruction_main() {
                     // Iterate of records and do the reconstruction
                     //int lastRecord = 0, nrecord = 0;    //last record required for SIRENA library creation
                     nrecord_filei = 0;
-                    while(getNextRecord(record_file,record,&status))
+                    while(getNextRecord(record_file,record,&lastRecord,&startRecordGroup,&status))
                     {
                             if(!strcmp(par.Rcmethod,"PP"))
                             {
@@ -617,7 +631,7 @@ int tesreconstruction_main() {
                                 
                                     //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
                                     reconstructRecordSIRENA(record,trig_reclength,event_list,reconstruct_init_sirena,
-                                                            lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
+                                                            lastRecord, startRecordGroup, &pulsesAll, &optimalFilter, &status);
                             }
                             CHECK_STATUS_BREAK(status);
 
@@ -626,9 +640,6 @@ int tesreconstruction_main() {
                                     // In THREADING mode, saveEventListToFileSIRENA is not called until finishing with calculus 
                                     // (ordering is necessary previously)  
                                     if(!is_threading()){    
-                                            //printf("\n %p - %f", outfile, record_file->delta_t);
-                                            //printf("\nRecord single");
-                                            //printf("\n%f - %ld", record->time, record->pixid);
                                             saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
                                             CHECK_STATUS_BREAK(status);
                                             //Reinitialize event list
@@ -640,21 +651,12 @@ int tesreconstruction_main() {
                     } // while getNextRecord
                     if(is_threading()) 
                     {
-                            //printf("%s","**Threading...waiting \n");
                             th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
-                            //printf("%s %d %s","**Threading...after th_end: pulsesAll->ndetpulses", pulsesAll->ndetpulses,"\n");
-                            //printf("%s %d %s","**Threading...after th_end: pulsesAll->size", pulsesAll->size,"\n");
                             int i = 1;
                             int aux = 1;
                             while((aux = th_get_event_list(&event_list, &record)) == 1)
                             {
-                                    //printf("%s %d %s","**Threading...i: ", i,"\n");
-                                    //printf("%s %d %s","**Threading...event_list->size_energy: ", event_list->size_energy,"\n"); Always 0
-                                    //printf("%s %e %s","**Threading...event_list->energies[0]: ", event_list->energies[0],"\n"); Energy value
-                                    //printf("%s %e %s","**Threading...event_list->energies[1]: ", event_list->energies[1],"\n"); Not error but non relevant value
-                                    //printf("%s %e %s","**Threading...event_list->energies[100000]: ", event_list->energies[100000],"\n"); Not error but non relevant value
                                     saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-                                    //printf("%s","**Threading...after de saveEventListToFileSIRENA \n");
                                     CHECK_STATUS_BREAK(status);
                                     ++i;
                             }
@@ -729,12 +731,6 @@ int tesreconstruction_main() {
             }
             CHECK_STATUS_BREAK(status);
             
-            //printf("%s %d %s","record_file->trigger_size0: ", record_file->trigger_size,"\n");
-            //printf("%s %d %s","trig_reclength: ", trig_reclength,"\n");
-            //if (record_file->trigger_size > trig_reclength)
-            //{
-            //    record_file->trigger_size = trig_reclength;
-            //}
             // Build up TesRecord to read the file
             record = newTesRecord(&status);
             if ((record_file->delta_t == -999) && (sampling_rate == -999))
@@ -747,12 +743,10 @@ int tesreconstruction_main() {
             //allocateTesRecord(record,record_file->trigger_size,record_file->delta_t,0,&status);
             allocateTesRecord(record,trig_reclength,record_file->delta_t,0,&status);
             CHECK_STATUS_BREAK(status);
-            //printf("%s %f %s","record_file->delta_t = ",record_file->delta_t,"\n");
-            //printf("%s %f %s","samprate = ",1.0/(record_file->delta_t),"\n");
                 
             // Iterate of records and do the reconstruction
             lastRecord = 0, nrecord = 0;    //last record required for SIRENA library creation
-            while(getNextRecord(record_file,record,&status))
+            while(getNextRecord(record_file,record,&lastRecord,&startRecordGroup,&status))
             {
                     if(!strcmp(par.Rcmethod,"PP"))
                     {
@@ -761,12 +755,12 @@ int tesreconstruction_main() {
                     else
                     {
                             nrecord = nrecord + 1;
-                            if(nrecord == record_file->nrows) lastRecord=1;
-                            /*if(nrecord < 7) 
+                            //if(nrecord == record_file->nrows) lastRecord=1;
+                            /*if(nrecord < 116) 
                             {
                               continue;
                             }
-                            else if(nrecord > 7)
+                            else if(nrecord > 117)
                             {
                               status=1;
                               CHECK_STATUS_BREAK(status);
@@ -783,10 +777,9 @@ int tesreconstruction_main() {
                             }
                         
                             //printf("%s %d %s","**TESRECONSTRUCTION nrecord = ",nrecord,"\n");
-                            //printf("%s %d %s", "pixid: ",record->pixid,"\n");
-                            //printf("%s %d %s","ph_id: ",record->phid_list->phid_array[0],"\n");
+                            //printf("%s %d %s","startRecordGroup = ",startRecordGroup,"\n");
                             reconstructRecordSIRENA(record,trig_reclength, event_list,reconstruct_init_sirena,
-                                                    lastRecord, nrecord, &pulsesAll, &optimalFilter, &status);
+                                                    lastRecord, startRecordGroup, &pulsesAll, &optimalFilter, &status);
                     }
                     CHECK_STATUS_BREAK(status);
 
@@ -795,14 +788,7 @@ int tesreconstruction_main() {
                             // In THREADING mode, saveEventListToFileSIRENA is not called until finishing with calculus 
                             // (ordering is necessary previously)  
                             if(!is_threading()){    
-                                    //printf("\n %p - %f", outfile, record_file->delta_t);
-                                    //printf("\nRecord single");
-                                    //printf("\n%f - %ld", record->time, record->pixid);
-                                    //printf("%s %d %s","**Before saveEventListToFileSIRENA \n");
-                                    //printf("%s %d %s","status2 = ",status,"\n");
                                     saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-                                    //printf("%s %d %s","**After saveEventListToFileSIRENA \n");
-                                    //printf("%s %d %s","status3 = ",status,"\n");
                                     CHECK_STATUS_BREAK(status);
                                     //Reinitialize event list
                                     event_list->index=0;
@@ -814,18 +800,11 @@ int tesreconstruction_main() {
             {
                     //printf("%s","**Threading...waiting \n");
                     th_end(&reconstruct_init_sirena, &pulsesAll, &optimalFilter);
-                    //printf("%s %d %s","**Threading...after th_end: pulsesAll->ndetpulses", pulsesAll->ndetpulses,"\n");
-                    //printf("%s %d %s","**Threading...after th_end: pulsesAll->size", pulsesAll->size,"\n");
                     int i = 1;
                     int aux = 1;
                     while((aux = th_get_event_list(&event_list, &record)) == 1)
                     {
-                            //printf("%s %d %s","**Threading...event_list->size_energy: ", event_list->size_energy,"\n"); //Always 0
-                            //printf("%s %e %s","**Threading...event_list->energies[0]: ", event_list->energies[0],"\n"); //Energy value
-                            //printf("%s %e %s","**Threading...event_list->energies[1]: ", event_list->energies[1],"\n"); //Not error but non relevant value
-                            //printf("%s %e %s","**Threading...event_list->energies[100000]: ", event_list->energies[100000],"\n"); Not error but non relevant value
                             saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
-                            //printf("%s","**Threading...after saveEventListToFileSIRENA \n");
                             CHECK_STATUS_BREAK(status);
                             ++i;
                     }
@@ -1095,7 +1074,7 @@ int getpar(struct Parameters* const par)
 	
 	status=ape_trad_query_int("OFLength", &par->OFLength);
         
-    status=ape_trad_query_int("preBuffer", &par->preBuffer);
+    status=ape_trad_query_bool("preBuffer", &par->preBuffer);
         
     status=ape_trad_query_int("errorT", &par->errorT);
         
@@ -1222,14 +1201,14 @@ int getpar(struct Parameters* const par)
 	MyAssert((strcmp(par->OFStrategy,"FREE") == 0) || (strcmp(par->OFStrategy,"BYGRADE") == 0) || (strcmp(par->OFStrategy,"FIXED") == 0), 
 		 "OFStrategy must be FREE, BYGRADE or FIXED");
 	
-        MyAssert(par->OFLength > 0, "OFLength must be greater than 0");
+    MyAssert(par->OFLength > 0, "OFLength must be greater than 0");
         
-        MyAssert(par->preBuffer >= 0, "preBuffer must be 0 or greater than 0");
+    //MyAssert(par->preBuffer >= 0, "preBuffer must be 0 or greater than 0");
 	
 	MyAssert(par->energyPCA1 > 0, "energyPCA1 must be greater than 0");
-        MyAssert(par->energyPCA2 > 0, "energyPCA2 must be greater than 0");
+    MyAssert(par->energyPCA2 > 0, "energyPCA2 must be greater than 0");
         
-        MyAssert(par->LbT > 0, "LbT must be greater than 0");
+    MyAssert(par->LbT > 0, "LbT must be greater than 0");
 	
   } else {
 	SIXT_ERROR("failed reading the Rcmethod parameter");
