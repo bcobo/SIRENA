@@ -5,7 +5,7 @@
 
 ####################
 SIRENA description
-#################### 
+####################
 
 ********
 Purpose
@@ -86,7 +86,7 @@ The second step is simulating the noise stream. This can be done by choosing eit
    
    Noise file triggered into records of 10000 samples by using ``tessim`` [#]_ .
    
-.. [#] If ``xifusim`` (XIFUSIM) is used, the noise records are in the *TESRECORDS* HDU (Header Data Unit) among others HDUs such as *GEOCHANNELPARAM*, *TESPARAM*, *SQUIDPARAM*,... 
+.. [#] If ``xifusim`` (XIFUSIM) is used, the noise records are in the *TESRECORDS* HDU (Header Data Unit) among others HDUs such as *GEOCHANNELPARAM*, *TESPARAM*, *SQUIDPARAM*,...
    
    
 **2) Noise spectrum and weight matrices generation**
@@ -178,7 +178,7 @@ where *suppress* is the time (in samples) after the triggering of an event, duri
    
 .. [#] Previous figure is equivalent in ``xifusim`` replacing *triggerSize*, *suppress* and *PreBufferSize* by *trig_reclength*, *trig_n_suppress* and *trig_n_pre* respectively. 
   
-The SIXTE simulated calibration files are now FITS files with only one HDU called *RECORDS* [#]_ populated with four columns: **TIME** (arrival time of the event), **ADC** (digitized current), **PIXID** (pixel identification) and **PH_ID** (photon identification, for debugging purposes only).
+The SIXTE simulated calibration files are now FITS files with only one HDU called *RECORDS* [#]_ populated with four columns: **TIME** (arrival time of the event), **ADC** (digitized current), **PIXID** (pixel identification) and **PH_ID** (photon identification, for debugging purposes only). 
 
 .. figure:: images/records.png
    :align:  center
@@ -186,7 +186,7 @@ The SIXTE simulated calibration files are now FITS files with only one HDU calle
 
    Records in calibration file by using ``tessim``.
    
-.. [#] If XIFUSIM is used, the calibration files have not only the *TESRECORDS* HDU with the events records but also others such as *GEOCHANNELPARAM*, *TESPARAM*, *SQUIDPARAM*, *WFEEPARAM*, *DREPARAM*, *ADCPARAM* and *TRIGGERPARAM*.    
+.. [#] If XIFUSIM is used, the calibration files have not only the *TESRECORDS* HDU with the events records but also others such as *GEOCHANNELPARAM*, *TESPARAM*, *SQUIDPARAM*, *WFEEPARAM*, *DREPARAM*, *ADCPARAM* and *TRIGGERPARAM*. The latest XIFUSIM version adds an **EXTEND** column to indicate that there is more data in a record which needs to be read from the next line(s) to complete it. Depending on the simulator version the PH_ID column can be a fixed-length or variable-length column with different dimensions; the latest XIFUSIM simulated files have a 3-length column, each row filled with the identifiers of the first three photons in the corresponding record.
    
 **2) Library construction**
 
@@ -216,7 +216,7 @@ The parameters of ``tesreconstruction``  for the library creation process are:
 * :option:`scaleFactor`, :option:`samplesUp` and :option:`nSgms`: parameters involved in the pulse detection process.
 .. * :option:`PulseLength`:  length of the pulses to create the pulse template. If the pulse length used to create the noise is larger that this value, noise will be decimated accordingly when used to pre-calculate the optimal filters or the covariance matrices. If it is shorter, an error will be raised.
 * :option:`largeFilter`: length (in samples) of the longest fixed filter. If the interval size (:option:`intervalMinSamples`) used to create the noise is larger that this value, noise will be decimated accordingly when used to pre-calculate the optimal filters or the covariance matrices. If it is shorter, an error will be raised.
-* :option:`preBuffer`: some samples added before the starting time of a pulse.
+* :option:`preBuffer`: some samples added or not before the starting time of a pulse (number of added samples read from the XML file).
 * :option:`EnergyMethod`: energy calculation Method: OPTFILT (Optimal filtering), WEIGHT (Covariance matrices), WEIGHTN (Covariance matrices, first order), I2R and I2RFITTED (Linear Transformations), or PCA (Principal Component Analysis).
 * :option:`Ifit`: constant to apply the I2RFITTED conversion 
 * :option:`monoenergy`: the monochromatic energy of the calibration pulses used to create the current row in the library.
@@ -224,6 +224,7 @@ The parameters of ``tesreconstruction``  for the library creation process are:
 * :option:`LrsT` and :option:`LbT`: running sum filter length and baseline averaging length.
 * :option:`tstartPulse1` and :option:`tstartPulse2` and :option:`tstartPulse3`: start time (in samples) of the first, second and third pulse in the record (0 if detection should be performed by the system; greater than 0 if provided by the user).
 * :option:`intermediate` and :option:`detectFile`: write intermediate file and name of this intermediate file.
+* :option:`XMLFile`: XML input FITS file with instrument definition (if :option:`preBuffer` = yes the library will be built by using filter lengths and their corresponding preBuffer values read from the XML input file).
 
 .. _libraryColumns:
 
@@ -254,9 +255,11 @@ The library FITS file has 3 HDUs called *LIBRARY*, *FIXFILTT*, *FIXFILTF* which 
 * **PABMXLFF**: **PAB** according to :option:`largeFilter`. If :option:`largeFilter` is a base-2, it does not appear (although several calibration energies are included in the library)
 * **DAB**: vectors :math:`(S_{\beta}-S_{\alpha})/(E_{\beta}-E_{\alpha})`, :math:`D(t)_{\alpha\beta}` in :ref:`first order approach <optimalFilter_NSD>`. It appears if there are several calibration energies (not only one) included in the library.
 
-The *FIXFILTT* HDU contains pre-calculated optimal filters in the time domain for different lengths, calculated from the matched filters (*MF* or *MFB0* columns) in **Tx** columns, or from the *DAB* column, in the **ABTx** columns. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the :option:`largeFilter` decreasing until 2. Moreover, **Txmax** and **ABTxmax** columns being *xmax* = :option:`largeFilter` are added if :option:`largeFilter` is not a base-2 value. The *FIXFILTT* HDU always contains **Tx** columns but **ABTx** columns only appear if there are several calibration energies (not only one) included in the library. 
+If :option:`preBuffer` = yes, the library will be built by using the filter lengths and their corresponding preBuffer values read from the XML input file, no matter :option:`PulseLength` or :option:`largeFilter` values. The length of the *PULSE*, *PULSEB0*, *MF*, *MFB0*, *PAB* and *DAB* columns will be the maximum of the *post* values plus the maximum of the *pB* values in the XML file (being the *post* values the samples between two consecutive pulses according to the grading and *pBi* their corresposponding preBuffer values).   
 
-The *FIXFILTF* HDU contains pre-calculated optimal filters in frequency domain for different lengths calculated from the matched filters (*MF* or *MFB0* columns), in columns **Fx**, or from the *DAB* column, in **ABFx** columns. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the :option:`largeFilter` decreasing until 2. Moreover, **Fxmax** and **ABFxmax** columns being *xmax* = :option:`largeFilter` are added if :option:`largeFilter` is not a base-2 value. The *FIXFILTF* HDU always contains **Fx** columns but **ABFx** columns only appear if there are several calibration energies (not only one) included in the library.
+The *FIXFILTT* HDU contains pre-calculated optimal filters in the time domain for different lengths, calculated from the matched filters (*MF* or *MFB0* columns) in **Tx** columns, or from the *DAB* column, in the **ABTx** columns. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the :option:`largeFilter` decreasing until 2. Moreover, **Txmax** and **ABTxmax** columns being *xmax* = :option:`largeFilter` are added if :option:`largeFilter` is not a base-2 value. The *FIXFILTT* HDU always contains **Tx** columns but **ABTx** columns only appear if there are several calibration energies (not only one) included in the library. If :option:`preBuffer` = yes, there will be so many **Tx** columns (or **ABTx** columns) as different grades in the XML input file.
+
+The *FIXFILTF* HDU contains pre-calculated optimal filters in frequency domain for different lengths calculated from the matched filters (*MF* or *MFB0* columns), in columns **Fx**, or from the *DAB* column, in **ABFx** columns. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the :option:`largeFilter` decreasing until 2. Moreover, **Fxmax** and **ABFxmax** columns being *xmax* = :option:`largeFilter` are added if :option:`largeFilter` is not a base-2 value. The *FIXFILTF* HDU always contains **Fx** columns but **ABFx** columns only appear if there are several calibration energies (not only one) included in the library. If :option:`preBuffer` = yes, there will be so many **Tx** columns (or **ABTx** columns) as different grades in the XML input file.
 
 The *PRECALWN* HDU contains :ref:`pre-calculated values by using the noise weight matrix from the subtraction of model from pulses <WEIGHTN>` :math:`(X'WX)^{-1}X'W` for different lengths, **PCLx**. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the :option:`largeFilter` decreasing until 2.
 
@@ -295,7 +298,7 @@ The reconstructed energies for all the detected events are saved into an output 
 
 * **AVG4SD**: average of the first 4 samples of the derivative of the pulse.
 
-* **ELOWRES**: energy provided by a low resolution energy estimator filtering with a 4-samples-length filter (in keV).
+* **ELOWRES**: energy provided by a low resolution energy estimator filtering with a 8-samples-length filter (in keV).
 
 * **GRADE1**: length of the filter used, i.e., the distance to the following pulse (in samples) or the pulse length if the next event is further than this value or if there are no more events in the same record.
 
@@ -311,13 +314,13 @@ The reconstructed energies for all the detected events are saved into an output 
 
 * **PIX_ID**: pixel number
 
-* **PH_ID**: photon number identification for cross matching with the impact list.
+* **PH_ID**: photon number identification of the first three photons in the corresponding record for cross matching with the impact list.
 
 * **RISETIME**: rise time of the event (in s).
 
 * **FALLTIME**: fall time of the event (in s).
 
-* **GRADING**: Pulse grade (HighRes=1, MidRes=2, LimRes=3, LowRes=4, Rejected=-1, Pileup=-2).
+* **GRADING**: Pulse grade (VeryHighRes=1, HighRes=2, IntRes=3, MidRes=4, LimRes=5, LowRes=6, Rejected=-1, Pileup=-2).
 
 .. _evtFile:
 
@@ -771,11 +774,11 @@ The :math:`10^5` scaling factor has been included in the quasi resistance space 
 :pageblue:`Two experimental approaches: adding a preBuffer or 0-padding`
 ------------------------------------------------------------------------
 
-        For pulses closer than the High Resolution length, short optimal filters in current or quasi-resistance space must be used in their reconstruction, causing a degradation of the energy resolution that must be studied :cite:`Doriese2009`. Two different experimental approaches (**variant of Optimal Filtering by using the noise spectral density in current or quasi resistance space**) have been developed to try to minimize this degradation:
+        For pulses closer than the Very High Resolution length, short optimal filters in current or quasi-resistance space must be used in their reconstruction, causing a degradation of the energy resolution that must be studied :cite:`Doriese2009`. Two different experimental approaches (**variant of Optimal Filtering by using the noise spectral density in current or quasi resistance space**) have been developed to try to minimize this degradation:
         
         **a) Adding a preBuffer:**
         
-        First, the addition of a few signal samples, :option:`preBuffer` (different from 0), before the triggering point to the pulses template that is used to build the optimal filter.
+        First, the addition of a few signal samples, :option:`preBuffer` = yes (preBuffer values are matched to filter length values in the XML file), before the triggering point to the pulses template that is used to build the optimal filter.
         
         .. figure:: images/preBuffer.png
             :align: center

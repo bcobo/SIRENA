@@ -474,11 +474,11 @@ To run SIRENA implementation, the user must supply the following input parameter
 	
 	Only used in production run (:option:`opmode` = 1) when :option:`OFLib` = no and :option:`OFStrategy` = **FIXED**.
 	
-.. option::  preBuffer=<int> 
+.. option::  preBuffer=<yes|no> 
 
-	Some samples added before the starting time of a pulse.
+	Some samples added or not before the starting time of a pulse (number of added samples read from the xml file).
 
-	Default: 0
+	Default: no
 	
 	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
@@ -560,7 +560,7 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 	Default: *xifu_pipeline.xml*
 	
-	Only used in production run (:option:`opmode` = 1).
+	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 	
 .. option::  clobber=<yes|no> 
 	
@@ -588,7 +588,7 @@ The output file will also be a FITS file storing one event per row with the foll
 
 * **AVG4SD**: average of the first 4 samples of the derivative of the pulse
 
-* **ELOWRES**: energy provided by a low resolution energy estimator filtering with a 4-samples-length filter (in keV)
+* **ELOWRES**: energy provided by a low resolution energy estimator filtering with a 8-samples-length filter (in keV)
 
 * **GRADE1**: length of the filter used, i.e., the distance to the following pulse (in samples) or the pulse length if the next event is further than this value or if there are no more events in the same record
 
@@ -604,7 +604,7 @@ The output file will also be a FITS file storing one event per row with the foll
 
 * **PIX_ID**: pixel number
 
-* **PH_ID**: photon number identification for cross matching with the impact list
+* **PH_ID**: photon number identification of the first three photons in the corresponding record for cross matching with the impact list
 
 * **RISETIME**: rise time of the event (in s)
 
