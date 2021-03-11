@@ -10269,6 +10269,13 @@ int calculus_optimalFilter(int TorF, int intermediate, int opmode, gsl_vector *m
     gsl_vector *mf_f = gsl_vector_alloc(mf_size);				// Sorted frequencies according [-fmax,...,0,...,fmax]
     gsl_vector *mf_FFT = gsl_vector_alloc(mf_size);				// Sorted magnitude according [-fmax,...,0,...,fmax]
     
+    // Apply a Hanning window to reduce spectral leakage
+    /*if (hannWindow(&matchedfiltergsl))
+    {
+        message = "Cannot run hannWindow routine";
+        EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+    }*/
+    
     // FFT calculus
     if (FFT(matchedfiltergsl,mfFFTcomp,SelectedTimeDuration))
     {

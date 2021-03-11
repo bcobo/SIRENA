@@ -55,6 +55,7 @@ MAP OF SECTIONS IN THIS FILE::
  - 13. fileExists
  - 14. parabola3Pts
  - 15. isNumber
+ - 16. hannWindow
 
 *******************************************************************************/
 
@@ -528,3 +529,27 @@ bool isNumber(string s)
     return true; 
 } 
 /*xxxx end of SECTION 15 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+
+/***** SECTION 16 ************************************************************
+* hannWindow: This function applies a N-length Hanning window to the input vector
+* 
+* Parameters:
+* - inoutvector: Input/Output GSL vector
+*****************************************************************************/
+int hannWindow(gsl_vector **inoutvector)
+{
+	//Declare variables
+    int status=EPOK;
+ 	double multiplier;
+    int N = (*inoutvector)->size;
+    
+    for (int i = 0; i < N; i++) 
+    {
+        multiplier = 0.5 * (1 - cos(2*pi*i/N));
+        gsl_vector_set(*inoutvector,i,gsl_vector_get(*inoutvector,i)*multiplier);
+    }
+
+ 	return EPOK;
+}
+/*xxxx end of SECTION 3 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/

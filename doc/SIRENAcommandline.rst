@@ -39,9 +39,7 @@ The user must supply the following input parameters:
 
 .. option:: intervalMinSamples=<int>
 
-	Minimum length (in samples) of a pulse-free interval to use. 
-	
-	It will be redefined as the base-2 system value closest-lower than or equal than :option:`intervalMinSamples`.
+	Length (in samples) of a pulse-free interval to use. 
 	
 	Default: 8192
 

@@ -3022,7 +3022,7 @@ Search functions by name at :ref:`genindex`.
     
     int **intervalMinSamples**
     
-        Minimum length of a pulse-free interval to use (samples) = *intervalMinBins*
+        Length of a pulse-free interval to use (samples) = *intervalMinBins*
     
     int **nplPF**
     

@@ -158,12 +158,13 @@
      double cutFreq = 0.;
      int boxLength = 0;
      
-     if ((log2(par.intervalMinSamples)-floor(log2(par.intervalMinSamples))) > 0)	
+     int intervalMinSamples_base2 = pow(2,floor(log2(par.intervalMinSamples)));
+     /*if ((log2(par.intervalMinSamples)-floor(log2(par.intervalMinSamples))) > 0)	
      {	
          par.intervalMinSamples = pow(2,floor(log2(par.intervalMinSamples)));
          message = "intervalMinSamples' has been redefined as a base-2 system value.";
          EP_PRINT_ERROR(message,-999);	// Only a warning
-     }
+     }*/
      
      message="Into GENNOISESPEC task";
      cout<<message<<endl;
@@ -945,9 +946,12 @@
      // Generate WEIGHT representation
      if (par.weightMS == 1)
      {
-         weightpoints = gsl_vector_alloc(floor(log2(par.intervalMinSamples)));
+         /*weightpoints = gsl_vector_alloc(floor(log2(par.intervalMinSamples)));
          for (int i=0;i<weightpoints->size;i++) 		gsl_vector_set(weightpoints,i,pow(2,floor(log2(par.intervalMinSamples))-i));
-         weightMatrixes = gsl_matrix_alloc(weightpoints->size,par.intervalMinSamples*par.intervalMinSamples);
+         weightMatrixes = gsl_matrix_alloc(weightpoints->size,par.intervalMinSamples*par.intervalMinSamples);*/
+         weightpoints = gsl_vector_alloc(floor(log2(intervalMinSamples_base2)));
+         for (int i=0;i<weightpoints->size;i++) 		gsl_vector_set(weightpoints,i,pow(2,floor(log2(intervalMinSamples_base2))-i));
+         weightMatrixes = gsl_matrix_alloc(weightpoints->size,intervalMinSamples_base2*intervalMinSamples_base2);
          gsl_matrix_set_all(weightMatrixes,-999.0);
          gsl_matrix_view tempm;
          gsl_matrix *noiseIntervals_weightPoints;
@@ -960,11 +964,12 @@
                  weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,i),gsl_vector_get(weightpoints,i));
                  noiseIntervals_weightPoints = gsl_matrix_alloc(cnt,gsl_vector_get(weightpoints,i));
                  
-                 tempm = gsl_matrix_submatrix(noiseIntervals,0,0,par.nintervals,gsl_vector_get(weightpoints,i));
+                 tempm = gsl_matrix_submatrix(noiseIntervals,0,0,cnt,gsl_vector_get(weightpoints,i));
                  gsl_matrix_memcpy(noiseIntervals_weightPoints,&tempm.matrix);
                  
                  if (par.matrixSize == 0){ //do all sizes
-                     weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
+                     //weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
+                     gsl_matrix_set_all(weightMatrix,1);
                      for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
                      {
                          for (int k=0;k<gsl_vector_get(weightpoints,i);k++)
@@ -1107,7 +1112,7 @@
      gsl_vector_free(sigma); sigma = 0;     
      
      gsl_matrix_free(noiseIntervals); noiseIntervals = 0;
-     if (par.weightMS == 1)
+     if (weightMS == 1)
      {
          gsl_vector_free(weightpoints); weightpoints = 0;
          gsl_matrix_free(weightMatrixes); weightMatrixes = 0;
@@ -2714,6 +2719,7 @@
      }
      
      status=ape_trad_query_bool("weightMS", &par->weightMS);
+     if (par->weightMS == 1)    weightMS = 1;
      
      status=ape_trad_query_string("EnergyMethod", &sbuffer);
      if (EXIT_SUCCESS!=status) {
