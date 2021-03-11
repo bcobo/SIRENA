@@ -535,9 +535,9 @@ The <em>NOISE</em> HDU contains three columns:</p>
 
 <dl class="std option">
 <dt id="cmdoption-arg-preBuffer">
-<span id="cmdoption-arg-prebuffer"></span><code class="sig-name descname">preBuffer</code><code class="sig-prename descclassname">=&lt;int&gt;</code><a class="headerlink" href="#cmdoption-arg-preBuffer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Some samples added before the starting time of a pulse.</p>
-<p>Default: 0</p>
+<span id="cmdoption-arg-prebuffer"></span><code class="sig-name descname">preBuffer</code><code class="sig-prename descclassname">=&lt;yes|no&gt;</code><a class="headerlink" href="#cmdoption-arg-preBuffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Some samples added or not before the starting time of a pulse (number of added samples read from the xml file).</p>
+<p>Default: no</p>
 <p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
@@ -618,7 +618,7 @@ The <em>NOISE</em> HDU contains three columns:</p>
 <span id="cmdoption-arg-xmlfile"></span><code class="sig-name descname">XMLFile</code><code class="sig-prename descclassname">=&lt;str&gt;</code><a class="headerlink" href="#cmdoption-arg-XMLFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>XML input FITS file with instrument definition.</p>
 <p>Default: <em>xifu_pipeline.xml</em></p>
-<p>Only used in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
+<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
 </dd></dl>
 
 <dl class="std option">
@@ -643,7 +643,7 @@ The <em>NOISE</em> HDU contains three columns:</p>
 <li><p><strong>TIME</strong>: arrival time of the event (in s)</p></li>
 <li><p><strong>SIGNAL</strong>: energy of the event (in keV)</p></li>
 <li><p><strong>AVG4SD</strong>: average of the first 4 samples of the derivative of the pulse</p></li>
-<li><p><strong>ELOWRES</strong>: energy provided by a low resolution energy estimator filtering with a 4-samples-length filter (in keV)</p></li>
+<li><p><strong>ELOWRES</strong>: energy provided by a low resolution energy estimator filtering with a 8-samples-length filter (in keV)</p></li>
 <li><p><strong>GRADE1</strong>: length of the filter used, i.e., the distance to the following pulse (in samples) or the pulse length if the next event is further than this value or if there are no more events in the same record</p></li>
 <li><p><strong>GRADE2</strong>: distance to the end of the preceding pulse (in samples). If pulse is the first event in the record, this is fixed to the pulse length value</p></li>
 <li><p><strong>PHI</strong>: arrival phase (offset relative to the central point of the parabola) (in samples)</p></li>
@@ -651,7 +651,7 @@ The <em>NOISE</em> HDU contains three columns:</p>
 <li><p><strong>BSLN</strong>: mean value of the baseline in general ‘before’ a pulse (according the value in samples of <a class="reference internal" href="#cmdoption-arg-4"><code class="xref std std-option docutils literal notranslate"><span class="pre">LbT</span></code></a>)</p></li>
 <li><p><strong>RMSBSLN</strong>: standard deviation of the baseline in general ‘before’ a pulse (according the value in samples of <a class="reference internal" href="#cmdoption-arg-4"><code class="xref std std-option docutils literal notranslate"><span class="pre">LbT</span></code></a>)</p></li>
 <li><p><strong>PIX_ID</strong>: pixel number</p></li>
-<li><p><strong>PH_ID</strong>: photon number identification for cross matching with the impact list</p></li>
+<li><p><strong>PH_ID</strong>: photon number identification of the first three photons in the corresponding record for cross matching with the impact list</p></li>
 <li><p><strong>RISETIME</strong>: rise time of the event (in s)</p></li>
 <li><p><strong>FALLTIME</strong>: fall time of the event (in s)</p></li>
 <li><p><strong>GRADING</strong>: Pulse grade (HighRes=1, MidRes=2, LimRes=3, LowRes=4, Rejected=-1, Pileup=-2)</p></li>

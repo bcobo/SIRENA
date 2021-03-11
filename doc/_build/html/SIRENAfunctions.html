@@ -2274,8 +2274,8 @@ out of the function, to try to get a usable <a class="reference internal" href="
 </dd></dl>
 
 <dl class="cpp function">
-<dt id="_CPPv420getLibraryCollectionPCKciiiiPciPcPcPccPPcdiPCi">
-<span id="_CPPv320getLibraryCollectionPCKciiiiPciPcPcPccPPcdiPCi"></span><span id="_CPPv220getLibraryCollectionPCKciiiiPciPcPcPccPPcdiPCi"></span><span id="getLibraryCollection__cCPC.i.i.i.i.cP.i.cP.cP.cP.c.cPP.double.i.iPC"></span>LibraryCollection *<code class="sig-name descname">getLibraryCollection</code><span class="sig-paren">(</span><em class="property">const</em> char *<em class="property">const</em> <em>filename</em>, int <em>opmode</em>, int <em>hduPRECALWN</em>, int <em>hduPRCLOFWM</em>, int <em>largeFilter</em>, char *<em>filter_domain</em>, int <em>pulse_length</em>, char *<em>energy_method</em>, char *<em>ofnoise</em>, char *<em>filter_method</em>, char <em>oflib</em>, char **<em>ofinterp</em>, double <em>filtEev</em>, int <em>lagsornot</em>, int *<em class="property">const</em> <em>status</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv420getLibraryCollectionPCKciiiiPciPcPcPccPPcdiPCi" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv420getLibraryCollectionPCKciiiiPciPcPcPccPPcdiiP10gsl_vectorP10gsl_vectorPCi">
+<span id="_CPPv320getLibraryCollectionPCKciiiiPciPcPcPccPPcdiiP10gsl_vectorP10gsl_vectorPCi"></span><span id="_CPPv220getLibraryCollectionPCKciiiiPciPcPcPccPPcdiiP10gsl_vectorP10gsl_vectorPCi"></span><span id="getLibraryCollection__cCPC.i.i.i.i.cP.i.cP.cP.cP.c.cPP.double.i.i.gsl_vectorP.gsl_vectorP.iPC"></span>LibraryCollection *<code class="sig-name descname">getLibraryCollection</code><span class="sig-paren">(</span><em class="property">const</em> char *<em class="property">const</em> <em>filename</em>, int <em>opmode</em>, int <em>hduPRECALWN</em>, int <em>hduPRCLOFWM</em>, int <em>largeFilter</em>, char *<em>filter_domain</em>, int <em>pulse_length</em>, char *<em>energy_method</em>, char *<em>ofnoise</em>, char *<em>filter_method</em>, char <em>oflib</em>, char **<em>ofinterp</em>, double <em>filtEev</em>, int <em>lagsornot</em>, int <em>preBuffer</em>, gsl_vector *<em>pBi</em>, gsl_vector *<em>posti</em>, int *<em class="property">const</em> <em>status</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv420getLibraryCollectionPCKciiiiPciPcPcPccPPcdiiP10gsl_vectorP10gsl_vectorPCi" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Located in file: <em>integraSIRENA.cpp</em></p>
 <p>This function creates and retrieves a <em>LibraryCollection</em> from a file.</p>
 <ul class="simple">
@@ -2345,6 +2345,22 @@ It has been fixed in <a class="reference internal" href="SIRENAcommandline.html#
 <p>double <strong>filtEev</strong></p>
 <blockquote>
 <div><p>Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED), <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-filtEeV"><code class="xref std std-option docutils literal notranslate"><span class="pre">filtEeV</span></code></a></p>
+</div></blockquote>
+<p>int <strong>lagsornot</strong></p>
+<blockquote>
+<div><p>Lags (1) or no lags (0)</p>
+</div></blockquote>
+<p>int <strong>preBuffer</strong></p>
+<blockquote>
+<div><p>Using preBuffer (1) or not using preBuffer (0)</p>
+</div></blockquote>
+<p>gsl_vector <strong>pBi</strong></p>
+<blockquote>
+<div><p>Vector with the preBuffer values read from the XML file</p>
+</div></blockquote>
+<p>gsl_vector <strong>posti</strong></p>
+<blockquote>
+<div><p>Vector with the post values read from the XML file</p>
 </div></blockquote>
 <p>int* const <strong>status</strong></p>
 <blockquote>
@@ -2630,8 +2646,8 @@ pulse height is going to be estimated by using <a class="reference internal" hre
 </dd></dl>
 
 <dl class="cpp function">
-<dt id="_CPPv430initializeReconstructionSIRENAP21ReconstructInitSIRENAPCcP8fitsfilePCcPCcidiidiiPcddPCcPcPcPcddPciiiicPcPciidcciiPCciicidPCciiddPCcPCi">
-<span id="_CPPv330initializeReconstructionSIRENAP21ReconstructInitSIRENAPCcP8fitsfilePCcPCcidiidiiPcddPCcPcPcPcddPciiiicPcPciidcciiPCciicidPCciiddPCcPCi"></span><span id="_CPPv230initializeReconstructionSIRENAP21ReconstructInitSIRENAPCcP8fitsfilePCcPCcidiidiiPcddPCcPcPcPcddPciiiicPcPciidcciiPCciicidPCciiddPCcPCi"></span><span id="initializeReconstructionSIRENA__ReconstructInitSIRENAP.cPC.fitsfileP.cPC.cPC.i.double.i.i.double.i.i.cP.double.double.cPC.cP.cP.cP.double.double.cP.i.i.i.i.c.cP.cP.i.i.double.c.c.i.i.cPC.i.i.c.i.double.cPC.i.i.double.double.cPC.iPC"></span>extern_C_void <code class="sig-name descname">initializeReconstructionSIRENA</code><span class="sig-paren">(</span>ReconstructInitSIRENA *<em>reconstruct_init</em>, char *<em class="property">const</em> <em>record_file</em>, fitsfile *<em>fptr</em>, char *<em class="property">const</em> <em>library_file</em>, char *<em class="property">const</em> <em>event_file</em>, int <em>pulse_length</em>, double <em>scaleFactor</em>, int <em>samplesUp</em>, int <em>samplesDown</em>, double <em>nSgms</em>, int <em>detectSP</em>, int <em>opmode</em>, char *<em>detectionMode</em>, double <em>LrsT</em>, double <em>LbT</em>, char *<em class="property">const</em> <em>noise_file</em>, char *<em>filter_domain</em>, char *<em>filter_method</em>, char *<em>energy_method</em>, double <em>filtEev</em>, double <em>Ifit</em>, char *<em>ofnoise</em>, int <em>lagsornot</em>, int <em>nLags</em>, int <em>Fitting35</em>, int <em>ofiter</em>, char <em>oflib</em>, char *<em>ofinterp</em>, char *<em>oflength_strategy</em>, int <em>oflength</em>, int <em>preBuffer</em>, double <em>monoenergy</em>, char <em>hduPRECALWN</em>, char <em>hduPRCLOFWM</em>, int <em>largeFilter</em>, int <em>interm</em>, char *<em class="property">const</em> <em>detectFile</em>, int <em>errorT</em>, int <em>Sum0Filt</em>, char <em>clobber</em>, int <em>maxPulsesPerRecord</em>, double <em>SaturationValue</em>, char *<em class="property">const</em> <em>tstartPulse1</em>, int <em>tstartPulse2</em>, int <em>tstartPulse3</em>, double <em>energyPCA1</em>, double <em>energyPCA2</em>, char *<em class="property">const</em> <em>XMLFile</em>, int *<em class="property">const</em> <em>status</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv430initializeReconstructionSIRENAP21ReconstructInitSIRENAPCcP8fitsfilePCcPCcidiidiiPcddPCcPcPcPcddPciiiicPcPciidcciiPCciicidPCciiddPCcPCi" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv430initializeReconstructionSIRENAP21ReconstructInitSIRENAPCcP8fitsfilePCcPCcidiidiiPcddPCcPcPcPcddPciiiicPcPcicdcciiPCciicidPCciiddPCcPCi">
+<span id="_CPPv330initializeReconstructionSIRENAP21ReconstructInitSIRENAPCcP8fitsfilePCcPCcidiidiiPcddPCcPcPcPcddPciiiicPcPcicdcciiPCciicidPCciiddPCcPCi"></span><span id="_CPPv230initializeReconstructionSIRENAP21ReconstructInitSIRENAPCcP8fitsfilePCcPCcidiidiiPcddPCcPcPcPcddPciiiicPcPcicdcciiPCciicidPCciiddPCcPCi"></span><span id="initializeReconstructionSIRENA__ReconstructInitSIRENAP.cPC.fitsfileP.cPC.cPC.i.double.i.i.double.i.i.cP.double.double.cPC.cP.cP.cP.double.double.cP.i.i.i.i.c.cP.cP.i.c.double.c.c.i.i.cPC.i.i.c.i.double.cPC.i.i.double.double.cPC.iPC"></span>extern_C_void <code class="sig-name descname">initializeReconstructionSIRENA</code><span class="sig-paren">(</span>ReconstructInitSIRENA *<em>reconstruct_init</em>, char *<em class="property">const</em> <em>record_file</em>, fitsfile *<em>fptr</em>, char *<em class="property">const</em> <em>library_file</em>, char *<em class="property">const</em> <em>event_file</em>, int <em>pulse_length</em>, double <em>scaleFactor</em>, int <em>samplesUp</em>, int <em>samplesDown</em>, double <em>nSgms</em>, int <em>detectSP</em>, int <em>opmode</em>, char *<em>detectionMode</em>, double <em>LrsT</em>, double <em>LbT</em>, char *<em class="property">const</em> <em>noise_file</em>, char *<em>filter_domain</em>, char *<em>filter_method</em>, char *<em>energy_method</em>, double <em>filtEev</em>, double <em>Ifit</em>, char *<em>ofnoise</em>, int <em>lagsornot</em>, int <em>nLags</em>, int <em>Fitting35</em>, int <em>ofiter</em>, char <em>oflib</em>, char *<em>ofinterp</em>, char *<em>oflength_strategy</em>, int <em>oflength</em>, char <em>preBuffer</em>, double <em>monoenergy</em>, char <em>hduPRECALWN</em>, char <em>hduPRCLOFWM</em>, int <em>largeFilter</em>, int <em>interm</em>, char *<em class="property">const</em> <em>detectFile</em>, int <em>errorT</em>, int <em>Sum0Filt</em>, char <em>clobber</em>, int <em>maxPulsesPerRecord</em>, double <em>SaturationValue</em>, char *<em class="property">const</em> <em>tstartPulse1</em>, int <em>tstartPulse2</em>, int <em>tstartPulse3</em>, double <em>energyPCA1</em>, double <em>energyPCA2</em>, char *<em class="property">const</em> <em>XMLFile</em>, int *<em class="property">const</em> <em>status</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv430initializeReconstructionSIRENAP21ReconstructInitSIRENAPCcP8fitsfilePCcPCcidiidiiPcddPCcPcPcPcddPciiiicPcPcicdcciiPCciicidPCciiddPCcPCi" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Located in file: <em>integraSIRENA.cpp</em></p>
 <p>This function initializes the structure <em>ReconstructInitSIRENA</em> with the variables required for SIRENA reconstruction. The values are taken from the input parameters.</p>
 <ul class="simple">
@@ -2762,9 +2778,9 @@ It has been fixed in <a class="reference internal" href="SIRENAcommandline.html#
 <blockquote>
 <div><p>Optimal Filter length (taken into account if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-OFStrategy"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFStrategy</span></code></a> = <strong>FIXED</strong>), <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-OFLength"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFLength</span></code></a></p>
 </div></blockquote>
-<p>int <strong>preBuffer</strong></p>
+<p>char <strong>preBuffer</strong></p>
 <blockquote>
-<div><p>Some samples added before the starting time of a pulse</p>
+<div><p>Some samples added or not before the starting time of a pulse (number of added samples read from the xml file)</p>
 </div></blockquote>
 <p>double <strong>monoenergy</strong></p>
 <blockquote>
@@ -3457,8 +3473,8 @@ S_{(x,x^2)}=\sum{{x_i}^3}-\frac{\sum{x_i}\cdot\sum{{x_i}^2}}{N} &amp; \\
 </dd></dl>
 
 <dl class="cpp function">
-<dt id="_CPPv410procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectioni">
-<span id="_CPPv310procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectioni"></span><span id="_CPPv210procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectioni"></span><span id="procRecord__ReconstructInitSIRENAPP.double.double.fitsfileP.gsl_vectorP.gsl_vectorP.PulsesCollectionP.i"></span>int <code class="sig-name descname">procRecord</code><span class="sig-paren">(</span>ReconstructInitSIRENA **<em>reconstruct_init</em>, double <em>tstartRecord</em>, double <em>samprate</em>, fitsfile *<em>dtcObject</em>, gsl_vector *<em>record</em>, gsl_vector *<em>recordWithoutConvert2R</em>, PulsesCollection *<em>foundPulses</em>, int <em>oscillations</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv410procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectioni" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv410procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectionliP10gsl_vectori">
+<span id="_CPPv310procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectionliP10gsl_vectori"></span><span id="_CPPv210procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectionliP10gsl_vectori"></span><span id="procRecord__ReconstructInitSIRENAPP.double.double.fitsfileP.gsl_vectorP.gsl_vectorP.PulsesCollectionP.l.i.gsl_vectorP.i"></span>int <code class="sig-name descname">procRecord</code><span class="sig-paren">(</span>ReconstructInitSIRENA **<em>reconstruct_init</em>, double <em>tstartRecord</em>, double <em>samprate</em>, fitsfile *<em>dtcObject</em>, gsl_vector *<em>record</em>, gsl_vector *<em>recordWithoutConvert2R</em>, PulsesCollection *<em>foundPulses</em>, long <em>num_previousDetectedPulses</em>, int <em>pixid</em>, gsl_vector *<em>phid</em>, int <em>oscillations</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv410procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectionliP10gsl_vectori" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Located in file: <em>tasksSIRENA.cpp</em></p>
 <p>This function processes the input record (detecting the pulses):</p>
 <ol class="arabic">
@@ -3531,7 +3547,7 @@ S_{(x,x^2)}=\sum{{x_i}^3}-\frac{\sum{x_i}\cdot\sum{{x_i}^2}}{N} &amp; \\
 <blockquote>
 <div><p>Pixel ID (from the input file) to be propagated</p>
 </div></blockquote>
-<p>int <strong>phid</strong></p>
+<p>gsl_vector* <strong>phid</strong></p>
 <blockquote>
 <div><p>Photon ID (from the input file) to be propagated</p>
 </div></blockquote>
@@ -3860,10 +3876,10 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 <li><p>For each pulse:</p>
 <blockquote>
 <div><ul>
-<li><p>Establish the pulse grade (HighRes=1, MidRes=2, LimRes=3, LowRes=4, Rejected=-1, Pileup=-2) and the optimal filter length</p></li>
+<li><p>Establish the pulse grade (for example VeryHighRes=1, HighRes=2, IntRes=3, MedRes=4, LimRes=5, LowRes=6, Rejected=-1, Pileup=-2) and the optimal filter length</p></li>
 <li><p>Pulse: Load the proper piece of the record in <em>pulse</em></p></li>
 <li><dl class="simple">
-<dt>Get the low resolution energy estimator by filtering with a 4-samples-length filter:</dt><dd><ul class="simple">
+<dt>Get the low resolution energy estimator by filtering with a 8-samples-length filter:</dt><dd><ul class="simple">
 <li><p>Load the low resolution pulse in <em>pulse_lowres</em></p></li>
 <li><p>Get the filter</p></li>
 <li><p>Calculate the low resolution estimator</p></li>
@@ -4015,7 +4031,11 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 <li><p>Register HEATOOL</p></li>
 <li><p>Reading all programm parameters by using PIL</p></li>
 <li><p>Read XML info</p></li>
-<li><p>Read the grading info from the input XML file</p></li>
+<li><p>Sixt standard keywords structure</p></li>
+<li><p>Open output FITS file</p></li>
+<li><p>Initialize PP data structures needed for pulse filtering</p></li>
+<li><p>Initialize SIRENA data structures needed for pulse filtering</p></li>
+<li><p>Read the grading data from the XML file and store it in ‘reconstruct_init_sirena-&gt;grading’</p></li>
 <li><dl class="simple">
 <dt>Obtain the samplig rate and the ‘trig_reclength’:</dt><dd><ul>
 <li><dl class="simple">
@@ -4052,11 +4072,6 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 </dd>
 </dl>
 </li>
-<li><p>Sixt standard keywords structure</p></li>
-<li><p>Open output FITS file</p></li>
-<li><p>Initialize PP data structures needed for pulse filtering</p></li>
-<li><p>Initialize SIRENA data structures needed for pulse filtering</p></li>
-<li><p>Read the grading data from the XML file and store it in ‘reconstruct_init_sirena-&gt;grading’</p></li>
 <li><p>Build up TesEventList to recover the results of the reconstruction</p></li>
 <li><dl class="simple">
 <dt>Reconstruct the input record FITS file:</dt><dd><ul>
@@ -4277,9 +4292,9 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 <blockquote>
 <div><p>Optimal Filter length (taken into account if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-OFStrategy"><code class="xref std std-option docutils literal notranslate"><span class="pre">OFStrategy</span></code></a> = <strong>FIXED</strong>)</p>
 </div></blockquote>
-<p>int <strong>preBuffer</strong></p>
+<p>char <strong>preBuffer</strong></p>
 <blockquote>
-<div><p>Some samples added before the starting time of a pulse</p>
+<div><p>Some samples added or not before the starting time of a pulse (number of added samples read from the xml file)</p>
 </div></blockquote>
 <p>int <strong>intermediate</strong></p>
 <blockquote>
