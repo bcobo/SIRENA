@@ -269,6 +269,11 @@ int tesreconstruction_main() {
     
     destroyAdvDet(&det);
     
+    if ((par.preBuffer == 1) && (par.opmode == 0))
+    {
+        printf("%s","Attention: preBuffer used => Parameters of library filters read from XML file (largeFilter & PulseLength values not taken into account)\n");
+    }
+    
     int trig_reclength = -999;
     
     char* firstchar = strndup(par.RecordFile, 1);

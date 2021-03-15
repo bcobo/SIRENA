@@ -2445,7 +2445,6 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
     // 10 => Saturated pulses ('procRecord')
     // 11 => Truncated at the beginning and saturated pulses ('procRecord')
     // 12 => Truncated at the end and saturated pulses ('procRecord')
-    //cout<<"sizePulse_b: "<<sizePulse_b<<endl;
     for (int i=0;i<numPulses;i++)
     {
         if ((*reconstruct_init)->opmode == 1)    gsl_vector_set(tstartgsl,i,gsl_vector_get(tstartgsl,i) + (*reconstruct_init)->errorT);
@@ -2458,7 +2457,7 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
         {
             if ((*reconstruct_init)->preBuffer == 1)
             {
-                gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_min_value+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
+                gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
             }
             else
             {
@@ -2540,7 +2539,7 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
     for (int i=0;i<numPulses;i++)
     {
         //foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i));
-        foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_min_value));
+        foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value));
         if (((*reconstruct_init)->preBuffer == 1) && ((*reconstruct_init)->opmode == 1))
         {
             if (((*reconstruct_init)->OFLength > foundPulses->pulses_detected[i].pulse_duration) && ((*reconstruct_init)->pulse_length >= (*reconstruct_init)->OFLength))

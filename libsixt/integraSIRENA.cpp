@@ -194,7 +194,7 @@
              }*/
              if ((pulse_length < oflength) && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RFITTED") == 0)))
              {
-                 EP_PRINT_ERROR("0-padding is going to be used)",-999); // Only a warning
+                 EP_PRINT_ERROR("0-padding is going to be used",-999); // Only a warning
                  /*if (preBuffer > pulse_length)
                  {
                     EP_EXIT_ERROR("It has no sense preBuffer>PulseLength",EPFAIL);
