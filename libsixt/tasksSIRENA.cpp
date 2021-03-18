@@ -2539,7 +2539,14 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
     for (int i=0;i<numPulses;i++)
     {
         //foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i));
-        foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value));
+        if ((*reconstruct_init)->preBuffer == 0)
+        {
+            foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)));
+        }
+        else if ((*reconstruct_init)->preBuffer == 1)
+        {
+            foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value));
+        }
         if (((*reconstruct_init)->preBuffer == 1) && ((*reconstruct_init)->opmode == 1))
         {
             if (((*reconstruct_init)->OFLength > foundPulses->pulses_detected[i].pulse_duration) && ((*reconstruct_init)->pulse_length >= (*reconstruct_init)->OFLength))
@@ -2649,7 +2656,7 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
                 str.clear();
                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
             }
-            
+           
             if ((foundPulses->pulses_detected[i].pulse_adc_preBuffer = gsl_vector_alloc(foundPulses->pulses_detected[i].pulse_duration)) == 0)
             {
                 sprintf(valERROR,"%d",__LINE__-2);

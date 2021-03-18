@@ -390,6 +390,7 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
         //printf("%s %d %s","eventsz: ",file->trigger_size,"\n");
     }
     
+    
     return(file);
 }
 
@@ -402,6 +403,7 @@ int getNextRecord(TesTriggerFile* const file,TesRecord* record,int *lastRecord,i
   (*lastRecord) = 0;
   (*startRecordGroup) = 0;
 
+  //printf("%s %p %s","file->fptr: ",file->fptr,"\n");
   if (NULL==file || NULL==file->fptr) {
     *status=EXIT_FAILURE;
     SIXT_ERROR("No opened trigger file to read from");

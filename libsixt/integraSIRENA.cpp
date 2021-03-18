@@ -255,8 +255,11 @@
          EP_EXIT_ERROR((char*)"Error accessing library file: it does not exists ",EPFAIL); 
      }
      
-     if (pBi != NULL) gsl_vector_free(pBi); pBi = 0;
-     if (posti != NULL) gsl_vector_free(posti); posti = 0;
+     if (reconstruct_init->preBuffer == 1)
+     {
+        gsl_vector_free(pBi); pBi = 0;
+        gsl_vector_free(posti); posti = 0;
+     }
      
      // Load NoiseSpec structure
      reconstruct_init->noise_spectrum = NULL;
