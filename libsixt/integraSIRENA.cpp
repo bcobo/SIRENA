@@ -173,14 +173,19 @@
      // Loading in the reconstruct_init structure values related to grading and preBuffer values from the XML file 
      if (0 != preBuffer)	reconstruct_init->preBuffer = 1;
      else			        reconstruct_init->preBuffer = 0;
-     gsl_vector *pBi = gsl_vector_alloc(reconstruct_init->grading->ngrades);
-     gsl_matrix_get_col(pBi,reconstruct_init->grading->gradeData,2);
-     reconstruct_init->preBuffer_max_value = gsl_vector_max(pBi);
-     reconstruct_init->preBuffer_min_value = gsl_vector_min(pBi);
-     gsl_vector *posti = gsl_vector_alloc(reconstruct_init->grading->ngrades);
-     gsl_matrix_get_col(posti,reconstruct_init->grading->gradeData,1);
-     reconstruct_init->post_max_value = gsl_vector_max(posti);
-     reconstruct_init->post_min_value = gsl_vector_min(posti);
+     gsl_vector *pBi;
+     gsl_vector *posti;
+     if (reconstruct_init->preBuffer == 1)
+     {
+        pBi = gsl_vector_alloc(reconstruct_init->grading->ngrades);
+        gsl_matrix_get_col(pBi,reconstruct_init->grading->gradeData,2);
+        reconstruct_init->preBuffer_max_value = gsl_vector_max(pBi);
+        reconstruct_init->preBuffer_min_value = gsl_vector_min(pBi);
+        posti = gsl_vector_alloc(reconstruct_init->grading->ngrades);
+        gsl_matrix_get_col(posti,reconstruct_init->grading->gradeData,1);
+        reconstruct_init->post_max_value = gsl_vector_max(posti);
+        reconstruct_init->post_min_value = gsl_vector_min(posti);
+     }
      
      if (exists)
      {
@@ -250,8 +255,8 @@
          EP_EXIT_ERROR((char*)"Error accessing library file: it does not exists ",EPFAIL); 
      }
      
-     gsl_vector_free(pBi); pBi = 0;
-     gsl_vector_free(posti); posti = 0;
+     if (pBi != NULL) gsl_vector_free(pBi); pBi = 0;
+     if (posti != NULL) gsl_vector_free(posti); posti = 0;
      
      // Load NoiseSpec structure
      reconstruct_init->noise_spectrum = NULL;
@@ -480,9 +485,20 @@
      if(reconstruct_init->pulse_length > record->trigger_size)
      {
          //EP_EXIT_ERROR("Warning: pulse length is larger than record size. Pulse length set to maximum value (record size)",EPFAIL);
-         if (reconstruct_init->opmode == 0)
+         /*if (reconstruct_init->opmode == 0)
          {
              EP_EXIT_ERROR("largeFilter is larger than record size",EPFAIL);
+         }
+         else 
+         {
+            EP_EXIT_ERROR("Pulse length is larger than record size",EPFAIL);
+         }*/
+         if (reconstruct_init->opmode == 0) 
+         {
+             if (reconstruct_init->preBuffer == 0)
+                 EP_EXIT_ERROR("largeFilter is larger than record size",EPFAIL);
+             //else if (reconstruct_init->preBuffer == 1)
+             //    
          }
          else 
          {

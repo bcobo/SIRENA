@@ -195,78 +195,81 @@ int tesreconstruction_main() {
     double sampling_rate = -999.0;
     AdvDet *det = newAdvDet(&status);
     
-    // Read XML info
-    //--------------
-    CHECK_STATUS_BREAK(status);
-    det = loadAdvDet(par.XMLFile, &status);
-    CHECK_STATUS_BREAK(status);
-    
-    sf = det->SampleFreq;
-    
-    // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
-    reconstruct_init_sirena->grading = NULL;
-    reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
-    
-    reconstruct_init_sirena->grading->ngrades = 0;
-    reconstruct_init_sirena->grading->value  = NULL;
-    reconstruct_init_sirena->grading->gradeData = NULL;
-    
-    if ((det->nrecons == 0) && (det->npix == 0))
+    if ((par.opmode ==1) || ((par.opmode == 0) && (par.preBuffer == 1)))
     {
-        SIXT_ERROR("The provided XMLFile does not have the grading info");
-        return(EXIT_FAILURE);
-    }
-    else if ((det->nrecons == 0) && (det->npix != 0))
-    {
-        if (det->pix->grades == NULL)
+        // Read XML info
+        //--------------
+        CHECK_STATUS_BREAK(status);
+        det = loadAdvDet(par.XMLFile, &status);
+        CHECK_STATUS_BREAK(status);
+        
+        sf = det->SampleFreq;
+        
+        // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
+        reconstruct_init_sirena->grading = NULL;
+        reconstruct_init_sirena->grading = (Grading*)malloc(sizeof(Grading));
+        
+        reconstruct_init_sirena->grading->ngrades = 0;
+        reconstruct_init_sirena->grading->value  = NULL;
+        reconstruct_init_sirena->grading->gradeData = NULL;
+        
+        if ((det->nrecons == 0) && (det->npix == 0))
         {
             SIXT_ERROR("The provided XMLFile does not have the grading info");
             return(EXIT_FAILURE);
         }
-        reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
-        reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->pix->ngrades,3);
-        for (int i=0;i<det->pix->ngrades;i++)
+        else if ((det->nrecons == 0) && (det->npix != 0))
         {
-            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->pix->grades[i].gradelim_pre));
-            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post));
-            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,2,(int) (det->pix->grades[i].grade_preBuffer));
-        }
-    }
-    else if(((det->nrecons != 0) && (det->npix == 0)) || ((det->nrecons == 1) && (det->npix == 1)))
-    {
-        if (det->recons->grades == NULL)
-        {
-            SIXT_ERROR("The provided XMLFile does not have the grading info");
-            return(EXIT_FAILURE);
-        }
-        reconstruct_init_sirena->grading->ngrades=det->recons->ngrades;
-        reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->recons->ngrades,3);
-        for (int i=0;i<det->recons->ngrades;i++)
-        {
-            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->recons->grades[i].gradelim_pre));
-            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->recons->grades[i].gradelim_post));
-            gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,2,(int) (det->recons->grades[i].grade_preBuffer));
-        }
-    }
-    
-    int OFlengthvsposti = 0;
-    if ((par.preBuffer == 1) && (par.opmode == 1))
-    {
-        for (int i=0;i<reconstruct_init_sirena->grading->ngrades;i++) 
-        {
-            if (par.OFLength == gsl_matrix_get(reconstruct_init_sirena->grading->gradeData,i,1))
+            if (det->pix->grades == NULL)
             {
-                OFlengthvsposti = 1;
-                break;
+                SIXT_ERROR("The provided XMLFile does not have the grading info");
+                return(EXIT_FAILURE);
+            }
+            reconstruct_init_sirena->grading->ngrades=det->pix->ngrades;
+            reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->pix->ngrades,3);
+            for (int i=0;i<det->pix->ngrades;i++)
+            {
+                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->pix->grades[i].gradelim_pre));
+                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post));
+                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,2,(int) (det->pix->grades[i].grade_preBuffer));
             }
         }
-        if (OFlengthvsposti == 0)
+        else if(((det->nrecons != 0) && (det->npix == 0)) || ((det->nrecons == 1) && (det->npix == 1)))
         {
-            SIXT_ERROR("The grading/preBuffer info of the XML file does not match the OFLength input parameter");
-            return(EXIT_FAILURE);
+            if (det->recons->grades == NULL)
+            {
+                SIXT_ERROR("The provided XMLFile does not have the grading info");
+                return(EXIT_FAILURE);
+            }
+            reconstruct_init_sirena->grading->ngrades=det->recons->ngrades;
+            reconstruct_init_sirena->grading->gradeData = gsl_matrix_alloc(det->recons->ngrades,3);
+            for (int i=0;i<det->recons->ngrades;i++)
+            {
+                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,0,(int) (det->recons->grades[i].gradelim_pre));
+                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,1,(int) (det->recons->grades[i].gradelim_post));
+                gsl_matrix_set(reconstruct_init_sirena->grading->gradeData,i,2,(int) (det->recons->grades[i].grade_preBuffer));
+            }
+        }
+        
+        int OFlengthvsposti = 0;
+        if ((par.preBuffer == 1) && (par.opmode == 1))
+        {
+            for (int i=0;i<reconstruct_init_sirena->grading->ngrades;i++) 
+            {
+                if (par.OFLength == gsl_matrix_get(reconstruct_init_sirena->grading->gradeData,i,1))
+                {
+                    OFlengthvsposti = 1;
+                    break;
+                }
+            }
+            if (OFlengthvsposti == 0)
+            {
+                SIXT_ERROR("The grading/preBuffer info of the XML file does not match the OFLength input parameter");
+                return(EXIT_FAILURE);
+            }
         }
     }
-    
+
     destroyAdvDet(&det);
     
     if ((par.preBuffer == 1) && (par.opmode == 0))
@@ -1001,219 +1004,219 @@ int getpar(struct Parameters* const par)
 	}
   }else if(strcmp(par->Rcmethod,"SIRENA")==0){
 	
-	// SIRENA parameters
-	status=ape_trad_query_string("LibraryFile", &sbuffer);
-	strcpy(par->LibraryFile, sbuffer);
-	free(sbuffer);
-
-	status=ape_trad_query_double("scaleFactor", &par->scaleFactor);
-    
-	status=ape_trad_query_int("samplesUp", &par->samplesUp);
-        
-    status=ape_trad_query_int("samplesDown", &par->samplesDown);
-  
-	status=ape_trad_query_double("nSgms", &par->nSgms);
-        
-    status=ape_trad_query_int("detectSP", &par->detectSP);
-  
-	status=ape_trad_query_int("opmode", &par->opmode);
-        
-    status=ape_trad_query_string("detectionMode", &sbuffer);
-	strcpy(par->detectionMode, sbuffer);
-	free(sbuffer);
-  
-	status=ape_trad_query_double("LrsT", &par->LrsT);
-
-	status=ape_trad_query_double("LbT", &par->LbT);
-
-	status=ape_trad_query_int("intermediate", &par->intermediate);
-
-	status=ape_trad_query_string("detectFile", &sbuffer);
-	strcpy(par->detectFile, sbuffer);
-	free(sbuffer);
-
-	status=ape_trad_query_double("monoenergy", &par->monoenergy);
-	
-	status=ape_trad_query_bool("hduPRECALWN", &par->hduPRECALWN);
-	status=ape_trad_query_bool("hduPRCLOFWM", &par->hduPRCLOFWM);
-	
-	status=ape_trad_query_int("largeFilter", &par->largeFilter);
-
-	status=ape_trad_query_string("NoiseFile", &sbuffer);
-	strcpy(par->NoiseFile, sbuffer);
-	free(sbuffer);
-	
-	status=ape_trad_query_string("FilterDomain", &sbuffer);
-	strcpy(par->FilterDomain, sbuffer);
-	free(sbuffer);
-	
-	status=ape_trad_query_string("FilterMethod", &sbuffer);
-	strcpy(par->FilterMethod, sbuffer);
-	free(sbuffer);
-
-	status=ape_trad_query_string("EnergyMethod", &sbuffer);
-	strcpy(par->EnergyMethod, sbuffer);
-	free(sbuffer);
-        
-    status=ape_trad_query_double("filtEev", &par->filtEev);
-    
-    status=ape_trad_query_double("Ifit", &par->Ifit);
-
-	status=ape_trad_query_string("OFNoise", &sbuffer);
-	strcpy(par->OFNoise, sbuffer);
-	free(sbuffer);
-	
-	status=ape_trad_query_int("LagsOrNot", &par->LagsOrNot);
-    status=ape_trad_query_int("nLags", &par->nLags);
-    status=ape_trad_query_int("Fitting35", &par->Fitting35);
-
-	status=ape_trad_query_int("OFIter", &par->OFIter);
-
-	status=ape_trad_query_bool("OFLib", &par->OFLib);
-	
-	strcpy(par->OFInterp, "DAB");
-	
-	status=ape_trad_query_string("OFStrategy", &sbuffer);
-	strcpy(par->OFStrategy, sbuffer);
-	free(sbuffer);
-	
-	status=ape_trad_query_int("OFLength", &par->OFLength);
-        
-    status=ape_trad_query_bool("preBuffer", &par->preBuffer);
-        
-    status=ape_trad_query_int("errorT", &par->errorT);
-        
-    status=ape_trad_query_int("Sum0Filt", &par->Sum0Filt);
-
-	//status=ape_trad_query_int("tstartPulse1", &par->tstartPulse1);
-    status=ape_trad_query_string("tstartPulse1", &sbuffer);
-	strcpy(par->tstartPulse1, sbuffer);
-	free(sbuffer);
-	
-	status=ape_trad_query_int("tstartPulse2", &par->tstartPulse2);
-	
-	status=ape_trad_query_int("tstartPulse3", &par->tstartPulse3);
-	
-	status=ape_trad_query_double("energyPCA1", &par->energyPCA1);
-	
-	status=ape_trad_query_double("energyPCA2", &par->energyPCA2);
-	
-	status=ape_trad_query_string("XMLFile", &sbuffer);
-	strcpy(par->XMLFile, sbuffer);
-	free(sbuffer);
-	
-	if (EXIT_SUCCESS!=status) {
-		SIXT_ERROR("failed reading some SIRENA parameter");
-		return(status);
-	}
-	
-	MyAssert((par->opmode == 0) || (par->opmode == 1), "opmode must be 0 or 1");
-        int isNumber = 1;
-        for (int i = 0; i < strlen(par->tstartPulse1); i++) 
-        {
-            if (isdigit(par->tstartPulse1[i]) == 0)    
-            {
-                isNumber = 0;
-                break;
-            }
-        }
-        if ((isNumber == 0) && (par->opmode == 0))
-        {
-            SIXT_ERROR("tstartPulse1 can not be a file if CALIBRATION mode");
-            return(EXIT_FAILURE);
-        }
-        if ((isNumber == 0) && (strcmp(par->FilterDomain,"F") == 0))    // It is only implemented tstartPulse1 as a file for time domain
-        {
-            SIXT_ERROR("It is not possible to work in FREQUENCY domain if tstartPulse1 is a file => Change FilterDomain to TIME domain (T) ");
-            return(EXIT_FAILURE);
-        }
-	  
-	MyAssert((par->intermediate == 0) || (par->intermediate == 1), "intermediate must be 0 or 1");
-	
-        if (par->opmode == 0) MyAssert(par->monoenergy > 0, "monoenergy must be greater than 0");
-	
-	MyAssert((strcmp(par->FilterDomain,"T") == 0) || (strcmp(par->FilterDomain,"F") == 0), "FilterDomain must be T or F");
-	
-	MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0),"FilterMethod must be F0 or B0");
-	
-	MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0) ||
-		(strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0) 
-        || (strcmp(par->EnergyMethod,"PCA") == 0), "EnergyMethod must be OPTFILT, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA");
-	
-	MyAssert((strcmp(par->OFNoise,"NSD") == 0) || (strcmp(par->OFNoise,"WEIGHTM") == 0), "OFNoise must be NSD or WEIGHTM");
-        
-        MyAssert((strcmp(par->detectionMode,"AD") == 0) || (strcmp(par->detectionMode,"STC") == 0), "detectionMode must be AD or STC");
-	
-	MyAssert((par->LagsOrNot ==0) || (par->LagsOrNot ==1), "LagsOrNot must me 0 or 1");
-        if ((par->nLags)%2 == 0)
-	{
-		SIXT_ERROR("parameter error: nLags must be odd");
-		return(EXIT_FAILURE);
-	}
-	MyAssert((par->Fitting35 ==3) || (par->Fitting35 ==5), "Fitting35 must me 3 or 5");
-        if ((par->Fitting35 ==3) && (par->nLags<3))
-        {
-                SIXT_ERROR("parameter error: nLags must be at least 3");
-		return(EXIT_FAILURE);
-        }
-        if ((par->Fitting35 ==5) && (par->nLags<5))
-        {
-                SIXT_ERROR("parameter error: nLags must be at least 5");
-		return(EXIT_FAILURE);
-        }
-        
-        MyAssert((par->Sum0Filt ==0) || (par->Sum0Filt ==1), "Sum0Filt must be 0 or 1");
-
-        if ((strcmp(par->EnergyMethod,"WEIGHT") == 0) && (par->LagsOrNot == 1))
-	{
-		SIXT_ERROR("parameter error: EnergyMethod=WEIGHT and Lags not implemented yet");
-		return(EXIT_FAILURE);
-	}
-	
-	MyAssert((par->OFIter ==0) || (par->OFIter ==1), "OFIter must be 0 or 1");
-	
-        // It was in order to not ask for the noise file if OFLib=1
-	/*if ((par->OFLib == 1) && (strcmp(par->FilterMethod,"F0") != 0))
-	{
-		SIXT_ERROR("parameter error: If OFLib=yes => FilterMethod must be F0");
-		return(EXIT_FAILURE);
-	}*/
-        
-        if ((par->PulseLength < par->OFLength) && (strcmp(par->FilterDomain,"F") == 0))
-        {
-            SIXT_ERROR("Code is not prepared to run 0-padding in Frequency domain");
-            // To run 0-padding in Frequency domain the steps should be:
-            //1. Take the 8192-samples-length filter in Time domain
-            //2. Cut the 0-padding length first samples (the first 4096 samples, or the first 2048 samples...) => 0-padding filter
-            //3. FFT of the 0-padding filter
-            //4. FFT of the 0-padding pulse (pulse cut according the 0-padding)
-            //5. Scalar product in Frequency domain
-            return(EXIT_FAILURE);
-        }
-        
-	if ((strcmp(par->EnergyMethod,"WEIGHT") == 0) && (par->OFLib == 1))
-	{
-		SIXT_ERROR("parameter error: EnergyMethod=WEIGHT => OFLib should be 'no'");
-		return(EXIT_FAILURE);
-	}
-	
-	if ((strcmp(par->EnergyMethod,"OPTFILT") == 0) && (strcmp(par->OFNoise,"WEIGHTM") == 0) && (par->OFLib == 0))
-	{
-		SIXT_ERROR("parameter error: EnergyMethod=OPTFILT && OFNoise=WEIGHTM => OFLib should be 'yes'");
-		return(EXIT_FAILURE);
-	}
-	
-	MyAssert((strcmp(par->OFStrategy,"FREE") == 0) || (strcmp(par->OFStrategy,"BYGRADE") == 0) || (strcmp(par->OFStrategy,"FIXED") == 0), 
-		 "OFStrategy must be FREE, BYGRADE or FIXED");
-	
-    MyAssert(par->OFLength > 0, "OFLength must be greater than 0");
-        
-    //MyAssert(par->preBuffer >= 0, "preBuffer must be 0 or greater than 0");
-	
-	MyAssert(par->energyPCA1 > 0, "energyPCA1 must be greater than 0");
-    MyAssert(par->energyPCA2 > 0, "energyPCA2 must be greater than 0");
-        
-    MyAssert(par->LbT > 0, "LbT must be greater than 0");
+      // SIRENA parameters
+      status=ape_trad_query_string("LibraryFile", &sbuffer);
+      strcpy(par->LibraryFile, sbuffer);
+      free(sbuffer);
+      
+      status=ape_trad_query_double("scaleFactor", &par->scaleFactor);
+      
+      status=ape_trad_query_int("samplesUp", &par->samplesUp);
+      
+      status=ape_trad_query_int("samplesDown", &par->samplesDown);
+      
+      status=ape_trad_query_double("nSgms", &par->nSgms);
+      
+      status=ape_trad_query_int("detectSP", &par->detectSP);
+      
+      status=ape_trad_query_int("opmode", &par->opmode);
+      
+      status=ape_trad_query_string("detectionMode", &sbuffer);
+      strcpy(par->detectionMode, sbuffer);
+      free(sbuffer);
+      
+      status=ape_trad_query_double("LrsT", &par->LrsT);
+      
+      status=ape_trad_query_double("LbT", &par->LbT);
+      
+      status=ape_trad_query_int("intermediate", &par->intermediate);
+      
+      status=ape_trad_query_string("detectFile", &sbuffer);
+      strcpy(par->detectFile, sbuffer);
+      free(sbuffer);
+      
+      status=ape_trad_query_double("monoenergy", &par->monoenergy);
+      
+      status=ape_trad_query_bool("hduPRECALWN", &par->hduPRECALWN);
+      status=ape_trad_query_bool("hduPRCLOFWM", &par->hduPRCLOFWM);
+      
+      status=ape_trad_query_int("largeFilter", &par->largeFilter);
+      
+      status=ape_trad_query_string("NoiseFile", &sbuffer);
+      strcpy(par->NoiseFile, sbuffer);
+      free(sbuffer);
+      
+      status=ape_trad_query_string("FilterDomain", &sbuffer);
+      strcpy(par->FilterDomain, sbuffer);
+      free(sbuffer);
+      
+      status=ape_trad_query_string("FilterMethod", &sbuffer);
+      strcpy(par->FilterMethod, sbuffer);
+      free(sbuffer);
+      
+      status=ape_trad_query_string("EnergyMethod", &sbuffer);
+      strcpy(par->EnergyMethod, sbuffer);
+      free(sbuffer);
+      
+      status=ape_trad_query_double("filtEev", &par->filtEev);
+      
+      status=ape_trad_query_double("Ifit", &par->Ifit);
+      
+      status=ape_trad_query_string("OFNoise", &sbuffer);
+      strcpy(par->OFNoise, sbuffer);
+      free(sbuffer);
+      
+      status=ape_trad_query_int("LagsOrNot", &par->LagsOrNot);
+      status=ape_trad_query_int("nLags", &par->nLags);
+      status=ape_trad_query_int("Fitting35", &par->Fitting35);
+      
+      status=ape_trad_query_int("OFIter", &par->OFIter);
+      
+      status=ape_trad_query_bool("OFLib", &par->OFLib);
+      
+      strcpy(par->OFInterp, "DAB");
+      
+      status=ape_trad_query_string("OFStrategy", &sbuffer);
+      strcpy(par->OFStrategy, sbuffer);
+      free(sbuffer);
+      
+      status=ape_trad_query_int("OFLength", &par->OFLength);
+      
+      status=ape_trad_query_bool("preBuffer", &par->preBuffer);
+      
+      status=ape_trad_query_int("errorT", &par->errorT);
+      
+      status=ape_trad_query_int("Sum0Filt", &par->Sum0Filt);
+      
+      //status=ape_trad_query_int("tstartPulse1", &par->tstartPulse1);
+      status=ape_trad_query_string("tstartPulse1", &sbuffer);
+      strcpy(par->tstartPulse1, sbuffer);
+      free(sbuffer);
+      
+      status=ape_trad_query_int("tstartPulse2", &par->tstartPulse2);
+      
+      status=ape_trad_query_int("tstartPulse3", &par->tstartPulse3);
+      
+      status=ape_trad_query_double("energyPCA1", &par->energyPCA1);
+      
+      status=ape_trad_query_double("energyPCA2", &par->energyPCA2);
+      
+      status=ape_trad_query_string("XMLFile", &sbuffer);
+      strcpy(par->XMLFile, sbuffer);
+      free(sbuffer);
+      
+      if (EXIT_SUCCESS!=status) {
+          SIXT_ERROR("failed reading some SIRENA parameter");
+          return(status);
+      }
+      
+      MyAssert((par->opmode == 0) || (par->opmode == 1), "opmode must be 0 or 1");
+      int isNumber = 1;
+      for (int i = 0; i < strlen(par->tstartPulse1); i++) 
+      {
+          if (isdigit(par->tstartPulse1[i]) == 0)    
+          {
+              isNumber = 0;
+              break;
+          }
+      }
+      if ((isNumber == 0) && (par->opmode == 0))
+      {
+          SIXT_ERROR("tstartPulse1 can not be a file if CALIBRATION mode");
+          return(EXIT_FAILURE);
+      }
+      if ((isNumber == 0) && (strcmp(par->FilterDomain,"F") == 0))    // It is only implemented tstartPulse1 as a file for time domain
+      {
+          SIXT_ERROR("It is not possible to work in FREQUENCY domain if tstartPulse1 is a file => Change FilterDomain to TIME domain (T) ");
+          return(EXIT_FAILURE);
+      }
+      
+      MyAssert((par->intermediate == 0) || (par->intermediate == 1), "intermediate must be 0 or 1");
+      
+      if (par->opmode == 0) MyAssert(par->monoenergy > 0, "monoenergy must be greater than 0");
+      
+      MyAssert((strcmp(par->FilterDomain,"T") == 0) || (strcmp(par->FilterDomain,"F") == 0), "FilterDomain must be T or F");
+      
+      MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0),"FilterMethod must be F0 or B0");
+      
+      MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0) ||
+      (strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0) 
+      || (strcmp(par->EnergyMethod,"PCA") == 0), "EnergyMethod must be OPTFILT, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA");
+      
+      MyAssert((strcmp(par->OFNoise,"NSD") == 0) || (strcmp(par->OFNoise,"WEIGHTM") == 0), "OFNoise must be NSD or WEIGHTM");
+      
+      MyAssert((strcmp(par->detectionMode,"AD") == 0) || (strcmp(par->detectionMode,"STC") == 0), "detectionMode must be AD or STC");
+      
+      MyAssert((par->LagsOrNot ==0) || (par->LagsOrNot ==1), "LagsOrNot must me 0 or 1");
+      if ((par->nLags)%2 == 0)
+      {
+          SIXT_ERROR("parameter error: nLags must be odd");
+          return(EXIT_FAILURE);
+      }
+      MyAssert((par->Fitting35 ==3) || (par->Fitting35 ==5), "Fitting35 must me 3 or 5");
+      if ((par->Fitting35 ==3) && (par->nLags<3))
+      {
+          SIXT_ERROR("parameter error: nLags must be at least 3");
+          return(EXIT_FAILURE);
+      }
+      if ((par->Fitting35 ==5) && (par->nLags<5))
+      {
+          SIXT_ERROR("parameter error: nLags must be at least 5");
+          return(EXIT_FAILURE);
+      }
+      
+      MyAssert((par->Sum0Filt ==0) || (par->Sum0Filt ==1), "Sum0Filt must be 0 or 1");
+      
+      if ((strcmp(par->EnergyMethod,"WEIGHT") == 0) && (par->LagsOrNot == 1))
+      {
+          SIXT_ERROR("parameter error: EnergyMethod=WEIGHT and Lags not implemented yet");
+          return(EXIT_FAILURE);
+      }
+      
+      MyAssert((par->OFIter ==0) || (par->OFIter ==1), "OFIter must be 0 or 1");
+      
+      // It was in order to not ask for the noise file if OFLib=1
+      /*if ((par->OFLib == 1) && (strcmp(par->FilterMethod,"F0") != 0))
+       {                                                       *
+       SIXT_ERROR("parameter error: If OFLib=yes => FilterMethod must be F0");
+       return(EXIT_FAILURE);
+  }*/
+      
+      if ((par->PulseLength < par->OFLength) && (strcmp(par->FilterDomain,"F") == 0))
+      {
+          SIXT_ERROR("Code is not prepared to run 0-padding in Frequency domain");
+          // To run 0-padding in Frequency domain the steps should be:
+          //1. Take the 8192-samples-length filter in Time domain
+          //2. Cut the 0-padding length first samples (the first 4096 samples, or the first 2048 samples...) => 0-padding filter
+          //3. FFT of the 0-padding filter
+          //4. FFT of the 0-padding pulse (pulse cut according the 0-padding)
+          //5. Scalar product in Frequency domain
+          return(EXIT_FAILURE);
+      }
+      
+      if ((strcmp(par->EnergyMethod,"WEIGHT") == 0) && (par->OFLib == 1))
+      {
+          SIXT_ERROR("parameter error: EnergyMethod=WEIGHT => OFLib should be 'no'");
+          return(EXIT_FAILURE);
+      }
+      
+      if ((strcmp(par->EnergyMethod,"OPTFILT") == 0) && (strcmp(par->OFNoise,"WEIGHTM") == 0) && (par->OFLib == 0))
+      {
+          SIXT_ERROR("parameter error: EnergyMethod=OPTFILT && OFNoise=WEIGHTM => OFLib should be 'yes'");
+          return(EXIT_FAILURE);
+      }
+      
+      MyAssert((strcmp(par->OFStrategy,"FREE") == 0) || (strcmp(par->OFStrategy,"BYGRADE") == 0) || (strcmp(par->OFStrategy,"FIXED") == 0), 
+               "OFStrategy must be FREE, BYGRADE or FIXED");
+      
+      MyAssert(par->OFLength > 0, "OFLength must be greater than 0");
+      
+      //MyAssert(par->preBuffer >= 0, "preBuffer must be 0 or greater than 0");
+      
+      MyAssert(par->energyPCA1 > 0, "energyPCA1 must be greater than 0");
+      MyAssert(par->energyPCA2 > 0, "energyPCA2 must be greater than 0");
+      
+      MyAssert(par->LbT > 0, "LbT must be greater than 0");
 	
   } else {
 	SIXT_ERROR("failed reading the Rcmethod parameter");

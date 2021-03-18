@@ -2600,6 +2600,28 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
         }
         else        
         {
+            if (((*reconstruct_init)->preBuffer == 1) && ((*reconstruct_init)->opmode == 0))
+            {
+                if (gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value < 0)
+                {
+                    gsl_vector_set(qualitygsl,i, 1);
+                }
+            }
+            else if (((*reconstruct_init)->preBuffer == 1) && ((*reconstruct_init)->opmode == 1))
+            {
+                if (gsl_vector_get(tstartgsl,i)-preBuffer_value < 0)
+                {
+                    gsl_vector_set(qualitygsl,i, 1);
+                }
+            }
+            else if ((*reconstruct_init)->preBuffer == 0)
+            {
+                if (gsl_vector_get(tstartgsl,i) < 0)
+                {
+                    gsl_vector_set(qualitygsl,i, 1);
+                }
+            }
+        
             //if ((foundPulses->pulses_detected[i].pulse_adc = gsl_vector_alloc(foundPulses->pulses_detected[i].pulse_duration)) == 0)
             if ((foundPulses->pulses_detected[i].pulse_adc = gsl_vector_alloc(floor(gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i)))) == 0)
             {
@@ -2611,15 +2633,14 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
             }
             if (gsl_vector_get(tstartgsl,i) < 0)
             {
-                sprintf(valERROR,"%d",__LINE__+5);
+                sprintf(valERROR,"%d",__LINE__+6);
                 string str(valERROR);
                 message = "tstart < 0 in line " + str + " (" + __FILE__ + ")";
                 str.clear();
                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
             }
-           
-            //temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].pulse_duration);
             temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i),floor(gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i)));
+            //temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i),foundPulses->pulses_detected[i].pulse_duration);
             if (gsl_vector_memcpy(foundPulses->pulses_detected[i].pulse_adc,&temp.vector) != 0)
             {
                 sprintf(valERROR,"%d",__LINE__-2);
@@ -2665,7 +2686,6 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
                 }
                 else
                 {
-                    
                     if (gsl_vector_get(tstartgsl,i)-preBuffer_value >= 0)
                     {
                         temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i) - preBuffer_value,foundPulses->pulses_detected[i].pulse_duration);
@@ -2677,13 +2697,16 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
                 }
             }
 
-            if (gsl_vector_memcpy(foundPulses->pulses_detected[i].pulse_adc_preBuffer,&temp.vector) != 0)
+            if (gsl_vector_get(qualitygsl,i) != 1)
             {
-                sprintf(valERROR,"%d",__LINE__-2);
-                string str(valERROR);
-                message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
-                str.clear();
-                EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                if (gsl_vector_memcpy(foundPulses->pulses_detected[i].pulse_adc_preBuffer,&temp.vector) != 0)
+                {
+                    sprintf(valERROR,"%d",__LINE__-2);
+                    string str(valERROR);
+                    message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+                    str.clear();
+                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                }
             }
         }
         
@@ -2696,7 +2719,7 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
         foundPulses->pulses_detected[i].maxDER = gsl_vector_get(maxDERgsl,i);
         foundPulses->pulses_detected[i].samp1DER = gsl_vector_get(samp1DERgsl,i);
         // 'energy' will be known after running 'runEnergy'
-        if (((*reconstruct_init)->preBuffer == 1) && ((*reconstruct_init)->opmode == 0))
+        /*if (((*reconstruct_init)->preBuffer == 1) && ((*reconstruct_init)->opmode == 0))
         {
             if (gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value < 0)
             {
@@ -2716,7 +2739,7 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
             {
                 gsl_vector_set(qualitygsl,i, 1);
             }
-        }
+        }*/
         foundPulses->pulses_detected[i].quality = gsl_vector_get(qualitygsl,i);
         foundPulses->pulses_detected[i].numLagsUsed = gsl_vector_get(lagsgsl,i);
         foundPulses->pulses_detected[i].pixid = pixid;
@@ -4834,7 +4857,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
                         str.clear();
                         EP_EXIT_ERROR(message,EPFAIL);
                     }
-                    cout<<"matchedfiltersSHORT->size: "<<matchedfiltersSHORT->size<<endl;
+                    //cout<<"matchedfiltersSHORT->size: "<<matchedfiltersSHORT->size<<endl;
                     gsl_vector_free(matchedfiltersMaxLengthFixedFilter_row); matchedfiltersMaxLengthFixedFilter_row = 0;
                 }
                 else
@@ -8413,6 +8436,13 @@ void runEnergy(TesRecord* record, int nrecord, int trig_reclength, ReconstructIn
                 (*pulsesInRecord)->pulses_detected[i].quality = 1;
                 
                 message = "tstart-preBuffer+filterSize+numlags/2>recordSize for pulse i=" + boost::lexical_cast<std::string>(i+1) + " in record " + boost::lexical_cast<std::string>(nrecord);
+                EP_PRINT_ERROR(message,-999);
+            }
+            if (tstartSamplesRecordStartDOUBLE-preBuffer_value < 0) 
+            {
+                (*pulsesInRecord)->pulses_detected[i].quality = 1;
+                
+                message = "tstart-preBuffer-numlags/2<0 for pulse i=" + boost::lexical_cast<std::string>(i+1) + " in record " + boost::lexical_cast<std::string>(nrecord);
                 EP_PRINT_ERROR(message,-999);
             }
         }
