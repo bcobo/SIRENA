@@ -2534,7 +2534,6 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
     foundPulses->ndetpulses = numPulses;
     foundPulses->pulses_detected = new PulseDetected[numPulses];
     //cout<<"numPulses : "<<numPulses<<endl;
-    int resize_mf;
     int resize_mfvsposti = 0;
     for (int i=0;i<numPulses;i++)
     {
@@ -2549,21 +2548,9 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
         }
         if (((*reconstruct_init)->preBuffer == 1) && ((*reconstruct_init)->opmode == 1))
         {
-            if (((*reconstruct_init)->OFLength > foundPulses->pulses_detected[i].pulse_duration) && ((*reconstruct_init)->pulse_length >= (*reconstruct_init)->OFLength))
-            {
-                resize_mf = (*reconstruct_init)->OFLength;
-            }
-            else if ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength)
-            {
-                resize_mf = (*reconstruct_init)->pulse_length;
-            }
-            else
-            {
-                resize_mf = (*reconstruct_init)->OFLength;
-            }
             for (int j=0; j<(*reconstruct_init)->grading->gradeData->size1;j++)
             {
-                if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == resize_mf)
+                if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == (*reconstruct_init)->OFLength)
                 {
                     preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
                     resize_mfvsposti = 1;
@@ -2576,7 +2563,6 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
                 EP_EXIT_ERROR(message,EPFAIL);
             }
         }
-        //cout<<"foundPulses->pulses_detected[i].pulse_duration: "<<foundPulses->pulses_detected[i].pulse_duration<<endl;
         
         foundPulses->pulses_detected[i].avg_4samplesDerivative = gsl_vector_get(samp1DERgsl,i);
         foundPulses->pulses_detected[i].E_lowres = -999;
@@ -8424,7 +8410,7 @@ void runEnergy(TesRecord* record, int nrecord, int trig_reclength, ReconstructIn
             {
                 for (int j=0; j<(*reconstruct_init)->grading->gradeData->size1;j++)
                 {
-                    if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == resize_mf)
+                    if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == (*reconstruct_init)->OFLength)
                     {
                         preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
                         resize_mfvsposti = 1;
@@ -9443,7 +9429,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
             {
                 for (int j=0; j<(*reconstruct_init)->grading->gradeData->size1;j++)
                 {
-                    if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == resize_mf)
+                    if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == (*reconstruct_init)->OFLength)
                     {
                         preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
                         resize_mfvsposti = 1;

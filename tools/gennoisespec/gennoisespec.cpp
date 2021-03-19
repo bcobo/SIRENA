@@ -857,6 +857,13 @@
                 
                 gsl_matrix_get_row(interval,noiseIntervals,i);
                 
+                // Apply a Hanning window to reduce spectral leakage
+                /*if (hannWindow(&interval))
+                {
+                    message = "Cannot run hannWindow routine";
+                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                }*/
+    
                 // FFT calculus (EventSamplesFFT)
                 if(FFT(interval,vector_aux1,SelectedTimeDuration))
                 {
