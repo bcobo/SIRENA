@@ -9018,8 +9018,12 @@ void runEnergy(TesRecord* record, int nrecord, int trig_reclength, ReconstructIn
                 cout<<"sumfilt1="<<sumfilt<<endl;*/
                 }
                 
-                //for (int j=0;j<optimalfilter->size;j++)
-                //    cout<<j<<" "<<gsl_vector_get(optimalfilter,j)<<endl;
+                // Apply a Hanning window to reduce spectral leakage
+                if (hannWindow(&pulseToCalculateEnergy))
+                {
+                    message = "Cannot run hannWindow routine";
+                    EP_PRINT_ERROR(message,EPFAIL);
+                }
                 
                 // Calculate the energy of each pulse
                 if (calculateEnergy(pulseToCalculateEnergy,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
@@ -10030,6 +10034,13 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                 cout<<"sumfilt1="<<sumfilt<<endl;*/
                 }
                 
+                // Apply a Hanning window to reduce spectral leakage
+                if (hannWindow(&pulseToCalculateEnergy))
+                {
+                    message = "Cannot run hannWindow routine";
+                    EP_PRINT_ERROR(message,EPFAIL);
+                }
+                
                 // Calculate the energy of each pulse
                 if (calculateEnergy(pulseToCalculateEnergy,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
                 {
@@ -10292,11 +10303,11 @@ int calculus_optimalFilter(int TorF, int intermediate, int opmode, gsl_vector *m
     gsl_vector *mf_FFT = gsl_vector_alloc(mf_size);				// Sorted magnitude according [-fmax,...,0,...,fmax]
     
     // Apply a Hanning window to reduce spectral leakage
-    /*if (hannWindow(&matchedfiltergsl))
+    if (hannWindow(&matchedfiltergsl))
     {
         message = "Cannot run hannWindow routine";
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-    }*/
+    }
     
     // FFT calculus
     if (FFT(matchedfiltergsl,mfFFTcomp,SelectedTimeDuration))
