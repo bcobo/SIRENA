@@ -534,6 +534,9 @@ bool isNumber(string s)
 /***** SECTION 16 ************************************************************
 * hannWindow: This function applies a N-length Hanning window to the input vector
 * 
+* 0.5-0.5cos(2PIn/N) 0<=n<=N
+* 0.5-0.5cos(2PIn/(N-1)) 0<=n<=N-1
+* 
 * Parameters:
 * - inoutvector: Input/Output GSL vector
 *****************************************************************************/
@@ -546,7 +549,7 @@ int hannWindow(gsl_vector **inoutvector)
     
     for (int i = 0; i < N; i++) 
     {
-        multiplier = 0.5 * (1 - cos(2*pi*i/N));
+        multiplier = 0.5 * (1 - cos(2*pi*i/(N-1)));
         gsl_vector_set(*inoutvector,i,gsl_vector_get(*inoutvector,i)*multiplier);
     }
 
