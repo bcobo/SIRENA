@@ -2563,7 +2563,7 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
                 EP_EXIT_ERROR(message,EPFAIL);
             }
         }
-        
+
         foundPulses->pulses_detected[i].avg_4samplesDerivative = gsl_vector_get(samp1DERgsl,i);
         foundPulses->pulses_detected[i].E_lowres = -999;
         
@@ -2674,7 +2674,15 @@ gsl_vector_memcpy(recordDERIVATIVE,record);*/
                     }
                     else if (gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value < 0)
                     {
-                        temp = gsl_vector_subvector(recordNOTFILTERED,0,foundPulses->pulses_detected[i].pulse_duration+(*reconstruct_init)->preBuffer_max_value);
+                        if (foundPulses->pulses_detected[i].pulse_duration+(*reconstruct_init)->preBuffer_max_value > recordNOTFILTERED->size)
+                        {
+                            temp = gsl_vector_subvector(recordNOTFILTERED,0,foundPulses->pulses_detected[i].pulse_duration);
+                            gsl_vector_set(qualitygsl,i,1); 
+                        }
+                        else
+                        {
+                            temp = gsl_vector_subvector(recordNOTFILTERED,0,foundPulses->pulses_detected[i].pulse_duration+(*reconstruct_init)->preBuffer_max_value);
+                        }
                     }
                 }
                 else
@@ -8009,7 +8017,7 @@ int filterByWavelets (ReconstructInitSIRENA* reconstruct_init, gsl_vector **inve
  * }*/
 
 int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vector *tstartgsl, gsl_vector *tendgsl, gsl_vector *Bgsl, gsl_vector *Lbgsl, int numPulses, gsl_vector **tauRisegsl, gsl_vector **tauFallgsl)
-{
+{    
     double abase, amax;
     int indexmax;
     double threshold10, threshold50;
@@ -9017,13 +9025,6 @@ void runEnergy(TesRecord* record, int nrecord, int trig_reclength, ReconstructIn
                 }
                 cout<<"sumfilt1="<<sumfilt<<endl;*/
                 }
-                
-                /*// Apply a Hanning window to reduce spectral leakage
-                if (hannWindow(&pulseToCalculateEnergy))
-                {
-                    message = "Cannot run hannWindow routine";
-                    EP_PRINT_ERROR(message,EPFAIL);
-                }*/
                 
                 // Calculate the energy of each pulse
                 if (calculateEnergy(pulseToCalculateEnergy,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
@@ -10033,13 +10034,6 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                 }
                 cout<<"sumfilt1="<<sumfilt<<endl;*/
                 }
-                
-                // Apply a Hanning window to reduce spectral leakage
-                /*if (hannWindow(&pulseToCalculateEnergy))
-                {
-                    message = "Cannot run hannWindow routine";
-                    EP_PRINT_ERROR(message,EPFAIL);
-                }*/
                 
                 // Calculate the energy of each pulse
                 if (calculateEnergy(pulseToCalculateEnergy,pulseGrade,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
