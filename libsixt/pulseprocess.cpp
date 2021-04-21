@@ -429,7 +429,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
 	// It is not necessary to check the allocation because 'tstart' size must already be > 0
 	*B = gsl_vector_alloc(tstart->size);
 	gsl_vector_set_all(*B,-999);
-        *rmsB = gsl_vector_alloc(tstart->size);
+    *rmsB = gsl_vector_alloc(tstart->size);
 	gsl_vector_set_all(*rmsB,-999);
 	double Baux = -999;
 	double tendprev;
