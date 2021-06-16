@@ -19,14 +19,14 @@
    CANTABRIA (CSIC-UC) with funding from the Spanish Ministry of Science and 
    Innovation (MICINN) under project  ESP2006-13608-C02-01, and Spanish (
    Ministry of Economy (MINECO) under projects AYA2012-39767-C02-01, 
-   ESP2013-48637-C2-1-P and ESP2014-53672-C3-1-P.
+   ESP2013-48637-C2-1-P, ESP2014-53672-C3-1-P and RTI2018-096686-B-C21.
 
-/***********************************************************************
+***********************************************************************
 *                      PULSEPROCESS
 *
 *  File:       pulseprocess.cpp
 *  Developers: Beatriz Cobo
-* 	       cobo@ifca.unican.es
+* 	           cobo@ifca.unican.es
 *              IFCA
 *              Maite Ceballos
 *              ceballos@ifca.unican.es
@@ -429,7 +429,7 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
 	// It is not necessary to check the allocation because 'tstart' size must already be > 0
 	*B = gsl_vector_alloc(tstart->size);
 	gsl_vector_set_all(*B,-999);
-        *rmsB = gsl_vector_alloc(tstart->size);
+    *rmsB = gsl_vector_alloc(tstart->size);
 	gsl_vector_set_all(*rmsB,-999);
 	double Baux = -999;
 	double tendprev;
