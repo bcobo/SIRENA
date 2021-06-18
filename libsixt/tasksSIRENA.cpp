@@ -11687,9 +11687,9 @@ int calculateEnergy (gsl_vector *pulse, int pulseGrade, gsl_vector *filter, gsl_
     //cout<<gsl_vector_max(filter)<<endl;
     //cout<<gsl_vector_max_index(filter)<<endl;
     
-    int makeParabola = 1;
+    /*int makeParabola = 1;
     if (gsl_vector_max_index(filter) == filter->size-1)
-        makeParabola = 0;
+        makeParabola = 0;*/
         
     /*int minimo;
     if (pulse->size < filter->size) minimo = pulse->size;
@@ -12019,7 +12019,7 @@ int calculateEnergy (gsl_vector *pulse, int pulseGrade, gsl_vector *filter, gsl_
                             }
                         }
                         
-                        if ((makeParabola == 0) || (maxParabolaFound == false))
+                        /*if ((makeParabola == 0) || (maxParabolaFound == false))
                         {
                             *calculatedEnergy = calculatedEnergy_Nolags;
                             *tstartNewDev = 0;
@@ -12029,8 +12029,8 @@ int calculateEnergy (gsl_vector *pulse, int pulseGrade, gsl_vector *filter, gsl_
                         {
                             *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
                             *tstartNewDev = xmax;
-                        }
-                        /*if (maxParabolaFound == true)
+                        }*/
+                        if (maxParabolaFound == true)
                         {
                             //cout<<"maxParabolaFound == true"<<endl;
                             *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
@@ -12042,7 +12042,7 @@ int calculateEnergy (gsl_vector *pulse, int pulseGrade, gsl_vector *filter, gsl_
                             *calculatedEnergy = calculatedEnergy_Nolags;
                             *tstartNewDev = 0;
                             *lagsShift = 0;
-                        }*/
+                        }
                         
                         //cout<<"*calculatedEnergyTIME: "<<*calculatedEnergy<<endl;
                         //std::cout << std::setprecision(17) <<*calculatedEnergy<< '\n';
