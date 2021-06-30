@@ -8146,15 +8146,18 @@ void runEnergy(TesRecord* record, int nrecord, int trig_reclength, ReconstructIn
     double minimum;
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    int length_lowres = 8;
+    //int length_lowres = 8;
+    int length_lowres = 16; // Lowres estimator = Shortfilter8+Lags
     double energy_lowres;
     long resize_mf_lowres;
     gsl_vector *pulse_lowres;
-    resize_mf_lowres = 8; 
-    pulse_lowres = gsl_vector_alloc(resize_mf_lowres);
+    //resize_mf_lowres = 8;
+    resize_mf_lowres = 8; // Lowres estimator = Shortfilter8+Lags
+    //pulse_lowres = gsl_vector_alloc(resize_mf_lowres);
+    pulse_lowres = gsl_vector_alloc(length_lowres);
     gsl_vector *filtergsl_lowres = NULL;
-    if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres);
-    else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)	filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres*2);
+    if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		       filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres);
+    else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)	   filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres*2);
     gsl_vector *Pab_lowres = gsl_vector_alloc(resize_mf_lowres);
     gsl_matrix *PRCLWN_lowres = NULL;
     gsl_matrix *PRCLOFWM_lowres = NULL;
@@ -8325,15 +8328,17 @@ void runEnergy(TesRecord* record, int nrecord, int trig_reclength, ReconstructIn
             }
             
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            //////////// In order to get the low resolution energy estimator by filtering with a 4-samples-length filter ///////////////////
+            //////////// In order to get the low resolution energy estimator by filtering with a 8-samples-length filter ///////////////////
             log_trace("Calculating the low energy estimator...");
             energy_lowres = -999;
             if (filter8_exist == 1)
             {
                 // Pulse 
-                if ((resize_mf_lowres <= recordAux->size-tstartSamplesRecord) && ((*reconstruct_init)->OFLib == 1))
+                //if ((resize_mf_lowres <= recordAux->size-tstartSamplesRecord) && ((*reconstruct_init)->OFLib == 1))
+                if ((resize_mf_lowres <= recordAux->size-tstartSamplesRecord-numlags2) && ((*reconstruct_init)->OFLib == 1))
                 {
-                    temp = gsl_vector_subvector(recordAux,tstartSamplesRecord,length_lowres);
+                    //temp = gsl_vector_subvector(recordAux,tstartSamplesRecord,length_lowres);
+                    temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-numlags2,length_lowres);
                     
                     gsl_vector *vectoraux = gsl_vector_alloc(length_lowres);
                     gsl_vector_memcpy(vectoraux,&temp.vector);
@@ -8372,6 +8377,7 @@ void runEnergy(TesRecord* record, int nrecord, int trig_reclength, ReconstructIn
                             EP_EXIT_ERROR(message,EPFAIL);
                         }
                     }
+                    
                     gsl_vector_set_all(optimalfilter_lowres,0);
                     for (int k=0;k<filtergsl_lowres->size/2;k++)
                     {
@@ -8388,7 +8394,7 @@ void runEnergy(TesRecord* record, int nrecord, int trig_reclength, ReconstructIn
                     }
                     
                     // Calculate the low resolution estimator
-                    if (calculateEnergy(pulse_lowres,1,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,0,(*reconstruct_init),TorF,1/record->delta_t,Pab_lowres,PRCLWN_lowres,PRCLOFWM_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,1))
+                    if (calculateEnergy(pulse_lowres,1,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,0,(*reconstruct_init),TorF,1/record->delta_t,Pab_lowres,PRCLWN_lowres,PRCLOFWM_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
                     {
                         message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
                         EP_EXIT_ERROR(message,EPFAIL);
@@ -9140,12 +9146,12 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
     double minimum;
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    int length_lowres = 8;
+    int length_lowres = 16;
     double energy_lowres;
     long resize_mf_lowres;
     gsl_vector *pulse_lowres;
     resize_mf_lowres = 8; 
-    pulse_lowres = gsl_vector_alloc(resize_mf_lowres);
+    pulse_lowres = gsl_vector_alloc(length_lowres);
     gsl_vector *filtergsl_lowres = NULL;
     if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres);
     else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)	filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres*2);
@@ -9301,8 +9307,16 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
             tstartJITTER = ((*pulsesInRecord)->pulses_detected[i].Tstart-record->time)/record->delta_t;
             shift = tstartJITTER - tstartSamplesRecord;
             
+            if ((runF0orB0val == 1) && (runEMethod == 0))
+            {
+                gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulse->size);
+                gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
+                gsl_vector_add(pulse,bslnEachPulsegsl);
+                gsl_vector_free(bslnEachPulsegsl); bslnEachPulsegsl = 0;
+            }
+            
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            //////////// In order to get the low resolution energy estimator by filtering with a 4-samples-length filter ///////////////////
+            //////////// In order to get the low resolution energy estimator by filtering with a 8-samples-length filter ///////////////////
             energy_lowres = -999;
             if (filter8_exist == 1)
             {
@@ -9319,6 +9333,14 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                     for (int k=0;k<length_lowres;k++)
                     {
                         gsl_vector_set(pulse_lowres,k,gsl_vector_get(vectoraux,k));
+                    }
+                    
+                    if ((runF0orB0val == 1) && (runEMethod == 0))
+                    {
+                        gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulse_lowres->size);
+                        gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
+                        gsl_vector_add(pulse_lowres,bslnEachPulsegsl);
+                        gsl_vector_free(bslnEachPulsegsl); bslnEachPulsegsl = 0;
                     }
                     
                     gsl_vector_free(vectoraux); vectoraux = 0;
@@ -9355,7 +9377,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                         }
                     }
                     // Calculate the low resolution estimator
-                    if (calculateEnergy(pulse_lowres,1,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,0,(*reconstruct_init),TorF,1/record->delta_t,Pab_lowres,PRCLWN_lowres,PRCLOFWM_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,1))
+                    if (calculateEnergy(pulse_lowres,1,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,0,(*reconstruct_init),TorF,1/record->delta_t,Pab_lowres,PRCLWN_lowres,PRCLOFWM_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
                     {
                         message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
                         EP_EXIT_ERROR(message,EPFAIL);
@@ -9431,6 +9453,14 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                         str.clear();
                         EP_EXIT_ERROR(message,EPFAIL);
                     }
+                }
+                
+                if ((runF0orB0val == 1) && (runEMethod == 0))
+                {
+                    gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulseToCalculateEnergy->size);
+                    gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
+                    gsl_vector_add(pulseToCalculateEnergy,bslnEachPulsegsl);
+                    gsl_vector_free(bslnEachPulsegsl); bslnEachPulsegsl = 0;
                 }
                 
                 extraSizeDueToLags = numlags-1;
@@ -11710,7 +11740,9 @@ int calculateEnergy (gsl_vector *pulse, int pulseGrade, gsl_vector *filter, gsl_
     
     // To calculate Elowres (optimal filter length = 4 samples)
     double LagsOrNot = reconstruct_init->LagsOrNot;
-    if ((LowRes == 1) || (tooshortPulse_NoLags == 1))  
+    
+    //if ((LowRes == 1) || (tooshortPulse_NoLags == 1))
+    if (tooshortPulse_NoLags == 1)
     {
         LagsOrNot = 0;
     }
@@ -11819,9 +11851,7 @@ int calculateEnergy (gsl_vector *pulse, int pulseGrade, gsl_vector *filter, gsl_
                         {   
                             for (int j=0;j<numlags;j++)
                             {
-                                //cout<<"Lags "<<gsl_vector_get(lags_vector,j)<<endl;
                                 vector = gsl_vector_alloc(productSize);
-                                //cout<<"indiceVector0: "<<(reconstruct_init->nLags)/2+j-1<<endl;
                                 temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,productSize);
                                 gsl_vector_memcpy(vector,&temp.vector);
                         
