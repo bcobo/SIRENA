@@ -39,9 +39,8 @@ TesTriggerFile* newTesTriggerFile(unsigned long triggerSize,int write_doubles, i
   file->rowbuffer    =0;
   file->timeCol      =1;
   file->trigCol      =2;
-  file->extendCol    =3;
-  file->pixIDCol     =4;
-  file->ph_idCol     =5;
+  file->pixIDCol     =3;
+  file->ph_idCol     =4;
   file->trigger_size =triggerSize;
   file->delta_t=0;
   file->write_doubles = write_doubles;
@@ -78,7 +77,6 @@ void freeTesTriggerFile(TesTriggerFile** const file, int* const status){
     (*file)->rowbuffer 	      =0;
     (*file)->timeCol          =0;
     (*file)->trigCol          =0;
-    (*file)->extendCol        =0;
     (*file)->ph_idCol         =0;
     (*file)->pixIDCol         =0;
 
@@ -129,10 +127,9 @@ TesTriggerFile* opennewTesTriggerFile(const char* const filename,
   CHECK_STATUS_RET(*status,NULL);
 
    // Create table
-  char *ttype[]={"TIME","ADC","EXTEND","PIXID","PH_ID"};
-  char *tunit[]={"s","ADU","SAMPLES","",""};
-  //char *tform[]={"1D",NULL,"1J","1PJ"};
-  char *tform[]={"1D",NULL,"1J","1J","3PJ"};
+  char *ttype[]={"TIME","ADC","PIXID","PH_ID"};
+  char *tunit[]={"s","ADU","",""};
+  char *tform[]={"1D",NULL,"1J","1PJ"};
 
   tform[1]=malloc(FLEN_KEYWORD*sizeof(char));
   if (write_doubles){
@@ -362,7 +359,6 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
     
     if (pointerTFORM) // There is a parenthesis
     {
-        //printf("%s","YES (\n");
         char each_character_after_paren[125];
         char characters_after_paren[125];
         
@@ -380,8 +376,6 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
     }
     else    // There is not a parenthesis
     {   
-        //printf("%s","NO (\n");
-        
         char *ptr;
         long ret;
 
@@ -403,7 +397,6 @@ int getNextRecord(TesTriggerFile* const file,TesRecord* record,int *lastRecord,i
   (*lastRecord) = 0;
   (*startRecordGroup) = 0;
 
-  //printf("%s %p %s","file->fptr: ",file->fptr,"\n");
   if (NULL==file || NULL==file->fptr) {
     *status=EXIT_FAILURE;
     SIXT_ERROR("No opened trigger file to read from");
@@ -581,14 +574,14 @@ int getNextRecord(TesTriggerFile* const file,TesRecord* record,int *lastRecord,i
 
 /** Writes a record to a file */
 void writeRecord(TesTriggerFile* outputFile,TesRecord* record,int* const status){
-        // if we've run out of buffer, extend the table
-        if (outputFile->rowbuffer==0){
-                // extend to 1.5 of previous length
-                outputFile->rowbuffer = (long) outputFile->nrows/2; 
-                fits_insert_rows(outputFile->fptr, outputFile->nrows, outputFile->rowbuffer, status);
-        }
+    // if we've run out of buffer, extend the table
+    if (outputFile->rowbuffer==0){
+        // extend to 1.5 of previous length
+        outputFile->rowbuffer = (long) outputFile->nrows/2; 
+        fits_insert_rows(outputFile->fptr, outputFile->nrows, outputFile->rowbuffer, status);
+    }
 
-        // write values
+    // write values
 	fits_write_col(outputFile->fptr, TDOUBLE, outputFile->timeCol,
 			outputFile->row, 1, 1, &(record->time), status);
 	if (outputFile->write_doubles){
@@ -603,7 +596,7 @@ void writeRecord(TesTriggerFile* outputFile,TesRecord* record,int* const status)
 	fits_write_col(outputFile->fptr, TLONG, outputFile->ph_idCol,
 			outputFile->row, 1,record->phid_list->index,record->phid_list->phid_array, status);
 
-        outputFile->rowbuffer--;
+    outputFile->rowbuffer--;
 	outputFile->nrows++;
 	outputFile->row++;
 }
