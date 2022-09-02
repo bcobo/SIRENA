@@ -586,7 +586,7 @@ The output file will also be a FITS file storing one event per row with the foll
 
 * **AVG4SD**: average of the first 4 samples of the derivative of the pulse
 
-* **ELOWRES**: energy provided by a low resolution energy estimator filtering with a 8-samples-length filter (in keV)
+* **ELOWRES**: energy provided by a low resolution energy estimator filtering with a 8-samples-length filter (with lags) (in keV)
 
 * **GRADE1**: length of the filter used, i.e., the distance to the following pulse (in samples) or the pulse length if the next event is further than this value or if there are no more events in the same record
 

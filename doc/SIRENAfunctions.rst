@@ -5790,7 +5790,7 @@ Search functions by name at :ref:`genindex`.
 
         - Establish the pulse grade (for example VeryHighRes=1, HighRes=2, IntRes=3, MedRes=4, LimRes=5, LowRes=6, Rejected=-1, Pileup=-2) and the optimal filter length
         - Pulse: Load the proper piece of the record in *pulse*
-        - Get the low resolution energy estimator by filtering with a 8-samples-length filter:
+        - Get the low resolution energy estimator by filtering with a 8-samples-length (with lags) filter:
             - Load the low resolution pulse in *pulse_lowres*
             - Get the filter
             - Calculate the low resolution estimator
