@@ -2353,7 +2353,7 @@ Search functions by name at :ref:`genindex`.
         Maximum of the first derivative of the (low-pass filtered) record inside each found pulse
 
  
-.. cpp:function:: int find_Esboundary(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, int *indexEalpha, int *indexEbeta, double *Ealpha, double *Ebeta)
+.. cpp:function:: int find_Esboundary(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, int *indexEalpha, int *indexEbeta, double *Ealpha, double *Ebeta, double margin)
     
     Located in file: *tasksSIRENA.cpp*.
     
@@ -2395,6 +2395,10 @@ Search functions by name at :ref:`genindex`.
     double* **Ebeta** 
     
         Energy (in eV) which straddle the :cpp:member:`maxDER` in the higher limit
+
+    double **margin**
+
+        Margin to be applied when several energies in the library to choose the proper filter (hardcoded in *LibraryCollection* in *integraSIRENA.cpp*)
         
     .. cpp:member:: double maxDER
     
@@ -2423,9 +2427,13 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: double* Ebeta 
     
         Energy (in eV) which straddle the :cpp:member:`maxDER` in the higher limit
+
+    .. cpp:member:: double margin
+
+        Margin to be applied when several energies in the library to choose the proper filter (hardcoded in *LibraryCollection* in *integraSIRENA.cpp*)
         
         
-.. cpp:function:: int find_matchedfilterDAB(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, gsl_vector **matchedfilterFound, gsl_vector **PabFound, double *Ealpha, double *Ebeta)
+.. cpp:function:: int find_matchedfilterDAB(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, gsl_vector **matchedfilterFound, gsl_vector **PabFound, double *Ealpha, double *Ebeta, double margin)
     
     Located in file: *tasksSIRENA.cpp*
     
@@ -2470,6 +2478,10 @@ Search functions by name at :ref:`genindex`.
     double* **Ebeta**
     
         Energy (in eV) which straddle the :cpp:member:`maxDER` in the higher limit
+
+    double **margin**
+
+        Margin to be applied when several energies in the library to choose the proper filter (hardcoded in *LibraryCollection* in *integraSIRENA.cpp*)
         
     .. cpp:member:: int runF0orB0val
 
@@ -2502,6 +2514,10 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: double* Ebeta
     
         Energy (in eV) which straddle the :cpp:member:`maxDER` in the higher limit
+
+    .. cpp:member:: double margin
+
+        Margin to be applied when several energies in the library to choose the proper filter (hardcoded in *LibraryCollection* in *integraSIRENA.cpp*)
         
         
 .. cpp:function:: int find_model_energies(double energy, ReconstructInitSIRENA *reconstruct_init, gsl_vector **modelFound)
@@ -2629,7 +2645,7 @@ Search functions by name at :ref:`genindex`.
         Found template of the pulse whose 1st sample of the derivative of the filtered pulse is :cpp:member:`samp1DER`
         
                 
-.. cpp:function:: int find_optimalfilterDAB(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, gsl_vector **optimalfilterFound, gsl_vector **PabFound, double *Ealpha, double *Ebeta)
+.. cpp:function:: int find_optimalfilterDAB(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, gsl_vector **optimalfilterFound, gsl_vector **PabFound, double *Ealpha, double *Ebeta, double margin)
     
     Located in file: *tasksSIRENA.cpp*
     
@@ -2672,6 +2688,10 @@ Search functions by name at :ref:`genindex`.
     double* **Ebeta**
     
         Energy (in eV) which straddle the :cpp:member:`maxDER` in the higher limit
+
+    double **margin**
+
+        Margin to be applied when several energies in the library to choose the proper filter (hardcoded in *LibraryCollection* in *integraSIRENA.cpp*)
         
     .. cpp:member:: double maxDER
     
@@ -2701,9 +2721,13 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: double* Ebeta
     
         Energy (in eV) which straddle the :cpp:member:`maxDER` in the higher limit
+
+    .. cpp:member:: double margin
+
+        Margin to be applied when several energies in the library to choose the proper filter (hardcoded in *LibraryCollection* in *integraSIRENA.cpp*)
        
        
-.. cpp:function:: int find_prclofwm(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, gsl_vector **PRCLOFWMFound, double *Ealpha, double *Ebeta)
+.. cpp:function:: int find_prclofwm(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, gsl_vector **PRCLOFWMFound, double *Ealpha, double *Ebeta, double margin)
     
     Located in file: *tasksSIRENA.cpp*
     
@@ -2740,6 +2764,10 @@ Search functions by name at :ref:`genindex`.
     double* **Ebeta**
     
         Energy (in eV) which straddle the :cpp:member:`maxDER` in the higher limit
+
+    double **margin**
+
+        Margin to be applied when several energies in the library to choose the proper filter (hardcoded in *LibraryCollection* in *integraSIRENA.cpp*)
         
     .. cpp:member:: double maxDER
     
@@ -2764,9 +2792,13 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: double* Ebeta
     
         Energy (in eV) which straddle the :cpp:member:`maxDER` in the higher limit
+
+    .. cpp:member:: double margin
+
+        Margin to be applied when several energies in the library to choose the proper filter (hardcoded in *LibraryCollection* in *integraSIRENA.cpp*)
 	
 	
-.. cpp:function:: int find_prclwn(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, gsl_vector **PRCLWNFound, gsl_vector **PabFound, double *Ealpha, double *Ebeta)
+.. cpp:function:: int find_prclwn(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, gsl_vector **PRCLWNFound, gsl_vector **PabFound, double *Ealpha, double *Ebeta, double margin)
     
     Located in file: *tasksSIRENA.cpp*
     
@@ -2807,6 +2839,10 @@ Search functions by name at :ref:`genindex`.
     double* **Ebeta**
     
         Energy (in eV) which straddle the :cpp:member:`maxDER` in the higher limit
+
+    double **margin**
+
+        Margin to be applied when several energies in the library to choose the proper filter (hardcoded in *LibraryCollection* in *integraSIRENA.cpp*)
         
     .. cpp:member:: double maxDER
     
@@ -2835,6 +2871,10 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: double* Ebeta
     
         Energy (in eV) which straddle the :cpp:member:`maxDER` in the higher limit
+
+    .. cpp:member:: double margin
+
+        Margin to be applied when several energies in the library to choose the proper filter (hardcoded in *LibraryCollection* in *integraSIRENA.cpp*)
         
         
 .. cpp:function:: extern_C_void freeOptimalFilterSIRENA(OptimalFilterSIRENA* OFilterColl)
