@@ -3127,7 +3127,15 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
     }
     if (cnt == 0)
     {
-        message = "No valid pulses to calculate the template (check as a possibility if PulseLength or largeFilter > Record size)";
+        message = "No valid pulses to calculate the template. Check as a possibility:";
+        EP_PRINT_ERROR(message,-999);
+        message = "  - if PulseLength or largeFilter > Record size";
+        EP_PRINT_ERROR(message,-999);
+        message = "  - if tstart of all pulses < preBuffer maximum";
+        EP_PRINT_ERROR(message,-999);
+        message = "  - ...";
+        EP_PRINT_ERROR(message,-999);
+        message = " ";
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
     if (cnt > pulseheightAUX->size)

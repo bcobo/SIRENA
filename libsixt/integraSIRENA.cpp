@@ -881,6 +881,8 @@
              double numLagsUsed_mean;
              double numLagsUsed_sigma;
              gsl_vector *numLagsUsed_vector = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+             gsl_vector_set_all(numLagsUsed_vector,-999); // Debugger complains about an initialized variable in a conditional jump
+                                                          // (in findMeanSigma 6 lines forward)
              
              for (int ip=0; ip<(*pulsesAll)->ndetpulses; ip++)
              {
@@ -890,7 +892,6 @@
              {
                  EP_EXIT_ERROR("Cannot run findMeanSigma routine for calculating numLagsUsed statistics",EPFAIL);
              }
-             
              gsl_vector_free(numLagsUsed_vector);
          }           
      }

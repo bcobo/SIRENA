@@ -158,6 +158,10 @@ int tesreconstruction_main() {
   
   // Containing all programm parameters read by PIL.
   struct Parameters par;
+  par.hduPRCLOFWM = 0;  // Debugger complains about an initialized variable (only the boolean type)
+  par.hduPRECALWN = 0;  // Debugger complains about an initialized variable (only the boolean type)
+  par.preBuffer = 0;    // Debugger complains about an initialized variable (only the boolean type)
+  par.OFLib = 1;        // Debugger complains about an initialized variable (only the boolean type)
   
   // Error status.
   int status=EXIT_SUCCESS;
@@ -169,7 +173,7 @@ int tesreconstruction_main() {
   do { // Beginning of the ERROR handling loop (will at
        // most be run once).
     headas_chat(3, "initialize ...\n");
-    
+
     // Get program parameters.
     status=getpar(&par);
     CHECK_STATUS_BREAK(status);
@@ -202,10 +206,9 @@ int tesreconstruction_main() {
     
     int trig_reclength = -999;
     
-    char* firstchar = strndup(par.RecordFile, 1);
-    char firstchar2[2];
-    strcpy(firstchar2,firstchar);
-        
+    char firstchar = par.RecordFile[0];
+    char firstchar2[2] = {firstchar , '\0'};
+
     // Check if input file header is complete to work with xifusim/tessim simulated files
     // -------------------------------------------------------------------------------
     fitsfile* fptr = NULL;
@@ -225,7 +228,6 @@ int tesreconstruction_main() {
     
     if (strcmp(firstchar2,"@") == 0)
     {
-            //printf("%s %s %s","File: ",strndup(par.RecordFile+1, strlen(par.RecordFile)-1),"\n");
             FILE *filetxt = fopen(strndup(par.RecordFile+1, strlen(par.RecordFile)-1), "r");
             if (filetxt == NULL)    
             {

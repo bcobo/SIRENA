@@ -231,7 +231,7 @@ int findMeanSigma (gsl_vector *invector, double *mean, double *sigma)
 	// Mean
 	for (int i=0;i<size;i++)
 	{
-                if (gsl_vector_get(invector,i)>1e10)
+        if (gsl_vector_get(invector,i)>1e10)
 		{
 			veryBig =true;
 			break;
