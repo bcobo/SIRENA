@@ -448,21 +448,22 @@ To run SIRENA implementation, the user must supply the following input parameter
 	
 	Only used in production run (:option:`opmode` = 1).
 
-.. option::  OFLib=<yes|no>  
+.. option::  OFLib=<yes|no>
 
 	Work with a library with optimal filters (:option:`OFLib` = yes) or instead do Optimal Filter calculation on-the-fly (:option:`OFLib` = no).
-	
-	Default: *yes* 
-	
+	If
+
+	Default: *yes*
+
 	Only used in production run (:option:`opmode` = 1).
 
 .. option::  OFStrategy=<FREE | BYGRADE | FIXED> 
 
-	Optimal Filter length Strategy: FREE (no length restriction), BYGRADE (length according to event grading) or FIXED (fixed length). These last 2 options are only for checking and development purposes; a normal run with *on-the-fly* calculations will be done with :option:`OFStrategy` = *FREE*.
+	Optimal Filter length Strategy: FREE (no length restriction), BYGRADE (length according to event grading) or FIXED (fixed length). These last 2 options are only for checking and development purposes; a normal run with *on-the-fly* calculations will be done with :option:`OFStrategy` = *FREE*. If :option:`OFStrategy` = *FREE*, :option:`OFLib` = no. If :option:`OFStrategy` = *FIXED* or :option:`OFStrategy` = *BYGRADE*, :option:`OFLib` = yes.
 
 	Default: *BYGRADE*
 	
-	Only used in production run (:option:`opmode` = 1) when :option:`OFLib` = no.
+	Only used in production run (:option:`opmode` = 1).
 
 .. option::  OFLength=<int> 
 
@@ -470,7 +471,7 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 	Default: 8192
 	
-	Only used in production run (:option:`opmode` = 1) when :option:`OFLib` = no and :option:`OFStrategy` = **FIXED**.
+	Only used in production run (:option:`opmode` = 1) when :option:`OFStrategy` = **FIXED**.
 	
 .. option::  preBuffer=<yes|no> 
 

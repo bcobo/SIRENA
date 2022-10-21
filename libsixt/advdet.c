@@ -288,15 +288,6 @@ void freeTDMTab(TDMTab* tab, int gr){
 
 void freeCrosstalk(AdvDet* det, int gr){
 
-	if (NULL!=det->channel_file){
-		free(det->channel_file);
-		det->channel_file=NULL;
-	}
-	if (NULL!=det->channel_resfreq_file){
-		free(det->channel_resfreq_file);
-		det->channel_resfreq_file=NULL;
-	}
-
 	freeReadoutChannels(det->readout_channels);
 	//Freeing tables for every grade
 	if(gr!=0){
@@ -403,6 +394,7 @@ AdvDet* newAdvDet(int* const status){
   det->crosstalk_TDM_prop=NULL;
   det->prop_TDM_scaling_1=1;
   det->prop_TDM_scaling_2=1;
+  det->prop_TDM_scaling_3=1;
 
   det->TDM_der_file=NULL;
   det->crosstalk_TDM_der=NULL;
@@ -423,12 +415,14 @@ void destroyAdvDet(AdvDet **det){
 	if(NULL!=(*det)){
 		int gr=0;
 		if(NULL!=(*det)->pix){
-			gr =(*det)->pix[0].ngrades;
+			//gr =(*det)->pix[0].ngrades;
+			if ((*det)->npix != 0) gr =(*det)->pix[0].ngrades; // SIRENA
 			for(int i=0;i<(*det)->npix;i++){
 				freeAdvPix(&(*det)->pix[i]);
 			}
 			free((*det)->pix);
 		}
+
 		//int grRecons=0;
 		if(NULL!=(*det)->recons){             //SIRENA
 			//grRecons =(*det)->recons[0].ngrades;
@@ -437,6 +431,7 @@ void destroyAdvDet(AdvDet **det){
 			}
 			free((*det)->recons);
 		}
+
 		if(NULL!=(*det)->filename){
 			free((*det)->filename);
 		}
@@ -449,7 +444,18 @@ void destroyAdvDet(AdvDet **det){
 		freeRMFLibrary((*det)->rmf_library);
 		freeARFLibrary((*det)->arf_library);
 
-		freeCrosstalk(*(det), gr);
+		if(NULL!=(*det)->TDM_prop_file){
+			free((*det)->TDM_prop_file);
+		}
+		if(NULL!=(*det)->TDM_der_file){
+			free((*det)->TDM_der_file);
+		}
+
+		//freeCrosstalk(*(det), gr);
+		if (gr != 0)					// SIRENA
+		{
+			freeCrosstalk(*(det), gr);
+		}
 		free(*(det));
 	}
 }
@@ -1131,6 +1137,7 @@ static void AdvDetXMLElementStart(void* parsedata,
 
 		xmlparsedata->det->prop_TDM_scaling_1=getXMLAttributeDouble(attr,"SCALING1");
 		xmlparsedata->det->prop_TDM_scaling_2=getXMLAttributeDouble(attr,"SCALING2");
+		xmlparsedata->det->prop_TDM_scaling_3=getXMLAttributeDouble(attr,"SCALING3");
 
 	} else if(!strcmp(Uelement, "DERCROSSTALK")){
 		xmlparsedata->det->TDM_der_file=(char*)malloc(MAXFILENAME*sizeof(char));
@@ -1532,8 +1539,10 @@ void freeMatrixPropCrossTalk(MatrixPropCrossTalk* matrix){
 	if (matrix!=NULL){
 		free(matrix->cross_talk_pixels_1);
 		free(matrix->cross_talk_pixels_2);
+		free(matrix->cross_talk_pixels_3);
 		matrix->type_1_pix=0;
 		matrix->type_2_pix=0;
+		matrix->type_3_pix=0;
 	}
 	free(matrix);
 	matrix=NULL;
@@ -1600,8 +1609,10 @@ MatrixPropCrossTalk* newMatrixPropCrossTalk(int* const status){
 
 	matrix->type_1_pix=0;
 	matrix->type_2_pix=0;
+	matrix->type_3_pix=0;
 	matrix->cross_talk_pixels_1 = NULL;
 	matrix->cross_talk_pixels_2 = NULL;
+	matrix->cross_talk_pixels_3 = NULL;
 
 	return matrix;
 }

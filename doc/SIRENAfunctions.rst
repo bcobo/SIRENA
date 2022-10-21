@@ -859,7 +859,24 @@ Search functions by name at :ref:`genindex`.
 
         Optimal filter spectrum (complex values) (output)
         
+
+.. cpp:function:: int checkXmls(struct Parameters* const par)
+
+    Located in file: *tesreconstruction.c*
+
+    This function checks if the XML file used to build the library is the same to be used to recconstruct
+
+    **Members/Variables**
+
+    struct Parameters* const **par**
+
+        Structure containing the input parameters specified in *tesreconstruction.par*
+
+    .. cpp:member:: struct Parameters* const par
+
+        Structure containing the input parameters specified in *tesreconstruction.par*
         
+
 .. cpp:function:: int convertI2R (char* EnergyMethod, double Ibias, double Imin, double Imax, double ADU_CNV, double ADU_BIAS, double I_BIAS, double Ifit, double samprate, gsl_vector **invector)
     
     Located in file: *tasksSIRENA.cpp*
@@ -2433,7 +2450,7 @@ Search functions by name at :ref:`genindex`.
         Margin to be applied when several energies in the library to choose the proper filter (hardcoded in *LibraryCollection* in *integraSIRENA.cpp*)
         
         
-.. cpp:function:: int find_matchedfilterDAB(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, gsl_vector **matchedfilterFound, gsl_vector **PabFound, double *Ealpha, double *Ebeta, double margin)
+.. cpp:function:: int find_matchedfilterDAB(int runF0orB0val, double maxDER, gsl_vector *maxDERs, int preBuffer, ReconstructInitSIRENA *reconstruct_init, gsl_vector **matchedfilterFound, gsl_vector **PabFound, double *Ealpha, double *Ebeta, double margin)
     
     Located in file: *tasksSIRENA.cpp*
     
@@ -2458,6 +2475,10 @@ Search functions by name at :ref:`genindex`.
     gsl_vector* **maxDERs**
     
         GSL vector with the maximum values of the derivatives of the templates in the library to be compared with the pulse being analysed
+
+    int **preBuffer**
+
+        preBuffer to work with in the particular pulse
     
     ReconstructInitSIRENA* **reconstruct_init** 
     
@@ -2494,6 +2515,10 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: gsl_vector* maxDERs
     
         GSL vector with the maximum values of the derivatives of the templates in the library to be compared with the pulse being analysed
+
+    .. cpp:member:: int preBuffer
+
+        preBuffer to work with in the particular pulse
     
     .. cpp:member:: ReconstructInitSIRENA* reconstruct_init 
     
@@ -2731,7 +2756,7 @@ Search functions by name at :ref:`genindex`.
     
     Located in file: *tasksSIRENA.cpp*
     
-    When :option:`EnergyMethod` = **OPTFILT** and :option:`OFNoise` = **WEIGHTM** this function selects the proper precalculated values (**OFWx**) from the calibration *PRCLOFWM* HDU of the library by comparing the maximum value of the pulse derivative (:cpp:member:`maxDER`) to the list of maximums in the library (:cpp:member:`maxDERs`) for the :option:`OFLib` = yes.
+    When :option:`EnergyMethod` = **OPTFILT** and :option:`OFNoise` = **WEIGHTM** this function selects the proper precalculated values (**OFWx**) from the calibration *PRCLOFWM* HDU of the library by comparing the maximum value of the pulse derivative (:cpp:member:`maxDER`) to the list of maximums in the library (:cpp:member:`maxDERs`) for *reconstruct_init->OFLib* = 1.
 
     It finds the two embracing :cpp:member:`maxDERs` in the calibration library:
     
@@ -2802,7 +2827,7 @@ Search functions by name at :ref:`genindex`.
     
     Located in file: *tasksSIRENA.cpp*
     
-    When :option:`EnergyMethod` = **WEIGHTN** this function selects the proper precalculated values (**PCLx**) from the *PRECALWN* HDU of the  calibration library by comparing the maximum value of the pulse derivative (:cpp:member:`maxDER`) to the list of maximums in the library (:cpp:member:`maxDERs`) for the :option:`OFLib` = yes. It also selects the proper row from the column **PAB**.
+    When :option:`EnergyMethod` = **WEIGHTN** this function selects the proper precalculated values (**PCLx**) from the *PRECALWN* HDU of the  calibration library by comparing the maximum value of the pulse derivative (:cpp:member:`maxDER`) to the list of maximums in the library (:cpp:member:`maxDERs`) for the *reconstruct_init->OFLib* = 1. It also selects the proper row from the column **PAB**.
 
     It finds the two embracing :cpp:member:`maxDERs` in the calibration library:
     
@@ -3268,7 +3293,7 @@ Search functions by name at :ref:`genindex`.
     
     char **oflib**
     
-        Work or not with a library with optimal filters (1/0), related to :option:`OFLib`
+        Work or not with a library with optimal filters (1/0)
         
     char** **ofinterp**
     
@@ -3341,7 +3366,7 @@ Search functions by name at :ref:`genindex`.
     
     .. cpp:member:: char oflib
     
-        Work or not with a library with optimal filters (1/0), related to :option:`OFLib`
+        Work or not with a library with optimal filters (1/0)
         
     .. cpp:member:: char** ofinterp
     
@@ -3449,7 +3474,7 @@ Search functions by name at :ref:`genindex`.
     
 .. cpp:function:: int getpar(struct Parameters* const par)
 
-    Located in file: *tesreconstruction.cpp*
+    Located in file: *tesreconstruction.c*
     
     This function gets the input parameter from the command line or their default values from the *tesreconstruction.par* file
     
@@ -3920,7 +3945,7 @@ Search functions by name at :ref:`genindex`.
     
     char **oflib**
     
-        Work or not with a library with optimal filters (1/0), related to :option:`OFLib`
+        Work or not with a library with optimal filters (1/0)
     
     char* **ofinterp**
     
@@ -4117,7 +4142,7 @@ Search functions by name at :ref:`genindex`.
     
     .. cpp:member:: char oflib
     
-        Work or not with a library with optimal filters (1/0), related to :option:`OFLib`
+        Work or not with a library with optimal filters (1/0)
     
     .. cpp:member:: char* ofinterp
     
@@ -4319,6 +4344,23 @@ Search functions by name at :ref:`genindex`.
         Tstart of the first pulse provided as input parameter    
         
         
+.. cpp:function:: extern_C_void IntegrafreeTesEventListSIRENA(TesEventList* event_list)
+
+    Located in file *integraSIRENA.cpp*
+
+    This function frees the structure in the input parameter.
+
+    **Members/Variables**
+
+    TesEventList* **event_list**
+
+        Instance of *TesEventList* structure that contains the information of the reconstructed pulses
+
+    .. cpp:member:: TesEventList* event_list
+
+        Instance of *TesEventList* structure that contains the information of the reconstructed pulses
+
+
 .. cpp:function:: int interactivePars(inparam *taskPars, int np, string task)
     
     Located in file *inoututils.cpp*
@@ -5218,7 +5260,7 @@ Search functions by name at :ref:`genindex`.
         Status
 
         
-.. cpp:function:: int procRecord (ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, gsl_vector *recordWithoutConvert2R, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, gsl_vector *phid, int oscillations)
+.. cpp:function:: int procRecord (ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, gsl_vector *recordWithoutConvert2R, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, gsl_vector *phid, int oscillations, int nrecord, double tstartPrevPulse)
         
     Located in file: *tasksSIRENA.cpp*
     
@@ -5300,9 +5342,17 @@ Search functions by name at :ref:`genindex`.
 
         Photon ID (from the input file) to be propagated
     
-    int oscillations
+    int **oscillations**
     
         1 (there are weird oscillations in the record) or 0 (record without weird oscillations)  
+
+    int **nrecord**
+
+        Current record index
+
+    double **tstartPrevPulse**
+
+        tstart of the previous pulse (last pulse of the previous record) (seconds)
     
     .. cpp:member:: ReconstructInitSIRENA** reconstruct_init
 
@@ -5347,8 +5397,17 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: int oscillations
 
         1 (there are weird oscillations in the record) or 0 (record without weird oscillations)  
+
+    .. cpp:member:: int nrecord
+
+        Current record index
+
+    .. cpp:member:: double tstartPrevPulse
+
+        tstart of the previous pulse (last pulse of the previous record) (seconds)
+
                 
-.. cpp:function:: int pulseGrading(ReconstructInitSIRENA *reconstruct_init, int grade1, int grade2, int OFlength_strategy, int *pulseGrade, long *OFlength)
+.. cpp:function:: int pulseGrading(ReconstructInitSIRENA *reconstruct_init, int tstart, int grade1, int grade2, int *pulseGrade, long *OFlength, int nrecord)
     
     Located in file: *tasksSIRENA.cpp*
     
@@ -5360,6 +5419,10 @@ Search functions by name at :ref:`genindex`.
 
         Member of *ReconstructInitSIRENA* structure to initialize the reconstruction parameters (pointer and values).
      
+    int **tstart**
+
+        Start time (samples)
+
     int **grade1**
      
         Pulse duration (length of optimal filter applied)
@@ -5367,10 +5430,6 @@ Search functions by name at :ref:`genindex`.
     int **grade2**
     
         Difference between the start time of the pulse and the start time of the previous pulse
-        
-    int **OFlength_strategy**
-     
-        Same as :option:`OFStrategy` (input)
         
     int* **pulseGrade**
     
@@ -5605,6 +5664,14 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: TesRecord* record 
 
         Instance of *TesRecord* structure that contains the input record 
+
+    .. cpp:member:: int lastRecord
+
+        If record being analyzed is the last one, :cpp:member:`lastRecord` = 1. Otherwise it is equal to 0
+
+    .. cpp:member:: int nRecord
+
+        Input record number
         
     .. cpp:member:: int trig_reclength
     
@@ -5814,7 +5881,7 @@ Search functions by name at :ref:`genindex`.
         Member of *PulsesCollection* structure to store all the pulses found in the input record
 
                 
-.. cpp:function:: void runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord, OptimalFilterSIRENA **optimalFilter)
+.. cpp:function:: void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclength, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord, OptimalFilterSIRENA **optimalFilter)
     
     Located in file: *tasksSIRENA.cpp*
     
@@ -5837,12 +5904,12 @@ Search functions by name at :ref:`genindex`.
         - If :option:`OFIter` = 1, in the first iteration ( *numiteration* = 0) the values of *maxDER* and *maxDERs* are used in 
           :cpp:func:`find_matchedfilterDAB`, :cpp:func:`find_optimalfilterDAB` or :cpp:func:`find_Esboundary` getting the values of the *energies* which straddle the *maxDER* (*Ealpha* and *Ebeta*). It will have more iterations if the calculated *energy* is out of *[Ealpha, Ebeta]*. If *energy* is in *[Ealpha, Ebeta]* the iterative process stops.
             
-                - If :option:`EnergyMethod` = **OPTFILT** (or **I2R**, **I2RFITTED**) and :option:`OFLib` = no and :option:`OFNoise` = **NSD**:
+                - If :option:`EnergyMethod` = **OPTFILT** (or **I2R**, **I2RFITTED**) and *reconstruct_init->OFLib* = 0 and :option:`OFNoise` = **NSD**:
                 
                     - Find the matched filter and load it in *filter* (:cpp:func:`find_matchedfilterDAB`) 
                     - Calculate the optimal filter
                     
-                - If :option:`EnergyMethod` = **OPTFILT** (or **I2R**, **I2RFITTED**) and :option:`OFLib` = yes and :option:`OFNoise` = **NSD**:
+                - If :option:`EnergyMethod` = **OPTFILT** (or **I2R**, **I2RFITTED**) and *reconstruct_init->OFLib* = 1 and :option:`OFNoise` = **NSD**:
                 
                     - If it is necessary, choose the base-2 system value closest (lower than or equal) to the pulse length
                     - Find the optimal filter and load it in *filter* (:cpp:func:`find_optimalfilterDAB`)
@@ -5850,12 +5917,12 @@ Search functions by name at :ref:`genindex`.
                 - If :option:`EnergyMethod` = **WEIGHT** or **WEIGHTN**:
                 
                     - Get the indexes of the two energies which straddle the pulse (:cpp:func:`find_Esboundary`)
-                    - If :option:`EnergyMethod` = **WEIGHTN** and :option:`OFLib` = yes:
+                    - If :option:`EnergyMethod` = **WEIGHTN** and *reconstruct_init->OFLib* = 1:
                     
                        - Choose the base-2 system value closest (lower than or equal) to the pulse length
                        - :cpp:func:`find_prclwn` to find the appropriate values of the *PRECALWN* HDU (**PCLx** columns)
                 
-                - If :option:`EnergyMethod` = **OPTFILT** (or **I2R**, **I2RFITTED**) and :option:`OFLib` = yes and :option:`OFNoise` = **WEIGHTM**:
+                - If :option:`EnergyMethod` = **OPTFILT** (or **I2R**, **I2RFITTED**) and *reconstruct_init->OFLib* = 1 and :option:`OFNoise` = **WEIGHTM**:
                 
                     - Choose the base-2 system value closest (lower than or equal) to the pulse length
                     - :cpp:func:`find_prclofwm` to find the appropriate values of the *PRCLOFWM* HDU (**OFWx** columns)
@@ -5873,6 +5940,14 @@ Search functions by name at :ref:`genindex`.
     TesRecord** **record**
 
         Structure that contains the input ADC record
+
+    int **lastRecord**
+
+        If record being analyzed is the last one, :cpp:member:`lastRecord` = 1. Otherwise it is equal to 0
+
+    int **nRecord**
+
+        Input record number
         
     int **trig_reclength** 
 
@@ -5897,6 +5972,8 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: TesRecord** record
 
         Structure that contains the input ADC record
+
+
         
     .. cpp:member:: int trig_reclength 
 
@@ -5919,10 +5996,9 @@ Search functions by name at :ref:`genindex`.
         Member of *PulsesCollection* structure to store all the pulses found in the input FITS file. To know the index to get the proper element from *tstartPulse1_i* in case :option:`tstartPulse1` was a file name
         
         
-.. cpp:function:: void th_runEnergy(TesRecord* record, int trig_reclength, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord, OptimalFilterSIRENA **optimalFilter)
+.. cpp:function:: void th_runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclength, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord, OptimalFilterSIRENA **optimalFilter)
     
     Located in file: *tasksSIRENA.cpp*
-
 
     This function is responsible for the **reconstruction** in SIRENA (instead of :cpp:func:`runEnergy`) when the **THREADING** running option has been chosen (hardcoded at this moment). 
 
@@ -6806,11 +6882,11 @@ Search functions by name at :ref:`genindex`.
     Located in file: *tasksSIRENA.cpp*
     
     This function runs in RECONSTRUCTION mode and writes the optimal filter info (in the *FILTER* HDU) for each pulse
-    if :option:`intermediate` = 1 and either :option:`OFLib` = no or :option:`OFLib` = yes, :option:`filtEeV` = 0 and the the number of energies in the library FITS file is greater than 1.
+    if :option:`intermediate` = 1 and either *reconstruct_init->OFLib* = 0 or *reconstruct_init->OFLib* = 1, :option:`filtEeV` = 0 and the the number of energies in the library FITS file is greater than 1.
 
     - Declare variables
     - Open intermediate FITS file
-    - If (:option:`OFLib` = no) or (option:`OFLib` = yes, :option:`filtEeV` = 0 and the the number of energies in the library FITS file is greater than 1):
+    - If (*reconstruct_init->OFLib* = 0) or (*reconstruct_init->OFLib* = 1, :option:`filtEeV` = 0 and the the number of energies in the library FITS file is greater than 1):
         - Create the *FILTER* HDU if it is the first pulse
         - Write data:
             - **OPTIMALF** or **OPTIMALFF** column (in time or frequency domain)
