@@ -406,12 +406,6 @@ int tesreconstruction_main() {
             if (par.opmode == 1)
             {
                 status = checkXmls(&par);
-                if (status != 0)
-                {
-                    SIXT_ERROR("XML file from library FITS file and from input parameter do not match");
-                    return(EXIT_FAILURE);
-                }
-
             }
 
             // Get the sampling rate from the HISTORY keyword from the input FITS file
@@ -1373,7 +1367,11 @@ int checkXmls(struct Parameters* const par)
 
     // Move to "Primary" HDU of the library file
     fits_open_file(&libptr, par->LibraryFile, READONLY, &status);
-    if (status != 0)    printf("%s","File given in LibraryFile does not exist\n");
+    if (status != 0)
+    {
+        SIXT_ERROR("File given in LibraryFile does not exist");
+        return(EXIT_FAILURE);
+    }
 
     if (fits_movabs_hdu(libptr, 1, NULL, &status))
     {
@@ -1429,6 +1427,12 @@ int checkXmls(struct Parameters* const par)
 
     if (strcmp(libXMLfile, reconsXMLfile) == 0) status = 0;
     else status = 1;
+
+    if (status != 0)
+    {
+        SIXT_ERROR("XML file from library FITS file and from input parameter do not match");
+        return(EXIT_FAILURE);
+    }
 
     return(status);
 }

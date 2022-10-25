@@ -9075,6 +9075,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
             shift = tstartJITTER - tstartSamplesRecord;
             // In order to subtract the pulse model, it has to be located in the tstart with jitter and know its values in the digitized samples
             gsl_vector *modelToSubtract = gsl_vector_alloc(model->size);
+            gsl_vector_set_all(modelToSubtract,-999.0);
             for (int j=0;j<model->size;j++)
             {
                 if (shift < 0)
@@ -9102,6 +9103,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 }
             }
             gsl_vector_memcpy(model,modelToSubtract);
+            //gsl_vector_free(modelToSubtract); modelToSubtract = 0;
             if (modelToSubtract != NULL) {gsl_vector_free(modelToSubtract); modelToSubtract = 0;}
         
             minimum = min((double) trig_reclength,(double) record->trigger_size);
@@ -12116,7 +12118,7 @@ int calculateEnergy (gsl_vector *pulse, int pulseGrade, gsl_vector *filter, gsl_
             gsl_vector *calculatedEnergy_vector = gsl_vector_alloc(numlags);
             gsl_vector_set_zero(calculatedEnergy_vector);
             double a,b,c;
-            double xmax;
+            double xmax = -999;
             double calculatedEnergy_Nolags;
             bool maxParabolaFound = false;
             
@@ -12158,7 +12160,7 @@ int calculateEnergy (gsl_vector *pulse, int pulseGrade, gsl_vector *filter, gsl_
                     }
                     else
                     {
-                        int indexmax;
+                        int indexmax = -999;
                         indexLags = 0;
                         int newLag = 0;
                         bool exitLags = false;
@@ -12200,7 +12202,7 @@ int calculateEnergy (gsl_vector *pulse, int pulseGrade, gsl_vector *filter, gsl_
                             calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
                             
                             if ((xmax >= -1) && (xmax <= 1)) maxParabolaFound = true;
-                            
+
                             if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
                             {
                                 do
