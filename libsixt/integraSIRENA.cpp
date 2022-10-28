@@ -503,8 +503,12 @@
          reconstruct_init->i2rdata->ADU_CNV = -999;
          reconstruct_init->i2rdata->I_BIAS = -999;
          reconstruct_init->i2rdata->ADU_BIAS = -999;
+         reconstruct_init->i2rdata->V0 = -999;
+         reconstruct_init->i2rdata->RL = -999;
+         reconstruct_init->i2rdata->L = -999;
          reconstruct_init->i2rdata->Ifit = reconstruct_init->Ifit;
-         if (strcmp(reconstruct_init->EnergyMethod,"OPTFILT") != 0)  
+         //if (strcmp(reconstruct_init->EnergyMethod,"OPTFILT") != 0)
+         if ((strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RFITTED") == 0))
          {
              char extname[20];
              char keyname[10];
@@ -535,7 +539,11 @@
                      *status = 0;
                  }
              }
-             if (adu_cnv_exists == 1)
+             if (adu_cnv_exists == 0)
+             {
+                 EP_EXIT_ERROR("ADU_CNV keyword (to be used in resistance space) is not in the input FITS file",EPFAIL);
+             }
+             else if (adu_cnv_exists == 1)
              {
                  double I_BIAS;
                  
@@ -557,7 +565,7 @@
                  }
                  if (i_bias_exists == 0)
                  {
-                     EP_EXIT_ERROR("I_BIAS keyword is not in the input FITS file",EPFAIL);
+                     EP_EXIT_ERROR("I_BIAS keyword (to be used in resistance space) is not in the input FITS file",EPFAIL);
                  }
                  double ADU_BIAS;
                  
@@ -579,7 +587,7 @@
                  }
                  if (adu_bias_exists == 0)
                  {
-                     EP_EXIT_ERROR("ADU_BIAS keyword is not in the input FITS file",EPFAIL);
+                     EP_EXIT_ERROR("ADU_BIAS keyword (to be used in resistance space) is not in the input FITS file",EPFAIL);
                  }
              }
              
@@ -599,13 +607,13 @@
                      strcpy(extname,"ADCPARAM");
                      if (fits_movnam_hdu(reconstruct_init->record_file_fptr, ANY_HDU,extname, 0, status))
                      {
-                         EP_EXIT_ERROR("Cannot move to HDU ",EPFAIL);
+                         EP_EXIT_ERROR("ADU_CNV or I_BIAS or ADU_BIAS not in the input FITS file (to be used in resistance space). Cannot move to ADCPARAM HDU to alternatively look for IMIN and IMAX (old files with RECORDS HDU)",EPFAIL);
                      }
                      strcpy(keyname,"IMIN");
                      fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMIN,NULL,status);
                      if (*status != 0)
                      {
-                         EP_EXIT_ERROR("Cannot read IMIN keyword to be used in convertI2R",EPFAIL);
+                         EP_EXIT_ERROR("ADU_CNV or I_BIAS or ADU_BIAS not in the input FITS file (to be used in resistance space). Cannot alternatively read IMIN keyword (ADCPARAM HDU) to be used in resistance space",EPFAIL);
                      }
                      reconstruct_init->i2rdata->IMIN = IMIN;
                      strcpy(keyname,"IMAX");
@@ -613,13 +621,13 @@
                      reconstruct_init->i2rdata->IMAX = IMAX;
                      if (*status != 0)
                      {
-                         EP_EXIT_ERROR("Cannot read IMAX keyword to be used in convertI2R",EPFAIL);
+                         EP_EXIT_ERROR("ADU_CNV or I_BIAS or ADU_BIAS not in the input FITS file (to be used in resistance space). Cannot alternatively read IMAX keyword (ADCPARAM HDU) to be used in resistance space",EPFAIL);
                      }
                      
                      strcpy(extname,"TESPARAM");
                      if (fits_movnam_hdu(reconstruct_init->record_file_fptr, ANY_HDU,extname, 0, status))
                      {
-                         EP_EXIT_ERROR("Cannot move to HDU ",EPFAIL);
+                         EP_EXIT_ERROR("Cannot move to TESPARAM HDU ",EPFAIL);
                      }
                      IOData obj;
                      obj.inObject = reconstruct_init->record_file_fptr;
@@ -641,7 +649,7 @@
                      
                      if (fits_movabs_hdu(reconstruct_init->record_file_fptr, hdunum, &hdutype, status))
                      {
-                         EP_EXIT_ERROR("Cannot move to HDU ",EPFAIL);
+                         EP_EXIT_ERROR("Cannot move to RECORDS or TESRECORDS HDU ",EPFAIL);
                      }
                      
                      gsl_vector_free(vector); vector = 0;
@@ -658,17 +666,104 @@
                      
                      strcpy(keyname,"I0_START");
                      if (fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &I0_START,NULL,status))
-                        EP_EXIT_ERROR("Cannot read I0_START keyword to be used in convertI2R",EPFAIL);
+                        EP_EXIT_ERROR("ADU_CNV or I_BIAS or ADU_BIAS not in the input FITS file (to be used in resistance space). Cannot alternatively read I0_START keyword (TESRECORDS HDU)",EPFAIL);
                      reconstruct_init->i2rdata->I0_START = I0_START;
                      strcpy(keyname,"IMIN");
                      if (fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMIN,NULL,status))
-                        EP_EXIT_ERROR("Cannot read IMIN keyword to be used in convertI2R",EPFAIL);
+                        EP_EXIT_ERROR("ADU_CNV or I_BIAS or ADU_BIAS not in the input FITS file (to be used in resistance space). Cannot alternatively read IMIN keyword (TESRECORDS HDU)",EPFAIL);
                      reconstruct_init->i2rdata->IMIN = IMIN;
                      strcpy(keyname,"IMAX");
                      if (fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &IMAX,NULL,status))
-                        EP_EXIT_ERROR("Cannot read IMAX keyword to be used in convertI2R",EPFAIL);
+                        EP_EXIT_ERROR("ADU_CNV or I_BIAS or ADU_BIAS not in the input FITS file (to be used in resistance space). Cannot alternatively read IMAX keyword (TESRECORDS HDU)",EPFAIL);
                      reconstruct_init->i2rdata->IMAX = IMAX;
                  }
+             }
+         }
+         if (strcmp(reconstruct_init->EnergyMethod,"I2RDER") == 0)
+         {
+             *status = 0;
+
+             char keyname[10];
+
+             int currentHdu_num; // Number of the current HDU (RECORDS or TESRECORDS)
+             int currentHdu_type;
+             fits_get_hdu_num(reconstruct_init->record_file_fptr, &currentHdu_num);
+             fits_get_hdu_type(reconstruct_init->record_file_fptr, &currentHdu_type, status);
+
+             int hdunum; // How many HDU's are in the file
+             fits_get_num_hdus(reconstruct_init->record_file_fptr, &hdunum,status);
+             int keyword_exists = 0;
+             double keywordValue;
+             strcpy(keyname,"V0");
+             for (int i=0;i<hdunum;i++)
+             {
+                 fits_movabs_hdu(reconstruct_init->record_file_fptr, i+1, NULL, status);
+                 fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &keywordValue,NULL,status);
+                 if (*status == 0)
+                 {
+                     keyword_exists = 1;
+                     reconstruct_init->i2rdata->V0 = keywordValue;
+                     break;
+
+                 }
+                 else if ((*status != 0) && (i <= hdunum-1))
+                 {
+                    *status = 0;
+                 }
+             }
+             if (keyword_exists == 0)
+             {
+                EP_EXIT_ERROR("Cannot read V0 keyword to be used in convertI2R",EPFAIL);
+             }
+             keyword_exists = 0;
+
+             strcpy(keyname,"RL");
+             for (int i=0;i<hdunum;i++)
+             {
+                fits_movabs_hdu(reconstruct_init->record_file_fptr, i+1, NULL, status);
+                fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &keywordValue,NULL,status);
+                if (*status == 0)
+                {
+                    keyword_exists = 1;
+                    reconstruct_init->i2rdata->RL = keywordValue;
+                    break;
+                }
+                else if ((*status != 0) && (i <= hdunum-1))
+                {
+                    *status = 0;
+                }
+             }
+             if (keyword_exists == 0)
+             {
+                EP_EXIT_ERROR("Cannot read RL keyword to be used in convertI2R",EPFAIL);
+             }
+             keyword_exists = 0;
+
+             strcpy(keyname,"L");
+             for (int i=0;i<hdunum;i++)
+             {
+                fits_movabs_hdu(reconstruct_init->record_file_fptr, i+1, NULL, status);
+                fits_read_key(reconstruct_init->record_file_fptr,TDOUBLE,keyname, &keywordValue,NULL,status);
+                if (*status == 0)
+                {
+                    keyword_exists = 1;
+                    reconstruct_init->i2rdata->L = keywordValue;
+
+                    break;
+                }
+                else if ((*status != 0) && (i <= hdunum-1))
+                {
+                    *status = 0;
+                }
+             }
+             if (keyword_exists == 0)
+             {
+                EP_EXIT_ERROR("Cannot read L keyword to be used in convertI2R",EPFAIL);
+             }
+
+             if (fits_movabs_hdu(reconstruct_init->record_file_fptr, currentHdu_num, &currentHdu_type, status))
+             {
+                EP_EXIT_ERROR("Cannot move to RECORDS or TESRECORDS HDU ",EPFAIL);
              }
          }
      }
@@ -721,12 +816,6 @@
      
      //cout<<"pulsesInRecord->ndetpulses: "<<pulsesInRecord->ndetpulses<<endl;
      //cout<<"(*pulsesAll)->ndetpulses: "<<(*pulsesAll)->ndetpulses<<endl;
-
-     if(pulsesInRecord->ndetpulses == 0) // No pulses found in record
-     {
-         delete pulsesAllAux; pulsesAllAux = 0;
-         return;
-     }
      
      if ((reconstruct_init->opmode == 1) && (strcmp(reconstruct_init->EnergyMethod,"PCA") != 0))
      {

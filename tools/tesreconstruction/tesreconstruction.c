@@ -84,8 +84,8 @@
 * - NoiseFile: Noise FITS file with noise spectrum
 * - FilterDomain: Filtering Domain: Time (T) or Frequency (F)
 * - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)
-* - EnergyMethod: Energy calculation Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED or PCA
-* - filtEeV: Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R, I2RALL, I2RNOL and I2RFITTED)
+* - EnergyMethod: Energy calculation Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED, I2RDER or PCA
+* - filtEeV: Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R, I2RFITTED and I2RDER)
 * - Ifit: Constant to apply the I2RFITTED conversion
 * - OFNoise: Noise to use with Optimal Filtering: NSD or WEIGHTM
 * - LagsOrNot: Lags or no lags (1/0)
@@ -706,8 +706,8 @@ int tesreconstruction_main() {
                                     nrecord_filei = nrecord_filei + 1;
                                     if ((nrecord_filei == record_file->nrows) && (j == numfits-1)) lastRecord=1;  // lastRecord of all the FITS files
                                    
-                                    if ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2RALL") == 0) 
-                                        || (strcmp(par.EnergyMethod,"I2RNOL") == 0) || (strcmp(par.EnergyMethod,"I2RFITTED") == 0))
+                                    if ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2RFITTED") == 0)
+                                        || (strcmp(par.EnergyMethod,"I2RDER") == 0))
                                     {
                                             strcpy(reconstruct_init_sirena->EnergyMethod,par.EnergyMethod);
                                     }
@@ -853,8 +853,8 @@ int tesreconstruction_main() {
                             	status=1;
                                 CHECK_STATUS_BREAK(status);
                             }*/
-                            if ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2RALL") == 0) 
-                                || (strcmp(par.EnergyMethod,"I2RNOL") == 0) || (strcmp(par.EnergyMethod,"I2RFITTED") == 0))
+                            if ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2RFITTED") == 0)
+                                || (strcmp(par.EnergyMethod,"I2RDER") == 0))
                             {
                                 strcpy(reconstruct_init_sirena->EnergyMethod,par.EnergyMethod);
                             }
@@ -1174,7 +1174,7 @@ int getpar(struct Parameters* const par)
       strcpy(par->OFStrategy, sbuffer);
       free(sbuffer);
 
-      if ((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"I2R") == 0) || (strcmp(par->EnergyMethod,"I2RFITTED") == 0))
+      if ((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"I2R") == 0) || (strcmp(par->EnergyMethod,"I2RFITTED") == 0) || (strcmp(par->EnergyMethod,"I2RDER") == 0))
       {
         if (strcmp(par->OFStrategy,"FREE") == 0)  par->OFLib = 0;
         else if (strcmp(par->OFStrategy,"FIXED") == 0)    par->OFLib = 1;
@@ -1241,8 +1241,8 @@ int getpar(struct Parameters* const par)
       MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0),"FilterMethod must be F0 or B0");
       
       MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0) ||
-      (strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0) 
-      || (strcmp(par->EnergyMethod,"PCA") == 0), "EnergyMethod must be OPTFILT, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA");
+      (strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0) ||	(strcmp(par->EnergyMethod,"I2RDER") == 0)
+      || (strcmp(par->EnergyMethod,"PCA") == 0), "EnergyMethod must be OPTFILT, WEIGHT, WEIGHTN, I2R, I2RFITTED, I2RDER or PCA");
       
       MyAssert((strcmp(par->OFNoise,"NSD") == 0) || (strcmp(par->OFNoise,"WEIGHTM") == 0), "OFNoise must be NSD or WEIGHTM");
       

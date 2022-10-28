@@ -299,6 +299,10 @@ typedef struct I2RData
   double ADU_BIAS;
   
   double Ifit;
+
+  double V0;
+  double RL;
+  double L;
   
 #ifdef __cplusplus
   I2RData();
