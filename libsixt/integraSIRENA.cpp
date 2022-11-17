@@ -987,7 +987,7 @@
                  EP_EXIT_ERROR("Cannot run findMeanSigma routine for calculating numLagsUsed statistics",EPFAIL);
              }
              if (numLagsUsed_vector != NULL) {gsl_vector_free(numLagsUsed_vector); numLagsUsed_vector = 0;}
-         }           
+         }
      }
      else
      {
@@ -3390,35 +3390,23 @@
   ******************************************************************************/
  extern "C" void IntegrafreeTesEventListSIRENA(TesEventList* event_list)
  {
-
-
-	//if (NULL!=event_list){
-
-        if (event_list->energies != NULL) 	delete [] event_list->energies;
-         if (event_list->avgs_4samplesDerivative != NULL) 	delete [] event_list->avgs_4samplesDerivative;
-         if (event_list->Es_lowres != NULL) 	delete [] event_list->Es_lowres;
-         if (event_list->phis != NULL) 	        delete [] event_list->phis;
-         if (event_list->lagsShifts != NULL) 	delete [] event_list->lagsShifts;
-         if (event_list->bsln != NULL) 	        delete [] event_list->bsln;
-         if (event_list->rmsbsln != NULL) 	delete [] event_list->rmsbsln;
-         if (event_list->grading != NULL) 	delete [] event_list->grading;
-         //if (event_list->grades1 != NULL) 	delete [] event_list->grades1;
-         if (event_list->grades2 != NULL) 	delete [] event_list->grades2;
-         //if (event_list->pulse_heights != NULL) 	delete [] event_list->pulse_heights;
-         if (event_list->ph_ids != NULL) 	delete [] event_list->ph_ids;
-         if (event_list->ph_ids2 != NULL) 	delete [] event_list->ph_ids2;
-         if (event_list->ph_ids3 != NULL) 	delete [] event_list->ph_ids3;
-         if (event_list->pix_ids != NULL) 	delete [] event_list->pix_ids;
-         if (event_list->tstarts != NULL) 	delete [] event_list->tstarts;
-         if (event_list->tends != NULL) 	        delete [] event_list->tends;
-         if (event_list->risetimes != NULL)       delete [] event_list->risetimes;
-         if (event_list->falltimes != NULL)       delete [] event_list->falltimes;
-
-         //if (event_list->event_indexes != NULL) 	delete [] event_list->event_indexes;
-
-		//free(event_list);
-		//event_list=NULL;
-	//}
+    if (event_list->energies != NULL) 	delete [] event_list->energies;
+    if (event_list->avgs_4samplesDerivative != NULL) 	delete [] event_list->avgs_4samplesDerivative;
+    if (event_list->Es_lowres != NULL) 	delete [] event_list->Es_lowres;
+    if (event_list->phis != NULL) 	        delete [] event_list->phis;
+    if (event_list->lagsShifts != NULL) 	delete [] event_list->lagsShifts;
+    if (event_list->bsln != NULL) 	        delete [] event_list->bsln;
+    if (event_list->rmsbsln != NULL) 	delete [] event_list->rmsbsln;
+    if (event_list->grading != NULL) 	delete [] event_list->grading;
+    if (event_list->grades2 != NULL) 	delete [] event_list->grades2;
+    if (event_list->ph_ids != NULL) 	delete [] event_list->ph_ids;
+    if (event_list->ph_ids2 != NULL) 	delete [] event_list->ph_ids2;
+    if (event_list->ph_ids3 != NULL) 	delete [] event_list->ph_ids3;
+    if (event_list->pix_ids != NULL) 	delete [] event_list->pix_ids;
+    if (event_list->tstarts != NULL) 	delete [] event_list->tstarts;
+    if (event_list->tends != NULL) 	        delete [] event_list->tends;
+    if (event_list->risetimes != NULL)       delete [] event_list->risetimes;
+    if (event_list->falltimes != NULL)       delete [] event_list->falltimes;
 }
 /*xxxx end of SECTION 11 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
  

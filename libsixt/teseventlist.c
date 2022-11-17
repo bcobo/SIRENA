@@ -100,71 +100,8 @@ void freeTesEventListSIRENA(TesEventList* event_list){
 	if (NULL!=event_list->grades1) free(event_list->grades1);
 	if (NULL!=event_list->pulse_heights) free(event_list->pulse_heights);
 
-	if (NULL!=event_list){
-		//free(event_list); event_list = NULL;
-		/*delete [event_list->event_indexes];
-		delete event_list->pulse_heights;
-		delete event_list->energies;
-        delete event_list->avgs_4samplesDerivative;
-        delete event_list->Es_lowres;
-		delete event_list->grading;
-		delete event_list->phis;
-		delete event_list->lagsShifts;
-		delete event_list->bsln;
-		delete event_list->rmsbsln;
-		delete event_list->grades1;
-		delete event_list->grades2;
-		delete event_list->ph_ids;
-        delete event_list->ph_ids2;
-        delete event_list->ph_ids3;
-        delete event_list->pix_ids;
-		delete event_list->risetimes;
-		delete event_list->falltimes;
-		delete [] event_list;*/
-		//delete [] lagsShifts;
-		//printf("%s %f %s: ", "event_list->event_indexes: ",*event_list->event_indexes,"\n");
-		//free(event_list->event_indexes); event_list->event_indexes = 0;
-		//free(event_list->event_indexes); event_list->event_indexes = NULL;
-		//free(event_list->event_indexes);
-		//printf("%s %f %s: ", "event_list->event_indexes: ",*event_list->event_indexes,"\n");
-		//free(event_list->event_indexes); event_list->event_indexes=NULL;
-		/*free(event_list->pulse_heights); event_list->pulse_heights=NULL;
-		free(event_list->energies); event_list->energies=NULL;
-        free(event_list->avgs_4samplesDerivative); event_list->avgs_4samplesDerivative=NULL;
-        free(event_list->Es_lowres); event_list->Es_lowres=NULL;
-		free(event_list->grading); event_list->grading=NULL;
-		free(event_list->phis); event_list->phis=NULL;
-		free(event_list->lagsShifts); event_list->lagsShifts=NULL;
-		free(event_list->bsln); event_list->bsln=NULL;
-		free(event_list->rmsbsln); event_list->rmsbsln=NULL;
-		free(event_list->grades1); event_list->grades1=NULL;
-		free(event_list->grades2); event_list->grades2=NULL;
-		free(event_list->ph_ids); event_list->ph_ids=NULL;
-        free(event_list->ph_ids2); event_list->ph_ids2=NULL;
-        free(event_list->ph_ids3); event_list->ph_ids3=NULL;
-        free(event_list->pix_ids); event_list->pix_ids=NULL;
-		free(event_list->risetimes); event_list->risetimes=NULL;
-		free(event_list->falltimes); event_list->falltimes=NULL;*/
-		//printf("%s %f %s: ", "event_list->event_indexes: ",*event_list->event_indexes,"\n");
-		/*free(event_list->event_indexes);
-		free(event_list->pulse_heights);
-		free(event_list->energies);
-        free(event_list->avgs_4samplesDerivative); 
-        free(event_list->Es_lowres); 
-		free(event_list->grading); 
-		free(event_list->phis); 
-		free(event_list->lagsShifts); 
-		free(event_list->bsln); 
-		free(event_list->rmsbsln); 
-		free(event_list->grades1);
-		free(event_list->grades2);
-		free(event_list->ph_ids);
-        free(event_list->ph_ids2);
-        free(event_list->ph_ids3);
-        free(event_list->pix_ids);
-		free(event_list->risetimes);
-		free(event_list->falltimes);*/
-
+	if (NULL!=event_list)
+	{
 		free(event_list);
 		event_list=NULL;
 	}
