@@ -634,8 +634,10 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
     A linearization (in the sense of pulse height vs. energy) has been implemented in SIRENA.
         
     If the *Group 1* info is available in the input FITS file:
-		
-        :math:`\Delta I=` ``I_BIAS`` + ``ADU_CNV`` * :math:`(\mathit{ADC}`-``ADU_BIAS``:math:`)`
+
+        :math:`I=` ``I_BIAS`` + ``ADU_CNV`` * :math:`(\mathit{ADC}`-``ADU_BIAS``:math:`)`
+
+        :math:`\Delta I=` ``ADU_CNV`` * :math:`(\mathit{ADC}`-``ADU_BIAS``:math:`)`
         
         .. math::
 
