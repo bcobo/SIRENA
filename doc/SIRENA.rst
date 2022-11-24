@@ -661,7 +661,9 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
 		
 	.. math::
 	
-		\frac{R}{V0} = -10^5\frac{1}{(I_{fit} + ADC)}
+        \frac{R}{V0} \backsim \frac{1}{(I_{fit} + ADC)}
+
+	..	\frac{R}{V0} = -10^5\frac{1}{(I_{fit} + ADC)}
 		
     .. If the *Group 1* info is available in the input FITS file:
     
@@ -674,7 +676,7 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
     .. These values for :math:`I_{fit}` are a first approach, although it should be confirmed after the instrument calibration.
     The :math:`I_{fit}` value is tunable for the moment as an input parameter. 
     
-The :math:`10^5` scaling factor has been included in the quasi resistance space (both **I2R** and **I2RFITTED** transformations) to avoid rounding errors when working with very small numbers.
+A :math:`10^5` scaling factor has been included in the quasi resistance space (both **I2R** and **I2RFITTED** transformations) to avoid rounding errors when working with very small numbers.
 
     
 	
