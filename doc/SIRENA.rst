@@ -394,7 +394,7 @@ It follows these steps:
 3.- Based on the first sample of the signal derivative which passes the threshold level, a template is selected from the library. The 25-samples-long dot product of the pre-detected pulse and the template is then calculated at different positions (lags) around the initial starting time of the pulse to better determine its correct starting point. Usually a dot product in 3 different **lags** [#]_ around the sample of the initial detection is adequate to find a maximum and the following steps will depend on whether a maximum of the dot product has been found or not:
 
 - If a maximum of the dot product has not been found, the starting time of the pulse is fixed to the time when the derivative gets over the threshold (in this case, the *tstart* matches a digitized sample without taking the possible jitter into account).
-- If a maximum of the dot product has been found, a new starting time f the pulse is going to be established (by using the 3-dot-product results around the maximum to analytically define a parabola and locate its maximum). Then, an iterative process begins in order to select the best template from the library, resulting each time in a new starting time with a different jitter. As due to the jitter, the pulses are placed out of a digitized sample clock, the first sample of the derivative of the pulse itself is not exactly the value of the first sample getting over the threshold and it would need to be corrected depending on the time shift with respect to the digitized samples (*samp1DER correction*). 
+- If a maximum of the dot product has been found, a new starting time of the pulse is going to be established (by using the 3-dot-product results around the maximum to analytically define a parabola and locate its maximum). Then, an iterative process begins in order to select the best template from the library, resulting each time in a new starting time with a different jitter. As due to the jitter, the pulses are placed out of a digitized sample clock, the first sample of the derivative of the pulse itself is not exactly the value of the first sample getting over the threshold and it would need to be corrected depending on the time shift with respect to the digitized samples (*samp1DER correction*). 
 
 .. [#] Nevertheless, when the residual signals are large, the maximum of the dot product moves towards the secondary pulse, missing the primary detection. This is why currently the maximum number of the dot product lags is limited to 5.
 
@@ -660,7 +660,7 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
     Looking for a simple transformation that would produce also a linear gain scale, a new transformation *I2RFITTED* has been proposed in :cite:`Peille2016`.
 		
 	.. math::
-	
+
         \frac{R}{V0} \backsim \frac{1}{(I_{fit} + ADC)}
 
 	..	\frac{R}{V0} = -10^5\frac{1}{(I_{fit} + ADC)}
