@@ -644,9 +644,6 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
             \frac{R}{R0} = \mathit{1} - \left(\frac{abs(\Delta I)/\mathit{I\_BIAS}}{1 + abs(\Delta I)/\mathit{I\_BIAS}}\right)
 
          ..
-            .. math::
-
-         ..
             \frac{R}{R0} = {\mathit{1} - \left(\frac{abs(\Delta I)/\mathit{I0\_START}}{1 + abs(\Delta I)/\mathit{I0\_START}}\right)}\cdot10^5
              
     If the *Group 1* info is not available in the input FITS file, the *Group 2* is used. In this case the ADU conversion factor must be calculated taking into account the number of quantification levels (65534):
