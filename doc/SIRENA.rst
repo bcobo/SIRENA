@@ -302,7 +302,7 @@ The reconstructed energies for all the detected events are saved into an output 
 
 * **GRADE1**: length of the filter used, i.e., the distance to the following pulse (in samples) or the pulse length if the next event is further than this value or if there are no more events in the same record.
 
-* **GRADE2**: distance to the end of the preceding pulse (in samples). If pulse is the first event in the record, this is fixed to the pulse length value.
+* **GRADE2**: distance to the starting time of the preceding pulse (in samples). If pulse is the first event, this is fixed to the pulse length value.
 
 * **PHI**: arrival phase (offset relative to the central point of the parabola) (in samples).
 
