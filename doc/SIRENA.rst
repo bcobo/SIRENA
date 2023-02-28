@@ -242,12 +242,12 @@ The library FITS file has 3 HDUs called *LIBRARY*, *FIXFILTT*, *FIXFILTF* which 
 * **PULSEB0**: baseline subtracted templates (from **PULSE**)
 * **MF**: matched filters (energy normalized templates) (from **PULSE**)
 * **MFB0**: baseline subtracted matched filters ((from **MFB0**))
-* **COVARM**: :ref:`covariance matrices<covMatrices>` ( :option:`PulseLength` x :option:`PulseLength` in shape ) stored in the FITS column as vectors of size :option:`PulseLength` * :option:`PulseLength`. It appears if :option:`hduPRECALWN` = yes
-* **WEIGHTM**: :ref:`weight matrices<covMatrices>` ( :option:`PulseLength` x :option:`PulseLength` in shape) stored in the FITS column as vectors of size :option:`PulseLength` * :option:`PulseLength`. It appears if :option:`hduPRECALWN` = yes
-* **WAB**: matrices :math:`(W_\alpha + W_\beta)/2` stored as vectors ( :option:`PulseLength` * :option:`PulseLength` ), being :math:`\mathit{W}` weight matrixes and :math:`\alpha` and :math:`\beta` two consecutive energies in the library. It appears if :option:`hduPRECALWN` = yes
+* **COVARM**: :ref:`covariance matrices<covMatrices>` ( pulselength x pulselength in shape = :option:`OFLength` x :option:`OFLength` ) stored in the FITS column as vectors of size pulselength * pulselength`. It appears if :option:`hduPRECALWN` = yes
+* **WEIGHTM**: :ref:`weight matrices<covMatrices>` ( pulselength x pulselength in shape) stored in the FITS column as vectors of size pulselength * pulselength. It appears if :option:`hduPRECALWN` = yes
+* **WAB**: matrices :math:`(W_\alpha + W_\beta)/2` stored as vectors ( pulselength x pulselength ), being :math:`\mathit{W}` weight matrixes and :math:`\alpha` and :math:`\beta` two consecutive energies in the library. It appears if :option:`hduPRECALWN` = yes
 * **TV**: vectors :math:`S_{\beta}-S_{\alpha}` being :math:`S_i` the template at :math:`\mathit{i}` energy. It appears if :option:`hduPRECALWN` = yes
 * **tE**: scalars :math:`T \cdot W_{\alpha} \cdot T`. It appears if :option:`hduPRECALWN` = yes
-* **XM**: matrices :math:`(W_\beta + W_\alpha)/t` stored as vectors ( :option:`PulseLength` * :option:`PulseLength` ). It appears if :option:`hduPRECALWN` = yes
+* **XM**: matrices :math:`(W_\beta + W_\alpha)/t` stored as vectors ( pulselength * pulselength ). It appears if :option:`hduPRECALWN` = yes
 * **YV**: vectors :math:`(W_\alpha \cdot T)/t`. It appears if :option:`hduPRECALWN` = yes
 * **ZV**: vectors :math:`\mathit{X \cdot T}`. It appears if :option:`hduPRECALWN` = yes
 * **rE**: scalars :math:`\mathit{1/(Z \cdot T)}`. It appears if :option:`hduPRECALWN` = yes
@@ -255,7 +255,7 @@ The library FITS file has 3 HDUs called *LIBRARY*, *FIXFILTT*, *FIXFILTF* which 
 * **PABMXLFF**: **PAB** according to :option:`largeFilter`. If :option:`largeFilter` is a base-2, it does not appear (although several calibration energies are included in the library)
 * **DAB**: vectors :math:`(S_{\beta}-S_{\alpha})/(E_{\beta}-E_{\alpha})`, :math:`D(t)_{\alpha\beta}` in :ref:`first order approach <optimalFilter_NSD>`. It appears if there are several calibration energies (not only one) included in the library.
 
-If :option:`preBuffer` = yes, the library will be built by using the filter lengths and their corresponding preBuffer values read from the XML input file, no matter :option:`PulseLength` or :option:`largeFilter` values. The length of the *PULSE*, *PULSEB0*, *MF*, *MFB0*, *PAB* and *DAB* columns will be the maximum of the *post* values plus the maximum of the *pB* values in the XML file (being the *post* values the samples between two consecutive pulses according to the grading and *pBi* their corresposponding preBuffer values).   
+If :option:`preBuffer` = yes, the library will be built by using the filter lengths and their corresponding preBuffer values read from the XML input file. The length of the *PULSE*, *PULSEB0*, *MF*, *MFB0*, *PAB* and *DAB* columns will be the maximum of the *post* values plus the maximum of the *pB* values in the XML file (being the *post* values the samples between two consecutive pulses according to the grading and *pBi* their corresposponding preBuffer values).
 
 The *FIXFILTT* HDU contains pre-calculated optimal filters in the time domain for different lengths, calculated from the matched filters (*MF* or *MFB0* columns) in **Tx** columns, or from the *DAB* column, in the **ABTx** columns. The lengths *x* will be base-2 values and will vary from the base-2 system value closest-lower than or equal-to the :option:`largeFilter` decreasing until 2. Moreover, **Txmax** and **ABTxmax** columns being *xmax* = :option:`largeFilter` are added if :option:`largeFilter` is not a base-2 value. The *FIXFILTT* HDU always contains **Tx** columns but **ABTx** columns only appear if there are several calibration energies (not only one) included in the library. If :option:`preBuffer` = yes, there will be so many **Tx** columns (or **ABTx** columns) as different grades in the XML input file.
 
@@ -790,7 +790,7 @@ A :math:`10^5` scaling factor has been included in the quasi resistance space (b
         
         **b) 0-padding:**
         
-        Second, instead of obtaining the energy through the scalar product of the short pulse and the corresponding short optimal filter (built with a reduced-length template), the full filter (built from a high resolution-long template) is always used, but it is padded with 0s after the short pulse length. If :option:`PulseLength` < :option:`OFLength`, 0-padding will be run.
+        Second, instead of obtaining the energy through the scalar product of the short pulse and the corresponding short optimal filter (built with a reduced-length template), the full filter (built from a high resolution-long template) is always used, but it is padded with 0s after the short pulse length. If :option:`OFLengthNotPadded` < :option:`OFLength`, 0-padding will be run (filter will be padded with zeros from :option:`OFLengthNotPadded` onwards).
         
         .. figure:: images/0-padding.png
             :align: center

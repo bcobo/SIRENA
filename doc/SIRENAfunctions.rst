@@ -41,7 +41,7 @@ Search functions by name at :ref:`genindex`.
     This function writes the first row of the library (without intermediate AB-related values, because it would be necessary to have at least two rows=energies in the library). It also writes the *FIXFILTT* and *FIXFILTF* HDUs with the optimal filters in the time and frequency domain with fixed legnths (base-2 values) and the *PRCLOFWM* HDU with the precalculated values for optimal filtering and :option:`EnergyMethod` = **WEIGHTM**.
     
     - Declare variables
-    - Write in the first row of the library FITS file some columns with the info provided by the input GSL vectors :cpp:member:`E`, :cpp:member:`PHEIGHT`, :cpp:member:`PULSE`, :cpp:member:`PULSEB0`,             :cpp:member:`MF` and :cpp:member:`MFB0` (and :cpp:member:`COVAR` and :cpp:member:`WEIGHT` if :option:`hduPRCLOFWM` = yes) (and :cpp:member:`PULSEMaxLengthFixedFilter` if :option:`largeFilter` > :option:`PulseLength`)
+    - Write in the first row of the library FITS file some columns with the info provided by the input GSL vectors :cpp:member:`E`, :cpp:member:`PHEIGHT`, :cpp:member:`PULSE`, :cpp:member:`PULSEB0`,             :cpp:member:`MF` and :cpp:member:`MFB0` (and :cpp:member:`COVAR` and :cpp:member:`WEIGHT` if :option:`hduPRCLOFWM` = yes) (and :cpp:member:`PULSEMaxLengthFixedFilter` if :option:`largeFilter` > :option:`OFLengthNotPadded`, in general being :option:`OFLengthNotPadded`=:option:`OFLength`)
     - Writing HDUs with fixed filters in time (*FIXFILTT*) and frequency (*FIXFILTF*), **Tx** and **Fx** columns respectively (calculating the optimal filters, :cpp:func:`calculus_optimalFilter`).
       In time domain **Tx** columns are real numbers but in frequency domain **Fx** columns are complex numbers (so real parts are written in the first half of the column and imaginary parts in the second one)
     - Calculate and write the pre-calculated values by using the noise weight matrix from noise intervals (M'WM)^{-1}M'W for different lengths, **OFWx** columns in *PRCLOFWM*
@@ -1021,7 +1021,7 @@ Search functions by name at :ref:`genindex`.
 
     int **inputPulseLength**
         
-        :option:`PulseLength` input parameter
+        :option:`OFLengthNotPadded` input parameter
 
     .. cpp:member:: ReconstructInitSIRENA** reconstruct_init
         
@@ -1037,7 +1037,7 @@ Search functions by name at :ref:`genindex`.
 	
     .. cpp:member:: int inputPulseLength
         
-        :option:`PulseLength` input parameter    
+        :option:`OFLengthNotPadded` input parameter
 
         
 .. cpp:function:: int createHisto(gsl_vector *invector, int nbins, gsl_vector **xhistogsl, gsl_vector **yhistogsl)
@@ -3277,7 +3277,7 @@ Search functions by name at :ref:`genindex`.
         
     int **pulse_length**
     
-        Pulse length, :option:`PulseLength`
+        Pulse length, :option:`OFLengthNotPadded`
         
     char* **energy_method**
     
@@ -3350,7 +3350,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: int pulse_length
     
-        Pulse length, :option:`PulseLength`
+        Pulse length, :option:`OFLengthNotPadded`
         
     .. cpp:member:: char* energy_method
     
@@ -3861,7 +3861,7 @@ Search functions by name at :ref:`genindex`.
         
     int **pulse_length**
     
-        Pulse length, :option:`PulseLength`
+        Pulse length, :option:`OFLengthNotPadded`
         
     double **scaleFactor**
     
@@ -4058,7 +4058,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: int pulse_length
     
-        Pulse length, :option:`PulseLength`
+        Pulse length, :option:`OFLengthNotPadded`
         
     .. cpp:member:: double scaleFactor
     
@@ -6140,9 +6140,9 @@ Search functions by name at :ref:`genindex`.
     
         Output event list file
         
-    int **PulseLength**
+    int **OFLengthNotPadded**
     
-        Pulse length
+        Filter length not padded with 0s (only necessary when reconstructing with 0-padding)
         
     int **EventListSize**
     
@@ -6734,7 +6734,7 @@ Search functions by name at :ref:`genindex`.
             ....  &  ....  & ... &  ....  \\
             <D_nD_1> & <D_nD_2> & ... & <D_nD_n>\end{matrix}\right]
 
-        where *n* is the :option:`PulseLength` and thus :math:`V = [n \times n]`.
+        where *n* is the :option:`OFLengthNotPadded` and thus :math:`V = [n \times n]`.
         
         The weight matrix :math:`W = [V]^{-1}`.
 
@@ -6848,7 +6848,7 @@ Search functions by name at :ref:`genindex`.
             ....  &  ....  & ... &  ....  \\
             <D_nD_1> & <D_nD_2> & ... & <D_nD_n>\end{matrix}\right]
             
-        where *n* is the :option:`PulseLength` and thus :math:`V = [n \times n]`.
+        where *n* is the :option:`OFLengthNotPadded` and thus :math:`V = [n \times n]`.
         
         The weight matrix :math:`W = 1/V`.
         

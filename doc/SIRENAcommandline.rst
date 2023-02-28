@@ -228,11 +228,11 @@ To run SIRENA implementation, the user must supply the following input parameter
 	
 	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
-.. option::  PulseLength=<int>
+.. option::  OFLengthNotPadded=<int>
 
-	Pulse length in samples. Only to be used if 0-padding is going to be used (different from -999 and lowewr than :option:`OFLength`).
+	Filter length not padded with 0s (only necessary when reconstructing with 0-padding) (lowewr than :option:`OFLength`).
 	
-	Default: -999
+	Default: 8192
 	
 	Used in production run (:option:`opmode` = 1).
 
@@ -386,7 +386,7 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 	:ref:`reconMethods` Energy calculation Method: OPTFILT (Optimal filtering), WEIGHT (Covariance matrices), WEIGHTN (Covariance matrices, first order), I2R and I2RFITTED (Linear Transformations), or PCA (Principal Component Analysis). 
 	
-	If :option:`EnergyMethod` = OPTFILT and :option:`PulseLength` < :option:`OFLength`, 0-padding is applied (:option:`OFLength` length filters will be used but padding with 0's from :option:`PulseLength`).
+	If :option:`EnergyMethod` = OPTFILT and :option:`OFLengthNotPadded` < :option:`OFLength`, 0-padding is applied (:option:`OFLength` length filters will be used but padding with 0's from :option:`OFLengthNotPadded`).
 
 	Default: *OPTFILT*
 	
