@@ -1267,13 +1267,15 @@
      {
          if (ntemplates == 1)
          {	
-             if (strcmp(*ofinterp,"DAB") == 0)	strcpy(*ofinterp,"MF");
+             //if (strcmp(*ofinterp,"DAB") == 0)	strcpy(*ofinterp,"MF");
+             if (strcmp(*ofinterp,"DAB") == 0)	*ofinterp = "MF";
          }
          else
          {
              if (filtEev != 0)
              {
-                 if (strcmp(*ofinterp,"DAB") == 0)	strcpy(*ofinterp,"MF");
+                 //if (strcmp(*ofinterp,"DAB") == 0)	strcpy(*ofinterp,"MF");
+                 if (strcmp(*ofinterp,"DAB") == 0)	*ofinterp = "MF";
                  
                  EP_PRINT_ERROR("The library has several rows, but only the row related to filtEev is going to be used in reconstruction",-999); // Only a warning
              }
