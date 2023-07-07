@@ -13,9 +13,9 @@ if [ -z ${SIXTE+x} ]; then
     echo "Please define SIXTE var according to the SIXTE installation"
 else
     echo "SIXTE is set to '$SIXTE'"
-    rsync -av libsixt/  $SIXTE/../sixt/libsixt/
-    rsync -av tools/ $SIXTE/../sixt/tools/
-    cd $SIXTE/../sixt/
+    rsync -av libsixt/  ../sixte/libsixt/
+    rsync -av tools/ ../sixte/tools/
+    cd ../sixte/
     make install
     echo "SIRENA installation is complete"
 fi
