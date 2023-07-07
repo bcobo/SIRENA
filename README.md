@@ -9,7 +9,7 @@ To install the last version of this package:
    according to instructions. 
    * [XIFU instrument files](https://www.sternwarte.uni-erlangen.de/research/sixte/simulation.php#Setup) must also be installed
    * [HEASoft](https://heasarc.gsfc.nasa.gov/docs/software/heasoft/) package must be also installed and initiated.
-2. Clone SIRENA repository in a temporary path. It will create there a folder named "SIRENA"
+2. Clone SIRENA repository in the same directory where you have cloned "sixte". It will create there a folder named "SIRENA"
    ```
      > git clone https://github.com/bcobo/SIRENA.git
    ```
