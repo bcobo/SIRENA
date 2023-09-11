@@ -1769,7 +1769,7 @@ Search functions by name at :ref:`genindex`.
         Used in :cpp:func:`medianKappaClipping`
         
         
-.. cpp:function:: int findPulsesNoise(gsl_vector *vectorin, gsl_vector *vectorinDER, gsl_vector **tstart, gsl_vector **quality, gsl_vector **energy, int *nPulses, double *threshold, double scalefactor, int sizepulsebins, double samplingRate, int samplesup, double nsgms, double lb, double lrs, double stopcriteriamkc, double kappamkc)
+.. cpp:function:: int findPulsesNoise(gsl_vector *vectorin, gsl_vector *vectorinDER, gsl_vector **tstart, gsl_vector **quality, int *nPulses, double *threshold, double scalefactor, int sizepulsebins, double samplingRate, int samplesup, double nsgms, double stopcriteriamkc, double kappamkc)
 
     Located in file: *gennoisespec.cpp*
     
@@ -1780,8 +1780,6 @@ Search functions by name at :ref:`genindex`.
     - Declare variables
     - Establish the threshold (call :cpp:func:`medianKappaClipping`)
     - Find pulses (call :cpp:func:`findTstartNoise`)
-    - If at least a pulse is found
-        - Get the *pulseheight* of each found pulse
     - Free allocated GSL vectors
     
     **Members/Variables**
@@ -1829,14 +1827,6 @@ Search functions by name at :ref:`genindex`.
     double **nsgms**
     
         Number of Sigmas to establish the threshold
-
-    double **lb**
-    
-        Vector containing the baseline averaging length used for each pulse
-        
-    double **lrs**
-    
-        Running sum length
         
     double **stopCriteriamkc**
     
@@ -1889,14 +1879,6 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: double nsgms
     
         Number of Sigmas to establish the threshold
-  
-    .. cpp:member:: double lb
-    
-        Vector containing the baseline averaging length used for each pulse
-        
-    .. cpp:member:: double lrs
-    
-        Running sum length (equal to the *Lrs* input parameter)
   
     .. cpp:member:: double stopCriteriamkc
     

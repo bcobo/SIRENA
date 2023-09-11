@@ -86,22 +86,6 @@ The user must supply the following input parameters:
 	Pulse length in samples (to establish which part of the record is rejected due to a found pulse). 
 
 	Default: 8192
-
-.. _LrsT_gennoisespec:
-
-.. option:: LrsT=<secs> 
-
-	Running sum (RS) length for the RS-filtering for raw energy estimation, in seconds. 
-
-	Default: 3.E-5
-
-.. _LbT_gennoisespec:
-
-.. option:: LbT=<secs> 
-
-	Baseline averaging length, in seconds. 
-
-	Default: 6.4E-3
 	
 .. option:: weightMS=<yes|no> 
 
@@ -230,7 +214,7 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 .. option::  OFLengthNotPadded=<int>
 
-	Filter length not padded with 0s (only necessary when reconstructing with 0-padding) (lowewr than :option:`OFLength`).
+	Filter length not padded with 0s (only necessary when reconstructing with 0-padding) (lower than :option:`OFLength`).
 	
 	Default: 8192
 	
@@ -404,7 +388,7 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 	Constant to apply the I2RFITTED conversion.
 
-	Default: 7000.0
+	Default: 0.0
 	
 	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1) if :option:`EnergyMethod` = I2RFITTED.
 	
@@ -601,7 +585,7 @@ The output file will also be a FITS file storing one event per row with the foll
 
 * **RMSBSLN**: standard deviation of the baseline in general 'before' a pulse (according the value in samples of :option:`LbT`)
 
-* **PIX_ID**: pixel number
+* **PIXID**: pixel number
 
 * **PH_ID**: photon number identification of the first three photons in the corresponding record for cross matching with the impact list
 
