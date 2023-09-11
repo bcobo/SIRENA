@@ -176,7 +176,7 @@ If :option:`weightMS` = *yes*, the *WEIGHTMS* HDU contains **Wx** columns. The l
 tesreconstruction
 =================
 
-The ``tesreconstruction`` tool is a wrapper to perform the energy reconstruction of the photon events by means of two different implementations: ``Rcmethod=PP`` runs the preliminary branch developed by Philippe Peille and ``Rcmethod=SIRENA`` runs the SIRENA code in this documentation.
+The ``tesreconstruction`` tool is a wrapper to perform the energy reconstruction of the photon events.
 
 SIRENA code takes a FITS input file of data, optionally performs the detection of the events, then grades them and finally reconstructs their energy following the algorithm selected by the user in the input command line of ``tesreconstruction``.
 
@@ -187,14 +187,6 @@ To run SIRENA implementation, the user must supply the following input parameter
 
 .. _tesreconPars:
 
-
-.. option:: Rcmethod=<PP|SIRENA>
-
-	Reconstruction method.
-	
-	Default: *SIRENA*
-	
-	Used in calibration run (:option:`opmode` = 0) and in production run (:option:`opmode` = 1).
 
 .. option::  RecordFile=<str>
 

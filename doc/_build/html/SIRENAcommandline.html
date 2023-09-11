@@ -246,19 +246,11 @@ The <em>NOISE</em> HDU contains three columns:</p>
 </section>
 <section id="tesreconstruction">
 <span id="id2"></span><h2>tesreconstruction<a class="headerlink" href="#tesreconstruction" title="Permalink to this headline">¶</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">tesreconstruction</span></code> tool is a wrapper to perform the energy reconstruction of the photon events by means of two different implementations: <code class="docutils literal notranslate"><span class="pre">Rcmethod=PP</span></code> runs the preliminary branch developed by Philippe Peille and <code class="docutils literal notranslate"><span class="pre">Rcmethod=SIRENA</span></code> runs the SIRENA code in this documentation.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">tesreconstruction</span></code> tool is a wrapper to perform the energy reconstruction of the photon events.</p>
 <p>SIRENA code takes a FITS input file of data, optionally performs the detection of the events, then grades them and finally reconstructs their energy following the algorithm selected by the user in the input command line of <code class="docutils literal notranslate"><span class="pre">tesreconstruction</span></code>.</p>
 <p>The <a class="reference internal" href="SIRENA_preBuffer.html#inputfiles"><span class="std std-ref">input data</span></a> should be a FITS file with the data splitted into <a class="reference internal" href="SIRENA_preBuffer.html#records"><span class="std std-ref">records</span></a>.</p>
 <p>To run SIRENA implementation, the user must supply the following input parameters (see <a class="reference internal" href="SIRENA_preBuffer.html#reconmethods"><span class="std std-ref">Event Energy Determination: methods</span></a> for a detailed description in the context of the reconstruction methods to which they apply):</p>
 <span class="target" id="tesreconpars"></span><dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-arg-Rcmethod">
-<span id="cmdoption-arg-rcmethod"></span><span class="sig-name descname"><span class="pre">Rcmethod</span></span><span class="sig-prename descclassname"><span class="pre">=&lt;PP|SIRENA&gt;</span></span><a class="headerlink" href="#cmdoption-arg-Rcmethod" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reconstruction method.</p>
-<p>Default: <em>SIRENA</em></p>
-<p>Used in calibration run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0) and in production run (<a class="reference internal" href="#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1).</p>
-</dd></dl>
-
-<dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-arg-RecordFile">
 <span id="cmdoption-arg-recordfile"></span><span class="sig-name descname"><span class="pre">RecordFile</span></span><span class="sig-prename descclassname"><span class="pre">=&lt;str&gt;</span></span><a class="headerlink" href="#cmdoption-arg-RecordFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Input record FITS file.</p>

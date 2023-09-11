@@ -62,7 +62,7 @@ Search functions by name at :ref:`genindex`.
         
     int **runF0orB0val**
     
-        If :option:`FilterMethod` = **F0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 0
+        If :option:`FilterMethod` = **F0** => :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** => :cpp:member:`runF0orB0val` = 0
 
     gsl_vector* **E**
     
@@ -114,7 +114,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: int runF0orB0val
     
-        If :option:`FilterMethod` = **F0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 0
+        If :option:`FilterMethod` = **F0** => :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** => :cpp:member:`runF0orB0val` = 0
 
     .. cpp:member:: gsl_vector* E
     
@@ -252,11 +252,11 @@ Search functions by name at :ref:`genindex`.
         
     int **runEMethod**
     
-        - :option:`EnergyMethod` = **OPTFILT** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
-        - :option:`EnergyMethod` = **I2R** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
-        - :option:`EnergyMethod` = **I2RFITTED** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
-        - :option:`EnergyMethod` = **WEIGHT** :math:`\Rightarrow` :cpp:member:`runEMethod` = 1
-        - :option:`EnergyMethod` = **WEIGHTN** :math:`\Rightarrow` :cpp:member:`runEMethod` = 2
+        - :option:`EnergyMethod` = **OPTFILT** => :cpp:member:`runEMethod` = 0
+        - :option:`EnergyMethod` = **I2R** => :cpp:member:`runEMethod` = 0
+        - :option:`EnergyMethod` = **I2RFITTED** => :cpp:member:`runEMethod` = 0
+        - :option:`EnergyMethod` = **WEIGHT** => :cpp:member:`runEMethod` = 1
+        - :option:`EnergyMethod` = **WEIGHTN** => :cpp:member:`runEMethod` = 2
 
     int **indexEalpha**
     
@@ -272,8 +272,8 @@ Search functions by name at :ref:`genindex`.
         
     int **domain**
     
-        - :option:`FilterDomain` = **T** :math:`\Rightarrow` :cpp:member:`domain` = 0
-        - :option:`FilterDomain` = **F** :math:`\Rightarrow` :cpp:member:`domain` = 1
+        - :option:`FilterDomain` = **T** => :cpp:member:`domain` = 0
+        - :option:`FilterDomain` = **F** => :cpp:member:`domain` = 1
 
     double **samprate**
     
@@ -329,11 +329,11 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: int runEMethod 
     
-        - :option:`EnergyMethod` = **OPTFILT** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
-        - :option:`EnergyMethod` = **I2R** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
-        - :option:`EnergyMethod` = **I2RFITTED** :math:`\Rightarrow` :cpp:member:`runEMethod` = 0
-        - :option:`EnergyMethod` = **WEIGHT** :math:`\Rightarrow` :cpp:member:`runEMethod` = 1
-        - :option:`EnergyMethod` = **WEIGHTN** :math:`\Rightarrow` :cpp:member:`runEMethod` = 2
+        - :option:`EnergyMethod` = **OPTFILT** => :cpp:member:`runEMethod` = 0
+        - :option:`EnergyMethod` = **I2R** => :cpp:member:`runEMethod` = 0
+        - :option:`EnergyMethod` = **I2RFITTED** => :cpp:member:`runEMethod` = 0
+        - :option:`EnergyMethod` = **WEIGHT** => :cpp:member:`runEMethod` = 1
+        - :option:`EnergyMethod` = **WEIGHTN** => :cpp:member:`runEMethod` = 2
 
     .. cpp:member:: int indexEalpha
     
@@ -349,8 +349,8 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: int domain
     
-        - :option:`FilterDomain` = **T** :math:`\Rightarrow` :cpp:member:`domain` = 0
-        - :option:`FilterDomain` = **F** :math:`\Rightarrow` :cpp:member:`domain` = 1
+        - :option:`FilterDomain` = **T** => :cpp:member:`domain` = 0
+        - :option:`FilterDomain` = **F** => :cpp:member:`domain` = 1
 
     .. cpp:member:: double samprate
     
@@ -419,7 +419,7 @@ Search functions by name at :ref:`genindex`.
         
     int **runF0orB0val**
 
-        If :option:`FilterMethod` = **F0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 0
+        If :option:`FilterMethod` = **F0** => :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** => :cpp:member:`runF0orB0val` = 0
 
     gsl_matrix* **modelsaux**
         
@@ -511,7 +511,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: int runF0orB0val
 
-        If :option:`FilterMethod` = **F0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 0
+        If :option:`FilterMethod` = **F0** => :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** => :cpp:member:`runF0orB0val` = 0
 
     .. cpp:member:: gsl_matrix* modelsaux
         
@@ -603,7 +603,7 @@ Search functions by name at :ref:`genindex`.
     
         * Check if the pulse is piled-up or not
         
-        * Non piled-up pulses :math:`\Rightarrow` Average them 
+        * Non piled-up pulses => Average them 
     
     5) Calculate covariance and weight matrices
     
@@ -736,36 +736,36 @@ Search functions by name at :ref:`genindex`.
         - Free allocated GSL vectors
         
     - :math:`N(f)`
-    - To divide :math:`MatchedFilter(f)/N^2(f)` :math:`\Rightarrow` :math:`MatchedFilter(f)` and :math:`N(f)` must have the same number of points
+    - To divide :math:`MatchedFilter(f)/N^2(f)` => :math:`MatchedFilter(f)` and :math:`N(f)` must have the same number of points
     
         - *if* (:cpp:member:`mf_size` < *freqgsl->size*) 
     
-            - *if* ((*freqgsl->size)%mf_size* == 0) :math:`\Rightarrow` Decimate noise samples
-            - *else* :math:`\Rightarrow` It is necessary to work only with the positive frequencies so as not to handle the :math:`f=0` :math:`\Rightarrow` :math:`N(f)` interpolation (:cpp:func:`interpolatePOS`)
+            - *if* ((*freqgsl->size)%mf_size* == 0) => Decimate noise samples
+            - *else* => It is necessary to work only with the positive frequencies so as not to handle the :math:`f=0` => :math:`N(f)` interpolation (:cpp:func:`interpolatePOS`)
                              
-        - *else if* (:cpp:member:`mf_size` > *freqgsl->size*) :math:`\Rightarrow` Error: Noise spectrum must have more samples than pulse spectrum
-        - *else if* (:cpp:member:`mf_size` == *freqgsl->size*) :math:`\Rightarrow` It is not necessary to do anything
+        - *else if* (:cpp:member:`mf_size` > *freqgsl->size*) => Error: Noise spectrum must have more samples than pulse spectrum
+        - *else if* (:cpp:member:`mf_size` == *freqgsl->size*) => It is not necessary to do anything
     - :math:`OptimalFilter = MatchedFilter'(f)/N^2(f)`
     - Calculus of the normalization factor
     - Apply the normalization factor
     - Inverse FFT (to get the expression of the optimal filter in time domain)
     
-        - Complex :math:`OptimalFilter(f)` :math:`\Rightarrow` Taking into account magnitude :math:`MatchedFilter(f)/N^2(f)` and phase given by :math:`MatchedFilter(f)`
+        - Complex :math:`OptimalFilter(f)` => Taking into account magnitude :math:`MatchedFilter(f)/N^2(f)` and phase given by :math:`MatchedFilter(f)`
     - Free allocated GSL vectors
         
     **Members/Variables**
     
     int **TorF**
 
-        If :option:`FilterDomain` = **T** :math:`\Rightarrow` :cpp:member:`TorF` = 0; If :option:`FilterDomain` = **F** :math:`\Rightarrow` :cpp:member:`TorF` = 1
+        If :option:`FilterDomain` = **T** => :cpp:member:`TorF` = 0; If :option:`FilterDomain` = **F** => :cpp:member:`TorF` = 1
         
     int **intermediate** 
 
-        If :option:`intermediate` = 0 :math:`\Rightarrow` Do not write an intermediate file; If :option:`intermediate` = 1 :math:`\Rightarrow` Write an intermediate file
+        If :option:`intermediate` = 0 => Do not write an intermediate file; If :option:`intermediate` = 1 => Write an intermediate file
         
     int **opmode**
 
-        If :option:`opmode` = 0 :math:`\Rightarrow` CALIBRATION run (library creation); If :option:`opmode` = 1 :math:`\Rightarrow` RECONSTRUCTION run (energy determination)
+        If :option:`opmode` = 0 => CALIBRATION run (library creation); If :option:`opmode` = 1 => RECONSTRUCTION run (energy determination)
 
     gsl_vector* **matchedfiltergsl** 
 
@@ -781,7 +781,7 @@ Search functions by name at :ref:`genindex`.
         
     int **runF0orB0val**
 
-        If :option:`FilterMethod` = **F0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 0.
+        If :option:`FilterMethod` = **F0** => :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** => :cpp:member:`runF0orB0val` = 0.
         
     gsl_vector* **freqgsl**
 
@@ -809,15 +809,15 @@ Search functions by name at :ref:`genindex`.
 
     .. cpp:member:: int TorF
 
-        If :option:`FilterDomain` = **T** :math:`\Rightarrow` :cpp:member:`TorF` = 0; If :option:`FilterDomain` = **F** :math:`\Rightarrow` :cpp:member:`TorF` = 1
+        If :option:`FilterDomain` = **T** => :cpp:member:`TorF` = 0; If :option:`FilterDomain` = **F** => :cpp:member:`TorF` = 1
         
     .. cpp:member:: int intermediate 
 
-        If :option:`intermediate` = 0 :math:`\Rightarrow` Do not write an intermediate file; If :option:`intermediate` = 1 :math:`\Rightarrow` Write an intermediate file
+        If :option:`intermediate` = 0 => Do not write an intermediate file; If :option:`intermediate` = 1 => Write an intermediate file
         
     .. cpp:member:: int opmode
 
-        If :option:`opmode` = 0 :math:`\Rightarrow` CALIBRATION run (library creation); If :option:`opmode` = 1 :math:`\Rightarrow` RECONSTRUCTION run (energy determination)
+        If :option:`opmode` = 0 => CALIBRATION run (library creation); If :option:`opmode` = 1 => RECONSTRUCTION run (energy determination)
 
     .. cpp:member:: gsl_vector* matchedfiltergsl 
 
@@ -833,7 +833,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: int runF0orB0val
 
-        If :option:`FilterMethod` = **F0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 0.
+        If :option:`FilterMethod` = **F0** => :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** => :cpp:member:`runF0orB0val` = 0.
         
     .. cpp:member:: gsl_vector* freqgsl
 
@@ -1003,7 +1003,7 @@ Search functions by name at :ref:`genindex`.
         
         * *TESTINFO* HDU will contain columns **FILDER** (the low-pass filtered and differentiated records) and **THRESHOLD**
 
-    If file exists :math:`\Rightarrow` Check :option:`clobber` for overwritting. If it does not, then create it.
+    If file exists => Check :option:`clobber` for overwritting. If it does not, then create it.
         
     **Members/Variables**
         
@@ -1052,9 +1052,9 @@ Search functions by name at :ref:`genindex`.
 
     1) Declare variables
     
-    2) It will work with the positive elements of the input vector :math:`\Rightarrow` *invectoraux2*
+    2) It will work with the positive elements of the input vector => *invectoraux2*
 
-    3) Check if all the values of :cpp:member:`invector` are the same :math:`\Rightarrow` Histogram of only one bin
+    3) Check if all the values of :cpp:member:`invector` are the same => Histogram of only one bin
 
     4) Obtain *invector_max* and *invector_min*
     
@@ -1105,9 +1105,9 @@ Search functions by name at :ref:`genindex`.
 
     This function creates the pulse templates library FITS file, if it does not exist yet. Otherwise, it opens it (to add a new row).
 
-        1) If it exists :math:`\Rightarrow` Open it and set *appendToLibrary = true*
+        1) If it exists => Open it and set *appendToLibrary = true*
         
-        2) If it does not exist :math:`\Rightarrow` Create it and set *appendToLibrary = false*
+        2) If it does not exist => Create it and set *appendToLibrary = false*
 
             - Write keyword ``EVENTCNT`` = 1 in the *LIBRARY* extension
             - Write the whole list of input parameters in ``HISTORY`` in the *Primary* extension (by usin 'HDpar_stamp')
@@ -1909,15 +1909,15 @@ Search functions by name at :ref:`genindex`.
             - Select the model of the found pulse from the libary by using the 1st sample of the derivative (*samp1DER*)
             - Dot product between the detected pulse and the pulse template in 3 different lags
             
-                - If maximum of the dot product found :math:`\Rightarrow` Stop calculating dot products in more lags
-                - If maximum of the dot product not found :math:`\Rightarrow` Calculate dot products in more lags (number of lags is limited to 5)
+                - If maximum of the dot product found => Stop calculating dot products in more lags
+                - If maximum of the dot product not found => Calculate dot products in more lags (number of lags is limited to 5)
             
-            - If maximum of the dot product not found :math:`\Rightarrow` tstart is the first sample crossing above the threshold (without jitter)
+            - If maximum of the dot product not found => tstart is the first sample crossing above the threshold (without jitter)
               
                 - Average of the first 4 samples of the derivative
                 - Find model in order to subtract
               
-            - If maximum of the dot product found :math:`\Rightarrow` Parabola analytically defined :math:`\Rightarrow` Locate the maximum :math:`\Rightarrow` New tstart (with jitter)
+            - If maximum of the dot product found => Parabola analytically defined => Locate the maximum => New tstart (with jitter)
             
                 - Iterative process in order to extract the best template from the library:
                     - *samp1DER* correction
@@ -2361,9 +2361,9 @@ Search functions by name at :ref:`genindex`.
 
     It finds the two embracing :cpp:member:`maxDERs` in the calibration library:
     
-        - If :cpp:member:`maxDER` is lower than the lowest :cpp:member:`maxDERs` in the library :math:`\Rightarrow` :cpp:member:`indexEalpha` = :cpp:member:`indexEbeta` = 0
+        - If :cpp:member:`maxDER` is lower than the lowest :cpp:member:`maxDERs` in the library => :cpp:member:`indexEalpha` = :cpp:member:`indexEbeta` = 0
     
-        - If :cpp:member:`maxDER` is higher than the highest :cpp:member:`maxDERs` in the library :math:`\Rightarrow` :cpp:member:`indexEalpha` = :cpp:member:`indexEbeta` = Number of templates-1
+        - If :cpp:member:`maxDER` is higher than the highest :cpp:member:`maxDERs` in the library => :cpp:member:`indexEalpha` = :cpp:member:`indexEbeta` = Number of templates-1
         
     **Members/Variables**
 
@@ -2440,15 +2440,15 @@ Search functions by name at :ref:`genindex`.
 
     It finds the two embracing :cpp:member:`maxDERs` in the calibration library:
     
-        - If :cpp:member:`maxDER` is lower than the lowest :cpp:member:`maxDERs` in the library :math:`\Rightarrow` The data with the lowest :cpp:member:`maxDERs` (first row) in the library are chosen
+        - If :cpp:member:`maxDER` is lower than the lowest :cpp:member:`maxDERs` in the library => The data with the lowest :cpp:member:`maxDERs` (first row) in the library are chosen
     
-        - If :cpp:member:`maxDER` is higher than the highest :cpp:member:`maxDERs` in the library :math:`\Rightarrow` The data of the penultimate row in the library are chosen
+        - If :cpp:member:`maxDER` is higher than the highest :cpp:member:`maxDERs` in the library => The data of the penultimate row in the library are chosen
 
     **Members/Variables**
     
     int **runF0orB0val**
 
-        If :option:`FilterMethod` = **F0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 0
+        If :option:`FilterMethod` = **F0** => :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** => :cpp:member:`runF0orB0val` = 0
 
     double **maxDER**
     
@@ -2488,7 +2488,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: int runF0orB0val
 
-        If :option:`FilterMethod` = **F0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** :math:`\Rightarrow` :cpp:member:`runF0orB0val` = 0
+        If :option:`FilterMethod` = **F0** => :cpp:member:`runF0orB0val` = 1. If :option:`FilterMethod` = **B0** => :cpp:member:`runF0orB0val` = 0
 
     .. cpp:member:: double maxDER
     
@@ -2535,8 +2535,8 @@ Search functions by name at :ref:`genindex`.
 
     In general, it finds the two energies wich straddle :cpp:member:`energy` in the calibration library and interpolates (:cpp:func:`interpolate_model`):
     
-      - If :cpp:member:`energy` is lower than the lowest energy in the library :math:`\Rightarrow` The model with the lowest energy in the library is chosen
-      - If :cpp:member:`energy` is higher than the highest energy in the library :math:`\Rightarrow` The model with the highest energy in the library is chosen
+      - If :cpp:member:`energy` is lower than the lowest energy in the library => The model with the lowest energy in the library is chosen
+      - If :cpp:member:`energy` is higher than the highest energy in the library => The model with the highest energy in the library is chosen
 
     **Members/Variables**
     
@@ -2578,9 +2578,9 @@ Search functions by name at :ref:`genindex`.
 
     In general, it finds the two *maxDER* which straddle :cpp:member:`maxDER` in the calibration library and interpolates (:cpp:func:`interpolate_model`):
     
-      - If :cpp:member:`maxDER` is lower than the lowest *maxDERs* in the library :math:`\Rightarrow` The model with
+      - If :cpp:member:`maxDER` is lower than the lowest *maxDERs* in the library => The model with
         the lowest *maxDERs* in the library is chosen
-      - If :cpp:member:`maxDER` is higher than the highest *maxDERs* in the library :math:`\Rightarrow` The model with
+      - If :cpp:member:`maxDER` is higher than the highest *maxDERs* in the library => The model with
         the highest *maxDERs* in the library is chosen
 
     **Members/Variables**
@@ -2622,8 +2622,8 @@ Search functions by name at :ref:`genindex`.
 
     It finds the two :cpp:member:`samp1DER` closer in the calibration library and interpolates (:cpp:func:`interpolate_model`)
         
-      - If :cpp:member:`samp1DER` is lower than the lowest samp1DER in the library :math:`\Rightarrow` The model with the lowest samp1DER in the library is chosen
-      - If :cpp:member:`samp1DER` is higher than the highest samp1DER in the library :math:`\Rightarrow` The model with the highest samp1DER in the library is chosen
+      - If :cpp:member:`samp1DER` is lower than the lowest samp1DER in the library => The model with the lowest samp1DER in the library is chosen
+      - If :cpp:member:`samp1DER` is higher than the highest samp1DER in the library => The model with the highest samp1DER in the library is chosen
 
     **Members/Variables**
     
@@ -2661,9 +2661,9 @@ Search functions by name at :ref:`genindex`.
 
     It finds the two embracing :cpp:member:`maxDERs` in the calibration library:
     
-        - If :cpp:member:`maxDER` is lower than the lowest :cpp:member:`maxDERs` in the library :math:`\Rightarrow` The data with the lowest :cpp:member:`maxDERs` (first row) in the library are chosen
+        - If :cpp:member:`maxDER` is lower than the lowest :cpp:member:`maxDERs` in the library => The data with the lowest :cpp:member:`maxDERs` (first row) in the library are chosen
     
-        - If :cpp:member:`maxDER` is higher than the highest :cpp:member:`maxDERs` in the library :math:`\Rightarrow` The data of the penultimate row in the library are chosen
+        - If :cpp:member:`maxDER` is higher than the highest :cpp:member:`maxDERs` in the library => The data of the penultimate row in the library are chosen
 
     **Members/Variables**
 
@@ -2742,9 +2742,9 @@ Search functions by name at :ref:`genindex`.
 
     It finds the two embracing :cpp:member:`maxDERs` in the calibration library:
     
-        - If :cpp:member:`maxDER` is lower than the lowest :cpp:member:`maxDERs` in the library :math:`\Rightarrow` The data with the lowest :cpp:member:`maxDERs` (first row) in the library are chosen
+        - If :cpp:member:`maxDER` is lower than the lowest :cpp:member:`maxDERs` in the library => The data with the lowest :cpp:member:`maxDERs` (first row) in the library are chosen
     
-        - If :cpp:member:`maxDER` is higher than the highest :cpp:member:`maxDERs` in the library :math:`\Rightarrow` The data of the penultimate row in the library are chosen
+        - If :cpp:member:`maxDER` is higher than the highest :cpp:member:`maxDERs` in the library => The data of the penultimate row in the library are chosen
 
     **Members/Variables**
 
@@ -2813,9 +2813,9 @@ Search functions by name at :ref:`genindex`.
 
     It finds the two embracing :cpp:member:`maxDERs` in the calibration library:
     
-        - If :cpp:member:`maxDER` is lower than the lowest :cpp:member:`maxDERs` in the library :math:`\Rightarrow` The data with the lowest :cpp:member:`maxDERs` (first row) in the library are chosen
+        - If :cpp:member:`maxDER` is lower than the lowest :cpp:member:`maxDERs` in the library => The data with the lowest :cpp:member:`maxDERs` (first row) in the library are chosen
     
-        - If :cpp:member:`maxDER` is higher than the highest :cpp:member:`maxDERs` in the library :math:`\Rightarrow` The data of the penultimate row in the library are chosen
+        - If :cpp:member:`maxDER` is higher than the highest :cpp:member:`maxDERs` in the library => The data of the penultimate row in the library are chosen
 
     **Members/Variables**
 
@@ -3143,14 +3143,14 @@ Search functions by name at :ref:`genindex`.
     
     - When the current pulse is the first pulse into the record:
     
-      - :math:`tstart \geq lb` :math:`\Rightarrow` Sum *lb* samples
-      - :math:`0<tstart<lb` :math:`\Rightarrow` Sum the available number of samples (although the available number of samples was lower than *lb*)
-      - :math:`tstart=0` :math:`\Rightarrow` If there is not a pulse-free interval before the pulse, it is looked for it after the current pulse
+      - :math:`tstart \geq lb` => Sum *lb* samples
+      - :math:`0<tstart<lb` => Sum the available number of samples (although the available number of samples was lower than *lb*)
+      - :math:`tstart=0` => If there is not a pulse-free interval before the pulse, it is looked for it after the current pulse
     
     - When the current pulse is not the first pulse into the record:
     
-      - :math:`tstart_i-tend_{i-1} \geq lb` :math:`\Rightarrow` Sum lb samples
-      - :math:`0<tstart_i-tend{i-1}<lb` :math:`\Rightarrow` Sum the available number of samples (although the available number of samples was lower than *lb*)
+      - :math:`tstart_i-tend_{i-1} \geq lb` => Sum lb samples
+      - :math:`0<tstart_i-tend{i-1}<lb` => Sum the available number of samples (although the available number of samples was lower than *lb*)
       - If there is not a pulse-free interval before the pulse, it is looked for it after the current pulse
 
     If *Baux* is still -999, a pulse-free interval can not be found to apply the running sum filter. This has to be taken into account,
@@ -3737,16 +3737,16 @@ Search functions by name at :ref:`genindex`.
     - Read iterator
     - Processing each record
         - Information has been read by blocks (with nrows per block)
-        - Just in case the last record has been filled out with 0's :math:`\Rightarrow` Last record discarded
+        - Just in case the last record has been filled out with 0's => Last record discarded
         - Convert to the resistance space if necessary
         - To avoid taking into account the pulse tails at the beginning of a record as part of a pulse-free interval
         - Low-pass filtering
    	- Differentiate 
    	- Finding the pulses: Pulses tstarts are found (call :cpp:func:`findPulsesNoise`)
         - Finding the pulse-free intervals in each record
-            - If there are pulses :math:`\Rightarrow` Call :cpp:func:`findInterval`
-            - No pulses :math:`\Rightarrow` The whole event is going to be used (DIVIDING into intervals of intervalMinBins size) :math:`\Rightarrow` Call :cpp:func:`findIntervalN`
-        - Calculating the mean and sigma of the intervals without pulses together :math:`\Rightarrow` *BSLN0* and *NOISESTD*
+            - If there are pulses => Call :cpp:func:`findInterval`
+            - No pulses => The whole event is going to be used (DIVIDING into intervals of intervalMinBins size) => Call :cpp:func:`findIntervalN`
+        - Calculating the mean and sigma of the intervals without pulses together => *BSLN0* and *NOISESTD*
     - Preparing the CSD calculus (not filtered data)
     - Free allocated GSL vectors
     
@@ -4000,7 +4000,7 @@ Search functions by name at :ref:`genindex`.
     
     int **tstartPulse3**
     
-        Tstart (samples) of the third pulse (if 0 :math:`\Rightarrow` PAIRS, if not 0 :math:`\Rightarrow` TRIOS), :option:`tstartPulse3`
+        Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS), :option:`tstartPulse3`
         
     double **energyPCA1**
     
@@ -4197,7 +4197,7 @@ Search functions by name at :ref:`genindex`.
     
     .. cpp:member:: int tstartPulse3
     
-        Tstart (samples) of the third pulse (if 0 :math:`\Rightarrow` PAIRS, if not 0 :math:`\Rightarrow` TRIOS), :option:`tstartPulse3`
+        Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS), :option:`tstartPulse3`
         
     .. cpp:member:: double energyPCA1
     
@@ -4259,9 +4259,9 @@ Search functions by name at :ref:`genindex`.
         
     bool* **triggerCondition**
         
-        True :math:`\Rightarrow` The algorithm has found the first event
+        True => The algorithm has found the first event
         
-        False :math:`\Rightarrow` The algorithm has not found any event
+        False => The algorithm has not found any event
         
     int* **tstart**
         
@@ -4305,9 +4305,9 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: bool* triggerCondition
         
-        True :math:`\Rightarrow` The algorithm has found the first event
+        True => The algorithm has found the first event
         
-        False :math:`\Rightarrow` The algorithm has not found any event
+        False => The algorithm has not found any event
         
     .. cpp:member:: int* tstart
         
@@ -4532,7 +4532,7 @@ Search functions by name at :ref:`genindex`.
     
     This fucntion loads the structure :cpp:member:`record` into the :cpp:member:`adc_double` GSL vector.
 
-    It checks if the record has been filled out with 0's :math:`\Rightarrow` It only loads the first values (which are different from 0).
+    It checks if the record has been filled out with 0's => It only loads the first values (which are different from 0).
 
     **Members/Variables**
 
@@ -4594,7 +4594,7 @@ Search functions by name at :ref:`genindex`.
     The function returns:
     
       - 1: Function cannot run
-      - 3: Cut-off frequency too high :math:`\Rightarrow` Equivalent to not filter
+      - 3: Cut-off frequency too high => Equivalent to not filter
       - 4: Cut-off frequency too low
     
     **Members/Variables**
@@ -5270,7 +5270,7 @@ Search functions by name at :ref:`genindex`.
     
     6) Calculate the end time of the found pulses and check if the pulse is saturated
     
-    7) Calculate the baseline (mean and standard deviation) before a pulse (in general *before*) :math:`\Rightarrow` To be written in **BSLN** and **RMSBSLN** columns in the output FITS file
+    7) Calculate the baseline (mean and standard deviation) before a pulse (in general *before*) => To be written in **BSLN** and **RMSBSLN** columns in the output FITS file
     
     8) Obtain the approximate rise and fall times of each pulse 
     
@@ -5754,15 +5754,15 @@ Search functions by name at :ref:`genindex`.
 
     Conditions:   
 
-        - If first record and :option:`opmode` = 1  :math:`\Rightarrow`  Run :cpp:func:`filderLibrary`
+        - If first record and :option:`opmode` = 1  =>  Run :cpp:func:`filderLibrary`
 
-        - If last record and :option:`opmode` = 0 :math:`\Rightarrow` Run :cpp:func:`calculateTemplate` and :cpp:func:`writeLibrary`
+        - If last record and :option:`opmode` = 0 => Run :cpp:func:`calculateTemplate` and :cpp:func:`writeLibrary`
 
-        - If :option:`intermediate` = 1 :math:`\Rightarrow` :cpp:func:`writeTestInfo` and :cpp:func:`writePulses`
+        - If :option:`intermediate` = 1 => :cpp:func:`writeTestInfo` and :cpp:func:`writePulses`
 
-        - If :option:`opmode` = 0 :math:`\Rightarrow` Find pulses by using :cpp:func:`findPulsesCAL`
+        - If :option:`opmode` = 0 => Find pulses by using :cpp:func:`findPulsesCAL`
         
-        - If :option:`opmode` = 1 :math:`\Rightarrow` Find pulses by :cpp:func:`InitialTriggering` and :cpp:func:`FindSecondaries` or :cpp:func:`FindSecondariesSTC`
+        - If :option:`opmode` = 1 => Find pulses by :cpp:func:`InitialTriggering` and :cpp:func:`FindSecondaries` or :cpp:func:`FindSecondariesSTC`
         
     Steps:
 
@@ -6060,8 +6060,6 @@ Search functions by name at :ref:`genindex`.
     
     This function is mainly a wrapper to pass a data file to the SIRENA tasks in order to reconstruct the energy of the incoming X-ray photons after their detection.
     
-    It can run the SIRENA tasks or the Philippe Peille's tasks depending on the 'Rcmethod' selected.
-    
     Steps:
     
     - Register HEATOOL
@@ -6069,23 +6067,22 @@ Search functions by name at :ref:`genindex`.
     - Read XML info
     - Sixt standard keywords structure
     - Open output FITS file
-    - Initialize PP data structures needed for pulse filtering
-    - Initialize SIRENA data structures needed for pulse filtering
+    - Initialize data structures needed for pulse filtering
     - Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
     - Obtain the samplig rate and the 'trig_reclength':
-        - If Rcmethod starts with '@' :math:`\Rightarrow` List of record input FITS files. For every FITS file:
+        - If RecordFile starts with '@' => List of record input FITS files. For every FITS file:
             - Open FITS file
             - Check if input FITS file have been simulated with TESSIM or XIFUSIM
             - If it is a xifusim simulated file
                 - Obtain 'trig_reclength' from the ``HISTORY`` block
-        - If Rcemethod doesn't start with '@' :math:`\Rightarrow` Single record input FITS file
+        - If RecordFile doesn't start with '@' => Single record input FITS file
             - Open FITS file
             - Check if input FITS file have been simulated with TESSIM or XIFUSIM
             - If it is a xifusim simulated file
                 - Obtain 'trig_reclength' from the ``HISTORY`` block
     - Build up TesEventList to recover the results of the reconstruction
     - Reconstruct the input record FITS file:
-        - If Rcmethod starts with '@' :math:`\Rightarrow` List of record input FITS files. For every FITS file:
+        - If RecordFile starts with '@' => List of record input FITS files. For every FITS file:
             - Open record file
             - Initialize: initializeReconstruction or initializeReconstructionSIRENA
             - Build up TesRecord to read the file
@@ -6094,7 +6091,7 @@ Search functions by name at :ref:`genindex`.
                 - Save events to the event_list
                 - Copy trigger keywords to event file
                 - Close file
-        - If Rcemethod doesn't start with '@' :math:`\Rightarrow` Single record input FITS file
+        - If RecordFile doesn't start with '@' => Single record input FITS file
             - Open record file
             - Initialize: initializeReconstruction or initializeReconstructionSIRENA
             - Build up TesRecord to read the file
@@ -6108,15 +6105,14 @@ Search functions by name at :ref:`genindex`.
     
     The user must supply the following input parameters (*tesreconstruction.par* file).
     
-    Common parameters:
+    Parameters:
 
-    char **Rcmethod** 
-        
-        Reconstruction method (**PP** or **SIRENA**). If SIRENA :math:`\Rightarrow` If Rcmethod starts with '@' it provides a file text containing several record input FITS files
         
     char **RecordFile**
     
         Record FITS file
+        
+        If SIRENA => If RecordFile starts with '@' it provides a file text containing several record input FITS files
         
     char **TesEventFile**
     
@@ -6137,38 +6133,6 @@ Search functions by name at :ref:`genindex`.
     char **history**
     
         Write program parameters into output file
-        
-    PP parameters:
-    
-    double **SaturationValue**
-    
-        Saturation level of the ADC curves
-        
-    char **OptimalFilterFile**
-    
-        Optimal filters file
-        
-    char **PulseTemplateFile**
-    
-        Pulse template file
-        
-    double **Threshold**
-    
-        Threshold level
-    
-    double **Calfac**
-    
-        Calibration factor (should be read from the xml file)
-    
-    int **NormalExclusion**
-    
-        Minimal distance before using OFs after a misreconstruction
-    
-    int **DerivateExclusion**
-    
-        Minimal distance before reconstructing any event after a misreconstruction
-
-    SIRENA parameters:
     
     char **LibraryFile**
     
@@ -6312,7 +6276,7 @@ Search functions by name at :ref:`genindex`.
         
     int **tstartPulse3**
     
-        Tstart (samples) of the third pulse (if 0 :math:`\Rightarrow` PAIRS, if not 0 :math:`\Rightarrow` TRIOS)
+        Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS)
         
     double **energyPCA1**
     
@@ -6325,15 +6289,12 @@ Search functions by name at :ref:`genindex`.
     char **XMLFile**
     
         XML input FITS file with instrument definition
-        
-    .. cpp:member:: char Rcmethod
-        
-        Reconstruction method (**PP** or **SIRENA**)
-        SIRENA: If Rcmethod starts with '@' it provides a file text containing several record input FITS files
-        
+                
     .. cpp:member:: char RecordFile
     
         Record FITS file
+        
+        If RecordFile starts with '@' it provides a file text containing several record input FITS files
         
     .. cpp:member:: char TesEventFile
     
@@ -6354,39 +6315,7 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: char history
     
         Write program parameters into output file
-        
-    PP parameters:
-    
-    .. cpp:member:: double SaturationValue
-    
-        Saturation level of the ADC curves
-        
-    .. cpp:member:: char OptimalFilterFile 
-    
-        Optimal filters file
-        
-    .. cpp:member:: char PulseTemplateFile
-    
-        Pulse template file
-        
-    .. cpp:member:: double Threshold
-    
-        Threshold level
-    
-    .. cpp:member:: double Calfac
-    
-        Calibration factor (should be read from the xml file)
-    
-    .. cpp:member:: int NormalExclusion
-    
-        Minimal distance before using OFs after a misreconstruction
-    
-    .. cpp:member:: int DerivateExclusion
-    
-        Minimal distance before reconstructing any event after a misreconstruction
-
-    SIRENA parameters:
-    
+            
     .. cpp:member:: char LibraryFile
     
         File with calibration library
@@ -6529,7 +6458,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: int tstartPulse3
     
-        Tstart (samples) of the third pulse (if 0 :math:`\Rightarrow` PAIRS, if not 0 :math:`\Rightarrow` TRIOS)
+        Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS)
         
     .. cpp:member:: double energyPCA1
     
@@ -6724,9 +6653,9 @@ Search functions by name at :ref:`genindex`.
 
         - Calculate the elements of the diagonal of the covariance matrix
         - Calculate the elements out of the diagonal of the covariance matrix
-        - If saturated pulses :math:`\Rightarrow` Covariance matrix is a singular matrix :math:`\Rightarrow` Non invertible 
+        - If saturated pulses => Covariance matrix is a singular matrix => Non invertible 
         
-          In order to allow the covariance matrix to be inverted :math:`\Rightarrow` Replacing 0's (0's are due to the saturated values, equal in the pulse and in the model)
+          In order to allow the covariance matrix to be inverted => Replacing 0's (0's are due to the saturated values, equal in the pulse and in the model)
           
           - Elements of the diagonal: Generating a random double :math:`f_1` between a range *(fMin,fMax)* (-NoiseStd,NoiseStd) to replace 0's with :math:`f_1^2`
           - Elements out of the diagonal: Generating two random doubles :math:`f_1` and :math:`f_2` between a range *(fMin,fMax)* (-NoiseStd,NoiseStd) to replace 0's with :math:`f_1 \cdot f_2`
@@ -6741,7 +6670,7 @@ Search functions by name at :ref:`genindex`.
         
     bool **saturatedPulses**
 
-        If *true*, all the pulses ( :option:`opmode` = 0 :math:`\Rightarrow` all the pulses have the same energy) are saturated
+        If *true*, all the pulses ( :option:`opmode` = 0 => all the pulses have the same energy) are saturated
         
     PulsesCollection* **pulsesAll** 
 
@@ -6777,7 +6706,7 @@ Search functions by name at :ref:`genindex`.
         
     .. cpp:member:: bool saturatedPulses
 
-        If *true*, all the pulses ( :option:`opmode` = 0 :math:`\Rightarrow` all the pulses have the same energy) are saturated
+        If *true*, all the pulses ( :option:`opmode` = 0 => all the pulses have the same energy) are saturated
         
     .. cpp:member:: PulsesCollection* pulsesAll 
 
@@ -7062,10 +6991,10 @@ Search functions by name at :ref:`genindex`.
     
     This function includes the processing of the each level of message in the log file and the output screen:
      
-      - Verbosity = 0 :math:`\Rightarrow` The log file and the output screen include Errors
-      - Verbosity = 1 :math:`\Rightarrow` The log file and the output screen include Errors and Warnings
-      - Verbosity = 2 :math:`\Rightarrow` The log file and the output screen include Errors, Warnings and Alerts
-      - Verbosity = 3 :math:`\Rightarrow` The log file and the output screen include Errors, Warnings, Alerts and Log messages
+      - Verbosity = 0 => The log file and the output screen include Errors
+      - Verbosity = 1 => The log file and the output screen include Errors and Warnings
+      - Verbosity = 2 => The log file and the output screen include Errors, Warnings and Alerts
+      - Verbosity = 3 => The log file and the output screen include Errors, Warnings, Alerts and Log messages
 
     **Members/Variables**
     
@@ -7142,15 +7071,15 @@ Search functions by name at :ref:`genindex`.
 
         GSL vector with the quality of the found pulses
         
-        0 :math:`\Rightarrow` Standard (good) pulses
+        0 => Standard (good) pulses
         
-        1 :math:`\Rightarrow` Truncated pulses at the beginning
+        1 => Truncated pulses at the beginning
         
-        2 :math:`\Rightarrow` Truncated pulses at the end
+        2 => Truncated pulses at the end
         
-        10 :math:`\Rightarrow` Saturated pulses
+        10 => Saturated pulses
         
-        11 :math:`\Rightarrow` Truncated and saturated pulses
+        11 => Truncated and saturated pulses
 
     gsl_vector* **taurise**
 
@@ -7196,15 +7125,15 @@ Search functions by name at :ref:`genindex`.
 
         GSL vector with the quality of the found pulses
         
-        0 :math:`\Rightarrow` Standard (good) pulses
+        0 => Standard (good) pulses
         
-        1 :math:`\Rightarrow` Truncated pulses at the beginning
+        1 => Truncated pulses at the beginning
         
-        2 :math:`\Rightarrow` Truncated pulses at the end
+        2 => Truncated pulses at the end
         
-        10 :math:`\Rightarrow` Saturated pulses
+        10 => Saturated pulses
         
-        11 :math:`\Rightarrow` Truncated and saturated pulses
+        11 => Truncated and saturated pulses
 
     .. cpp:member:: gsl_vector* taurise
 
@@ -7270,8 +7199,8 @@ Search functions by name at :ref:`genindex`.
     
     - Allocate GSL vectors
     - Write the data in the output FITS file (print only half of FFT to prevent aliasing)
-    - *NOISE* HDU only contains positive frequencies (:math:`\Rightarrow` Multiply by 2 the amplitude)
-    - *NOISEALL* HDU contains negative and positive frequencies :math:`\Rightarrow` It is the HDU read to build the optimal filters
+    - *NOISE* HDU only contains positive frequencies (=> Multiply by 2 the amplitude)
+    - *NOISEALL* HDU contains negative and positive frequencies => It is the HDU read to build the optimal filters
     - *WEIGHTMS* HDU
    
    

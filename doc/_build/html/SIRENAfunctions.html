@@ -179,7 +179,7 @@ In time domain <strong>Tx</strong> columns are real numbers but in frequency dom
 </div></blockquote>
 <p>int <strong>runF0orB0val</strong></p>
 <blockquote>
-<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>F0</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv411addFirstRowP21ReconstructInitSIRENAPP8fitsfilediP10gsl_vectorP10gsl_vectorP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrix" title="addFirstRow::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 1. If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>B0</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv411addFirstRowP21ReconstructInitSIRENAPP8fitsfilediP10gsl_vectorP10gsl_vectorP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrix" title="addFirstRow::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 0</p>
+<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>F0</strong> =&gt; <a class="reference internal" href="#_CPPv411addFirstRowP21ReconstructInitSIRENAPP8fitsfilediP10gsl_vectorP10gsl_vectorP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrix" title="addFirstRow::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 1. If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>B0</strong> =&gt; <a class="reference internal" href="#_CPPv411addFirstRowP21ReconstructInitSIRENAPP8fitsfilediP10gsl_vectorP10gsl_vectorP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrix" title="addFirstRow::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 0</p>
 </div></blockquote>
 <p>gsl_vector* <strong>E</strong></p>
 <blockquote>
@@ -290,11 +290,11 @@ In time domain <strong>Tx</strong> columns are real numbers but in frequency dom
 <p>int <strong>runEMethod</strong></p>
 <blockquote>
 <div><ul class="simple">
-<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-3"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>OPTFILT</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::runEMethod"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runEMethod</span></code></a> = 0</p></li>
-<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-3"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>I2R</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::runEMethod"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runEMethod</span></code></a> = 0</p></li>
-<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-3"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>I2RFITTED</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::runEMethod"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runEMethod</span></code></a> = 0</p></li>
-<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-3"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>WEIGHT</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::runEMethod"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runEMethod</span></code></a> = 1</p></li>
-<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-3"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>WEIGHTN</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::runEMethod"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runEMethod</span></code></a> = 2</p></li>
+<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-3"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>OPTFILT</strong> =&gt; <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::runEMethod"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runEMethod</span></code></a> = 0</p></li>
+<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-3"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>I2R</strong> =&gt; <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::runEMethod"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runEMethod</span></code></a> = 0</p></li>
+<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-3"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>I2RFITTED</strong> =&gt; <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::runEMethod"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runEMethod</span></code></a> = 0</p></li>
+<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-3"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>WEIGHT</strong> =&gt; <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::runEMethod"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runEMethod</span></code></a> = 1</p></li>
+<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-3"><code class="xref std std-option docutils literal notranslate"><span class="pre">EnergyMethod</span></code></a> = <strong>WEIGHTN</strong> =&gt; <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::runEMethod"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runEMethod</span></code></a> = 2</p></li>
 </ul>
 </div></blockquote>
 <p>int <strong>indexEalpha</strong></p>
@@ -312,8 +312,8 @@ In time domain <strong>Tx</strong> columns are real numbers but in frequency dom
 <p>int <strong>domain</strong></p>
 <blockquote>
 <div><ul class="simple">
-<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterDomain"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterDomain</span></code></a> = <strong>T</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::domain"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">domain</span></code></a> = 0</p></li>
-<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterDomain"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterDomain</span></code></a> = <strong>F</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::domain"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">domain</span></code></a> = 1</p></li>
+<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterDomain"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterDomain</span></code></a> = <strong>T</strong> =&gt; <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::domain"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">domain</span></code></a> = 0</p></li>
+<li><p><a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterDomain"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterDomain</span></code></a> = <strong>F</strong> =&gt; <a class="reference internal" href="#_CPPv415calculateEnergyP10gsl_vectoriP10gsl_vectorP18gsl_vector_complexiiiP21ReconstructInitSIRENAidP10gsl_vectorP10gsl_matrixP10gsl_matrixPdiPdii" title="calculateEnergy::domain"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">domain</span></code></a> = 1</p></li>
 </ul>
 </div></blockquote>
 <p>double <strong>samprate</strong></p>
@@ -383,7 +383,7 @@ In time domain <strong>Tx</strong> columns are real numbers but in frequency dom
 </div></blockquote>
 <p>int <strong>runF0orB0val</strong></p>
 <blockquote>
-<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>F0</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv418calculateIntParamsP21ReconstructInitSIRENAiidiP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixP10gsl_matrixPP10gsl_matrix" title="calculateIntParams::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 1. If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>B0</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv418calculateIntParamsP21ReconstructInitSIRENAiidiP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixP10gsl_matrixPP10gsl_matrix" title="calculateIntParams::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 0</p>
+<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>F0</strong> =&gt; <a class="reference internal" href="#_CPPv418calculateIntParamsP21ReconstructInitSIRENAiidiP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixP10gsl_matrixPP10gsl_matrix" title="calculateIntParams::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 1. If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>B0</strong> =&gt; <a class="reference internal" href="#_CPPv418calculateIntParamsP21ReconstructInitSIRENAiidiP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixP10gsl_matrixPP10gsl_matrix" title="calculateIntParams::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 0</p>
 </div></blockquote>
 <p>gsl_matrix* <strong>modelsaux</strong></p>
 <blockquote>
@@ -473,7 +473,7 @@ Just in case in the detection process some piled-up pulses have not been disting
 <blockquote>
 <div><ul class="simple">
 <li><p>Check if the pulse is piled-up or not</p></li>
-<li><p>Non piled-up pulses <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Average them</p></li>
+<li><p>Non piled-up pulses =&gt; Average them</p></li>
 </ul>
 </div></blockquote>
 </li>
@@ -559,19 +559,19 @@ to be minimized:</p>
 </div></blockquote>
 </li>
 <li><p><img class="math" src="_images/math/18732b2feb4428c46a2db0ed01158777057721fe.png" alt="N(f)"/></p></li>
-<li><p>To divide <img class="math" src="_images/math/00aa0d13ce4f5cd3d17e5640649a810b5f832afb.png" alt="MatchedFilter(f)/N^2(f)"/> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <img class="math" src="_images/math/fdd8ed11dc356518ff033a0c323365bfdfc768ea.png" alt="MatchedFilter(f)"/> and <img class="math" src="_images/math/18732b2feb4428c46a2db0ed01158777057721fe.png" alt="N(f)"/> must have the same number of points</p>
+<li><p>To divide <img class="math" src="_images/math/00aa0d13ce4f5cd3d17e5640649a810b5f832afb.png" alt="MatchedFilter(f)/N^2(f)"/> =&gt; <img class="math" src="_images/math/fdd8ed11dc356518ff033a0c323365bfdfc768ea.png" alt="MatchedFilter(f)"/> and <img class="math" src="_images/math/18732b2feb4428c46a2db0ed01158777057721fe.png" alt="N(f)"/> must have the same number of points</p>
 <blockquote>
 <div><ul>
 <li><p><em>if</em> (<a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::mf_size"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">mf_size</span></code></a> &lt; <em>freqgsl-&gt;size</em>)</p>
 <blockquote>
 <div><ul class="simple">
-<li><p><em>if</em> ((<em>freqgsl-&gt;size)%mf_size</em> == 0) <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Decimate noise samples</p></li>
-<li><p><em>else</em> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> It is necessary to work only with the positive frequencies so as not to handle the <img class="math" src="_images/math/65bad3fd19d020ad9e54c06f74cc6141fe115cdc.png" alt="f=0"/> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <img class="math" src="_images/math/18732b2feb4428c46a2db0ed01158777057721fe.png" alt="N(f)"/> interpolation (<a class="reference internal" href="#_CPPv414interpolatePOSP10gsl_vectorP10gsl_vectorldPP10gsl_vectorPP10gsl_vector" title="interpolatePOS"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">interpolatePOS()</span></code></a>)</p></li>
+<li><p><em>if</em> ((<em>freqgsl-&gt;size)%mf_size</em> == 0) =&gt; Decimate noise samples</p></li>
+<li><p><em>else</em> =&gt; It is necessary to work only with the positive frequencies so as not to handle the <img class="math" src="_images/math/65bad3fd19d020ad9e54c06f74cc6141fe115cdc.png" alt="f=0"/> =&gt; <img class="math" src="_images/math/18732b2feb4428c46a2db0ed01158777057721fe.png" alt="N(f)"/> interpolation (<a class="reference internal" href="#_CPPv414interpolatePOSP10gsl_vectorP10gsl_vectorldPP10gsl_vectorPP10gsl_vector" title="interpolatePOS"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">interpolatePOS()</span></code></a>)</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p><em>else if</em> (<a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::mf_size"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">mf_size</span></code></a> &gt; <em>freqgsl-&gt;size</em>) <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Error: Noise spectrum must have more samples than pulse spectrum</p></li>
-<li><p><em>else if</em> (<a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::mf_size"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">mf_size</span></code></a> == <em>freqgsl-&gt;size</em>) <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> It is not necessary to do anything</p></li>
+<li><p><em>else if</em> (<a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::mf_size"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">mf_size</span></code></a> &gt; <em>freqgsl-&gt;size</em>) =&gt; Error: Noise spectrum must have more samples than pulse spectrum</p></li>
+<li><p><em>else if</em> (<a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::mf_size"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">mf_size</span></code></a> == <em>freqgsl-&gt;size</em>) =&gt; It is not necessary to do anything</p></li>
 </ul>
 </div></blockquote>
 </li>
@@ -581,7 +581,7 @@ to be minimized:</p>
 <li><p>Inverse FFT (to get the expression of the optimal filter in time domain)</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Complex <img class="math" src="_images/math/e44c4deaefde8938bda846df51762a34f1a3f2ad.png" alt="OptimalFilter(f)"/> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Taking into account magnitude <img class="math" src="_images/math/00aa0d13ce4f5cd3d17e5640649a810b5f832afb.png" alt="MatchedFilter(f)/N^2(f)"/> and phase given by <img class="math" src="_images/math/fdd8ed11dc356518ff033a0c323365bfdfc768ea.png" alt="MatchedFilter(f)"/></p></li>
+<li><p>Complex <img class="math" src="_images/math/e44c4deaefde8938bda846df51762a34f1a3f2ad.png" alt="OptimalFilter(f)"/> =&gt; Taking into account magnitude <img class="math" src="_images/math/00aa0d13ce4f5cd3d17e5640649a810b5f832afb.png" alt="MatchedFilter(f)/N^2(f)"/> and phase given by <img class="math" src="_images/math/fdd8ed11dc356518ff033a0c323365bfdfc768ea.png" alt="MatchedFilter(f)"/></p></li>
 </ul>
 </div></blockquote>
 </li>
@@ -590,15 +590,15 @@ to be minimized:</p>
 <p><strong>Members/Variables</strong></p>
 <p>int <strong>TorF</strong></p>
 <blockquote>
-<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterDomain"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterDomain</span></code></a> = <strong>T</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::TorF"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">TorF</span></code></a> = 0; If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterDomain"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterDomain</span></code></a> = <strong>F</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::TorF"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">TorF</span></code></a> = 1</p>
+<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterDomain"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterDomain</span></code></a> = <strong>T</strong> =&gt; <a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::TorF"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">TorF</span></code></a> = 0; If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterDomain"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterDomain</span></code></a> = <strong>F</strong> =&gt; <a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::TorF"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">TorF</span></code></a> = 1</p>
 </div></blockquote>
 <p>int <strong>intermediate</strong></p>
 <blockquote>
-<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-intermediate"><code class="xref std std-option docutils literal notranslate"><span class="pre">intermediate</span></code></a> = 0 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Do not write an intermediate file; If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-intermediate"><code class="xref std std-option docutils literal notranslate"><span class="pre">intermediate</span></code></a> = 1 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Write an intermediate file</p>
+<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-intermediate"><code class="xref std std-option docutils literal notranslate"><span class="pre">intermediate</span></code></a> = 0 =&gt; Do not write an intermediate file; If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-intermediate"><code class="xref std std-option docutils literal notranslate"><span class="pre">intermediate</span></code></a> = 1 =&gt; Write an intermediate file</p>
 </div></blockquote>
 <p>int <strong>opmode</strong></p>
 <blockquote>
-<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> CALIBRATION run (library creation); If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> RECONSTRUCTION run (energy determination)</p>
+<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0 =&gt; CALIBRATION run (library creation); If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1 =&gt; RECONSTRUCTION run (energy determination)</p>
 </div></blockquote>
 <p>gsl_vector* <strong>matchedfiltergsl</strong></p>
 <blockquote>
@@ -614,7 +614,7 @@ to be minimized:</p>
 </div></blockquote>
 <p>int <strong>runF0orB0val</strong></p>
 <blockquote>
-<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>F0</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 1. If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>B0</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 0.</p>
+<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>F0</strong> =&gt; <a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 1. If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>B0</strong> =&gt; <a class="reference internal" href="#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex" title="calculus_optimalFilter::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 0.</p>
 </div></blockquote>
 <p>gsl_vector* <strong>freqgsl</strong></p>
 <blockquote>
@@ -746,7 +746,7 @@ to be minimized:</p>
 <li><p><em>TESTINFO</em> HDU will contain columns <strong>FILDER</strong> (the low-pass filtered and differentiated records) and <strong>THRESHOLD</strong></p></li>
 </ul>
 </div></blockquote>
-<p>If file exists <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Check <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">clobber</span></code></a> for overwritting. If it does not, then create it.</p>
+<p>If file exists =&gt; Check <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-5"><code class="xref std std-option docutils literal notranslate"><span class="pre">clobber</span></code></a> for overwritting. If it does not, then create it.</p>
 <p><strong>Members/Variables</strong></p>
 <p>ReconstructInitSIRENA** <strong>reconstruct_init</strong></p>
 <blockquote>
@@ -779,8 +779,8 @@ to be minimized:</p>
 </div></blockquote>
 <ol class="arabic simple">
 <li><p>Declare variables</p></li>
-<li><p>It will work with the positive elements of the input vector <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <em>invectoraux2</em></p></li>
-<li><p>Check if all the values of <a class="reference internal" href="#_CPPv411createHistoP10gsl_vectoriPP10gsl_vectorPP10gsl_vector" title="createHisto::invector"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">invector</span></code></a> are the same <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Histogram of only one bin</p></li>
+<li><p>It will work with the positive elements of the input vector =&gt; <em>invectoraux2</em></p></li>
+<li><p>Check if all the values of <a class="reference internal" href="#_CPPv411createHistoP10gsl_vectoriPP10gsl_vectorPP10gsl_vector" title="createHisto::invector"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">invector</span></code></a> are the same =&gt; Histogram of only one bin</p></li>
 <li><p>Obtain <em>invector_max</em> and <em>invector_min</em></p></li>
 <li><p>Obtain <em>binSize</em></p></li>
 <li><p>Create histogram axis</p></li>
@@ -812,8 +812,8 @@ to be minimized:</p>
 <p>This function creates the pulse templates library FITS file, if it does not exist yet. Otherwise, it opens it (to add a new row).</p>
 <blockquote>
 <div><ol class="arabic">
-<li><p>If it exists <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Open it and set <em>appendToLibrary = true</em></p></li>
-<li><p>If it does not exist <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Create it and set <em>appendToLibrary = false</em></p>
+<li><p>If it exists =&gt; Open it and set <em>appendToLibrary = true</em></p></li>
+<li><p>If it does not exist =&gt; Create it and set <em>appendToLibrary = false</em></p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Write keyword <code class="docutils literal notranslate"><span class="pre">EVENTCNT</span></code> = 1 in the <em>LIBRARY</em> extension</p></li>
@@ -1364,12 +1364,12 @@ The first condition to detect an event is that the <a class="reference internal"
 <li><p>Dot product between the detected pulse and the pulse template in 3 different lags</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>If maximum of the dot product found <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Stop calculating dot products in more lags</p></li>
-<li><p>If maximum of the dot product not found <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Calculate dot products in more lags (number of lags is limited to 5)</p></li>
+<li><p>If maximum of the dot product found =&gt; Stop calculating dot products in more lags</p></li>
+<li><p>If maximum of the dot product not found =&gt; Calculate dot products in more lags (number of lags is limited to 5)</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>If maximum of the dot product not found <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> tstart is the first sample crossing above the threshold (without jitter)</p>
+<li><p>If maximum of the dot product not found =&gt; tstart is the first sample crossing above the threshold (without jitter)</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Average of the first 4 samples of the derivative</p></li>
@@ -1377,7 +1377,7 @@ The first condition to detect an event is that the <a class="reference internal"
 </ul>
 </div></blockquote>
 </li>
-<li><p>If maximum of the dot product found <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Parabola analytically defined <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Locate the maximum <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> New tstart (with jitter)</p>
+<li><p>If maximum of the dot product found =&gt; Parabola analytically defined =&gt; Locate the maximum =&gt; New tstart (with jitter)</p>
 <blockquote>
 <div><ul class="simple">
 <li><dl class="simple">
@@ -1697,8 +1697,8 @@ required) over the threshold. To look for more pulses, it finds <em>nSamplesUp</
 <p>It finds the two embracing <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the calibration library:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>If <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is lower than the lowest <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::indexEalpha"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">indexEalpha</span></code></a> = <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::indexEbeta"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">indexEbeta</span></code></a> = 0</p></li>
-<li><p>If <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is higher than the highest <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::indexEalpha"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">indexEalpha</span></code></a> = <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::indexEbeta"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">indexEbeta</span></code></a> = Number of templates-1</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is lower than the lowest <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library =&gt; <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::indexEalpha"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">indexEalpha</span></code></a> = <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::indexEbeta"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">indexEbeta</span></code></a> = 0</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is higher than the highest <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library =&gt; <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::indexEalpha"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">indexEalpha</span></code></a> = <a class="reference internal" href="#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd" title="find_Esboundary::indexEbeta"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">indexEbeta</span></code></a> = Number of templates-1</p></li>
 </ul>
 </div></blockquote>
 <p><strong>Members/Variables</strong></p>
@@ -1744,14 +1744,14 @@ required) over the threshold. To look for more pulses, it finds <em>nSamplesUp</
 <p>It finds the two embracing <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the calibration library:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>If <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is lower than the lowest <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The data with the lowest <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> (first row) in the library are chosen</p></li>
-<li><p>If <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is higher than the highest <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The data of the penultimate row in the library are chosen</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is lower than the lowest <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library =&gt; The data with the lowest <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> (first row) in the library are chosen</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is higher than the highest <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library =&gt; The data of the penultimate row in the library are chosen</p></li>
 </ul>
 </div></blockquote>
 <p><strong>Members/Variables</strong></p>
 <p>int <strong>runF0orB0val</strong></p>
 <blockquote>
-<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>F0</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 1. If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>B0</strong> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 0</p>
+<div><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>F0</strong> =&gt; <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 1. If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-FilterMethod"><code class="xref std std-option docutils literal notranslate"><span class="pre">FilterMethod</span></code></a> = <strong>B0</strong> =&gt; <a class="reference internal" href="#_CPPv421find_matchedfilterDABidP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_matchedfilterDAB::runF0orB0val"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">runF0orB0val</span></code></a> = 0</p>
 </div></blockquote>
 <p>double <strong>maxDER</strong></p>
 <blockquote>
@@ -1799,8 +1799,8 @@ required) over the threshold. To look for more pulses, it finds <em>nSamplesUp</
 <p>In general, it finds the two energies wich straddle <a class="reference internal" href="#_CPPv419find_model_energiesdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_energies::energy"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">energy</span></code></a> in the calibration library and interpolates (<a class="reference internal" href="#_CPPv417interpolate_modelPP10gsl_vectordP10gsl_vectordP10gsl_vectord" title="interpolate_model"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">interpolate_model()</span></code></a>):</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>If <a class="reference internal" href="#_CPPv419find_model_energiesdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_energies::energy"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">energy</span></code></a> is lower than the lowest energy in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The model with the lowest energy in the library is chosen</p></li>
-<li><p>If <a class="reference internal" href="#_CPPv419find_model_energiesdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_energies::energy"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">energy</span></code></a> is higher than the highest energy in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The model with the highest energy in the library is chosen</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv419find_model_energiesdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_energies::energy"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">energy</span></code></a> is lower than the lowest energy in the library =&gt; The model with the lowest energy in the library is chosen</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv419find_model_energiesdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_energies::energy"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">energy</span></code></a> is higher than the highest energy in the library =&gt; The model with the highest energy in the library is chosen</p></li>
 </ul>
 </div></blockquote>
 <p><strong>Members/Variables</strong></p>
@@ -1829,9 +1829,9 @@ pulse template (<em>pulse_templates_filder</em>) of the calibration library.</p>
 <p>In general, it finds the two <em>maxDER</em> which straddle <a class="reference internal" href="#_CPPv418find_model_maxDERsdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_maxDERs::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> in the calibration library and interpolates (<a class="reference internal" href="#_CPPv417interpolate_modelPP10gsl_vectordP10gsl_vectordP10gsl_vectord" title="interpolate_model"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">interpolate_model()</span></code></a>):</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>If <a class="reference internal" href="#_CPPv418find_model_maxDERsdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_maxDERs::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is lower than the lowest <em>maxDERs</em> in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The model with
+<li><p>If <a class="reference internal" href="#_CPPv418find_model_maxDERsdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_maxDERs::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is lower than the lowest <em>maxDERs</em> in the library =&gt; The model with
 the lowest <em>maxDERs</em> in the library is chosen</p></li>
-<li><p>If <a class="reference internal" href="#_CPPv418find_model_maxDERsdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_maxDERs::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is higher than the highest <em>maxDERs</em> in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The model with
+<li><p>If <a class="reference internal" href="#_CPPv418find_model_maxDERsdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_maxDERs::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is higher than the highest <em>maxDERs</em> in the library =&gt; The model with
 the highest <em>maxDERs</em> in the library is chosen</p></li>
 </ul>
 </div></blockquote>
@@ -1860,8 +1860,8 @@ and the <em>maxDERs</em> of the templates</p>
 <p>It finds the two <a class="reference internal" href="#_CPPv420find_model_samp1DERsdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_samp1DERs::samp1DER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">samp1DER</span></code></a> closer in the calibration library and interpolates (<a class="reference internal" href="#_CPPv417interpolate_modelPP10gsl_vectordP10gsl_vectordP10gsl_vectord" title="interpolate_model"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">interpolate_model()</span></code></a>)</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>If <a class="reference internal" href="#_CPPv420find_model_samp1DERsdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_samp1DERs::samp1DER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">samp1DER</span></code></a> is lower than the lowest samp1DER in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The model with the lowest samp1DER in the library is chosen</p></li>
-<li><p>If <a class="reference internal" href="#_CPPv420find_model_samp1DERsdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_samp1DERs::samp1DER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">samp1DER</span></code></a> is higher than the highest samp1DER in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The model with the highest samp1DER in the library is chosen</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv420find_model_samp1DERsdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_samp1DERs::samp1DER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">samp1DER</span></code></a> is lower than the lowest samp1DER in the library =&gt; The model with the lowest samp1DER in the library is chosen</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv420find_model_samp1DERsdP21ReconstructInitSIRENAPP10gsl_vector" title="find_model_samp1DERs::samp1DER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">samp1DER</span></code></a> is higher than the highest samp1DER in the library =&gt; The model with the highest samp1DER in the library is chosen</p></li>
 </ul>
 </div></blockquote>
 <p><strong>Members/Variables</strong></p>
@@ -1888,8 +1888,8 @@ This function selects the proper optimal filter from the calibration library col
 <p>It finds the two embracing <a class="reference internal" href="#_CPPv421find_optimalfilterDABdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_optimalfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the calibration library:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>If <a class="reference internal" href="#_CPPv421find_optimalfilterDABdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_optimalfilterDAB::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is lower than the lowest <a class="reference internal" href="#_CPPv421find_optimalfilterDABdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_optimalfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The data with the lowest <a class="reference internal" href="#_CPPv421find_optimalfilterDABdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_optimalfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> (first row) in the library are chosen</p></li>
-<li><p>If <a class="reference internal" href="#_CPPv421find_optimalfilterDABdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_optimalfilterDAB::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is higher than the highest <a class="reference internal" href="#_CPPv421find_optimalfilterDABdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_optimalfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The data of the penultimate row in the library are chosen</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv421find_optimalfilterDABdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_optimalfilterDAB::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is lower than the lowest <a class="reference internal" href="#_CPPv421find_optimalfilterDABdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_optimalfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library =&gt; The data with the lowest <a class="reference internal" href="#_CPPv421find_optimalfilterDABdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_optimalfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> (first row) in the library are chosen</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv421find_optimalfilterDABdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_optimalfilterDAB::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is higher than the highest <a class="reference internal" href="#_CPPv421find_optimalfilterDABdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_optimalfilterDAB::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library =&gt; The data of the penultimate row in the library are chosen</p></li>
 </ul>
 </div></blockquote>
 <p><strong>Members/Variables</strong></p>
@@ -1936,8 +1936,8 @@ in the library (<em>optimal_filters</em>)</p>
 <p>It finds the two embracing <a class="reference internal" href="#_CPPv413find_prclofwmdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPdPdd" title="find_prclofwm::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the calibration library:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>If <a class="reference internal" href="#_CPPv413find_prclofwmdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPdPdd" title="find_prclofwm::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is lower than the lowest <a class="reference internal" href="#_CPPv413find_prclofwmdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPdPdd" title="find_prclofwm::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The data with the lowest <a class="reference internal" href="#_CPPv413find_prclofwmdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPdPdd" title="find_prclofwm::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> (first row) in the library are chosen</p></li>
-<li><p>If <a class="reference internal" href="#_CPPv413find_prclofwmdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPdPdd" title="find_prclofwm::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is higher than the highest <a class="reference internal" href="#_CPPv413find_prclofwmdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPdPdd" title="find_prclofwm::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The data of the penultimate row in the library are chosen</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv413find_prclofwmdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPdPdd" title="find_prclofwm::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is lower than the lowest <a class="reference internal" href="#_CPPv413find_prclofwmdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPdPdd" title="find_prclofwm::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library =&gt; The data with the lowest <a class="reference internal" href="#_CPPv413find_prclofwmdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPdPdd" title="find_prclofwm::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> (first row) in the library are chosen</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv413find_prclofwmdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPdPdd" title="find_prclofwm::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is higher than the highest <a class="reference internal" href="#_CPPv413find_prclofwmdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPdPdd" title="find_prclofwm::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library =&gt; The data of the penultimate row in the library are chosen</p></li>
 </ul>
 </div></blockquote>
 <p><strong>Members/Variables</strong></p>
@@ -1979,8 +1979,8 @@ in the library (<em>optimal_filters</em>)</p>
 <p>It finds the two embracing <a class="reference internal" href="#_CPPv411find_prclwndP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_prclwn::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the calibration library:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>If <a class="reference internal" href="#_CPPv411find_prclwndP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_prclwn::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is lower than the lowest <a class="reference internal" href="#_CPPv411find_prclwndP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_prclwn::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The data with the lowest <a class="reference internal" href="#_CPPv411find_prclwndP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_prclwn::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> (first row) in the library are chosen</p></li>
-<li><p>If <a class="reference internal" href="#_CPPv411find_prclwndP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_prclwn::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is higher than the highest <a class="reference internal" href="#_CPPv411find_prclwndP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_prclwn::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The data of the penultimate row in the library are chosen</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv411find_prclwndP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_prclwn::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is lower than the lowest <a class="reference internal" href="#_CPPv411find_prclwndP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_prclwn::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library =&gt; The data with the lowest <a class="reference internal" href="#_CPPv411find_prclwndP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_prclwn::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> (first row) in the library are chosen</p></li>
+<li><p>If <a class="reference internal" href="#_CPPv411find_prclwndP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_prclwn::maxDER"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDER</span></code></a> is higher than the highest <a class="reference internal" href="#_CPPv411find_prclwndP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd" title="find_prclwn::maxDERs"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">maxDERs</span></code></a> in the library =&gt; The data of the penultimate row in the library are chosen</p></li>
 </ul>
 </div></blockquote>
 <p><strong>Members/Variables</strong></p>
@@ -2248,15 +2248,15 @@ Then, the code is divided into 2 <em>if</em> statements:</p>
 <ul class="simple">
 <li><p>When the current pulse is the first pulse into the record:</p>
 <ul>
-<li><p><img class="math" src="_images/math/949c7431d2aaf222557f0050ded1e51320d755ef.png" alt="tstart \geq lb"/> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Sum <em>lb</em> samples</p></li>
-<li><p><img class="math" src="_images/math/0f0f2c70220962cba92dbb25bf46a8aa9e9e3f04.png" alt="0&lt;tstart&lt;lb"/> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Sum the available number of samples (although the available number of samples was lower than <em>lb</em>)</p></li>
-<li><p><img class="math" src="_images/math/e1d07fa16eb55055976ba32b0d52716a1797a1e6.png" alt="tstart=0"/> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> If there is not a pulse-free interval before the pulse, it is looked for it after the current pulse</p></li>
+<li><p><img class="math" src="_images/math/949c7431d2aaf222557f0050ded1e51320d755ef.png" alt="tstart \geq lb"/> =&gt; Sum <em>lb</em> samples</p></li>
+<li><p><img class="math" src="_images/math/0f0f2c70220962cba92dbb25bf46a8aa9e9e3f04.png" alt="0&lt;tstart&lt;lb"/> =&gt; Sum the available number of samples (although the available number of samples was lower than <em>lb</em>)</p></li>
+<li><p><img class="math" src="_images/math/e1d07fa16eb55055976ba32b0d52716a1797a1e6.png" alt="tstart=0"/> =&gt; If there is not a pulse-free interval before the pulse, it is looked for it after the current pulse</p></li>
 </ul>
 </li>
 <li><p>When the current pulse is not the first pulse into the record:</p>
 <ul>
-<li><p><img class="math" src="_images/math/b95bfe819bafca28a01a0cafc73fa49c99255f4d.png" alt="tstart_i-tend_{i-1} \geq lb"/> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Sum lb samples</p></li>
-<li><p><img class="math" src="_images/math/7e8e204636e4d23b96093164e800b43d62b90e20.png" alt="0&lt;tstart_i-tend{i-1}&lt;lb"/> <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Sum the available number of samples (although the available number of samples was lower than <em>lb</em>)</p></li>
+<li><p><img class="math" src="_images/math/b95bfe819bafca28a01a0cafc73fa49c99255f4d.png" alt="tstart_i-tend_{i-1} \geq lb"/> =&gt; Sum lb samples</p></li>
+<li><p><img class="math" src="_images/math/7e8e204636e4d23b96093164e800b43d62b90e20.png" alt="0&lt;tstart_i-tend{i-1}&lt;lb"/> =&gt; Sum the available number of samples (although the available number of samples was lower than <em>lb</em>)</p></li>
 <li><p>If there is not a pulse-free interval before the pulse, it is looked for it after the current pulse</p></li>
 </ul>
 </li>
@@ -2613,7 +2613,7 @@ pulse height is going to be estimated by using <a class="reference internal" hre
 <li><dl class="simple">
 <dt>Processing each record</dt><dd><ul>
 <li><p>Information has been read by blocks (with nrows per block)</p></li>
-<li><p>Just in case the last record has been filled out with 0’s <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Last record discarded</p></li>
+<li><p>Just in case the last record has been filled out with 0’s =&gt; Last record discarded</p></li>
 <li><p>Convert to the resistance space if necessary</p></li>
 <li><p>To avoid taking into account the pulse tails at the beginning of a record as part of a pulse-free interval</p></li>
 <li><p>Low-pass filtering</p></li>
@@ -2621,13 +2621,13 @@ pulse height is going to be estimated by using <a class="reference internal" hre
 <li><p>Finding the pulses: Pulses tstarts are found (call <a class="reference internal" href="#_CPPv415findPulsesNoiseP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPiPddididdd" title="findPulsesNoise"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">findPulsesNoise()</span></code></a>)</p></li>
 <li><dl class="simple">
 <dt>Finding the pulse-free intervals in each record</dt><dd><ul>
-<li><p>If there are pulses <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Call <a class="reference internal" href="#_CPPv412findIntervaliP10gsl_vectorP10gsl_vectoriiiiPiPP10gsl_vector" title="findInterval"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">findInterval()</span></code></a></p></li>
-<li><p>No pulses <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The whole event is going to be used (DIVIDING into intervals of intervalMinBins size) <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Call <a class="reference internal" href="#_CPPv413findIntervalNP10gsl_vectoriPiPP10gsl_vector" title="findIntervalN"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">findIntervalN()</span></code></a></p></li>
+<li><p>If there are pulses =&gt; Call <a class="reference internal" href="#_CPPv412findIntervaliP10gsl_vectorP10gsl_vectoriiiiPiPP10gsl_vector" title="findInterval"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">findInterval()</span></code></a></p></li>
+<li><p>No pulses =&gt; The whole event is going to be used (DIVIDING into intervals of intervalMinBins size) =&gt; Call <a class="reference internal" href="#_CPPv413findIntervalNP10gsl_vectoriPiPP10gsl_vector" title="findIntervalN"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">findIntervalN()</span></code></a></p></li>
 </ul>
 </dd>
 </dl>
 </li>
-<li><p>Calculating the mean and sigma of the intervals without pulses together <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <em>BSLN0</em> and <em>NOISESTD</em></p></li>
+<li><p>Calculating the mean and sigma of the intervals without pulses together =&gt; <em>BSLN0</em> and <em>NOISESTD</em></p></li>
 </ul>
 </dd>
 </dl>
@@ -2857,7 +2857,7 @@ It has been fixed in <a class="reference internal" href="SIRENAcommandline.html#
 </div></blockquote>
 <p>int <strong>tstartPulse3</strong></p>
 <blockquote>
-<div><p>Tstart (samples) of the third pulse (if 0 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> PAIRS, if not 0 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> TRIOS), <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-tstartPulse3"><code class="xref std std-option docutils literal notranslate"><span class="pre">tstartPulse3</span></code></a></p>
+<div><p>Tstart (samples) of the third pulse (if 0 =&gt; PAIRS, if not 0 =&gt; TRIOS), <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-tstartPulse3"><code class="xref std std-option docutils literal notranslate"><span class="pre">tstartPulse3</span></code></a></p>
 </div></blockquote>
 <p>double <strong>energyPCA1</strong></p>
 <blockquote>
@@ -2918,8 +2918,8 @@ It has been fixed in <a class="reference internal" href="SIRENAcommandline.html#
 </div></blockquote>
 <p>bool* <strong>triggerCondition</strong></p>
 <blockquote>
-<div><p>True <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The algorithm has found the first event</p>
-<p>False <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The algorithm has not found any event</p>
+<div><p>True =&gt; The algorithm has found the first event</p>
+<p>False =&gt; The algorithm has not found any event</p>
 </div></blockquote>
 <p>int* <strong>tstart</strong></p>
 <blockquote>
@@ -3063,7 +3063,7 @@ Used in tool <a class="reference internal" href="SIRENAcommandline.html#gennoise
 <span id="_CPPv310loadRecordP9TesRecordPdPP10gsl_vector"></span><span id="_CPPv210loadRecordP9TesRecordPdPP10gsl_vector"></span><span id="loadRecord__TesRecordP.doubleP.gsl_vectorPP"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">loadRecord</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">TesRecord</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">record</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">time_record</span></span>, <span class="n"><span class="pre">gsl_vector</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">adc_double</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv410loadRecordP9TesRecordPdPP10gsl_vector" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Located in file: <em>tasksSIRENA.cpp</em></p>
 <p>This fucntion loads the structure <a class="reference internal" href="#_CPPv410loadRecordP9TesRecordPdPP10gsl_vector" title="loadRecord::record"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">record</span></code></a> into the <a class="reference internal" href="#_CPPv410loadRecordP9TesRecordPdPP10gsl_vector" title="loadRecord::adc_double"><code class="xref cpp cpp-member docutils literal notranslate"><span class="pre">adc_double</span></code></a> GSL vector.</p>
-<p>It checks if the record has been filled out with 0’s <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> It only loads the first values (which are different from 0).</p>
+<p>It checks if the record has been filled out with 0’s =&gt; It only loads the first values (which are different from 0).</p>
 <p><strong>Members/Variables</strong></p>
 <p>TesRecord* <strong>record</strong></p>
 <blockquote>
@@ -3104,7 +3104,7 @@ Used in tool <a class="reference internal" href="SIRENAcommandline.html#gennoise
 <blockquote>
 <div><ul class="simple">
 <li><p>1: Function cannot run</p></li>
-<li><p>3: Cut-off frequency too high <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Equivalent to not filter</p></li>
+<li><p>3: Cut-off frequency too high =&gt; Equivalent to not filter</p></li>
 <li><p>4: Cut-off frequency too low</p></li>
 </ul>
 </div></blockquote>
@@ -3536,7 +3536,7 @@ S_{(x,x^2)}=\sum{{x_i}^3}-\frac{\sum{x_i}\cdot\sum{{x_i}^2}}{N} &amp; \\
 </ul>
 </li>
 <li><p>Calculate the end time of the found pulses and check if the pulse is saturated</p></li>
-<li><p>Calculate the baseline (mean and standard deviation) before a pulse (in general <em>before</em>) <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> To be written in <strong>BSLN</strong> and <strong>RMSBSLN</strong> columns in the output FITS file</p></li>
+<li><p>Calculate the baseline (mean and standard deviation) before a pulse (in general <em>before</em>) =&gt; To be written in <strong>BSLN</strong> and <strong>RMSBSLN</strong> columns in the output FITS file</p></li>
 <li><p>Obtain the approximate rise and fall times of each pulse</p></li>
 <li><p>Load the found pulses data in the input/output <em>foundPulses</em> structure</p></li>
 <li><p>Write test info (if <em>reconstruct_init-&gt;intermediate</em> = 1)</p></li>
@@ -3818,11 +3818,11 @@ is scaled with <a class="reference internal" href="#_CPPv49RS_filterP10gsl_vecto
 <p>Conditions:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>If first record and <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1  <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/>  Run <a class="reference internal" href="#_CPPv413filderLibraryPP21ReconstructInitSIRENAd" title="filderLibrary"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">filderLibrary()</span></code></a></p></li>
-<li><p>If last record and <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Run <a class="reference internal" href="#_CPPv417calculateTemplateP21ReconstructInitSIRENAP16PulsesCollectionP16PulsesCollectiondPP10gsl_vectorPdPP10gsl_matrixPP10gsl_matrixPP10gsl_vector" title="calculateTemplate"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">calculateTemplate()</span></code></a> and <a class="reference internal" href="#_CPPv412writeLibraryP21ReconstructInitSIRENAddP10gsl_vectorP10gsl_matrixP10gsl_matrixbPP8fitsfileP10gsl_vector" title="writeLibrary"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">writeLibrary()</span></code></a></p></li>
-<li><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-intermediate"><code class="xref std std-option docutils literal notranslate"><span class="pre">intermediate</span></code></a> = 1 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> <a class="reference internal" href="#_CPPv413writeTestInfoP21ReconstructInitSIRENAP10gsl_vectordP8fitsfile" title="writeTestInfo"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">writeTestInfo()</span></code></a> and <a class="reference internal" href="#_CPPv411writePulsesPP21ReconstructInitSIRENAddP10gsl_vectoriP10gsl_vectorP10gsl_vectorP10gsl_vectorP10gsl_vectorP10gsl_vectorP8fitsfile" title="writePulses"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">writePulses()</span></code></a></p></li>
-<li><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Find pulses by using <a class="reference internal" href="#_CPPv413findPulsesCALP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPiPdddidddP21ReconstructInitSIRENAdd" title="findPulsesCAL"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">findPulsesCAL()</span></code></a></p></li>
-<li><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Find pulses by <a class="reference internal" href="#_CPPv417InitialTriggeringP10gsl_vectordddddPbPiPiPdi" title="InitialTriggering"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">InitialTriggering()</span></code></a> and <a class="reference internal" href="#_CPPv415FindSecondariesiP10gsl_vectordP21ReconstructInitSIRENAiPiPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vector" title="FindSecondaries"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">FindSecondaries()</span></code></a> or <a class="reference internal" href="#_CPPv418FindSecondariesSTCiP10gsl_vectordP21ReconstructInitSIRENAiPiPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vector" title="FindSecondariesSTC"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">FindSecondariesSTC()</span></code></a></p></li>
+<li><p>If first record and <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1  =&gt;  Run <a class="reference internal" href="#_CPPv413filderLibraryPP21ReconstructInitSIRENAd" title="filderLibrary"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">filderLibrary()</span></code></a></p></li>
+<li><p>If last record and <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0 =&gt; Run <a class="reference internal" href="#_CPPv417calculateTemplateP21ReconstructInitSIRENAP16PulsesCollectionP16PulsesCollectiondPP10gsl_vectorPdPP10gsl_matrixPP10gsl_matrixPP10gsl_vector" title="calculateTemplate"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">calculateTemplate()</span></code></a> and <a class="reference internal" href="#_CPPv412writeLibraryP21ReconstructInitSIRENAddP10gsl_vectorP10gsl_matrixP10gsl_matrixbPP8fitsfileP10gsl_vector" title="writeLibrary"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">writeLibrary()</span></code></a></p></li>
+<li><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-intermediate"><code class="xref std std-option docutils literal notranslate"><span class="pre">intermediate</span></code></a> = 1 =&gt; <a class="reference internal" href="#_CPPv413writeTestInfoP21ReconstructInitSIRENAP10gsl_vectordP8fitsfile" title="writeTestInfo"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">writeTestInfo()</span></code></a> and <a class="reference internal" href="#_CPPv411writePulsesPP21ReconstructInitSIRENAddP10gsl_vectoriP10gsl_vectorP10gsl_vectorP10gsl_vectorP10gsl_vectorP10gsl_vectorP8fitsfile" title="writePulses"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">writePulses()</span></code></a></p></li>
+<li><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0 =&gt; Find pulses by using <a class="reference internal" href="#_CPPv413findPulsesCALP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPiPdddidddP21ReconstructInitSIRENAdd" title="findPulsesCAL"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">findPulsesCAL()</span></code></a></p></li>
+<li><p>If <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 1 =&gt; Find pulses by <a class="reference internal" href="#_CPPv417InitialTriggeringP10gsl_vectordddddPbPiPiPdi" title="InitialTriggering"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">InitialTriggering()</span></code></a> and <a class="reference internal" href="#_CPPv415FindSecondariesiP10gsl_vectordP21ReconstructInitSIRENAiPiPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vector" title="FindSecondaries"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">FindSecondaries()</span></code></a> or <a class="reference internal" href="#_CPPv418FindSecondariesSTCiP10gsl_vectordP21ReconstructInitSIRENAiPiPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vector" title="FindSecondariesSTC"><code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">FindSecondariesSTC()</span></code></a></p></li>
 </ul>
 </div></blockquote>
 <p>Steps:</p>
@@ -4074,7 +4074,6 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 <span id="_CPPv322tesreconstruction_mainv"></span><span id="_CPPv222tesreconstruction_mainv"></span><span id="tesreconstruction_main"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tesreconstruction_main</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv422tesreconstruction_mainv" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Located in file: <em>tesreconstruction.c</em></p>
 <p>This function is mainly a wrapper to pass a data file to the SIRENA tasks in order to reconstruct the energy of the incoming X-ray photons after their detection.</p>
-<p>It can run the SIRENA tasks or the Philippe Peille’s tasks depending on the ‘Rcmethod’ selected.</p>
 <p>Steps:</p>
 <ul class="simple">
 <li><p>Register HEATOOL</p></li>
@@ -4082,13 +4081,12 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 <li><p>Read XML info</p></li>
 <li><p>Sixt standard keywords structure</p></li>
 <li><p>Open output FITS file</p></li>
-<li><p>Initialize PP data structures needed for pulse filtering</p></li>
-<li><p>Initialize SIRENA data structures needed for pulse filtering</p></li>
+<li><p>Initialize data structures needed for pulse filtering</p></li>
 <li><p>Read the grading data from the XML file and store it in ‘reconstruct_init_sirena-&gt;grading’</p></li>
 <li><dl class="simple">
 <dt>Obtain the samplig rate and the ‘trig_reclength’:</dt><dd><ul>
 <li><dl class="simple">
-<dt>If Rcmethod starts with ‘&#64;’ <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> List of record input FITS files. For every FITS file:</dt><dd><ul>
+<dt>If RecordFile starts with ‘&#64;’ =&gt; List of record input FITS files. For every FITS file:</dt><dd><ul>
 <li><p>Open FITS file</p></li>
 <li><p>Check if input FITS file have been simulated with TESSIM or XIFUSIM</p></li>
 <li><dl class="simple">
@@ -4103,7 +4101,7 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 </dl>
 </li>
 <li><dl class="simple">
-<dt>If Rcemethod doesn’t start with ‘&#64;’ <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Single record input FITS file</dt><dd><ul>
+<dt>If RecordFile doesn’t start with ‘&#64;’ =&gt; Single record input FITS file</dt><dd><ul>
 <li><p>Open FITS file</p></li>
 <li><p>Check if input FITS file have been simulated with TESSIM or XIFUSIM</p></li>
 <li><dl class="simple">
@@ -4125,7 +4123,7 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 <li><dl class="simple">
 <dt>Reconstruct the input record FITS file:</dt><dd><ul>
 <li><dl class="simple">
-<dt>If Rcmethod starts with ‘&#64;’ <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> List of record input FITS files. For every FITS file:</dt><dd><ul>
+<dt>If RecordFile starts with ‘&#64;’ =&gt; List of record input FITS files. For every FITS file:</dt><dd><ul>
 <li><p>Open record file</p></li>
 <li><p>Initialize: initializeReconstruction or initializeReconstructionSIRENA</p></li>
 <li><p>Build up TesRecord to read the file</p></li>
@@ -4144,7 +4142,7 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 </dl>
 </li>
 <li><dl class="simple">
-<dt>If Rcemethod doesn’t start with ‘&#64;’ <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Single record input FITS file</dt><dd><ul>
+<dt>If RecordFile doesn’t start with ‘&#64;’ =&gt; Single record input FITS file</dt><dd><ul>
 <li><p>Open record file</p></li>
 <li><p>Initialize: initializeReconstruction or initializeReconstructionSIRENA</p></li>
 <li><p>Build up TesRecord to read the file</p></li>
@@ -4170,14 +4168,11 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 <li><p>Free memory</p></li>
 </ul>
 <p>The user must supply the following input parameters (<em>tesreconstruction.par</em> file).</p>
-<p>Common parameters:</p>
-<p>char <strong>Rcmethod</strong></p>
-<blockquote>
-<div><p>Reconstruction method (<strong>PP</strong> or <strong>SIRENA</strong>). If SIRENA <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> If Rcmethod starts with ‘&#64;’ it provides a file text containing several record input FITS files</p>
-</div></blockquote>
+<p>Parameters:</p>
 <p>char <strong>RecordFile</strong></p>
 <blockquote>
 <div><p>Record FITS file</p>
+<p>If SIRENA =&gt; If RecordFile starts with ‘&#64;’ it provides a file text containing several record input FITS files</p>
 </div></blockquote>
 <p>char <strong>TesEventFile</strong></p>
 <blockquote>
@@ -4199,36 +4194,6 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 <blockquote>
 <div><p>Write program parameters into output file</p>
 </div></blockquote>
-<p>PP parameters:</p>
-<p>double <strong>SaturationValue</strong></p>
-<blockquote>
-<div><p>Saturation level of the ADC curves</p>
-</div></blockquote>
-<p>char <strong>OptimalFilterFile</strong></p>
-<blockquote>
-<div><p>Optimal filters file</p>
-</div></blockquote>
-<p>char <strong>PulseTemplateFile</strong></p>
-<blockquote>
-<div><p>Pulse template file</p>
-</div></blockquote>
-<p>double <strong>Threshold</strong></p>
-<blockquote>
-<div><p>Threshold level</p>
-</div></blockquote>
-<p>double <strong>Calfac</strong></p>
-<blockquote>
-<div><p>Calibration factor (should be read from the xml file)</p>
-</div></blockquote>
-<p>int <strong>NormalExclusion</strong></p>
-<blockquote>
-<div><p>Minimal distance before using OFs after a misreconstruction</p>
-</div></blockquote>
-<p>int <strong>DerivateExclusion</strong></p>
-<blockquote>
-<div><p>Minimal distance before reconstructing any event after a misreconstruction</p>
-</div></blockquote>
-<p>SIRENA parameters:</p>
 <p>char <strong>LibraryFile</strong></p>
 <blockquote>
 <div><p>File with calibration library</p>
@@ -4371,7 +4336,7 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 </div></blockquote>
 <p>int <strong>tstartPulse3</strong></p>
 <blockquote>
-<div><p>Tstart (samples) of the third pulse (if 0 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> PAIRS, if not 0 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> TRIOS)</p>
+<div><p>Tstart (samples) of the third pulse (if 0 =&gt; PAIRS, if not 0 =&gt; TRIOS)</p>
 </div></blockquote>
 <p>double <strong>energyPCA1</strong></p>
 <blockquote>
@@ -4385,8 +4350,6 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 <blockquote>
 <div><p>XML input FITS file with instrument definition</p>
 </div></blockquote>
-<p>PP parameters:</p>
-<p>SIRENA parameters:</p>
 </dd></dl>
 
 <dl class="cpp function">
@@ -4500,8 +4463,8 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 <div><ul>
 <li><p>Calculate the elements of the diagonal of the covariance matrix</p></li>
 <li><p>Calculate the elements out of the diagonal of the covariance matrix</p></li>
-<li><p>If saturated pulses <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Covariance matrix is a singular matrix <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Non invertible</p>
-<p>In order to allow the covariance matrix to be inverted <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Replacing 0’s (0’s are due to the saturated values, equal in the pulse and in the model)</p>
+<li><p>If saturated pulses =&gt; Covariance matrix is a singular matrix =&gt; Non invertible</p>
+<p>In order to allow the covariance matrix to be inverted =&gt; Replacing 0’s (0’s are due to the saturated values, equal in the pulse and in the model)</p>
 <ul class="simple">
 <li><p>Elements of the diagonal: Generating a random double <img class="math" src="_images/math/0464a071da3203b9d565701f510a766ae52f3016.png" alt="f_1"/> between a range <em>(fMin,fMax)</em> (-NoiseStd,NoiseStd) to replace 0’s with <img class="math" src="_images/math/5618eb243e1e817e1d2728a5044d5d1944859f2c.png" alt="f_1^2"/></p></li>
 <li><p>Elements out of the diagonal: Generating two random doubles <img class="math" src="_images/math/0464a071da3203b9d565701f510a766ae52f3016.png" alt="f_1"/> and <img class="math" src="_images/math/8bba708bfd9e1df2575d817c79ab6ae0139b20c6.png" alt="f_2"/> between a range <em>(fMin,fMax)</em> (-NoiseStd,NoiseStd) to replace 0’s with <img class="math" src="_images/math/9a9ea6213f15f7db292a06229e467bf789827ec6.png" alt="f_1 \cdot f_2"/></p></li>
@@ -4517,7 +4480,7 @@ It only runs in RECONSTRUCTION mode (<a class="reference internal" href="SIRENAc
 </div></blockquote>
 <p>bool <strong>saturatedPulses</strong></p>
 <blockquote>
-<div><p>If <em>true</em>, all the pulses ( <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> all the pulses have the same energy) are saturated</p>
+<div><p>If <em>true</em>, all the pulses ( <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-opmode"><code class="xref std std-option docutils literal notranslate"><span class="pre">opmode</span></code></a> = 0 =&gt; all the pulses have the same energy) are saturated</p>
 </div></blockquote>
 <p>PulsesCollection* <strong>pulsesAll</strong></p>
 <blockquote>
@@ -4729,10 +4692,10 @@ if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-inte
 <p>This function includes the processing of the each level of message in the log file and the output screen:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Verbosity = 0 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The log file and the output screen include Errors</p></li>
-<li><p>Verbosity = 1 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The log file and the output screen include Errors and Warnings</p></li>
-<li><p>Verbosity = 2 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The log file and the output screen include Errors, Warnings and Alerts</p></li>
-<li><p>Verbosity = 3 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> The log file and the output screen include Errors, Warnings, Alerts and Log messages</p></li>
+<li><p>Verbosity = 0 =&gt; The log file and the output screen include Errors</p></li>
+<li><p>Verbosity = 1 =&gt; The log file and the output screen include Errors and Warnings</p></li>
+<li><p>Verbosity = 2 =&gt; The log file and the output screen include Errors, Warnings and Alerts</p></li>
+<li><p>Verbosity = 3 =&gt; The log file and the output screen include Errors, Warnings, Alerts and Log messages</p></li>
 </ul>
 </div></blockquote>
 <p><strong>Members/Variables</strong></p>
@@ -4793,11 +4756,11 @@ if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-inte
 <p>gsl_vector* <strong>quality</strong></p>
 <blockquote>
 <div><p>GSL vector with the quality of the found pulses</p>
-<p>0 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Standard (good) pulses</p>
-<p>1 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Truncated pulses at the beginning</p>
-<p>2 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Truncated pulses at the end</p>
-<p>10 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Saturated pulses</p>
-<p>11 <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Truncated and saturated pulses</p>
+<p>0 =&gt; Standard (good) pulses</p>
+<p>1 =&gt; Truncated pulses at the beginning</p>
+<p>2 =&gt; Truncated pulses at the end</p>
+<p>10 =&gt; Saturated pulses</p>
+<p>11 =&gt; Truncated and saturated pulses</p>
 </div></blockquote>
 <p>gsl_vector* <strong>taurise</strong></p>
 <blockquote>
@@ -4846,8 +4809,8 @@ if <a class="reference internal" href="SIRENAcommandline.html#cmdoption-arg-inte
 <ul class="simple">
 <li><p>Allocate GSL vectors</p></li>
 <li><p>Write the data in the output FITS file (print only half of FFT to prevent aliasing)</p></li>
-<li><p><em>NOISE</em> HDU only contains positive frequencies (<img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> Multiply by 2 the amplitude)</p></li>
-<li><p><em>NOISEALL</em> HDU contains negative and positive frequencies <img class="math" src="_images/math/d1a55bc0d5f4b30060db724826d79f376a4cd4d4.png" alt="\Rightarrow"/> It is the HDU read to build the optimal filters</p></li>
+<li><p><em>NOISE</em> HDU only contains positive frequencies (=&gt; Multiply by 2 the amplitude)</p></li>
+<li><p><em>NOISEALL</em> HDU contains negative and positive frequencies =&gt; It is the HDU read to build the optimal filters</p></li>
 <li><p><em>WEIGHTMS</em> HDU</p></li>
 </ul>
 </dd></dl>
