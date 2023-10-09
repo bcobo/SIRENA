@@ -3,3 +3,7 @@
 sphinxcontrib-bibtex
 numpydoc
 # sphinx.ext.imgmath
+scipy==1.11.1
+numpy==1.25.2
+pandas==2.0.3
+matplotlib==3.7.2
