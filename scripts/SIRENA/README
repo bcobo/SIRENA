@@ -26,11 +26,11 @@ SIRENA reconstruction requires a table with GRADING parameters to qualify the re
 
 For xifusim versions higher than 0.7.0, it is possible to use a single XML file for xifusim simulations and SIRENA reconstructions. In this case, the structure of the XML file should have a root node called 'xifuconfig' with the 'detector' node being a child thereof. There is also an optional 'reconstruction' node, on the same level as 'detector'.
 
-The 'reconstruction' node may contain keys for ADU to current  conversion. If they are present, they are added by xifusim to the Trigger  output header (useful for the reconstruction in the quasi-resistance space).
+The 'reconstruction' node may contain keys for ADU to current  conversion. If they are present, they are added by xifusim to the Trigger output header (useful for the reconstruction in the quasi-resistance space).
 The old structure with the 'detector' node at root is still supported by xifusim.
 
 Example of 8pix_nobbfb.xml XML file (common for xifusim>0.7.0 and SIRENA):
-==================================================
+==========================================================================
 
 <?xml version="1.0"?>
 
@@ -67,7 +67,8 @@ Example of 8pix_nobbfb.xml XML file (common for xifusim>0.7.0 and SIRENA):
 
 </xifuconfig>
 
-According the latest version of the XML file:
+Exampls of an XML file for most recent SIRENA versions:
+=======================================================
 
 <?xml version="1.0"?>
 

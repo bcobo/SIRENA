@@ -860,9 +860,155 @@ Search functions by name at :ref:`genindex`.
         Optimal filter spectrum (complex values) (output)
         
 
+.. cpp:function:: int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFile * outfile)
+
+    Located in file: *initSIRENA.c*
+
+    This function calls SIRENA to build a library or reconstruct energies.
+
+    **Members/Variables**
+
+    char* **inputFile**
+
+        Input file name
+
+    SixtStdKeywords* **keywords**
+
+        Sixt standard keywords structure
+
+    ReconstructInitSIRENA* **reconstruct_init_sirena**
+
+        Parameters to run SIRENA
+
+    struct Parameters **par**
+
+        Input parameters
+
+    double **sampling_rate**
+
+        Sampling rate
+
+    int* **trig_reclength**
+
+        Necessary if SIRENA is going to run in THREADING mode
+
+    PulsesCollection* **pulsesAll**
+
+        Structure containing the detected pulses
+
+    TesEventFile* **outfile**
+
+        Output events FITS file
+
+    .. cpp:member:: char* inputFile
+
+        Input file name
+
+    .. cpp:member:: SixtStdKeywords* keywords
+
+        Sixt standard keywords structure
+
+    .. cpp:member:: ReconstructInitSIRENA* reconstruct_init_sirena
+
+        Parameters to run SIRENA
+
+    .. cpp:member:: struct Parameters par
+
+        Input parameters
+
+    .. cpp:member:: double sampling_rate
+
+        Sampling rate
+
+    .. cpp:member:: int* trig_reclength
+
+        Necessary if SIRENA is going to run in THREADING mode
+
+    .. cpp:member:: PulsesCollection* pulsesAll
+
+        Structure containing the detected pulses
+
+    .. cpp:member:: TesEventFile* outfile
+
+        Output events FITS file
+
+
+.. cpp:function:: int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFile * outfile)
+
+    Located in file: *initSIRENA.c*
+
+    This function calls SIRENA to build a library or reconstruct energies no matter if :cpp:member:`inputFile` is only a FITS file or more (inputFile can start with '@' or not).
+
+    **Members/Variables**
+
+    char* **inputFile**
+
+        Input file name
+
+    SixtStdKeywords* **keywords**
+
+        Sixt standard keywords structure
+
+    ReconstructInitSIRENA* **reconstruct_init_sirena**
+
+        Parameters to run SIRENA
+
+    struct Parameters **par**
+
+        Input parameters
+
+    double **sampling_rate**
+
+        Sampling rate
+
+    int* **trig_reclength**
+
+        Necessary if SIRENA is going to run in THREADING mode
+
+    PulsesCollection* **pulsesAll**
+
+        Structure containing the detected pulses
+
+    TesEventFile* **outfile**
+
+        Output events FITS file
+
+    .. cpp:member:: char* inputFile
+
+        Input file name
+
+    .. cpp:member:: SixtStdKeywords* keywords
+
+        Sixt standard keywords structure
+
+    .. cpp:member:: ReconstructInitSIRENA* reconstruct_init_sirena
+
+        Parameters to run SIRENA
+
+    .. cpp:member:: struct Parameters par
+
+        Input parameters
+
+    .. cpp:member:: double sampling_rate
+
+        Sampling rate
+
+    .. cpp:member:: int* trig_reclength
+
+        Necessary if SIRENA is going to run in THREADING mode
+
+    .. cpp:member:: PulsesCollection* pulsesAll
+
+        Structure containing the detected pulses
+
+    .. cpp:member:: TesEventFile* outfile
+
+        Output events FITS file
+
+
 .. cpp:function:: int checkXmls(struct Parameters* const par)
 
-    Located in file: *tesreconstruction.c*
+    Located in file: *initSIRENA.c*
 
     This function checks if the XML file used to build the library is the same to be used to recconstruct
 
@@ -870,11 +1016,11 @@ Search functions by name at :ref:`genindex`.
 
     struct Parameters* const **par**
 
-        Structure containing the input parameters specified in *tesreconstruction.par*
+        Structure containing the input parameters specified in *tesreconstruction.par*, *teslib.par* or *tesrecons.par*
 
     .. cpp:member:: struct Parameters* const par
 
-        Structure containing the input parameters specified in *tesreconstruction.par*
+        Structure containing the input parameters specified in *tesreconstruction.par*, *teslib.par* or *tesrecons.par*
         
 
 .. cpp:function:: int convertI2R (char* EnergyMethod, double Ibias, double Imin, double Imax, double ADU_CNV, double ADU_BIAS, double I_BIAS, double Ifit, double samprate, gsl_vector **invector)
@@ -1399,6 +1545,39 @@ Search functions by name at :ref:`genindex`.
         File name
   
   
+.. cpp:function:: int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, ReconstructInitSIRENA** reconstruct_init_sirena)
+
+    Located in file: *initSIRENA.c*
+
+    This function reads the grading data from the XML file and store it in themember *grading* of the :cpp:member:`reconstruct_init_sirena`.
+
+    **Members/Variables**
+
+    struct Parameters **par**
+
+        Input parameters
+
+    AdvDet* **det**
+
+        Pixel detector
+
+    ReconstructInitSIRENA** **reconstruct_init**
+
+        Member of *ReconstructInitSIRENA* structure to initialize the reconstruction parameters (pointer and values).
+
+    .. cpp:member:: struct Parameters par
+
+        Input parameters
+
+    .. cpp:member:: AdvDet* det
+
+        Pixel detector
+
+    .. cpp:member:: ReconstructInitSIRENA** reconstruct_init
+
+        Member of *ReconstructInitSIRENA* structure to initialize the reconstruction parameters (pointer and values).
+
+
 .. cpp:function:: int filterByWavelets (ReconstructInitSIRENA* reconstruct_init, gsl_vector **invector, int length, int *onlyOnce)
     
     Located in file: *tasksSIRENA.cpp*
@@ -3486,7 +3665,42 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: struct Parameters* const par
     
         Structure containing the input parameters specified in *gennoisespec.par*
+
+
+.. cpp:function:: int getpar_teslib(struct Parameters* const par)
+
+    Located in file: *teslib.c*
+
+    This function gets the input parameter from the command line or their default values from the *teslib.par* file
+
+    **Members/Variables**
+
+    struct Parameters* const **par**
+
+        Structure containing the input parameters specified in *teslib.par*
+
+    .. cpp:member:: struct Parameters* const par
+
+        Structure containing the input parameters specified in *teslib.par*
    
+
+.. cpp:function:: int getpar_tesrecons(struct Parameters* const par)
+
+    Located in file: *tesrecons.c*
+
+    This function gets the input parameter from the command line or their default values from the *tesrecons.par* file
+
+    **Members/Variables**
+
+    struct Parameters* const **par**
+
+        Structure containing the input parameters specified in *tesrecons.par*
+
+    .. cpp:member:: struct Parameters* const par
+
+        Structure containing the input parameters specified in *tesrecons.par*
+
+
 .. cpp:function:: int getPulseHeight(gsl_vector *vectorin, double tstart, double tstartnext, int lastPulse, double lrs, double lb, double B, int sizepulse, double *pulseheight)
     
     Located in file: *pulseprocess.cpp*
@@ -3573,7 +3787,107 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: double* pulseheight
     
         Estimated pulse height of the pulse
-            
+
+
+.. cpp:function:: int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par, double* samplingrate, int* trigreclength)
+
+    Located in file: *initSIRENA.c*
+
+    This function gets the *sampling rate* and the *trig_reclength* from an inputs FITS file :cpp:member:`inputFile`.
+
+    Steps:
+
+     - Open FITS file
+     - Check if input FITS file have been simulated with TESSIM or XIFUSIM
+     - Check if input XML file and XMl file to build the library to be used to reconstruct are the same
+     - Get the sampling rate from the HISTORY keyword from the input FITS file and check with sampling rate from XML file
+     - If xifusim file => Get 'trig_reclength' from the HISTORY keyword from the input FITS file 'trig_reclength' is necessary if SIRENA is going to run in THREADING mode
+     - Close FITS file
+     - Free memory
+
+    **Members/Variables**
+
+    char* **inputFile**
+
+        Input file name
+
+    struct Parameters **par**
+
+        Input parameters
+
+    double* **samplingrate**
+
+        (In) Sampling rate from XML file => (Out) Sampling rate
+
+    int* **trigreclength**
+
+        Necessary if SIRENA is going to run in THREADING mode
+
+   .. cpp:member:: char* inputFile
+
+        Input file name
+
+   .. cpp:member:: struct Parameters par
+
+        Input parameters
+
+   .. cpp:member:: double* samplingrate
+
+        (In) Sampling rate from XML file => (Out) Sampling rate
+
+   .. cpp:member:: int* trigreclength
+
+        Necessary if SIRENA is going to run in THREADING mode
+
+
+.. cpp:function:: int getSamplingrate_trigreclength (char* inputFile, struct Parameters par, double* samplingrate, int* trigreclength, int* numfits)
+
+    Located in file: *initSIRENA.c*
+
+    This function gets the *sampling rate* and the *trig_reclength* no matter if :cpp:member:`inputFile` is only a FITS file or more (inputFile can start with '@' or not, input file or files can have been simulated with TESSIM or XIFUSIM).
+
+    **Members/Variables**
+
+    char* **inputFile**
+
+        Input file name
+
+    struct Parameters **par**
+
+        Input parameters
+
+    double* **samplingrate**
+
+        (In) Sampling rate from XML file => (Out) Sampling rate
+
+    int* **trigreclength**
+
+        Necessary if SIRENA is going to run in THREADING mode
+
+    int* **numfits**
+
+        Number of FITS files to work with
+
+   .. cpp:member:: char* inputFile
+
+        Input file name
+
+   .. cpp:member:: struct Parameters par
+
+        Input parameters
+
+   .. cpp:member:: double* samplingrate
+
+        (In) Sampling rate from XML file => (Out) Sampling rate
+
+   .. cpp:member:: int* trigreclength
+
+        Necessary if SIRENA is going to run in THREADING mode
+
+   .. cpp:member:: int* numfits
+
+        Number of FITS files to work with
+
             
 .. cpp:function:: void gsl_vector_complex_absIFCA(gsl_vector *cvnew,gsl_vector_complex *cv)
     
@@ -4797,7 +5111,7 @@ Search functions by name at :ref:`genindex`.
         
 .. cpp:function:: void MyAssert(int expr, char* msg)
 
-    Located in file: *tesreconstruction.c*
+    Located in file: *initSIRENA.c*
 
     This function displays an error message if the condition in :cpp:member:`expr` is true.
     
@@ -6050,56 +6364,1050 @@ Search functions by name at :ref:`genindex`.
     .. cpp:member:: gsl_vector* vectorout 
 
         GSL with input vector (:cpp:member:`vectorin`) moved forward :cpp:member:`m` samples
+
+
+.. cpp:function:: char* subString (const char* input, int offset, int len, char* dest)
+
+    Located in file: *initSIRENA.cpp*
+
+    This function extracts some elements from an array of characters.
+
+    **Members/Variables**
+
+    const char* **input**
+
+        Array of characters from which some elements are extracted
+
+    int **offset**
+
+        Offset
+
+    int **len**
+
+        Length (number of elements to extract)
+
+    char* **dest**
+
+        Array of characters into which the extracted characters are written
+
+    .. cpp:member:: const char* input
+
+        Array of characters from which some elements are extracted
+
+    .. cpp:member:: int offset
+
+        Offset
+
+    .. cpp:member:: int len
+
+        Length (number of elements to extract)
+
+    .. cpp:member:: char* dest
+
+        Array of characters into which the extracted characters are written
         
             
 .. _T:
+
+.. cpp:function:: int teslib_main()
+
+    Located in file: *teslib.c*
+
+    This function is mainly a wrapper to pass a data file to the SIRENA tasks in order to build a library.
+
+    Steps:
+
+    - Register HEATOOL
+    - Reading all programm parameters by using PIL
+    - Read XML info
+    - :cpp:func:`getSamplingrate_trigreclength` => Obtain the *trig_reclength* and the sampling rate
+    - Sixt standard keywords structure
+    - Open output FITS file
+    - Initialize data structures
+    - Read the grading data from the XML file and store it in *reconstruct_init_sirena->grading*
+    - Build up TesEventList
+    - Call SIRENA to build the library
+    - Save GTI extension to event file
+    - Free memory
+
+    The user must supply the following input parameters (*tesreconstruction.par* file).
+
+    Parameters:
+
+    char **RecordFile**
+
+        Record FITS file
+
+        If :cpp:member:`RecordFile` starts with '@' it provides a file text containing several record input FITS files
+
+    char **TesEventFile**
+
+        Output event list file
+
+    char **LibraryFile**
+
+        File with calibration library
+
+    char **NoiseFile**
+
+        Noise FITS file with noise spectrum
+
+    char **XMLFile**
+
+        XML input FITS file with instrument definition
+
+    char **preBuffer**
+
+        Some samples added or not before the starting time of a pulse (number of added samples read from the XML file)
+        SIRENA's format XML file (grading=>pre,post and pB) or new format XML file (grading=>pre,post and filtlen)
+                                pre=494, post=8192, pB=1000                       pre=494, post=7192, filtlen=8192
+                                                                                        preBuffer=filtlen-post
+
+    int **EventListSize**
+
+        Default size of the event list
+
+    char **clobber**
+
+        Overwrite or not output files if exist (yes/no)
+
+    char **history**
+
+        Write program parameters into output file
+
+    double **scaleFactor**
+
+        Detection scale factor for initial filtering
+
+    int **samplesUp**
+
+        Number of consecutive samples up for threshold trespassing
+
+    double **nSgms**
+
+        Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm
+
+    double **LrsT**
+
+        Running sum length for the RS raw energy estimation (seconds)
+
+    double **LbT**
+
+        Baseline averaging length (seconds)
+
+    double **monoenergy**
+
+        Monochromatic energy of the pulses in the input FITS file in eV
+
+    char **hduPRECALWN**
+
+        Add or not the PRECALWN HDU in the library file (yes/no)
+
+    char **hduPRCLOFWM**
+
+        Add or not the PRCLOFWM HDU in the library file (yes/no)
+
+    int **largeFilter**
+
+        Length of the longest fixed filter
+
+    char **FilterDomain**
+
+        Filtering Domain: Time (**T**) or Frequency (**F**)
+
+    char **FilterMethod**
+
+        Filtering Method: **F0** (deleting the zero frequency bin) or **B0** (deleting the baseline)
+
+    char **EnergyMethod**
+
+        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**
+
+    double **Ifit**
+
+        Constant to apply the I2RFITTED conversion
+
+    int **intermediate**
+
+        Write or not intermediate files (1/0)
+
+    char **detectFile**
+
+        Intermediate detections file (if :cpp:member:`intermediate` = 1)
+
+    .. cpp:member:: char *RecordFile*
+
+        Record FITS file
+
+        If :cpp:member:`RecordFile` starts with '@' it provides a file text containing several record input FITS files
+
+    .. cpp:member:: char TesEventFile
+
+        Output event list file
+
+    .. cpp:member:: char LibraryFile
+
+        File with calibration library
+
+    .. cpp:member:: char NoiseFile
+
+        Noise FITS file with noise spectrum
+
+    .. cpp:member:: char XMLFile
+
+        XML input FITS file with instrument definition
+
+    .. cpp:member:: char preBuffer
+
+        Some samples added or not before the starting time of a pulse (number of added samples read from the XML file)
+        SIRENA's format XML file (grading=>pre,post and pB) or new format XML file (grading=>pre,post and filtlen)
+                                pre=494, post=8192, pB=1000                       pre=494, post=7192, filtlen=8192
+                                                                                        preBuffer=filtlen-post
+
+    .. cpp:member:: int EventListSize
+
+        Default size of the event list
+
+    .. cpp:member:: char clobber
+
+        Overwrite or not output files if exist (yes/no)
+
+    .. cpp:member:: char history
+
+        Write program parameters into output file
+
+    .. cpp:member:: double scaleFactor
+
+        Detection scale factor for initial filtering
+
+    .. cpp:member:: int samplesUp
+
+        Number of consecutive samples up for threshold trespassing
+
+    .. cpp:member:: int samplesDown
+
+        Number of consecutive samples below the threshold to look for other pulse
+
+    .. cpp:member:: double nSgms
+
+        Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm
+
+    .. cpp:member:: double LrsT
+
+        Running sum length for the RS raw energy estimation (seconds)
+
+    .. cpp:member:: double LbT
+
+        Baseline averaging length (seconds)
+
+    .. cpp:member:: double monoenergy
+
+        Monochromatic energy of the pulses in the input FITS file in eV
+
+    .. cpp:member:: char hduPRECALWN
+
+        Add or not the PRECALWN HDU in the library file (yes/no)
+
+    .. cpp:member:: char hduPRCLOFWM
+
+        Add or not the PRCLOFWM HDU in the library file (yes/no)
+
+    .. cpp:member:: int largeFilter
+
+        Length of the longest fixed filter
+
+    .. cpp:member:: char FilterDomain
+
+        Filtering Domain: Time (**T**) or Frequency (**F**)
+
+    .. cpp:member:: char FilterMethod
+
+        Filtering Method: **F0** (deleting the zero frequency bin) or **B0** (deleting the baseline)
+
+    .. cpp:member:: char EnergyMethod
+
+        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**
+
+    .. cpp:member:: double Ifit
+
+        Constant to apply the I2RFITTED conversion
+
+    .. cpp:member:: int intermediate
+
+        Write or not intermediate files (1/0)
+
+    .. cpp:member:: char detectFile
+
+        Intermediate detections file (if :cpp:member:`intermediate` = 1)
+
+
+.. cpp:function:: int tesrecons_main()
+
+    Located in file: *tesrecons.c*
+
+    This function is mainly a wrapper to pass a data file to the SIRENA tasks in order to reconstruct the energies.
+
+    Steps:
+
+    - Register HEATOOL
+    - Reading all programm parameters by using PIL
+    - Read XML info
+    - :cpp:func:`getSamplingrate_trigreclength` => Obtain the *trig_reclength* and the sampling rate
+    - Sixt standard keywords structure
+    - Open output FITS file
+    - Initialize data structures for pulse filtering
+    - Read the grading data from the XML file and store it in *reconstruct_init_sirena->grading*
+    - Build up TesEventList
+    - Call SIRENA to build reconstruct the energies
+    - Save GTI extension to event file
+    - Free memory
+
+    The user must supply the following input parameters (*tesreconstruction.par* file).
+
+    Parameters:
+
+    char **RecordFile**
+
+        Record FITS file
+
+        If :cpp:member:`RecordFile` starts with '@' it provides a file text containing several record input FITS files
+
+    char **TesEventFile**
+
+        Output event list file
+
+    char **LibraryFile**
+
+        File with calibration library
+
+    char **XMLFile**
+
+        XML input FITS file with instrument definition
+
+    char **preBuffer**
+
+        Some samples added or not before the starting time of a pulse (number of added samples read from the XML file)
+        SIRENA's format XML file (grading=>pre,post and pB) or new format XML file (grading=>pre,post and filtlen)
+                                pre=494, post=8192, pB=1000                       pre=494, post=7192, filtlen=8192
+                                                                                        preBuffer=filtlen-post
+
+    int **EventListSize**
+
+        Default size of the event list
+
+    char **clobber**
+
+        Overwrite or not output files if exist (yes/no)
+
+    char **history**
+
+        Write program parameters into output file
+
+    double **scaleFactor**
+
+        Detection scale factor for initial filtering
+
+    int **samplesUp**
+
+        Number of consecutive samples up for threshold trespassing
+
+    int **samplesDown**
+
+        Number of consecutive samples below the threshold to look for other pulse
+
+    double **nSgms**
+
+        Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm
+
+    char **detectionMode**
+
+        Adjusted Derivative (**AD**) or Single Threshold Crossing (**STC**)
+
+    int **detectSP**
+
+        Detect secondary pulses (1) or not (0)
+
+    double **LbT**
+
+        Baseline averaging length (seconds)
+
+    char **FilterDomain**
+
+        Filtering Domain: Time (**T**) or Frequency (**F**)
+
+    char **FilterMethod**
+
+        Filtering Method: **F0** (deleting the zero frequency bin) or **B0** (deleting the baseline)
+
+    char **EnergyMethod**
+
+        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**
+
+    double **filtEeV**
+
+        Energy of the filters of the library to be used to calculate energy (only for **OPTFILT**, **I2R** and **I2RFITTED**)
+
+    double **Ifit**
+
+        Constant to apply the I2RFITTED conversion
+
+    char **OFNoise**
+
+        Noise to use with Optimal Filtering: **NSD** or **WEIGHTM**
+
+    int **LagsOrNot**
+
+        Lags or no lags (1/0)
+
+    int **nLags**
+
+        Number of lags (positive odd number)
+
+    int **Fitting35**
+
+        Number of lags to analytically calculate a parabola (3) or to fit a parabola (5)
+
+    int **OFIter**
+
+        Iterate or not iterate (1/0)
+
+    int **OFLib**
+
+        Work or not with a library with optimal filters (yes/no)
+
+    char **OFStrategy**
+
+        Optimal Filter length Strategy: **FREE**, **BYGRADE** or **FIXED**
+
+    int **OFLength**
+
+        Optimal Filter length (taken into account if :option:`OFStrategy` = **FIXED**)
+
+    int **OFLengthNotPadded**
+
+        Filter length not padded with 0s (only necessary when reconstructing with 0-padding)
+
+    int **errorT**
+
+        Additional error (in samples) added to the detected time (Logically, it changes the reconstructed energies )
+
+    int **Sum0Filt**
+
+        0-padding: Subtract the sum of the filter (1) or not (0)
+
+    char **tstartPulse1**
+
+        Integer number: Sample where the first pulse starts or nameFile: File where the tstart (seconds) of every pulse is
+
+    int **tstartPulse2**
+
+        Tstart (samples) of the second pulse
+
+    int **tstartPulse3**
+
+        Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS)
+
+    double **energyPCA1**
+
+        First energy (only for PCA)
+
+    double **energyPCA2**
+
+        Second energy (only for PCA)
+
+    int **intermediate**
+
+        Write or not intermediate files (1/0)
+
+    char **detectFile**
+
+        Intermediate detections file (if :cpp:member:`intermediate` = 1)
+
+    .. cpp:member:: char RecordFile
+
+        Record FITS file
+
+        If :cpp:member:`RecordFile` starts with '@' it provides a file text containing several record input FITS files
+
+    .. cpp:member:: char TesEventFile
+
+        Output event list file
+
+    .. cpp:member:: char LibraryFile
+
+        File with calibration library
+
+    .. cpp:member:: char XMLFile
+
+        XML input FITS file with instrument definition
+
+    .. cpp:member:: char preBuffer
+
+        Some samples added or not before the starting time of a pulse (number of added samples read from the XML file)
+        SIRENA's format XML file (grading=>pre,post and pB) or new format XML file (grading=>pre,post and filtlen)
+                                pre=494, post=8192, pB=1000                       pre=494, post=7192, filtlen=8192
+                                                                                        preBuffer=filtlen-post
+
+    .. cpp:member:: int EventListSize
+
+        Default size of the event list
+
+    .. cpp:member:: char clobber
+
+        Overwrite or not output files if exist (yes/no)
+
+    .. cpp:member:: char history
+
+        Write program parameters into output file
+
+    .. cpp:member:: double scaleFactor
+
+        Detection scale factor for initial filtering
+
+    .. cpp:member:: int samplesUp
+
+        Number of consecutive samples up for threshold trespassing
+
+    .. cpp:member:: int samplesDown
+
+        Number of consecutive samples below the threshold to look for other pulse
+
+    .. cpp:member:: double nSgms
+
+        Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm
+
+    .. cpp:member:: char detectionMode
+
+        Adjusted Derivative (**AD**) or Single Threshold Crossing (**STC**)
+
+    .. cpp:member:: int detectSP
+
+        Detect secondary pulses (1) or not (0)
+
+    .. cpp:member:: double LbT
+
+        Baseline averaging length (seconds)
+
+    .. cpp:member:: char FilterDomain
+
+        Filtering Domain: Time (**T**) or Frequency (**F**)
+
+    .. cpp:member:: char FilterMethod
+
+        Filtering Method: **F0** (deleting the zero frequency bin) or **B0** (deleting the baseline)
+
+    .. cpp:member:: char EnergyMethod
+
+        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**
+
+    .. cpp:member:: double filtEeV
+
+        Energy of the filters of the library to be used to calculate energy (only for **OPTFILT**, **I2R** and **I2RFITTED**)
+
+    .. cpp:member:: double Ifit
+
+        Constant to apply the I2RFITTED conversion
+
+    .. cpp:member:: char OFNoise
+
+        Noise to use with Optimal Filtering: **NSD** or **WEIGHTM**
+
+    .. cpp:member:: int LagsOrNot
+
+        Lags or no lags (1/0)
+
+    .. cpp:member:: int nLags
+
+        Number of lags (positive odd number)
+
+    .. cpp:member:: int Fitting35
+
+        Number of lags to analytically calculate a parabola (3) or to fit a parabola (5)
+
+    .. cpp:member:: int OFIter
+
+        Iterate or not iterate (1/0)
+
+    .. cpp:member:: int OFLib
+
+        Work or not with a library with optimal filters (yes/no)
+
+    .. cpp:member:: char OFStrategy
+
+        Optimal Filter length Strategy: **FREE**, **BYGRADE** or **FIXED**
+
+    .. cpp:member:: int OFLength
+
+        Optimal Filter length (taken into account if :option:`OFStrategy` = **FIXED**)
+
+    .. cpp:member:: int OFLengthNotPadded
+
+        Filter length not padded with 0s (only necessary when reconstructing with 0-padding)
+
+    .. cpp:member:: int errorT
+
+        Additional error (in samples) added to the detected time (Logically, it changes the reconstructed energies )
+
+    .. cpp:member:: int Sum0Filt
+
+        0-padding: Subtract the sum of the filter (1) or not (0)
+
+    .. cpp:member:: char tstartPulse1
+
+        Integer number: Sample where the first pulse starts or nameFile: File where the tstart (seconds) of every pulse is
+
+    .. cpp:member:: int tstartPulse2
+
+        Tstart (samples) of the second pulse
+
+    .. cpp:member:: int tstartPulse3
+
+        Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS)
+
+    .. cpp:member:: double energyPCA1
+
+        First energy (only for PCA)
+
+    .. cpp:member:: double energyPCA2
+
+        Second energy (only for PCA)
+
+    .. cpp:member:: int intermediate
+
+        Write or not intermediate files (1/0)
+
+    .. cpp:member:: char detectFile
+
+        Intermediate detections file (if :cpp:member:`intermediate` = 1)
+
+
+.. cpp:function:: int tesreconstruction_main()
+
+    Located in file: *tesreconstruction.c*
+
+    This function is mainly a wrapper to pass a data file to the SIRENA tasks in order to build a library or reconstruct the energy of the incoming X-ray photons after their detection which remains here only to backwards compatibility.
+
+    Steps:
+
+    - Register HEATOOL
+    - Reading all programm parameters by using PIL
+    - Read XML info
+    - :cpp:func:`getSamplingrate_trigreclength` => Obtain the *trig_reclength* and the sampling rate
+    - Sixt standard keywords structure
+    - Open output FITS file
+    - Initialize data structures needed for pulse filtering
+    - Read the grading data from the XML file and store it in *reconstruct_init_sirena->grading*
+    - Build up TesEventList to recover the results of the reconstruction
+    - Call SIRENA to build the library or reconstruct the energies
+    - Save GTI extension to event file
+    - Free memory
+
+    The user must supply the following input parameters (*tesreconstruction.par* file).
+
+    Parameters:
+
+    char **RecordFile**
+
+        Record FITS file
+
+        If SIRENA => If RecordFile starts with '@' it provides a file text containing several record input FITS files
+
+    char **TesEventFile**
+
+        Output event list file
+
+    int **OFLengthNotPadded**
+
+        Filter length not padded with 0s (only necessary when reconstructing with 0-padding)
+
+    int **EventListSize**
+
+        Default size of the event list
+
+    char **clobber**
+
+        Overwrite or not output files if exist (yes/no)
+
+    char **history**
+
+        Write program parameters into output file
+
+    char **LibraryFile**
+
+        File with calibration library
+
+    double **scaleFactor**
+
+        Detection scale factor for initial filtering
+
+    int **samplesUp**
+
+        Number of consecutive samples up for threshold trespassing (only used in calibration run, and in production run with **STC** detection mode)
+
+    int **samplesDown**
+
+        Number of consecutive samples below the threshold to look for other pulse (only used in production run with **STC** detection mode)
+
+    double **nSgms**
+
+        Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm
+
+    int **detectSP**
+
+        Detect secondary pulses (1) or not (0)
+
+    double **LrsT**
+
+        Running sum length for the RS raw energy estimation (seconds) (only for library creation)
+
+    double **LbT**
+
+        Baseline averaging length (seconds)
+
+    double **monoenergy**
+
+        Monochromatic energy of the pulses in the input FITS file in eV (only for library creation)
+
+    char **hduPRECALWN**
+
+        Add or not the PRECALWN HDU in the library file (yes/no) (only for library creation)
+
+    char **hduPRCLOFWM**
+
+        Add or not the PRCLOFWM HDU in the library file (yes/no) (only for library creation)
+
+    int **largeFilter**
+
+        Length of the longest fixed filter (only for library creation)
+
+    int **opmode**
+
+        Calibration run (0) or energy reconstruction run (1)
+
+    char **detectionMode**
+
+        Adjusted Derivative (**AD**) or Single Threshold Crossing (**STC**)
+
+    char **NoiseFile**
+
+        Noise FITS file with noise spectrum
+
+    char **FilterDomain**
+
+        Filtering Domain: Time (**T**) or Frequency (**F**)
+
+    char **FilterMethod**
+
+        Filtering Method: **F0** (deleting the zero frequency bin) or **B0** (deleting the baseline)
+
+    char **EnergyMethod**
+
+        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**
+
+    double **filtEeV**
+
+        Energy of the filters of the library to be used to calculate energy (only for **OPTFILT**, **I2R** and **I2RFITTED**)
+
+    double **Ifit**
+
+        Constant to apply the I2RFITTED conversion
+
+    char **OFNoise**
+
+        Noise to use with Optimal Filtering: **NSD** or **WEIGHTM**
+
+    int **LagsOrNot**
+
+        Lags or no lags (1/0)
+
+    int **nLags**
+
+        Number of lags (positive odd number)
+
+    int **Fitting35**
+
+        Number of lags to analytically calculate a parabola (3) or to fit a parabola (5)
+
+    int **OFIter**
+
+        Iterate or not iterate (1/0)
+
+    int **OFLib**
+
+        Work or not with a library with optimal filters (yes/no)
+
+    char **OFStrategy**
+
+        Optimal Filter length Strategy: **FREE**, **BYGRADE** or **FIXED**
+
+    int **OFLength**
+
+        Optimal Filter length (taken into account if :option:`OFStrategy` = **FIXED**)
+
+    char **preBuffer**
+
+        Some samples added or not before the starting time of a pulse (number of added samples read from the xml file)
+
+    int **intermediate**
+
+        Write or not intermediate files (1/0)
+
+    char **detectFile**
+
+        Intermediate detections file (if intermediate*=1)
+
+    int **errorT**
+
+        Additional error (in samples) added to the detected time (Logically, it changes the reconstructed energies )
+
+    int **Sum0Filt**
+
+        0-padding: Subtract the sum of the filter (1) or not (0)
+
+    char **tstartPulse1**
+
+        Integer number: Sample where the first pulse starts or nameFile: File where the tstart (seconds) of every pulse is
+
+    int **tstartPulse2**
+
+        Tstart (samples) of the second pulse
+
+    int **tstartPulse3**
+
+        Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS)
+
+    double **energyPCA1**
+
+        First energy (only for PCA)
+
+    double **energyPCA2**
+
+        Second energy (only for PCA)
+
+    char **XMLFile**
+
+        XML input FITS file with instrument definition
+
+    .. cpp:member:: char RecordFile
+
+        Record FITS file
+
+        If RecordFile starts with '@' it provides a file text containing several record input FITS files
+
+    .. cpp:member:: char TesEventFile
+
+        Output event list file
+
+    .. cpp:member:: int PulseLength
+
+        Pulse length
+
+    .. cpp:member:: int EventListSize
+
+        Default size of the event list
+
+    .. cpp:member:: char clobber
+
+        Overwrite or not output files if exist (yes/no)
+
+    .. cpp:member:: char history
+
+        Write program parameters into output file
+
+    .. cpp:member:: char LibraryFile
+
+        File with calibration library
+
+    .. cpp:member:: double scaleFactor
+
+        Detection scale factor for initial filtering
+
+    .. cpp:member:: int samplesUp
+
+        Number of consecutive samples up for threshold trespassing (only used in calibration run, and in production run with **STC** detection mode)
+
+    .. cpp:member:: int samplesDown
+
+        Number of consecutive samples below the threshold to look for other pulse (only used in production run with **STC** detection mode)
+
+    .. cpp:member:: double nSgms
+
+        Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm
+
+    .. cpp:member:: int detectSP
+
+        Detect secondary pulses (1) or not (0)
+
+    .. cpp:member:: double LrsT
+
+        Running sum length for the RS raw energy estimation (seconds) (only for library creation)
+
+    .. cpp:member:: double LbT
+
+        Baseline averaging length (seconds)
+
+    .. cpp:member:: double monoenergy
+
+        Monochromatic energy of the pulses in the input FITS file in eV (only for library creation)
+
+    .. cpp:member:: char hduPRECALWN
+
+        Add or not the PRECALWN HDU in the library file (yes/no) (only for library creation)
+
+    .. cpp:member:: char hduPRCLOFWM
+
+        Add or not the PRCLOFWM HDU in the library file (yes/no) (only for library creation)
+
+    .. cpp:member:: int largeFilter
+
+        Length of the longest fixed filter (only for library creation)
+
+    .. cpp:member:: int opmode
+
+        Calibration run (0) or energy reconstruction run (1)
+
+    .. cpp:member:: char detectionMode
+
+        Adjusted Derivative (**AD**) or Single Threshold Crossing (**STC**)
+
+    .. cpp:member:: char NoiseFile
+
+        NoiseFile: Noise FITS file with noise spectrum
+
+    .. cpp:member:: char FilterDomain
+
+        Filtering Domain: Time (**T**) or Frequency (**F**)
+
+    .. cpp:member:: char FilterMethod
+
+        Filtering Method: **F0** (deleting the zero frequency bin) or **B0** (deleting the baseline)
+
+    .. cpp:member:: char EnergyMethod
+
+        Energy calculation Method: **OPTFILT**, **WEIGHT**, **WEIGHTN**, **I2R**, **I2RFITTED** or **PCA**
+
+    .. cpp:member:: double filtEeV
+
+        Energy of the filters of the library to be used to calculate energy (only for **OPTFILT**, **I2R** and **I2RFITTED**)
+
+    .. cpp:member:: double Ifit
+
+        Constant to apply the I2RFITTED conversion
+
+    .. cpp:member:: char OFNoise
+
+        Noise to use with Optimal Filtering: **NSD** or **WEIGHTM**
+
+    .. cpp:member:: int LagsOrNot
+
+        Lags or no lags (1/0)
+
+    .. cpp:member:: int nLags
+
+        Number of lags (positive odd number)
+
+    .. cpp:member:: int Fitting35
+
+        Number of lags to analytically calculate a parabola (3) or to fit a parabola (5)
+
+    .. cpp:member:: int OFIter
+
+        Iterate or not iterate (1/0)
+
+    .. cpp:member:: int OFLib
+
+        Work or not with a library with optimal filters (yes/no)
+
+    .. cpp:member:: char OFStrategy
+
+        Optimal Filter length Strategy: **FREE**, **BYGRADE** or **FIXED**
+
+    .. cpp:member:: int OFLength
+
+        Optimal Filter length (taken into account if :option:`OFStrategy` = **FIXED**)
+
+    .. cpp:member:: char preBuffer
+
+        Some samples added or not before the starting time of a pulse (number of added samples read from the xml file)
+
+    .. cpp:member:: int intermediate
+
+        Write or not intermediate files (1/0)
+
+    .. cpp:member:: char detectFile
+
+        Intermediate detections file (if intermediate*=1)
+
+    .. cpp:member:: int errorT
+
+        Additional error (in samples) added to the detected time (Logically, it changes the reconstructed energies )
+
+    .. cpp:member:: int Sum0Filt
+
+        0-padding: Subtract the sum of the filter (1) or not (0)
+
+    .. cpp:member:: char tstartPulse1
+
+        Integer number: Sample where the first pulse starts or nameFile: File where the tstart (seconds) of every pulse is
+
+    .. cpp:member:: int tstartPulse2
+
+        Tstart (samples) of the second pulse
+
+    .. cpp:member:: int tstartPulse3
+
+        Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS)
+
+    .. cpp:member:: double energyPCA1
+
+        First energy (only for PCA)
+
+    .. cpp:member:: double energyPCA2
+
+        Second energy (only for PCA)
+
+    .. cpp:member:: char XMLFile
+
+        XML input FITS file with instrument definition
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .. cpp:function:: int tesreconstruction_main()
 
     Located in file: *tesreconstruction.c*
     
-    This function is mainly a wrapper to pass a data file to the SIRENA tasks in order to reconstruct the energy of the incoming X-ray photons after their detection.
+    This function is mainly a wrapper to pass a data file to the SIRENA tasks in order to build a library or reconstruct the energy of the incoming X-ray photons after their detection.
     
     Steps:
     
     - Register HEATOOL
     - Reading all programm parameters by using PIL
     - Read XML info
+    - :cpp:func:`getSamplingrate_trigreclength` => Obtain the *trig_reclength* and the sampling rate
     - Sixt standard keywords structure
     - Open output FITS file
     - Initialize data structures needed for pulse filtering
-    - Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
-    - Obtain the samplig rate and the 'trig_reclength':
-        - If RecordFile starts with '@' => List of record input FITS files. For every FITS file:
-            - Open FITS file
-            - Check if input FITS file have been simulated with TESSIM or XIFUSIM
-            - If it is a xifusim simulated file
-                - Obtain 'trig_reclength' from the ``HISTORY`` block
-        - If RecordFile doesn't start with '@' => Single record input FITS file
-            - Open FITS file
-            - Check if input FITS file have been simulated with TESSIM or XIFUSIM
-            - If it is a xifusim simulated file
-                - Obtain 'trig_reclength' from the ``HISTORY`` block
+    - Read the grading data from the XML file and store it in *reconstruct_init_sirena->grading*
     - Build up TesEventList to recover the results of the reconstruction
-    - Reconstruct the input record FITS file:
-        - If RecordFile starts with '@' => List of record input FITS files. For every FITS file:
-            - Open record file
-            - Initialize: initializeReconstruction or initializeReconstructionSIRENA
-            - Build up TesRecord to read the file
-            - Iterate of records and do the reconstruction
-                - Reconstruct: reconstructRecord or reconstructRecordSIRENA
-                - Save events to the event_list
-                - Copy trigger keywords to event file
-                - Close file
-        - If RecordFile doesn't start with '@' => Single record input FITS file
-            - Open record file
-            - Initialize: initializeReconstruction or initializeReconstructionSIRENA
-            - Build up TesRecord to read the file
-            - Iterate of records and do the reconstruction
-                - Reconstruct: reconstructRecord or reconstructRecordSIRENA
-                - Save events to the event_list
-                - Copy trigger keywords to event file
-                - Close file
+    - Call SIRENA to build the library or reconstruct the energies
     - Save GTI extension to event file
     - Free memory
     
@@ -6107,7 +7415,6 @@ Search functions by name at :ref:`genindex`.
     
     Parameters:
 
-        
     char **RecordFile**
     
         Record FITS file

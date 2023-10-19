@@ -11,7 +11,7 @@ SIRENA description
 Purpose
 ********
 
-SIRENA (*Software Ifca for Reconstruction of EveNts for Athena X-IFU*) is a software package developed to reconstruct the energy of the incoming X-ray photons after their detection in the `X-IFU <http://x-ifu.irap.omp.eu/>`_ TES detector. This is done by means of a tool called :ref:`tesreconstruction`, which is mainly a wrapper to pass a data file to the SIRENA tasks.
+SIRENA (*Software Ifca for Reconstruction of EveNts for Athena X-IFU*) is a software package developed to reconstruct the energy of the incoming X-ray photons after their detection in the `X-IFU <http://x-ifu.irap.omp.eu/>`_ TES detector. This is done by means of two tools called :ref:`teslib` and :ref:`tesrecons`, which are mainly two wrappers to pass a data file to the SIRENA tasks; :ref:`teslib` builds the library with the optimal filters to reconstruct the energies with :ref:`tesrecons`. (Until now, a single wrapper :pageblue:`tesrecosntruction` performed both functions. From now on, :pageblue:`tesrecosntruction` remains only for backwards compatibility.)
 
 SIRENA is integrated in the `SIXTE <http://www.sternwarte.uni-erlangen.de/research/sixte>`_ end-to-end simulations environment where it currently runs over SIXTE or XIFUSIM (available for the XIFU consortium members upon request at `sixte-xifusim@lists.fau.de <sixte-xifusim@lists.fau.de>`_) simulated data. In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a straightforward SIRENA tutorial and a set of scripts can be found with the aim of providing the user with a first approach running SIRENA. 
 
@@ -189,25 +189,24 @@ The SIXTE simulated calibration files are now FITS files with only one HDU calle
    
 **2) Library construction**
 
-Once the calibration files (for all the 1..N calibration energies) have been created, the library is built through the wrapper tool ``tesreconstruction``. To run it using SIRENA code:
+Once the calibration files (for all the 1..N calibration energies) have been created, the library is built through the wrapper tool ``teslib``. To run it using SIRENA code:
 
 ::
 
-  > tesreconstruction Recordfile=calib.fits TesEventFile=evtcal.fits largeFilter=8192 \
-  LibraryFile=library.fits opmode=0 clobber=yes monoenergy=monoEeV_1 EventListSize=1000\
+  > teslib Recordfile=calib.fits TesEventFile=evtcal.fits largeFilter=8192 \
+  LibraryFile=library.fits clobber=yes monoenergy=monoEeV_1 EventListSize=1000\
   NoiseFile=noiseSpec.fits scaleFactor=sF samplesUp=sU nSgms=nS \
   hduPRECALWN=yes/no hduPRCLOFWM=yes/no
                 
   [.....]
   
-  > tesreconstruction Recordfile=calib.fits TesEventFile=evtcal.fits largeFile=8192\
-  LibraryFile=library.fits opmode=0 clobber=yes monoenergy=monoEeV_N EventListSize=1000\
+  > teslib Recordfile=calib.fits TesEventFile=evtcal.fits largeFile=8192\
+  LibraryFile=library.fits clobber=yes monoenergy=monoEeV_N EventListSize=1000\
   NoiseFile=noiseSpec.fits scaleFactor=sF samplesUp=sU nSgms=nS \
   hduPRECALWN=yes/no hduPRCLOFWM=yes/no
   
-The parameters of ``tesreconstruction``  for the library creation process are:
+The parameters of ``teslib`` for the library creation process are:
 
-* :option:`opmode`: should be set to 0 if tool is used for library creation.
 * :option:`RecordFile`: record FITS file.
 * :option:`TesEventFile`: output event list FITS file.
 * :option:`NoiseFile`: noise spectrum FITS file.
@@ -246,11 +245,15 @@ The library FITS file has 3 HDUs called *LIBRARY*, *FIXFILTT*, *FIXFILTF* which 
 The number of columns in *LIBRARY* can increase based on input parameters or whether the library includes multiple calibration energies:
 
 * **PLSMXLFF**: long templates according to :option:`largeFilter` (obtained averaging many signals) with baseline. If :option:`largeFilter` is a base-2, it does not appear (it only appears **PULSE**)
-..
+
+|
+
 * **PAB**: vectors :math:`S_{\alpha}- E_{\alpha}(S_{\beta}-S_{\alpha})/(E_{\beta}-E_{\alpha})`, :math:`P(t)_{\alpha\beta}` in :ref:`first order approach <optimalFilter_NSD>`. It appears if there are several calibration energies (not only one) included in the library
 * **PABMXLFF**: **PAB** according to :option:`largeFilter`. If :option:`largeFilter` is a base-2, it does not appear (although several calibration energies are included in the library)
 * **DAB**: vectors :math:`(S_{\beta}-S_{\alpha})/(E_{\beta}-E_{\alpha})`, :math:`D(t)_{\alpha\beta}` in :ref:`first order approach <optimalFilter_NSD>`. It appears if there are several calibration energies (not only one) included in the library.
-..
+
+|
+
 * **COVARM**: :ref:`covariance matrices<covMatrices>` ( pulselength x pulselength in shape = :option:`OFLength` x :option:`OFLength` ) stored in the FITS column as vectors of size pulselength * pulselength`. It appears if :option:`hduPRECALWN` = yes
 * **WEIGHTM**: :ref:`weight matrices<covMatrices>` ( pulselength x pulselength in shape) stored in the FITS column as vectors of size pulselength * pulselength. It appears if :option:`hduPRECALWN` = yes
 * **WAB**: matrices :math:`(W_\alpha + W_\beta)/2` stored as vectors ( pulselength x pulselength ), being :math:`\mathit{W}` weight matrices and :math:`\alpha` and :math:`\beta` two consecutive energies in the library. It appears if :option:`hduPRECALWN` = yes
@@ -260,6 +263,7 @@ The number of columns in *LIBRARY* can increase based on input parameters or whe
 * **YV**: vectors :math:`(W_\alpha \cdot T)/t`. It appears if :option:`hduPRECALWN` = yes
 * **ZV**: vectors :math:`\mathit{X \cdot T}`. It appears if :option:`hduPRECALWN` = yes
 * **rE**: scalars :math:`\mathit{1/(Z \cdot T)}`. It appears if :option:`hduPRECALWN` = yes
+
 ..
    * **PLSMXLFF**: long templates according to :option:`largeFilter` (obtained averaging many signals) with baseline. If :option:`largeFilter` is equal to :option:`PulseLength` it does not appear
 
@@ -300,7 +304,7 @@ The sampling rate is calculated by using some keywords in the input FITS file. I
 Output Files
 ==============
 	
-The reconstructed energies for all the detected events are saved into an output FITS file (governed by the ``tesreconstruction`` input parameter :option:`TesEventFile`). It stores one event per row with the following information (some of it only helpful for development purposes), in the HDU named *EVENTS*:
+The reconstructed energies for all the detected events are saved into an output FITS file (governed by the ``tesrecons`` input parameter :option:`TesEventFile`). It stores one event per row with the following information (some of it only helpful for development purposes), in the HDU named *EVENTS*:
 
 * **TIME**: arrival time of the event (in s).
 
@@ -367,8 +371,7 @@ If :option:`intermediate` = 1, an intermediate FITS file with some useful info (
 Reconstruction Process
 ************************
 
-
-The energy reconstruction of the energies of the input pulses is performed with the tool ``tesreconstruction`` along three main blocks:
+The energy reconstruction of the energies of the input pulses is performed with the tool ``tesrecons`` along three main blocks:
 
 * Event Detection
 * Event Grading
@@ -986,9 +989,9 @@ In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a 
 
 ::
 
-   >tesreconstruction Recordfile=inputEvents.fits TesEventFile=outputEvents.fits 
+   >tesrecons Recordfile=inputEvents.fits TesEventFile=outputEvents.fits
    OFLib=no OFStrategy=FREE samplesUp=3 nSgms=3.5 samplesDown=4\
-   LibraryFile=libraryMultiE.fits opmode=1 NoiseFile=noise8192samplesADC.fits\
+   LibraryFile=libraryMultiE.fits NoiseFile=noise8192samplesADC.fits\
    FilterMethod=F0 clobber=yes intermediate=0 EnergyMethod=OPTFILT \
    XMLFile=xifu_detector_lpa_75um_AR0.5_pixoffset_mux40_pitch275um.xml 
 
@@ -996,8 +999,8 @@ In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a 
 
 ::
 
-   >tesreconstruction Recordfile=inputEvents.fits TesEventFile=outputEvents.fits \
-   LibraryFile=libraryMultiE.fits opmode=1 OFLib=yes\
+   >tesrecons Recordfile=inputEvents.fits TesEventFile=outputEvents.fits \
+   LibraryFile=libraryMultiE.fits OFLib=yes\
    FilterMethod=F0 clobber=yes intermediate=0 EnergyMethod=OPTFILT\
    XMLFile=xifu_detector_lpa_75um_AR0.5_pixoffset_mux40_pitch275um.xml
 
@@ -1005,7 +1008,7 @@ In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a 
 
 ::
 
-   >tesreconstruction Recordfile=inputEvents.fits TesEventFile=outputEvents.fits 
+   >tesrecons Recordfile=inputEvents.fits TesEventFile=outputEvents.fits
    LibraryFile=libraryMultiE.fits opmode=1 \
    NoiseFile=noise1024samplesADC.fits clobber=yes intermediate=0 \
    EnergyMethod=WEIGHT XMLFile=xifu_detector_lpa_75um_AR0.5_pixoffset_mux40_pitch275um.xml
@@ -1014,7 +1017,7 @@ In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a 
 
 ::
 
-   >tesreconstruction Recordfile=inputEvents.fits TesEventFile=outputEvents.fits \
+   >tesrecons Recordfile=inputEvents.fits TesEventFile=outputEvents.fits \
    LibraryFile=libraryMultiE.fits opmode=1 \
    NoiseFile=noise8192samplesR.fits FilterMethod=F0 clobber=yes intermediate=0 \
    EnergyMethod=I2R XMLFile=xifu_detector_hex_baseline.xml OFLib=no OFStrategy=FREE
