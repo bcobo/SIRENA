@@ -1,8 +1,7 @@
 # Sphinx>=1.4.3
 # matplotlib
-python==3.10
 sphinxcontrib-bibtex
-numpydoc==0.8.0
+#numpydoc==0.8.0
 # sphinx.ext.imgmath
 scipy==1.11.1
 numpy==1.25.2
