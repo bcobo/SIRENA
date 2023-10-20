@@ -110,7 +110,7 @@ On one hand, the tool calculates the FFT of the non-discarded pulse-free interva
    
    Noise spectrum (see noise file :ref:`description <outNoise>`)
 
-On the other hand, if :option:`weightMS` = *yes* the tool calculates the covariance matrix of the noise, :math:`V`, whose elements are expectation values (:math:`E[·]`) of two-point products for a pulse-free data sequence :math:`{di}` (over the unfiltered data) (:cite:`Fowler2015`)
+On the other hand, if :option:`weightMS` = *yes* the tool calculates the covariance matrix of the noise, :math:`V`, whose elements are expectation values (:math:`E[\cdot]`) of two-point products for a pulse-free data sequence :math:`{di}` (over the unfiltered data) (:cite:`Fowler2015`)
 
 .. math::
 
@@ -130,7 +130,7 @@ The weight matrix is the inverse of the covariance matrix, :math:`V^{-1}`. The w
 
 If the noise spectrum or the weight matrices are to be created from a data stream containing pulses, care should be taken with the parameters :ref:`scaleFactor <scaleFactor_gennoisespec>`, :ref:`samplesUp <samplesUp_gennoisespec>` and :ref:`nSgms <nSgms_gennoisespec>` responsible of the detection process.
 
-The sampling rate is calculated by using some keywords in the input FITS file. In case of ``tessim`` simulated data files, using the ``DELTAT`` keyword *samplingRate=1/deltat*. In case of ``xifusim`` simulated data files, every detector type defines a master clock-rate ``TCLOCK`` and the sampling rate is calculated either from a given decimation factor ``DEC_FAC`` (FDM and NOMUX) as *samplingRate=1/(tclock·dec_fac)*, or from the row period  ``P_ROW`` and the number of rows ``NUMROW`` (TDM) as *samplingRate=1/(tclock·numrow·p_row)*. In case of old simulated files, the sampling rate could be read from the ``HISTORY`` keyword in the *Primary* HDU. If the sampling frequency can not be get from the input file after all, a message will ask the user to include the ``DELTAT`` keyword (inverse of the sampling rate) in the input FITS file before running again.
+The sampling rate is calculated by using some keywords in the input FITS file. In case of ``tessim`` simulated data files, using the ``DELTAT`` keyword *samplingRate=1/deltat*. In case of ``xifusim`` simulated data files, every detector type defines a master clock-rate ``TCLOCK`` and the sampling rate is calculated either from a given decimation factor ``DEC_FAC`` (FDM and NOMUX) as :math:`samplingRate=1/(tclock\cdot dec\_fac)`, or from the row period  ``P_ROW`` and the number of rows ``NUMROW`` (TDM) as :math:`samplingRate=1/(tclock\cdot numrow\cdot p\_row)`. In case of old simulated files, the sampling rate could be read from the ``HISTORY`` keyword in the *Primary* HDU. If the sampling frequency can not be get from the input file after all, a message will ask the user to include the ``DELTAT`` keyword (inverse of the sampling rate) in the input FITS file before running again.
       
 .. _library:
 
@@ -297,7 +297,7 @@ The input data (simulated or laborarory data) files, currently required to be in
    
 .. [#]  When working with ``xifusim``, *TESRECORDS* HDU (among others HDUs such as *GEOCHANNELPARAM*, *TESPARAM*, *SQUIDPARAM*,...) instead of *RECORDS* HDU.
 
-The sampling rate is calculated by using some keywords in the input FITS file. In case of ``tessim`` simulated data files, using the ``DELTAT`` keyword *samplingRate=1/deltat*. In case of ``xifusim`` simulated data files, every detector type defines a master clock-rate ``TCLOCK`` and the sampling rate is calculated either from a given decimation factor ``DEC_FAC`` (FDM and NOMUX) as *samplingRate=1/(tclock·dec_fac)*, or from the row period  ``P_ROW`` and the number of rows ``NUMROW`` (TDM) as *samplingRate=1/(tclock·numrow·p_row)*. In case of old simulated files, the sampling rate could be read from the ``HISTORY`` keyword in the *Primary* HDU or even from the input XML file. If the sampling frequency can not be get from the input files after all, a message will ask the user to include the ``DELTAT`` keyword (inverse of the sampling rate) in the input FITS file before running again.
+The sampling rate is calculated by using some keywords in the input FITS file. In case of ``tessim`` simulated data files, using the ``DELTAT`` keyword *samplingRate=1/deltat*. In case of ``xifusim`` simulated data files, every detector type defines a master clock-rate ``TCLOCK`` and the sampling rate is calculated either from a given decimation factor ``DEC_FAC`` (FDM and NOMUX) as :math:`samplingRate=1/(tclock\cdot dec\_fac)`, or from the row period  ``P_ROW`` and the number of rows ``NUMROW`` (TDM) as :math:`samplingRate=1/(tclock\cdot numrow\cdot p\_row)`. In case of old simulated files, the sampling rate could be read from the ``HISTORY`` keyword in the *Primary* HDU or even from the input XML file. If the sampling frequency can not be get from the input files after all, a message will ask the user to include the ``DELTAT`` keyword (inverse of the sampling rate) in the input FITS file before running again.
 
 .. _reconOutFiles:
 	
@@ -529,7 +529,9 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
 
      	**As the X-IFU detector is a non-linear one, the energy estimation after any filtering method has been applied, has to be transformed to an unbiased estimation by the application of a gain scale obtained by the application of the same method to pulse templates at different energies (not done inside SIRENA)**.
      	
-	In SIRENA, optimal filters can be calculated *on-the-fly* or read as pre-calculated values from the calibration library. This option is selected with the input parameter :option:`OFLib`. If :option:`OFLib` = yes, fixed-length pre-calculated optimal filters (**Tx** or **Fx**, or **ABTx** or **ABFx**) will be read from the library (the length selected **x** will be the base-2 system value closest -lower than or equal- to that of the event being reconstructed or :option:`largeFilter`). If :option:`OFLib` = no, optimal filters will be calculated specifically for the pulse length of the event under study. This length calculation is determined by the parameter :option:`OFStrategy`. This way :option:`OFStrategy` = *FREE* will optimize the length of the filter to the maximum length available (let’s call this value *fltmaxlength*), given by the position of the following pulse, or the pulse length if this is shorter. :option:`OFStrategy` = *BYGRADE* will choose the filter length to use, according to the :ref:`grade <grade>` of the pulse (currently read from the :option:`XMLFile`) and :option:`OFStrategy` = *FIXED* will take a fixed length (given by the parameter :option:`OFLength`) for all the pulses. These last 2 options are only for checking and development purposes; a normal run with *on-the-fly* calculations with be done with :option:`OFStrategy` = *FREE*. Note that :option:`OFStrategy` = *FREE* fixes :option:`OFLib` = no and options :option:`OFStrategy` = *FIXED* or :option:`OFStrategy` = *BYGRADE* fix :option:`OFLib` = yes. Moreoover, if :option:`OFLib` = no, a noise file must be provided through parameter :option:`NoiseFile`, since in this case the optimal filter must be computed for each pulse at the required length.
+	In SIRENA, optimal filters can be calculated *on-the-fly* or read as pre-calculated values from the calibration library. This option is selected with the input parameter :option:`OFLib`. If :option:`OFLib` = yes, fixed-length pre-calculated optimal filters (**Tx** or **Fx**, or **ABTx** or **ABFx**) will be read from the library (the length selected **x** will be the base-2 system value closest -lower than or equal- to that of the event being reconstructed or :option:`largeFilter`). If :option:`OFLib` = no, optimal filters will be calculated specifically for the pulse length of the event under study. This length calculation is determined by the parameter :option:`OFStrategy`.
+
+	This way :option:`OFStrategy` = *FREE* will optimize the length of the filter to the maximum length available (let's call this value *fltmaxlength*), given by the position of the following pulse, or the pulse length if this is shorter. :option:`OFStrategy` = *BYGRADE* will choose the filter length to use, according to the :ref:`grade <grade>` of the pulse (currently read from the :option:`XMLFile`) and :option:`OFStrategy` = *FIXED* will take a fixed length (given by the parameter :option:`OFLength`) for all the pulses. These last 2 options are only for checking and development purposes; a normal run with *on-the-fly* calculations with be done with :option:`OFStrategy` = *FREE*. Note that :option:`OFStrategy` = *FREE* fixes :option:`OFLib` = *no* and options :option:`OFStrategy` = *FIXED* or :option:`OFStrategy` = *BYGRADE* fix :option:`OFLib` = *yes*. Moreover, if :option:`OFLib` = *no*, a noise file must be provided through parameter :option:`NoiseFile`, since in this case the optimal filter must be computed for each pulse at the required length.
 
         .. 
             OFLib=no (On-the-fly): Matched Filter MF(t) with the closest (>=) length to the pulse length, is read from the library ==> cut to the required length ==> NORMFACTOR is calculated from trimmed MF and the decimated noise ==> short OF is calculated ==> energy :  NOISE file required
@@ -612,9 +614,9 @@ The SIRENA input parameter that controls the reconstruction method applied is :o
 						
     In the electrical equation, :math:`L` is the effective inductance of the readout circuit, :math:`R_L` is the effective load resistor and :math:`V_0` is the constant voltage bias. Under AC bias conditions, 
                 
-        :math:`L =` ``LFILTER`` / ``TTR²``
+        :math:`L =` ``LFILTER`` / ``TTR^2``
 
-        :math:`R_L =` ``RPARA`` / ``TTR²``
+        :math:`R_L =` ``RPARA`` / ``TTR^2``
                 
         :math:`\mathit{V0} =` ``I0_START`` ( ``R0`` :math:`+ \mathit{R_L} )`
                 
@@ -731,9 +733,9 @@ A :math:`10^5` scaling factor has been included in the quasi resistance space (b
                             
            ..  In the electrical equation, :math:`L` is the effective inductance of the readout circuit, :math:`R_L` is the effective load resistor and :math:`V_0` is the constant voltage bias. Under AC bias conditions, 
                     
-           ..          :math:`L =` ``LFILTER`` / ``TTR²``
+           ..          :math:`L =` ``LFILTER`` / ``TTR^2``
                 
-           ..          :math:`R_L =` ``RPARA`` / ``TTR²``
+           ..          :math:`R_L =` ``RPARA`` / ``TTR^2``
                     
            ..          :math:`\mathit{V0} =` ``I0_START`` ( ``R0`` :math:`+ \mathit{R_L} )`
                     

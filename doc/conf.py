@@ -49,7 +49,7 @@ extensions = [
           'sphinx.ext.doctest',
           'ipython_console_highlighting',
           'sphinx.ext.inheritance_diagram',
-          'numpydoc',
+          #'numpydoc',
           'hidden_code_block',
 	  'sphinxcontrib.bibtex',
 ]
