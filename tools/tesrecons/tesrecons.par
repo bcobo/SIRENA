@@ -41,6 +41,7 @@ OFLib,b,h,yes,,,"Work or not with a library (yes/no)"
 OFStrategy,s,h,"BYGRADE",,,"Optimal Filter length Strategy: FREE, BYGRADE or FIXED"
 OFLength,i,h,8192,,,"Optimal Filter length (taken into account if OFStrategy=FIXED)"
 OFLengthNotPadded,i,h,8192,,,"Filter length not padded with 0s (only necessary when reconstructing with 0-padding)"
+pB0pad,i,h,1000,,,"preBuffer to be used when running 0-padding and OFStrategy=FIXED"
 
 errorT,i,h,0,,,"Additional error (in samples) added to the detected time"  # Logically, it changes the reconstructed energies
 Sum0Filt,i,h,0,,,"0-padding: Subtract the sum of the filter (1) or not (0)"

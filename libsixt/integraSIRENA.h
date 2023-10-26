@@ -539,6 +539,7 @@ typedef struct ReconstructInitSIRENA
   
   	//Optimal Filter length (taken into account if OFStrategy=FIXED) **/
   	int OFLength;
+	int pB0pad;
   
   	//0-padding filter if 0 (from pulseLength to OFLength filter filled in with 0's) or filter with a filter+preBuffer if different from 0
   	int preBuffer;
@@ -645,6 +646,7 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, 
                                     char *ofinterp, char* oflength_strategy, 
                                     int oflength, char preBuffer,
+									int pb0pad,
                                     double monoenergy, char hduPRECALWN, 
                                     char hduPRCLOFWM, int largeFilter, 
                                     int interm, char* detectFile, 

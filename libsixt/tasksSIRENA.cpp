@@ -2598,19 +2598,26 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
         //if (((*reconstruct_init)->preBuffer == 1) && ((*reconstruct_init)->opmode == 1) && (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0))
         if (((*reconstruct_init)->preBuffer == 1) && ((*reconstruct_init)->opmode == 1))
         {
-            for (int j=0; j<(int)((*reconstruct_init)->grading->gradeData->size1);j++)
+            if (((*reconstruct_init)->pulse_length<(*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)) // 0-padding and OFStrategy=FIXED
             {
-                if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == (*reconstruct_init)->OFLength)
-                {
-                    preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
-                    resize_mfvsposti = 1;
-                    break;
-                }
+                preBuffer_value = (*reconstruct_init)->pB0pad;
             }
-            if (resize_mfvsposti == 0)
+            else
             {
-                message = "The grading/preBuffer info of the XML file does not match the filter length";
-                EP_EXIT_ERROR(message,EPFAIL);
+                for (int j=0; j<(int)((*reconstruct_init)->grading->gradeData->size1);j++)
+                {
+                    if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == (*reconstruct_init)->OFLength)
+                    {
+                        preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
+                        resize_mfvsposti = 1;
+                        break;
+                    }
+                }
+                if (resize_mfvsposti == 0)
+                {
+                    message = "The grading/preBuffer info of the XML file does not match the filter length";
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }
             }
         }
         log_debug("preBuffer_value_procRecord: %d",preBuffer_value);
@@ -8405,19 +8412,27 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 }
                 else
                 {
-                    for (int j=0; j<(int)((*reconstruct_init)->grading->gradeData->size1);j++)
+                    if (((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) && (OFlength_strategy == 3)) // 0-padding and OFStrategy=FIXED
                     {
-                        if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == resize_mf)
-                        {
-                            preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
-                            resize_mfvsposti = 1;
-                            break;
-                        }
+                        preBuffer_value = (*reconstruct_init)->pB0pad;
                     }
-                    if (resize_mfvsposti == 0)
+                    else
                     {
-                        message = "The grading/preBuffer info of the XML file does not match the filter length";
-                        EP_EXIT_ERROR(message,EPFAIL);
+                        for (int j=0; j<(int)((*reconstruct_init)->grading->gradeData->size1);j++)
+                        {
+                            if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == resize_mf)
+                            {
+                                preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
+
+                                resize_mfvsposti = 1;
+                                break;
+                            }
+                        }
+                        if (resize_mfvsposti == 0)
+                        {
+                            message = "The grading/preBuffer info of the XML file does not match the filter length";
+                            EP_EXIT_ERROR(message,EPFAIL);
+                        }
                     }
                 }
             }
@@ -9455,19 +9470,26 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                 }
                 else
                 {
-                    for (int j=0; j<(int)((*reconstruct_init)->grading->gradeData->size1);j++)
+                    if (((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) && (OFlength_strategy == 3)) // 0-padding and OFStrategy=FIXED
                     {
-                        if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == resize_mf)
-                        {
-                            preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
-                            resize_mfvsposti = 1;
-                            break;
-                        }
+                        preBuffer_value = (*reconstruct_init)->pB0pad;
                     }
-                    if (resize_mfvsposti == 0)
+                    else
                     {
-                        message = "The grading/preBuffer info of the XML file does not match the filter length";
-                        EP_EXIT_ERROR(message,EPFAIL);
+                        for (int j=0; j<(int)((*reconstruct_init)->grading->gradeData->size1);j++)
+                        {
+                            if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == resize_mf)
+                            {
+                                preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
+                                resize_mfvsposti = 1;
+                                break;
+                            }
+                        }
+                        if (resize_mfvsposti == 0)
+                        {
+                            message = "The grading/preBuffer info of the XML file does not match the filter length";
+                            EP_EXIT_ERROR(message,EPFAIL);
+                        }
                     }
                 }
             }
@@ -11822,6 +11844,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
                 break;
             }
         }
+
         if (reconstruct_init->preBuffer == 1)
         {
             if (tstart < gsl_matrix_get(reconstruct_init->grading->gradeData,*pulseGrade-1,2))
@@ -11954,8 +11977,8 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
     //if (((grade2 < gradelim_pre) || (grade1 == -1)) && (OFlength_strategy != 2))    *pulseGrade = -1;
     if (grade2 < gradelim_pre) *pulseGrade = -1;
 
-    log_debug("*pulseGrade %d", *pulseGrade);
-    log_debug("*OFLength %d", *OFlength);
+    log_debug("pulseGrading *pulseGrade %d", *pulseGrade);
+    log_debug("pulseGrading *OFLength %d", *OFlength);
     
     message.clear();
     

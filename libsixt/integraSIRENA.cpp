@@ -143,7 +143,7 @@
                                                 char* const library_file, char* const event_file, int pulse_length, double scaleFactor, int samplesUp, int samplesDown,
                                                 double nSgms, int detectSP, int opmode, char *detectionMode, double LrsT, double LbT, char* const noise_file, char* filter_domain, char* filter_method, 
                                                 char* energy_method, double filtEev, double Ifit, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
-                                                char* oflength_strategy, int oflength, char preBuffer,
+                                                char* oflength_strategy, int oflength, char preBuffer, int pb0pad,
                                                 double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, int errorT,
                                                 int Sum0Filt,
                                                 char clobber, int maxPulsesPerRecord, double SaturationValue,
@@ -200,7 +200,7 @@
              }
              largeFilter = pulse_length;
          }
-         
+
          reconstruct_init->library_collection = getLibraryCollection(library_file, opmode, hduPRECALWN, hduPRCLOFWM, largeFilter, filter_domain, pulse_length, energy_method, ofnoise, filter_method, oflib, &ofinterp, filtEev, lagsornot, reconstruct_init->preBuffer, pBi, posti, status);
          reconstruct_init->library_collection->margin = 0.25;	// (%) Margin to be applied when several energies in the library to choose the proper filter
          if (*status)
@@ -391,7 +391,8 @@
      else		reconstruct_init->OFLib = 0;
      strcpy(reconstruct_init->OFInterp,ofinterp);
      strcpy(reconstruct_init->OFStrategy,oflength_strategy);
-     reconstruct_init->OFLength      = oflength;
+     reconstruct_init->OFLength = oflength;
+     reconstruct_init->pB0pad = pb0pad;
      reconstruct_init->errorT = errorT;
      reconstruct_init->Sum0Filt = Sum0Filt;
      reconstruct_init->intermediate  = interm;
@@ -2748,7 +2749,7 @@
                  if (ntemplates == 1)   nOFs = nOFs-1;		// -1 because the ENERGYcolumn
                  else                   nOFs = (nOFs-1)/2;	// /2 because the AB column
              }
-             
+
              if (nOFs == 0)	
              {
                  EP_PRINT_ERROR("The library has no fixed optimal filters",EPFAIL); 
@@ -3513,6 +3514,7 @@ extern "C" unsigned checksum(void *buffer, size_t len, unsigned int seed)
  OFIter(0),
  OFLib(0),
  OFLength(0),
+ pB0pad(0),
  preBuffer(0),
  intermediate(0),
  errorT(0),
@@ -3556,6 +3558,7 @@ extern "C" unsigned checksum(void *buffer, size_t len, unsigned int seed)
  OFIter(other.OFIter),
  OFLib(other.OFLib),
  OFLength(other.OFLength),
+ pB0pad(other.pB0pad),
  preBuffer(other.preBuffer),
  intermediate(other.intermediate),
  errorT(other.errorT),
@@ -3697,6 +3700,8 @@ extern "C" unsigned checksum(void *buffer, size_t len, unsigned int seed)
          intermediate = other.intermediate;
          strcpy(detectFile, other.detectFile);
 
+         pB0pad = other.pB0pad;
+
          errorT = other.errorT;
          Sum0Filt = other.Sum0Filt;
 
@@ -3829,6 +3834,8 @@ extern "C" unsigned checksum(void *buffer, size_t len, unsigned int seed)
      //sprintf(ret->detectFile, "%s_%i", ret->detectFile, n_record);
      strcat(ret->detectFile,"_");
      strcat(ret->detectFile,to_string(n_record).c_str());
+
+     ret->pB0pad = this->pB0pad;
 
      ret->errorT = this->errorT;
      ret->Sum0Filt = this->Sum0Filt;

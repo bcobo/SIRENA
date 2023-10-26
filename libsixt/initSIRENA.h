@@ -28,6 +28,7 @@ struct Parameters {
 
 	// Filter length not padded with 0s (only necessary when reconstructing with 0-padding)
 	int OFLengthNotPadded;
+	int pB0pad; // preBuffer used when 0padding and OFStrategy=FIXED
 
 	// Threshold level
 	double Threshold;

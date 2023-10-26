@@ -348,6 +348,8 @@ int getpar_tesrecons(struct Parameters* const par)
     return(status);
   }
   assert(par->OFLengthNotPadded > 0);
+  status=ape_trad_query_int("pB0pad", &par->pB0pad);
+  assert(par->pB0pad >= 0);
 
   status=ape_trad_query_int("errorT", &par->errorT);
   status=ape_trad_query_int("Sum0Filt", &par->Sum0Filt);
