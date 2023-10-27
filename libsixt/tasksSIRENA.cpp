@@ -8388,6 +8388,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
     int resize_mfvsposti = 0;
     
     int extraSizeDueToLags = 0;
+    model = gsl_vector_alloc((*reconstruct_init)->pulse_length);
     for (int i=0; i<(*pulsesInRecord)->ndetpulses ;i++)
     {      
         log_debug("Pulse................................................ %d",i+1);
@@ -8405,7 +8406,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 message = "Cannot run routine pulseGrading";
                 EP_EXIT_ERROR(message,EPFAIL);
             }
-            model = gsl_vector_alloc((*reconstruct_init)->pulse_length);
+            //model = gsl_vector_alloc((*reconstruct_init)->pulse_length);
 
             if (preBuffer == 1)
             {
@@ -9198,9 +9199,9 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
         }
     } // End for
     log_debug("After FOR");
-    
-    gsl_vector_free(recordAux); recordAux = 0;
-    gsl_vector_free(model); model = 0;
+
+    if (recordAux != NULL) {gsl_vector_free(recordAux); recordAux = 0;}
+    if (model != NULL) {gsl_vector_free(model); model = 0;}
     
     if (pulse_lowres != NULL) {gsl_vector_free(pulse_lowres); pulse_lowres = 0;}
     if (filtergsl_lowres!= NULL) {gsl_vector_free(filtergsl_lowres); filtergsl_lowres = 0;}
