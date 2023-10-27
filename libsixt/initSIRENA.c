@@ -54,6 +54,7 @@ int checkXmls(struct Parameters* const par)
     }
     else // or read full Primary HDU and store it in 'libheaderPrimary' and calculate XML checksum
     {
+        status = EXIT_SUCCESS;
         int numberkeywords;
         char *libheaderPrimary = NULL;
         if (fits_hdr2str(libptr, 0, NULL, 0,&libheaderPrimary, &numberkeywords, &status))
@@ -144,6 +145,7 @@ int checkXmls(struct Parameters* const par)
         FILE *fp_libXMLfile;
         size_t len_libXMLfile;
         char buf_libXMLfile[4096];
+        //fp_libXMLfile = fopen(libXMLfile, "rb");
         if (NULL == (fp_libXMLfile = fopen(libXMLfile, "rb")))
         {
             printf("Unable to open XML from library, %s, for reading it and calculate its checksum.\n", libXMLfile);

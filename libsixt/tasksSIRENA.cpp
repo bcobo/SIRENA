@@ -2301,7 +2301,10 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
     int sizePulse_b;
     if ((*reconstruct_init)->preBuffer == 1) 
     {
-        sizePulse_b = (*reconstruct_init)->post_max_value;
+        if (((*reconstruct_init)->pulse_length<(*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)) // 0-padding and OFStrategy=FIXED
+            sizePulse_b = (*reconstruct_init)->pulse_length;
+        else
+            sizePulse_b = (*reconstruct_init)->post_max_value;
     }
     else
     {
@@ -2488,13 +2491,27 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
         {
             if ((*reconstruct_init)->preBuffer == 1)
             {
-                if (gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value <0)
+                if (((*reconstruct_init)->pulse_length<(*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)) // 0-padding and OFStrategy=FIXED
                 {
-                    gsl_vector_set(tendgsl,i,sizePulse_b);	//tend_i = Pulse_Length
+                    if (gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->pB0pad <0)
+                    {
+                        gsl_vector_set(tendgsl,i,sizePulse_b);	//tend_i = Pulse_Length
+                    }
+                    else
+                    {
+                        gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->pB0pad+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
+                    }
                 }
                 else
                 {
-                    gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
+                    if (gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value <0)
+                    {
+                        gsl_vector_set(tendgsl,i,sizePulse_b);	//tend_i = Pulse_Length
+                    }
+                    else
+                    {
+                        gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
+                    }
                 }
             }
             else
@@ -12116,6 +12133,12 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
         log_debug("pulse->size: %i",pulse->size);
         log_debug("productSize: %i",productSize);
     }
+    /*if (LowRes == 0)
+    {
+        cout<<gsl_vector_get(filter,0)<<endl;
+        cout<<gsl_vector_get(filter,1)<<endl;
+        cout<<gsl_vector_get(filter,2)<<endl;
+    }*/
 
     gsl_vector *vector;
     
