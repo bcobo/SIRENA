@@ -10255,11 +10255,10 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
             (*pulsesInRecord)->pulses_detected[i].phi = -999.0;
             (*pulsesInRecord)->pulses_detected[i].lagsShift = -999.0;
         }
-
-        gsl_vector_free(model); model = 0;
     } // End for
     
-    gsl_vector_free(recordAux); recordAux = 0;
+    if (recordAux != NULL) {gsl_vector_free(recordAux); recordAux = 0;}
+    if (model != NULL) {gsl_vector_free(model); model = 0;}
     
     gsl_vector_free(pulse_lowres); pulse_lowres = 0;
     gsl_vector_free(filtergsl_lowres); filtergsl_lowres = 0;
