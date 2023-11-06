@@ -9254,7 +9254,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
 
 
 /***** SECTION BB ************************************************************
- * th_runEenergy: Run energy calculation only in multithread mode
+ * th_runEnergy: Run energy calculation only in multithread mode
  *****************************************************************************/
 void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                   ReconstructInitSIRENA** reconstruct_init, 
@@ -9456,6 +9456,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
     int resize_mfvsposti = 0;
     
     int extraSizeDueToLags = 0;
+    model = gsl_vector_alloc((*reconstruct_init)->pulse_length);
     for (int i=0; i<(*pulsesInRecord)->ndetpulses ;i++)
     {
         tstartSamplesRecord = (*pulsesInRecord)->pulses_detected[i].TstartSamples;
@@ -9472,7 +9473,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                 message = "Cannot run routine pulseGrading";
                 EP_EXIT_ERROR(message,EPFAIL);
             }
-            model =gsl_vector_alloc((*reconstruct_init)->pulse_length);
+            //model =gsl_vector_alloc((*reconstruct_init)->pulse_length);
             
             if (preBuffer == 1)
             {
