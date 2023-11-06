@@ -2608,7 +2608,15 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
             }
             else
             {
-                foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value));
+                if (((*reconstruct_init)->opmode == 1) && ((*reconstruct_init)->pulse_length<(*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0))
+                {
+                    foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->pB0pad));
+                }
+                else
+                {
+                    foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value));
+                }
+
             }
         }
 
