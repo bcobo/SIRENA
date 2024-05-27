@@ -19,7 +19,8 @@
    CANTABRIA (CSIC-UC) with funding from the Spanish Ministry of Science and 
    Innovation (MICINN) under project  ESP2006-13608-C02-01, and Spanish 
    Ministry of Economy (MINECO) under projects AYA2012-39767-C02-01, 
-   ESP2013-48637-C2-1-P, ESP2014-53672-C3-1-P and RTI2018-096686-B-C21.
+   ESP2013-48637-C2-1-P, ESP2014-53672-C3-1-P, RTI2018-096686-B-C21
+   and PID2021-122955OB-C41.
 
 ***********************************************************************
 *                      TESRECONSTRUCTION
@@ -80,7 +81,8 @@
 * - OFLib: Work or not with a library (1/0)
 * - OFStrategy: Optimal Filter length Strategy: FREE, BYGRADE or FIXED
 * - OFLength: Optimal Filter length (taken into account if OFStrategy=FIXED)
-* - OFLengthNotPadded: Filter length not padded with 0s (only necessary when reconstructing with 0-padding)
+* - flength_0pad: 0-padding filter length (only necessary when reconstructing with 0-padding)
+* - prebuff_0pad: preBuffer when 0-padding
 * - preBuffer: Some samples added before the starting time of a pulse (number of samples added read from the xml file)
 *              SIRENA's format XML file (grading=>pre,post and pB) or new format XML file (grading=>pre,post and filtlen)
 *                                      pre=494, post=8192, pB=1000                          pre=494, post=7192, filtlen=8192
@@ -148,9 +150,6 @@ int tesreconstruction_main() {
         return(EXIT_FAILURE);
     }
 
-    if (par.OFLengthNotPadded < par.OFLength)
-        printf("%s","Running 0-padding: 0 < OFLengthNotPadded < OFLength\n");
-        
     AdvDet *det = newAdvDet(&status);
     CHECK_STATUS_BREAK(status);
     double sampling_rate_XML = -999.; // Sampling rate from XML
@@ -162,11 +161,13 @@ int tesreconstruction_main() {
         
         sampling_rate_XML = det->SampleFreq;
     }
-    
-    if ((par.preBuffer == 1) && (par.opmode == 0))
+    if ((strcmp(par.EnergyMethod,"0PAD") == 0) && (strcmp(par.OFStrategy,"FIXED") != 0))
     {
-        printf("%s","Attention: preBuffer used => Parameters of library filters read from XML file\n");
+        printf("%s","Attention: EnergyMethod=0PAD => OFStrategy set to FIXED\n");
+        strcpy(par.OFStrategy,"FIXED");
     }
+    if (((par.preBuffer == 1) && (strcmp(par.EnergyMethod,"0PAD") != 0)) || ((par.preBuffer == 1) && (par.opmode == 0)))
+        printf("%s","Attention: preBuffer used => Parameters of library filters read from XML file\n");
     
     // Obtain the 'trig_reclength' and the sampling rate
     double sampling_rate = -999.0;
@@ -367,13 +368,20 @@ int getpar(struct Parameters* const par)
   strcpy(par->EnergyMethod, sbuffer);
   free(sbuffer);
 
-  status=ape_trad_query_int("OFLengthNotPadded", &par->OFLengthNotPadded);
+  status=ape_trad_query_int("flength_0pad", &par->flength_0pad);
   if (EXIT_SUCCESS!=status) {
-    SIXT_ERROR("failed reading the OFLengthNotPadded parameter");
+    SIXT_ERROR("failed reading the flength_0pad parameter");
     return(status);
   }
-  assert(par->OFLengthNotPadded > 0);
-  //MyAssert((par->OFLengthNotPadded > 0) && (par->OFLengthNotPadded <= par->OFLength), "0-padding: 0 < OFLengthNotPadded <= OFLength");
+  assert(par->flength_0pad > 0);
+
+  status=ape_trad_query_int("prebuff_0pad", &par->prebuff_0pad);
+  if (EXIT_SUCCESS!=status) {
+    SIXT_ERROR("failed reading the prebuff_0pad parameter");
+    return(status);
+  }
+  assert(par->prebuff_0pad >= 0);
+
 
   MyAssert((par->opmode == 0) || (par->opmode == 1), "opmode must be 0 or 1");
       
@@ -465,9 +473,9 @@ int getpar(struct Parameters* const par)
       
   MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0) || (strcmp(par->FilterMethod,"F0B0") == 0),"FilterMethod must be F0 or B0 or F0B0");
       
-  MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0) ||
+  MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"0PAD") == 0) || (strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0) ||
   (strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0) ||	(strcmp(par->EnergyMethod,"I2RDER") == 0)
-  || (strcmp(par->EnergyMethod,"PCA") == 0), "EnergyMethod must be OPTFILT, WEIGHT, WEIGHTN, I2R, I2RFITTED, I2RDER or PCA");
+  || (strcmp(par->EnergyMethod,"PCA") == 0), "EnergyMethod must be OPTFILT, 0PAD, WEIGHT, WEIGHTN, I2R, I2RFITTED, I2RDER or PCA");
       
   MyAssert((strcmp(par->OFNoise,"NSD") == 0) || (strcmp(par->OFNoise,"WEIGHTM") == 0), "OFNoise must be NSD or WEIGHTM");
       
@@ -508,7 +516,7 @@ int getpar(struct Parameters* const par)
    return(EXIT_FAILURE);
   }*/
       
-  if ((par->OFLengthNotPadded < par->OFLength) && (strcmp(par->FilterDomain,"F") == 0))
+  if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (strcmp(par->FilterDomain,"F") == 0))
   {
       SIXT_ERROR("Code is not prepared to run 0-padding in Frequency domain");
       // To run 0-padding in Frequency domain the steps should be:
@@ -519,6 +527,17 @@ int getpar(struct Parameters* const par)
       //5. Scalar product in Frequency domain
       return(EXIT_FAILURE);
   }
+  if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (strcmp(par->OFNoise,"WEIGHTM") == 0))
+  {
+      SIXT_ERROR("parameter error: EnergyMethod=0PAD && OFNoise=WEIGHTM not a valid choice => OFNoise should be NSD");
+      return(EXIT_FAILURE);
+  }
+  if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (strcmp(par->OFStrategy,"FIXED") != 0))
+  {
+      SIXT_ERROR("parameter error: EnergyMethod=0PAD => OFStrategy should be FIXED");
+      return(EXIT_FAILURE);
+  }
+  //if (strcmp(par->EnergyMethod,"0PAD") == 0) strcpy(par->EnergyMethod, "OPTFILT");
       
   if ((strcmp(par->EnergyMethod,"WEIGHT") == 0) && (par->OFLib == 1))
   {

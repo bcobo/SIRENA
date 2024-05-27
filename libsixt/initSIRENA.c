@@ -145,7 +145,6 @@ int checkXmls(struct Parameters* const par)
         FILE *fp_libXMLfile;
         size_t len_libXMLfile;
         char buf_libXMLfile[4096];
-        //fp_libXMLfile = fopen(libXMLfile, "rb");
         if (NULL == (fp_libXMLfile = fopen(libXMLfile, "rb")))
         {
             printf("Unable to open XML from library, %s, for reading it and calculate its checksum.\n", libXMLfile);
@@ -406,7 +405,6 @@ int getSamplingrate_trigreclength (char* inputFile, struct Parameters par, doubl
 {
     // Error status.
     int status=EXIT_SUCCESS;
-
     char firstcharAux = inputFile[0];
     char firstchar[2] = {firstcharAux , '\0'};
 
@@ -540,36 +538,35 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
         }
     }
 
-    //Check if OFLength is in the XML file
-    if ((par.opmode == 1) && (par.OFLength == par.OFLengthNotPadded)) // Not 0-padding
+    /*int OFlengthvsposti = 0;
+    if ((par.preBuffer == 1) && (par.opmode == 1))
     {
-        int OFlengthvsposti = 0;
-        if ((par.preBuffer == 1) && (par.opmode == 1))
+        for (int i=0;i<(*reconstruct_init_sirena)->grading->ngrades;i++)
         {
-            for (int i=0;i<(*reconstruct_init_sirena)->grading->ngrades;i++)
+            if (par.OFLength == gsl_matrix_get((*reconstruct_init_sirena)->grading->gradeData,i,1))
             {
-                if (par.OFLength == gsl_matrix_get((*reconstruct_init_sirena)->grading->gradeData,i,1))
-                {
-                    OFlengthvsposti = 1;
-                    break;
-                }
-            }
-            if ((OFlengthvsposti == 0) && ((*reconstruct_init_sirena)->pulse_length >= (*reconstruct_init_sirena)->OFLength)) // Not 0-padding
-            {
-                SIXT_ERROR("The grading/preBuffer info of the XML file does not match the OFLength input parameter");
-                return(EXIT_FAILURE);
+                OFlengthvsposti = 1;
+                break;
             }
         }
-    }
+        if (OFlengthvsposti == 0)
+        printf("%s %d %s","par.: ",par.Pul,"\n");
+        printf("%s %d %s","par.OFLength: ",par.OFLength,"\n");
+        if ((OFlengthvsposti == 0) && ((*reconstruct_init_sirena)->pulse_length >= (*reconstruct_init_sirena)->OFLength)) // Not 0-padding
+        {
+            SIXT_ERROR("The grading/preBuffer info of the XML file does not match the OFLength input parameter");
+            return(EXIT_FAILURE);
+        }
+    }*/
 
-    //Check if pB0pad input parameter (preBuffer)
-    if ((par.opmode == 1) && (strcmp(par.OFStrategy,"FIXED") == 0) && (par.OFLength != par.OFLengthNotPadded)) // 0-padding
+    //Check prebuff_0pad input parameter (preBuffer when 0-padding)
+    if ((par.opmode == 1) && (strcmp(par.OFStrategy,"FIXED") == 0) && ((*reconstruct_init_sirena)->pulse_length < (*reconstruct_init_sirena)->OFLength)) // 0-padding
     {
         gsl_vector *pBsXML = gsl_vector_alloc((*reconstruct_init_sirena)->grading->gradeData->size1);
         gsl_matrix_get_col(pBsXML,(*reconstruct_init_sirena)->grading->gradeData,2);
-        if (par.pB0pad > gsl_vector_max(pBsXML))
+        if (par.prebuff_0pad > gsl_vector_max(pBsXML))
         {
-            SIXT_ERROR("Prebuffer to be used with 0-padding (pB0pad) is bigger than the preBuffers of the optimal filters in the library");
+            SIXT_ERROR("Prebuffer to be used with 0-padding (prebuff_0pad) is bigger than the preBuffers of the optimal filters in the library");
             return(EXIT_FAILURE);
         }
     }
@@ -613,16 +610,14 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
 
     initializeReconstructionSIRENA(reconstruct_init_sirena, par.RecordFile, record_file->fptr,
-        par.LibraryFile, par.TesEventFile, par.OFLengthNotPadded, par.scaleFactor, par.samplesUp,
+        par.LibraryFile, par.TesEventFile, par.flength_0pad, par.prebuff_0pad, par.scaleFactor, par.samplesUp,
         par.samplesDown, par.nSgms, par.detectSP, par.opmode, par.detectionMode, par.LrsT,
         par.LbT, par.NoiseFile, par.FilterDomain, par.FilterMethod, par.EnergyMethod,
         par.filtEev, par.Ifit, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter,
-        par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer, par.pB0pad, par.monoenergy,
+        par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer, par.monoenergy,
         par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile,
         par.errorT, par.Sum0Filt, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1,
         par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
-
-    //if ((par.opmode == 1) && (par.OFLength == par.OFLengthNotPadded)) // Not 0-padding
 
     // Build up TesRecord to read the file
     TesRecord* record;
@@ -637,44 +632,27 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     allocateTesRecord(record,*trig_reclength,record_file->delta_t,0,&status);
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
 
-    // Iterate of records and run SIRENA
-    /*fitsfile *fptr;
-    //if (fits_open_file(&fptr, inputFile, READONLY, &status)) {
-    //    fits_report_error(stderr, status);
-    //   return status;
-    //}
-    fits_open_file(&fptr, inputFile, READONLY, &status);
+    // Iteration of records and running SIRENA
+    // Read numrecords (NAXIS2) to simulate a progress bar
+    fitsfile *fptr;
+    if (fits_open_file(&fptr, inputFile, READONLY, &status)) {
+        SIXT_ERROR("Cannot open the input FITS file to read the number of records (NAXIS2)(in 'callSIRENA_Filei' function).");
+        return status;
+    }
     fits_movnam_hdu(fptr, ANY_HDU,"TESRECORDS", 0, &status);
-    //if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
+    if (status != EXIT_SUCCESS)
+    {
+        status = EXIT_SUCCESS;
+        fits_movnam_hdu(fptr, ANY_HDU,"RECORDS", 0, &status);
+        if (status != EXIT_SUCCESS)
+        {
+            SIXT_ERROR("Cannot find the TESRECORDS (or RECORDS) HDU in the input FITS file to read the number of records (NAXIS2)(in 'callSIRENA_Filei' function).");
+            return status;
+        }
+    }
     int numrecords;
     fits_read_key(fptr, TINT, "NAXIS2", &numrecords, NULL, &status);
     fits_close_file(fptr, &status);
-    //printf("%s","Paso5\n");
-    //printf("%s %d %s","NAXIS2=",numrecords,"\n");
-    //printf("%s","Paso6\n");
-
-    //int i;
-    //int total=numrecords;
-    //    for (i = 0; i <= total; i++) {
-    //    float progress = (float)i / total;
-    //    int bar_width = 50;
-
-    //    printf("Simulating |");
-    //    int pos = bar_width * progress;
-    //    for (int j = 0; j < bar_width; j++) {
-    //        if (j < pos)
-    //            printf("=");
-    //        else if (j == pos)
-    //            printf(">");
-    //        else
-    //            printf(" ");
-    //    }
-    //    printf("| %.2f%%\r", progress * 100);
-
-    //    fflush(stdout);
-    //    usleep(100000); // Sleep for a short time to simulate progress
-    //}
-    //printf("\n");*/
 
     fits_movnam_hdu(outfile->fptr, ANY_HDU,"EVENTS", 0, &status);
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
@@ -686,11 +664,11 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
     while(getNextRecord(record_file,record,&lastRecord,&startRecordGroup,&status))
     {
-        /*float progress = (float)nrecord / numrecords;
+        // Progress bar
+        float progress = (float)nrecord / (numrecords-1);
         int bar_width = 50;
-
-        printf("Simulating |");
         int pos = bar_width * progress;
+        printf("Simulating |");
         for (int j = 0; j < bar_width; j++) {
             if (j < pos)
                 printf("=");
@@ -699,15 +677,13 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
             else
                 printf(" ");
         }
-
+        printf("| %.2f%%\r", progress * 100);
+        fflush(stdout);
+        usleep(100000); // Sleep for a short time to simulate progress
         if (nrecord == numrecords-1)
         {
-            printf("| %.2f%%\r", progress * 100);
-
-            fflush(stdout);
-            usleep(100000); // Sleep for a short time to simulate progress
-            printf("\n");
-        }*/
+            printf("\n"); // New line after ending "Simulating...."
+        }
 
         nrecord = nrecord + 1;
         /*if(nrecord < 5887)

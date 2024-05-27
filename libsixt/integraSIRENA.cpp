@@ -91,7 +91,8 @@
   * - fptr: FITS object with pointer to data file
   * - library_file: File name of calibration library
   * - event_file: File name of output events (with reconstructed energy)
-  * - pulse_length: Pulse length
+  * - flength_0pad: 0padding filter length
+  * - prebuff_0pad: preBuffer used when 0-padding
   * - scaleFactor: Detection scale factor for initial filtering
   * - samplesUp: Number of samples for threshold trespassing
   * - samplesDown: Number of samples below the threshold to look for other pulse
@@ -140,10 +141,10 @@
   * - status: Input/output status
   ******************************************************************************/
  extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init, char* const record_file, fitsfile *fptr,
-                                                char* const library_file, char* const event_file, int pulse_length, double scaleFactor, int samplesUp, int samplesDown,
+                                                char* const library_file, char* const event_file, int flength_0pad, int prebuff_0pad, double scaleFactor, int samplesUp, int samplesDown,
                                                 double nSgms, int detectSP, int opmode, char *detectionMode, double LrsT, double LbT, char* const noise_file, char* filter_domain, char* filter_method, 
                                                 char* energy_method, double filtEev, double Ifit, char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
-                                                char* oflength_strategy, int oflength, char preBuffer, int pb0pad,
+                                                char* oflength_strategy, int oflength, char preBuffer,
                                                 double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter, int interm, char* const detectFile, int errorT,
                                                 int Sum0Filt,
                                                 char clobber, int maxPulsesPerRecord, double SaturationValue,
@@ -159,10 +160,23 @@
      {
          EP_EXIT_ERROR("Error checking if library file exists",*status);
      }
-     
+
+     int pulse_length;
+
      if (opmode == 0)	// Calibration
      {
          pulse_length = pow(2,floor(log2(largeFilter)));
+     }
+
+     if (strcmp(energy_method,"0PAD") == 0)
+     {
+         pulse_length = flength_0pad;
+         if (pulse_length >= oflength)
+         {
+             EP_EXIT_ERROR("flength_0pad should be lower than the maximum filter length",*status);
+         }
+         strcpy(reconstruct_init->EnergyMethod,"OPTFILT");
+         strcpy(energy_method,"OPTFILT");
      }
      
      // Loading in the reconstruct_init structure values related to grading and preBuffer values from the XML file 
@@ -190,11 +204,11 @@
      {
          if (opmode == 1)		
          {
-             if ((pulse_length < oflength) && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RFITTED") == 0)|| (strcmp(energy_method,"I2RDER") == 0)))
+             if ((pulse_length < oflength) && ((strcmp(energy_method,"OPTFILT") == 0)))
              {
                  EP_PRINT_ERROR("0-padding is going to be used",-999); // Only a warning
              }
-             else if ((pulse_length > oflength) && ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RFITTED") == 0) || (strcmp(energy_method,"I2RDER") == 0)))
+             else if ((strcmp(energy_method,"OPTFILT") == 0) || (strcmp(energy_method,"I2R") == 0) || (strcmp(energy_method,"I2RFITTED") == 0) || (strcmp(energy_method,"I2RDER") == 0))
              {
                  pulse_length = oflength;
              }
@@ -391,12 +405,13 @@
      else		reconstruct_init->OFLib = 0;
      strcpy(reconstruct_init->OFInterp,ofinterp);
      strcpy(reconstruct_init->OFStrategy,oflength_strategy);
-     reconstruct_init->OFLength = oflength;
-     reconstruct_init->pB0pad = pb0pad;
+     reconstruct_init->OFLength      = oflength;
      reconstruct_init->errorT = errorT;
      reconstruct_init->Sum0Filt = Sum0Filt;
      reconstruct_init->intermediate  = interm;
      reconstruct_init->SaturationValue  = SaturationValue;
+     reconstruct_init->flength_0pad = flength_0pad;
+     reconstruct_init->prebuff_0pad = prebuff_0pad;
      
      strncpy(reconstruct_init->tstartPulse1,tstartPulse1,255);
      reconstruct_init->tstartPulse1[255]='\0';
@@ -2081,7 +2096,6 @@
                      gsl_matrix_set(matrixALL_OFTx,j,k+index,gsl_matrix_get(matrixAux_OFTx,j,k));
                  }
              }
-             
              if (ntemplates > 1)
              {
                  strcpy(obj.nameCol,(string("ABT")+string(str_length)).c_str());
@@ -2787,7 +2801,6 @@
              }
              
              strcpy(obj.nameTable,"FIXFILTT");
-             
              if (strcmp(*ofinterp,"MF") == 0)
              {
                  gsl_matrix *matrixALL_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
@@ -2885,6 +2898,8 @@
              {
                  gsl_matrix *matrixALLab_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
                  gsl_matrix *matrixAuxab_OFTx = NULL;
+                 cout<<"preBuffer: "<<preBuffer<<endl;
+                 cout<<"ntemplates: "<<ntemplates<<endl;
                  
                  if (preBuffer == 0)
                  {
@@ -3514,7 +3529,6 @@ extern "C" unsigned checksum(void *buffer, size_t len, unsigned int seed)
  OFIter(0),
  OFLib(0),
  OFLength(0),
- pB0pad(0),
  preBuffer(0),
  intermediate(0),
  errorT(0),
@@ -3558,7 +3572,6 @@ extern "C" unsigned checksum(void *buffer, size_t len, unsigned int seed)
  OFIter(other.OFIter),
  OFLib(other.OFLib),
  OFLength(other.OFLength),
- pB0pad(other.pB0pad),
  preBuffer(other.preBuffer),
  intermediate(other.intermediate),
  errorT(other.errorT),
@@ -3700,8 +3713,6 @@ extern "C" unsigned checksum(void *buffer, size_t len, unsigned int seed)
          intermediate = other.intermediate;
          strcpy(detectFile, other.detectFile);
 
-         pB0pad = other.pB0pad;
-
          errorT = other.errorT;
          Sum0Filt = other.Sum0Filt;
 
@@ -3834,8 +3845,6 @@ extern "C" unsigned checksum(void *buffer, size_t len, unsigned int seed)
      //sprintf(ret->detectFile, "%s_%i", ret->detectFile, n_record);
      strcat(ret->detectFile,"_");
      strcat(ret->detectFile,to_string(n_record).c_str());
-
-     ret->pB0pad = this->pB0pad;
 
      ret->errorT = this->errorT;
      ret->Sum0Filt = this->Sum0Filt;

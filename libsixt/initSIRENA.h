@@ -26,9 +26,10 @@ struct Parameters {
 	// File containing the pulse template
 	char PulseTemplateFile[MAXFILENAME];
 
-	// Filter length not padded with 0s (only necessary when reconstructing with 0-padding)
-	int OFLengthNotPadded;
-	int pB0pad; // preBuffer used when 0padding and OFStrategy=FIXED
+	// 0-padding filter length (only necessary when reconstructing with 0-padding)
+	int flength_0pad;
+	// 0-padding preBuffer (only necessary when reconstructing with 0-padding)
+	int prebuff_0pad;
 
 	// Threshold level
 	double Threshold;
@@ -105,7 +106,7 @@ struct Parameters {
 	// Filtering Method: F0 (deleting the zero frequency bin) or F0 (deleting the baseline) of F0B0 (deleting always the baseline)
 	char FilterMethod[5];
 
-	// Energy Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA
+	// Energy Method: OPTFILT, 0PAD, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA
 	char EnergyMethod[10];
 
     // Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED)

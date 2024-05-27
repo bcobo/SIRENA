@@ -539,7 +539,8 @@ typedef struct ReconstructInitSIRENA
   
   	//Optimal Filter length (taken into account if OFStrategy=FIXED) **/
   	int OFLength;
-	int pB0pad;
+	int flength_0pad;
+	int prebuff_0pad;
   
   	//0-padding filter if 0 (from pulseLength to OFLength filter filled in with 0's) or filter with a filter+preBuffer if different from 0
   	int preBuffer;
@@ -635,8 +636,8 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     char* const record_file, fitsfile *fptr, 
                                     char* const library_file,
                                     char* const event_file,
-                                    int pulse_length, double scaleFactor, 
-                                    int samplesUp, int samplesDown, 
+                                    int flength_0pad, int prebuff_0pad,
+									double scaleFactor, int samplesUp, int samplesDown,
                                     double nSgms, int detectSP,
                                     int opmode, char* detectionMode,double LrsT, 
                                     double LbT, char* const noise_file, 
@@ -646,7 +647,6 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, 
                                     char *ofinterp, char* oflength_strategy, 
                                     int oflength, char preBuffer,
-									int pb0pad,
                                     double monoenergy, char hduPRECALWN, 
                                     char hduPRCLOFWM, int largeFilter, 
                                     int interm, char* detectFile, 
