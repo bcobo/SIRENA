@@ -1,14 +1,14 @@
 ###########################################################################################
-#Parameters used to build the library:
+#Parameters used to reconstruct the pulseheights:
 ###########################################################################################
 RecordFile,s,lq,"record.fits",,,"Record FITS file"
 TesEventFile,s,lq,"event.fits",,,"Output event list file"
 LibraryFile,s,h,"library.fits",,,"File with calibration library"
 XMLFile,s,h,"xifu_pipeline.xml",,,"XML input FITS file with instrument definition"
-preBuffer,b,h,no,,,"Some samples added or not before the starting time of a pulse (number of added samples read from the xml file)"
+preBuffer,b,h,no,,,"Some samples added or not before the starting time of a pulse (number of added samples read from the XML file)"
 EventListSize,i,h,1000,,,"Default size of the event list"
 clobber,b,h,yes,,,"Overwrite or not output files if exist (yes/no)"
-history,b,h,yes,,,"write program parameters into output file?"
+history,b,h,yes,,,"Write program parameters into output file?"
 
 scaleFactor,r,h,0,,,"Detection scale factor for initial filtering"
 samplesUp,i,h,3,,,"Number of consecutive samples up for threshold trespassing (only used with STC detection mode)"
@@ -26,7 +26,7 @@ FilterDomain,s,h,"T",,,"Filtering Domain: Time (T) or Frequency (F)"
 #FilterMethod,s,h,"F0",,,"Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline) or F0B0 (deleting always the baseline)"
 FilterMethod,s,h,"F0",,,"Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)"
 EnergyMethod,s,h,"OPTFILT",,,"Energy calculation Method: OPTFILT, 0PAD, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA"
-filtEeV,r,h,6000,,,"Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED)"
+filtEeV,r,h,6000,,,"Energy of the filters of the library to be used to calculate energy (only for OPTFILT, 0PAD, I2R and I2RFITTED)"
 Ifit,r,h,0.0,,,"Constant to apply the I2RFITTED conversion"
 
 OFNoise,s,h,"NSD",,,"Noise to use with Optimal Filtering: NSD or WEIGHTM"
@@ -38,8 +38,8 @@ Fitting35,i,h,3,,,"Number of lags to analytically calculate a parabola (3) or to
 OFIter,i,h,0,,,"Iterate or not iterate (1/0)"
 
 OFLib,b,h,yes,,,"Work or not with a library (yes/no)"
-OFStrategy,s,h,"BYGRADE",,,"Optimal Filter length Strategy: FREE, BYGRADE or FIXED"
-OFLength,i,h,8192,,,"Optimal Filter length (taken into account if OFStrategy=FIXED)"
+OFStrategy,s,h,"BYGRADE",,,"Optimal filter length strategy: FREE, BYGRADE or FIXED"
+OFLength,i,h,8192,,,"Optimal filter length (taken into account if OFStrategy=FIXED)"
 prebuff_0pad,i,h,1000,,,"0-padding preBuffer (only necessary when reconstructing with 0-padding)"
 flength_0pad,i,h,8192,,,"0-padding filter length (only necessary when reconstructing with 0-padding)"
 

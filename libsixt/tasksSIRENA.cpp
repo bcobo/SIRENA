@@ -12147,12 +12147,12 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
     }
     //if (LowRes!=1){for (int i=0;i<10;i++) cout<<i<<" "<<gsl_vector_get(filter,i)<<endl;}
 
-    /*cout<<"pulse->size: "<<pulse->size<<endl;
+    cout<<"pulse->size: "<<pulse->size<<endl;
     for (int i=0;i<pulse->size;i++)
         cout<<i<<" "<<gsl_vector_get(pulse,i)<<endl;
     cout<<"filter->size: "<<filter->size<<endl;
     for (int i=0;i<filter->size;i++)
-        cout<<i<<" "<<gsl_vector_get(filter,i)<<endl;*/
+        cout<<i<<" "<<gsl_vector_get(filter,i)<<endl;
 
     gsl_vector *vector;
     

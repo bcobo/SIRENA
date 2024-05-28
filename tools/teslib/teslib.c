@@ -311,17 +311,18 @@ int getpar_teslib(struct Parameters* const par)
   status=ape_trad_query_bool("hduPRCLOFWM", &par->hduPRCLOFWM);
   status=ape_trad_query_int("largeFilter", &par->largeFilter);
 
-  status=ape_trad_query_string("FilterDomain", &sbuffer);
-  strcpy(par->FilterDomain, sbuffer);
-  free(sbuffer);
+  //status=ape_trad_query_string("FilterDomain", &sbuffer);
+  //strcpy(par->FilterDomain, sbuffer);
+  //free(sbuffer);
 
-  status=ape_trad_query_string("FilterMethod", &sbuffer);
-  strcpy(par->FilterMethod, sbuffer);
-  free(sbuffer);
+  //status=ape_trad_query_string("FilterMethod", &sbuffer);
+  //strcpy(par->FilterMethod, sbuffer);
+  //free(sbuffer);
 
   status=ape_trad_query_string("EnergyMethod", &sbuffer);
   strcpy(par->EnergyMethod, sbuffer);
   free(sbuffer);
+  if (strcmp(par->EnergyMethod,"0PAD") == 0)  strcpy(par->EnergyMethod,"OPTFILT");
 
   status=ape_trad_query_double("Ifit", &par->Ifit);
 
@@ -339,13 +340,13 @@ int getpar_teslib(struct Parameters* const par)
 
   MyAssert(par->monoenergy > 0, "monoenergy must be greater than 0");
 
-  MyAssert((strcmp(par->FilterDomain,"T") == 0) || (strcmp(par->FilterDomain,"F") == 0), "FilterDomain must be T or F");
+  //MyAssert((strcmp(par->FilterDomain,"T") == 0) || (strcmp(par->FilterDomain,"F") == 0), "FilterDomain must be T or F");
 
   //MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0) || (strcmp(par->FilterMethod,"F0B0") == 0),"FilterMethod must be F0 or B0 or F0B0");
-  MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0),"FilterMethod must be F0 or B0");
+  //MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0),"FilterMethod must be F0 or B0");
 
-  MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0),
-           "EnergyMethod must be OPTFILT, I2R or I2RFITTED");
+  MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"0PAD") == 0) || (strcmp(par->EnergyMethod,"I2R") == 0) || (strcmp(par->EnergyMethod,"I2RFITTED") == 0),
+           "EnergyMethod must be OPTFILT, 0PAD, I2R or I2RFITTED");
 
   MyAssert((par->intermediate == 0) || (par->intermediate == 1), "intermediate must be 0 or 1");
 

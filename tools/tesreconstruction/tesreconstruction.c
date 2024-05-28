@@ -207,6 +207,11 @@ int tesreconstruction_main() {
         status = fillReconstructInitSIRENAGrading (par, det, &reconstruct_init_sirena);
     }
     destroyAdvDet(&det);
+    if ((par.preBuffer == 1) && (strcmp(par.EnergyMethod,"0PAD") == 0) && (par.prebuff_0pad > reconstruct_init_sirena->preBuffer_max_value ))
+    {
+        SIXT_ERROR("prebuff_0pad should be lower than the maximum prebuffer value extracted from the XML file");
+        return(EXIT_FAILURE);
+    }
 
     // Build up TesEventList to recover the results of the reconstruction
     TesEventList* event_list = newTesEventListSIRENA(&status);

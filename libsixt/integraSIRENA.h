@@ -542,7 +542,6 @@ typedef struct ReconstructInitSIRENA
 	int flength_0pad;
 	int prebuff_0pad;
   
-  	//0-padding filter if 0 (from pulseLength to OFLength filter filled in with 0's) or filter with a filter+preBuffer if different from 0
   	int preBuffer;
   	int preBuffer_min_value;
   	int preBuffer_max_value;

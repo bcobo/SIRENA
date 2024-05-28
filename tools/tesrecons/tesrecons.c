@@ -140,6 +140,7 @@ int tesrecons_main() {
     }
     if ((par.preBuffer == 1) && (strcmp(par.EnergyMethod,"0PAD") != 0))    printf("%s","Attention: preBuffer used => Parameters of library filters read from XML file\n");
 
+
     // Obtain the 'trig_reclength' and the sampling rate
     double sampling_rate = -999.0;
     int trig_reclength = -999;
@@ -175,6 +176,11 @@ int tesrecons_main() {
     // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
     status = fillReconstructInitSIRENAGrading (par, det, &reconstruct_init_sirena);
     destroyAdvDet(&det);
+    if ((par.preBuffer == 1) && (strcmp(par.EnergyMethod,"0PAD") == 0) && (par.prebuff_0pad > reconstruct_init_sirena->preBuffer_max_value ))
+    {
+        SIXT_ERROR("prebuff_0pad should be lower than the maximum prebuffer value extracted from the XML file");
+        return(EXIT_FAILURE);
+    }
 
     // Build up TesEventList
     TesEventList* event_list = newTesEventListSIRENA(&status);
