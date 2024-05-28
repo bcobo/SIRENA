@@ -212,16 +212,16 @@ int teslib_main() {
   
   if (EXIT_SUCCESS==status) 
   {
-	headas_chat(3, "finished successfully!\n\n");
+        headas_chat(3, "finished successfully!\n\n");
         time_t ttcurrent = time(0);
         printf("Elapsed time: %f\n", ((float)(ttcurrent - ttstart)));
-	return(EXIT_SUCCESS);
+        return(EXIT_SUCCESS);
   } 
-  else 
+  else
   {
-        time_t ttcurrent = time(0);
-        printf("Elapsed time: %f\n", ((float)(ttcurrent - ttstart)));
-	return(status);
+        //time_t ttcurrent = time(0);
+        //printf("Elapsed time: %f\n", ((float)(ttcurrent - ttstart)));
+        return(status);
   }
 }
 /*xxxx end of SECTION 1 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
@@ -311,14 +311,6 @@ int getpar_teslib(struct Parameters* const par)
   status=ape_trad_query_bool("hduPRCLOFWM", &par->hduPRCLOFWM);
   status=ape_trad_query_int("largeFilter", &par->largeFilter);
 
-  //status=ape_trad_query_string("FilterDomain", &sbuffer);
-  //strcpy(par->FilterDomain, sbuffer);
-  //free(sbuffer);
-
-  //status=ape_trad_query_string("FilterMethod", &sbuffer);
-  //strcpy(par->FilterMethod, sbuffer);
-  //free(sbuffer);
-
   status=ape_trad_query_string("EnergyMethod", &sbuffer);
   strcpy(par->EnergyMethod, sbuffer);
   free(sbuffer);
@@ -339,11 +331,6 @@ int getpar_teslib(struct Parameters* const par)
   MyAssert(par->LbT > 0, "LbT must be greater than 0");
 
   MyAssert(par->monoenergy > 0, "monoenergy must be greater than 0");
-
-  //MyAssert((strcmp(par->FilterDomain,"T") == 0) || (strcmp(par->FilterDomain,"F") == 0), "FilterDomain must be T or F");
-
-  //MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0) || (strcmp(par->FilterMethod,"F0B0") == 0),"FilterMethod must be F0 or B0 or F0B0");
-  //MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0),"FilterMethod must be F0 or B0");
 
   MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"0PAD") == 0) || (strcmp(par->EnergyMethod,"I2R") == 0) || (strcmp(par->EnergyMethod,"I2RFITTED") == 0),
            "EnergyMethod must be OPTFILT, 0PAD, I2R or I2RFITTED");

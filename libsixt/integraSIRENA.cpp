@@ -167,6 +167,7 @@
      {
          pulse_length = pow(2,floor(log2(largeFilter)));
      }
+     else pulse_length = flength_0pad;
 
      if (strcmp(energy_method,"0PAD") == 0)
      {

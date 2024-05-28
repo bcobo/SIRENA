@@ -280,7 +280,7 @@ int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par,
         return(EXIT_FAILURE);
     }
 
-    // Check if input XML file and XMl file to build the library to be used to reconstruct are the same
+    // Check if input XML file and XML file to build the library to be used to reconstruct are the same
     if (par.opmode == 1)
     {
         status = checkXmls(&par);
@@ -560,7 +560,7 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
     }*/
 
     //Check prebuff_0pad input parameter (preBuffer when 0-padding)
-    if ((par.opmode == 1) && (strcmp(par.OFStrategy,"FIXED") == 0) && ((*reconstruct_init_sirena)->pulse_length < (*reconstruct_init_sirena)->OFLength)) // 0-padding
+    if ((par.opmode == 1) && (strcmp(par.EnergyMethod,"0PAD") == 0))
     {
         gsl_vector *pBsXML = gsl_vector_alloc((*reconstruct_init_sirena)->grading->gradeData->size1);
         gsl_matrix_get_col(pBsXML,(*reconstruct_init_sirena)->grading->gradeData,2);
@@ -668,7 +668,8 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
         float progress = (float)nrecord / (numrecords-1);
         int bar_width = 50;
         int pos = bar_width * progress;
-        printf("Simulating |");
+        if (par.opmode == 0)        printf("Building the library |");
+        else if (par.opmode == 1)   printf("Reconstructing |");
         for (int j = 0; j < bar_width; j++) {
             if (j < pos)
                 printf("=");

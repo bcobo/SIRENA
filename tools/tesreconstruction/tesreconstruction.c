@@ -207,11 +207,6 @@ int tesreconstruction_main() {
         status = fillReconstructInitSIRENAGrading (par, det, &reconstruct_init_sirena);
     }
     destroyAdvDet(&det);
-    if ((par.preBuffer == 1) && (strcmp(par.EnergyMethod,"0PAD") == 0) && (par.prebuff_0pad > reconstruct_init_sirena->preBuffer_max_value ))
-    {
-        SIXT_ERROR("prebuff_0pad should be lower than the maximum prebuffer value extracted from the XML file");
-        return(EXIT_FAILURE);
-    }
 
     // Build up TesEventList to recover the results of the reconstruction
     TesEventList* event_list = newTesEventListSIRENA(&status);
@@ -248,17 +243,17 @@ int tesreconstruction_main() {
   
   if (EXIT_SUCCESS==status) 
   {
-	headas_chat(3, "finished successfully!\n\n");
+        headas_chat(3, "finished successfully!\n\n");
         time_t ttcurrent = time(0);
         printf("Elapsed time: %f\n", ((float)(ttcurrent - ttstart)));
-	return(EXIT_SUCCESS);
+        return(EXIT_SUCCESS);
   } 
-  else 
+  /*else
   {
         time_t ttcurrent = time(0);
         printf("Elapsed time: %f\n", ((float)(ttcurrent - ttstart)));
 	return(status);
-  }
+  }*/
 }
 /*xxxx end of SECTION 1 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
