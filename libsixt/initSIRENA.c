@@ -571,6 +571,29 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
         }
     }
 
+     // Loading in the reconstruct_init structure values related to grading and preBuffer values from the XML file
+    gsl_vector *pBi = gsl_vector_alloc(1);   // preBuffer values
+    gsl_vector *posti = gsl_vector_alloc(1); // Filter length (including preBuffer)
+    // post in (grading=>pre,post and pB)
+    // filtlen in (grading=>pre,post and filtlen)
+
+    if (par.preBuffer == 1)
+    {
+        gsl_vector_free(pBi); pBi=0;
+        pBi = gsl_vector_alloc((*reconstruct_init_sirena)->grading->ngrades);
+        gsl_matrix_get_col(pBi,(*reconstruct_init_sirena)->grading->gradeData,2);
+        (*reconstruct_init_sirena)->preBuffer_max_value = gsl_vector_max(pBi);
+        (*reconstruct_init_sirena)->preBuffer_min_value = gsl_vector_min(pBi);
+        gsl_vector_free(posti); posti=0;
+        posti = gsl_vector_alloc((*reconstruct_init_sirena)->grading->ngrades);
+        gsl_matrix_get_col(posti,(*reconstruct_init_sirena)->grading->gradeData,1);
+        (*reconstruct_init_sirena)->post_max_value = gsl_vector_max(posti);
+        (*reconstruct_init_sirena)->post_min_value = gsl_vector_min(posti);
+
+        if (pBi != NULL) {gsl_vector_free(pBi); pBi = 0;}
+        if (posti != NULL) {gsl_vector_free(posti); posti = 0;}
+    }
+
     return(status);
 }
 /*xxxx end of SECTION 6 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/

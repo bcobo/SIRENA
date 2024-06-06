@@ -136,7 +136,7 @@ typedef struct LibraryCollection
 	int ntemplates;
         
 	/** BASELINE read from the noise file and propagated to the library file**/
-	    double baseline;
+	double baseline;
 	
 	/** Number of fixed length filters in the structure. */
 	int nfixedfilters;
@@ -504,10 +504,10 @@ typedef struct ReconstructInitSIRENA
   	/** Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline) or F0B0 (deleting always the baseline) **/
  	char FilterMethod[5];
   
-  	/** Energy Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA **/
+  	/** Energy Method: OPTFILT, 0PAD, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA **/
   	char EnergyMethod[10];
   
-  	/** Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED) **/
+  	/** Energy of the filters of the library to be used to calculate energy (only for OPTFILT, 0PAD, I2R and I2RFITTED) **/
   	double filtEev;
   
   	/** Constant to apply the I2RFITTED conversion **/
@@ -687,9 +687,42 @@ extern "C"
 #endif
 void IntegrafreeTesEventListSIRENA(TesEventList* event_list);
 
-LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char *filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int preBuffer, gsl_vector *pBi, gsl_vector *posti, int* const status);
+int loadLibrary (ReconstructInitSIRENA* reconstruct_init);
+//LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char *filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int preBuffer, gsl_vector *pBi, gsl_vector *posti, int* const status);
+LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init, gsl_vector *pBi, gsl_vector *posti, int* const status);
 
-NoiseSpec* getNoiseSpec(const char* const filename,int opmode,int hduPRCLOFWM,char *energy_method,char *ofnoise,char *filter_method,int* const status);
+int loadNoise (ReconstructInitSIRENA* reconstruct_init);
+//NoiseSpec* getNoiseSpec(const char* const filename,int opmode,int hduPRCLOFWM,char *energy_method,char *ofnoise,char *filter_method,int* const status);
+NoiseSpec* getNoiseSpec(ReconstructInitSIRENA* reconstruct_init, int* const status);
+
+int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
+	char* const record_file, fitsfile *fptr, char* const library_file, char* const event_file,
+	int flength_0pad, int prebuff_0pad,
+	double scaleFactor, int samplesUp, int samplesDown, double nSgms, int detectSP, int opmode, char *detectionMode,
+	double LrsT, double LbT,
+	char* const noise_file,
+	char* filter_domain, char* filter_method,
+	char* energy_method, double filtEev, double Ifit,
+	char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
+	char* oflength_strategy, int oflength, char preBuffer,
+	double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter,
+	int interm, char* const detectFile,
+	int errorT,
+	int Sum0Filt,
+	char clobber, int maxPulsesPerRecord, double SaturationValue,
+	char* const tstartPulse1, int tstartPulse2, int tstartPulse3,
+	double energyPCA1, double energyPCA2,
+	char * const XMLFile);
+
+int fillTstartPulse1_i(ReconstructInitSIRENA* reconstruct_init);
+
+int prepareToConvertI2R (ReconstructInitSIRENA* reconstruct_init);
+
+int fillPulsesAll (PulsesCollection** pulsesAll, PulsesCollection* pulsesInRecord);
+
+int fillEventList (TesEventList* event_list, PulsesCollection* pulsesAll, PulsesCollection* pulsesInRecord, ReconstructInitSIRENA* reconstruct_init, TesRecord* record, int lastRecord);
+
+long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_init, int* const status);
 
 #ifdef __cplusplus
 extern "C"

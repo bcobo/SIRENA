@@ -314,9 +314,13 @@ int getpar_teslib(struct Parameters* const par)
   status=ape_trad_query_string("EnergyMethod", &sbuffer);
   strcpy(par->EnergyMethod, sbuffer);
   free(sbuffer);
-  if (strcmp(par->EnergyMethod,"0PAD") == 0)  strcpy(par->EnergyMethod,"OPTFILT");
+  //if (strcmp(par->EnergyMethod,"0PAD") == 0)  strcpy(par->EnergyMethod,"OPTFILT");
 
   status=ape_trad_query_double("Ifit", &par->Ifit);
+
+  status=ape_trad_query_string("FilterMethod", &sbuffer);
+  strcpy(par->FilterMethod, sbuffer);
+  free(sbuffer);
 
   status=ape_trad_query_int("intermediate", &par->intermediate);
   status=ape_trad_query_string("detectFile", &sbuffer);
@@ -331,6 +335,9 @@ int getpar_teslib(struct Parameters* const par)
   MyAssert(par->LbT > 0, "LbT must be greater than 0");
 
   MyAssert(par->monoenergy > 0, "monoenergy must be greater than 0");
+
+  //MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0) || (strcmp(par->FilterMethod,"F0B0") == 0),"FilterMethod must be F0 or B0 or F0B0");
+  MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0),"FilterMethod must be F0 or B0");
 
   MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"0PAD") == 0) || (strcmp(par->EnergyMethod,"I2R") == 0) || (strcmp(par->EnergyMethod,"I2RFITTED") == 0),
            "EnergyMethod must be OPTFILT, 0PAD, I2R or I2RFITTED");

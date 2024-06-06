@@ -441,7 +441,7 @@ int getpar_tesrecons(struct Parameters* const par)
 
   if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (strcmp(par->FilterDomain,"F") == 0))
   {
-      SIXT_ERROR("Code is not prepared to run 0-padding in Frequency domain");
+      SIXT_ERROR("parameter error: Code is not prepared to run 0-padding in Frequency domain");
       // To run 0-padding in Frequency domain the steps should be:
       //1. Take the 8192-samples-length filter in Time domain
       //2. Cut the 0-padding length first samples (the first 4096 samples, or the first 2048 samples...) => 0-padding filter
@@ -453,6 +453,11 @@ int getpar_tesrecons(struct Parameters* const par)
   if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (strcmp(par->OFNoise,"WEIGHTM") == 0))
   {
       SIXT_ERROR("parameter error: EnergyMethod=0PAD && OFNoise=WEIGHTM not a valid choice => OFNoise should be NSD");
+      return(EXIT_FAILURE);
+  }
+  if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (par->flength_0pad >= par->OFLength))
+  {
+      SIXT_ERROR("parameter error: EnergyMethod=0PAD => flength_0pad should be lower than the maximum filter length (OFLength)");
       return(EXIT_FAILURE);
   }
 

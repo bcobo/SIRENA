@@ -2133,7 +2133,6 @@ int filderLibrary(ReconstructInitSIRENA** reconstruct_init, double samprate)
                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
             }
             
-            
             if(!sc->is_threading()){
                 
                 // Store the low-pass filtered derivatives in 'pulse_templates_filder'
@@ -2302,9 +2301,13 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
     if ((*reconstruct_init)->preBuffer == 1) 
     {
         if (((*reconstruct_init)->pulse_length<(*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)) // 0-padding and OFStrategy=FIXED
+        {
             sizePulse_b = (*reconstruct_init)->pulse_length;
+        }
         else
+        {
             sizePulse_b = (*reconstruct_init)->post_max_value;
+        }
     }
     else
     {
@@ -8142,7 +8145,7 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
  * - Check Quality
  * - For each pulse:
  * 	- Establish the pulse grade (for example VeryHighRes=1, HighRes=2, IntRes=3, MedRes=4, LimRes=5, LowRes=6, Rejected=-1, Pileup=-2) and the optimal filter length
- *  - Subtract the baseline if OPTFILT and 'runF0orB0val'= 1/2 ('FilterMethod'=B0/F0B0)
+ *  - Subtract the baseline if OPTFILT/0PAD and 'runF0orB0val'= 1/2 ('FilterMethod'=B0/F0B0)
  * 	- Pulse: Load the proper piece of the record in 'pulse'
  *       - Get the low resolution energy estimator by filtering with a 8-samples-length filter:
  *           - Load the low resolution pulse in *pulse_lowres*
@@ -8151,21 +8154,21 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
  * 	- If 'OFIter'=1, in the first iteration ('numiteration'=0) the values of 'maxDER' and 'maxDERs' are used in 'find_matchedfilterDAB', 
  *         'find_optimalfilterDAB' or 'find_Esboundary' getting the values of the 'energies' which straddle the 'maxDER' ('Ealpha' and 'Ebeta'). There will be more
  *         iterations if the calculated 'energy' is out of ['Ealpha','Ebeta']. If 'energy' is in ['Ealpha','Ebeta'] the iterative process stops.
- * 	  	- If OPTFILT or I2R, and 'OFLib'=0 and 'OFNOise=NSD':
+ * 	  	- If OPTFILT/0PAD/I2R/I2RFITTED and 'OFLib'=0 and 'OFNOise=NSD':
  *	 	    - Find the matched filter and load it in 'filter' ('find_matchedfilterDAB')
  * 		    - Calculate the optimal filter
- * 		- If OPTFILT or I2R, and 'OFLib'=1 and 'OFNOise=NSD':
- *                   - If it is necessary, choose the base-2 system value closest (lower than or equal) to the pulse length
+ * 		- If OPTFILT/0PAD/I2R/I2RFITTED, and 'OFLib'=1 and 'OFNOise=NSD':
+ *          - If it is necessary, choose the base-2 system value closest (lower than or equal) to the pulse length (not for 0PAD)
  *	 	    - Find the optimal filter and load it in 'optimalfilter' ('find_optimalfilterDAB')
  *		- If 'WEIGHT' or 'WEIGHTN':
  *		    - Get the indexes of the two energies which straddle the pulse ('find_Esboundary')
  * 		    - If 'WEIGHTN' and 'OFLib'=1:
  *                       - Choose the base-2 system value closest (lower than or equal) to the pulse length
  * 		        - 'find_prclwn' to find the appropriate values of the PRECALWN HDU ('PRCLx' columns)
- *               - If OPTFILT or I2R,  and 'OFLib'=1 and 'OFNOise=WEIGHTM':
+ *               - If OPTFILT/I2R/I2RFITTED,  and 'OFLib'=1 and 'OFNOise=WEIGHTM':
  *                   - Choose the base-2 system value closest (lower than or equal) to the pulse length
  * 		    - 'find_prclofwm' to find the appropriate values of the PRCLOFWM HDU ('OFWx' columns)
- *		- Subtract the sum of the filter if OPTFILT, NSD, T, 0-padding and Sum0Filt=1 
+ *		- Subtract the sum of the filter if 0PAD and Sum0Filt=1
  *               - Calculate the energy of each pulse
  *               - If using lags, it is necessary to modify the tstart of the pulse and the length of the filter used
  *       - In order to subtract the pulse model, it has to be located in the tstart with jitter and know its values in the digitized samples
@@ -8206,7 +8209,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
     {
         TorF=1;
     }
-    
+
     int runF0orB0val = -999;
     if (strcmp((*reconstruct_init)->FilterMethod,"F0") == 0)	// Deleting the frequency-zero bin
     {
@@ -8221,7 +8224,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
         runF0orB0val = 2;
     }
     
-    // I2R method converts I into R at the beginnig and after that 'I2R' is equivalent to 'OPTFILT'
+    // I2R/I2RFITTED method converts I into R at the beginnig and after that 'I2R'/'I2RFITTED' is equivalent to 'OPTFILT'
     int runEMethod = -999;
     if (strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0)
     {
@@ -8234,6 +8237,10 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
     else if (strcmp((*reconstruct_init)->EnergyMethod,"WEIGHTN") == 0)
     {
         runEMethod = 2;
+    }
+    else if (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0)
+    {
+        runEMethod = 3;
     }
     
     int OFlength_strategy = -999;
@@ -8513,7 +8520,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
             tstartJITTER = ((*pulsesInRecord)->pulses_detected[i].Tstart-record->time)/record->delta_t;
             shift = tstartJITTER - tstartSamplesRecord;
             
-            if (((runF0orB0val == 1) || (runF0orB0val == 2)) && (runEMethod == 0))
+            if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
             {
                 gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulse->size);
                 gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
@@ -8542,7 +8549,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         gsl_vector_set(pulse_lowres,k,gsl_vector_get(vectoraux,k));
                     }
                     
-                    if (((runF0orB0val == 1) || (runF0orB0val == 2)) && (runEMethod == 0))
+                    if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
                     {
                         gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulse_lowres->size);
                         gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
@@ -8575,8 +8582,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                     {
                         gsl_vector_complex_set(optimalfilter_FFT_complex_lowres,k,gsl_complex_rect(0.0,0.0));
                     }
-                    if (TorF == 0)     gsl_vector_memcpy(optimalfilter_lowres,filtergsl_lowres);
-                    else if (TorF == 1)
+                    if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)     gsl_vector_memcpy(optimalfilter_lowres,filtergsl_lowres);
+                    else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)
                     {
                         // It is not necessary to check the allocation because 'filtergsl' size has been checked previously
                         for (int k=0;k<(int)(filtergsl_lowres->size)/2;k++)
@@ -8586,7 +8593,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                     }
                     
                     // Calculate the low resolution estimator
-                    if (calculateEnergy(pulse_lowres,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,0,(*reconstruct_init),TorF,1/record->delta_t,Pab_lowres,PRCLWN_lowres,PRCLOFWM_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
+                    if (calculateEnergy(pulse_lowres,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,(*reconstruct_init),1/record->delta_t,Pab_lowres,PRCLWN_lowres,PRCLOFWM_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
                     {
                         message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
                         EP_EXIT_ERROR(message,EPFAIL);
@@ -8602,7 +8609,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 pulseToCalculateEnergy = gsl_vector_alloc(pulse->size);
                 gsl_vector_memcpy(pulseToCalculateEnergy,pulse);
             }
-            else if (((*reconstruct_init)->LagsOrNot == 1) && ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"WEIGHTN"))))
+            else if (((*reconstruct_init)->LagsOrNot == 1) && ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"WEIGHTN"))))
             {
                 if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
                 {
@@ -8645,7 +8652,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 }
                 log_debug("bslnEachPulse: %f",(*pulsesInRecord)->pulses_detected[i].bsln);
                 
-                if (((runF0orB0val == 1) || (runF0orB0val == 2)) && (runEMethod == 0))
+                if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
                 {
                     gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulseToCalculateEnergy->size);
                     gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
@@ -8669,7 +8676,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
             {
                 numiteration++;
                 
-                if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0))
+                if (((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0)) && (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0))
                 {
                     // Filter (find the matched filter and load it in 'filter')
                     if ((*reconstruct_init)->OFLib == 0)
@@ -8939,7 +8946,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 gsl_matrix_set(Estraddle,0,numiteration,Ealpha);
                 gsl_matrix_set(Estraddle,1,numiteration,Ebeta);
 
-                if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0))
+                if (((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0)) && (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0))
                 {
                     if ((*reconstruct_init)->OFLib == 0)
                     {
@@ -8960,8 +8967,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         {
                             gsl_vector_complex_set(optimalfilter_FFT_complex,k,gsl_complex_rect(0.0,0.0));
                         }
-                        if (TorF == 0)     gsl_vector_memcpy(optimalfilter,filtergsl);
-                        else if (TorF == 1)
+                        if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)     gsl_vector_memcpy(optimalfilter,filtergsl);
+                        else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)
                         {
                             // It is not necessary to check the allocation because 'filtergsl' size has been checked previously
                             for (int k=0;k<(int)(filtergsl->size)/2;k++)
@@ -9028,9 +9035,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 }
                 
                 // Subtract sumfilt if 0-padding and 'Sum0Filt' =1
-                if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
-                    && (strcmp((*reconstruct_init)->FilterDomain,"T") == 0) && ((*reconstruct_init)->pulse_length <= (*reconstruct_init)->OFLength) &&
-                    ((*reconstruct_init)->Sum0Filt == 1))
+                if ((strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0) && ((*reconstruct_init)->Sum0Filt == 1))
                 {
                     // Calculate the sum of the filter whose length is (*reconstruct_init)->pulse_length
                     sumfilt = 0.0;
@@ -9047,7 +9052,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 }
                 
                 // Calculate the energy of each pulse
-                if (calculateEnergy(pulseToCalculateEnergy,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
+                if (calculateEnergy(pulseToCalculateEnergy,optimalfilter,optimalfilter_FFT_complex,indexEalpha,indexEbeta,(*reconstruct_init),1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
                 {
                     message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
                     EP_EXIT_ERROR(message,EPFAIL);
@@ -9056,7 +9061,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 log_debug("After calculateEnergy");
                 
                 // If using lags, it is necessary to modify the tstart of the pulse 
-                if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && tstartNewDev != -999.0)
+                if (((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0)) && tstartNewDev != -999.0)
                 {
                     (*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + tstartNewDev*record->delta_t; // In seconds
                 }
@@ -9284,7 +9289,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
     {
         TorF=1;
     }
-    
+
     int runF0orB0val = -999;
     if (strcmp((*reconstruct_init)->FilterMethod,"F0") == 0)	// Deleting the frequency-zero bin
     {
@@ -9299,7 +9304,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
         runF0orB0val = 2;
     }
     
-    // I2R method converts I into R at the beginnig and after that 'I2R' is equivalent to 'OPTFILT'
+    // I2R/I2RFITTED method converts I into R at the beginnig and after that 'I2R'/'I2RFITTED' is equivalent to 'OPTFILT'
     int runEMethod = -999;
     if (strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0)
     {
@@ -9312,6 +9317,10 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
     else if (strcmp((*reconstruct_init)->EnergyMethod,"WEIGHTN") == 0)
     {
         runEMethod = 2;
+    }
+    else if (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0)
+    {
+        runEMethod = 3;
     }
     
     int OFlength_strategy = -999;
@@ -9566,7 +9575,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
             tstartJITTER = ((*pulsesInRecord)->pulses_detected[i].Tstart-record->time)/record->delta_t;
             shift = tstartJITTER - tstartSamplesRecord;
             
-            if (((runF0orB0val == 1) || (runF0orB0val == 2)) && (runEMethod == 0))
+            if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
             {
                 gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulse->size);
                 gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
@@ -9594,7 +9603,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                         gsl_vector_set(pulse_lowres,k,gsl_vector_get(vectoraux,k));
                     }
                     
-                    if (((runF0orB0val == 1) || (runF0orB0val == 2)) && (runEMethod == 0))
+                    if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
                     {
                         gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulse_lowres->size);
                         gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
@@ -9626,8 +9635,8 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                     {
                         gsl_vector_complex_set(optimalfilter_FFT_complex_lowres,k,gsl_complex_rect(0.0,0.0));
                     }
-                    if (TorF == 0)     gsl_vector_memcpy(optimalfilter_lowres,filtergsl_lowres);
-                    else if (TorF == 1)
+                    if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)     gsl_vector_memcpy(optimalfilter_lowres,filtergsl_lowres);
+                    else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)
                     {
                         // It is not necessary to check the allocation because 'filtergsl' size has been checked previously
                         for (int k=0;k<(int)(filtergsl_lowres->size)/2;k++)
@@ -9636,7 +9645,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                         }
                     }
                     // Calculate the low resolution estimator
-                    if (calculateEnergy(pulse_lowres,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,0,(*reconstruct_init),TorF,1/record->delta_t,Pab_lowres,PRCLWN_lowres,PRCLOFWM_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
+                    if (calculateEnergy(pulse_lowres,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,(*reconstruct_init),1/record->delta_t,Pab_lowres,PRCLWN_lowres,PRCLOFWM_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
                     {
                         message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
                         EP_EXIT_ERROR(message,EPFAIL);
@@ -9650,7 +9659,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                 pulseToCalculateEnergy = gsl_vector_alloc(pulse->size);
                 gsl_vector_memcpy(pulseToCalculateEnergy,pulse);
             }
-            else if (((*reconstruct_init)->LagsOrNot == 1) && ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"WEIGHTN"))))
+            else if (((*reconstruct_init)->LagsOrNot == 1) && ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"WEIGHTN"))))
             {
                 if (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
                 {
@@ -9714,7 +9723,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                     }
                 }
                 
-                if (((runF0orB0val == 1) || (runF0orB0val == 2)) && (runEMethod == 0))
+                if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
                 {
                     gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulseToCalculateEnergy->size);
                     gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
@@ -9738,7 +9747,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
             {
                 numiteration++;
                 
-                if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0))
+                if (((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0)) && (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0))
                 {
                     // Filter (find the matched filter and load it in 'filter')
                     if ((*reconstruct_init)->OFLib == 0)
@@ -10012,7 +10021,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                 gsl_matrix_set(Estraddle,0,numiteration,Ealpha);
                 gsl_matrix_set(Estraddle,1,numiteration,Ebeta);
                 
-                if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0))
+                if (((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0)) && (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0))
                 {
                     if ((*reconstruct_init)->OFLib == 0)
                     {
@@ -10033,8 +10042,8 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                         {
                             gsl_vector_complex_set(optimalfilter_FFT_complex,k,gsl_complex_rect(0.0,0.0));
                         }
-                        if (TorF == 0)     gsl_vector_memcpy(optimalfilter,filtergsl);
-                        else if (TorF == 1)
+                        if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)     gsl_vector_memcpy(optimalfilter,filtergsl);
+                        else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)
                         {
                             // It is not necessary to check the allocation because 'filtergsl' size has been checked previously
                             for (int k=0;k<(int)(filtergsl->size)/2;k++)
@@ -10086,9 +10095,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                     }
                 }
                 
-                if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && (strcmp((*reconstruct_init)->OFNoise,"NSD") == 0)
-                    && (strcmp((*reconstruct_init)->FilterDomain,"T") == 0) && ((*reconstruct_init)->pulse_length <= (*reconstruct_init)->OFLength) &&
-                    ((*reconstruct_init)->Sum0Filt == 1))
+                if ((strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0) && ((*reconstruct_init)->Sum0Filt == 1))
                 {
                     // Calculate the sum of the filter whose length is (*reconstruct_init)->pulse_length
                     sumfilt = 0.0;
@@ -10105,7 +10112,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                 }
                 
                 // Calculate the energy of each pulse
-                if (calculateEnergy(pulseToCalculateEnergy,optimalfilter,optimalfilter_FFT_complex,runEMethod,indexEalpha,indexEbeta,(*reconstruct_init),TorF,1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
+                if (calculateEnergy(pulseToCalculateEnergy,optimalfilter,optimalfilter_FFT_complex,indexEalpha,indexEbeta,(*reconstruct_init),1/record->delta_t,Pab,PRCLWN,PRCLOFWM,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
                 {
                     message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
                     EP_EXIT_ERROR(message,EPFAIL);
@@ -10113,7 +10120,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                 gsl_vector_free(pulseToCalculateEnergy); pulseToCalculateEnergy = 0;
                 
                 // If using lags, it is necessary to modify the tstart of the pulse and the length of the filter used
-                if ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && tstartNewDev != -999.0)
+                if (((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0)) && tstartNewDev != -999.0)
                 {
                     (*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + tstartNewDev*record->delta_t; // In seconds
                 }
@@ -12022,7 +12029,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
  * 
  * OPTIONAL (hardcore selected): Apply a Hanning window to reduce spectral leakage
  *
- * OPTFILT (= I2R) and NSD: Optimal filter = Wiener filter
+ * OPTFILT (= I2R) or 0PAD and NSD: Optimal filter = Wiener filter
  *
  *   Once the filter template has been created ('filter' or 'filterFFT'), pulse height analysis is performed by aligning the template
  *   with a pulse and multiplying each point in the template by the corresponding point in the pulse. The sum of these products is the energy.
@@ -12115,14 +12122,13 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
  * - filter: Optimal filter in time domain
  * - filterFFT: Optimal filter in frequency domain
  * - runEMethod: 'EnergyMethod' = OPTFILT => 'runEMethod' = 0
- * 		'EnergyMethod' = I2R => 'runEMethod' = 0
+ * 		'EnergyMethod' = I2R/I2RFITTED => 'runEMethod' = 0
  * 		'EnergyMethod' = WEIGHT => 'runEMethod' = 1
  * 		'EnergyMethod' = WEIGHTN => 'runEMethod' = 2
+ * 		'EnergyMethod' = 0PAD => 'runEMethod' = 3
  * - indexEalpha: Index of the energy lower than the energy of the pulse which is being analyzed
  * - indexEbeta: Index of the energy higher than the energy of the pulse which is being analyzed
  * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
- * - domain: 'FilterDomain' = T => 'domain' = 0
- *           'FilterDomain' = F => 'domain' = 1
  * - samprate: Sampling rate
  * - Pab: PAB column in the library
  * - PRCLWN: Appropriate PCLx column in the library
@@ -12135,7 +12141,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
  * - productSize: Size of the scalar product to be calculated
  * - tooshortPulse_NoLags: Pulse too short to apply lags (1) or not (0)
  ****************************************************************************/
-int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *filterFFT,int runEMethod, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, int domain, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes, int productSize, int tooshortPulse_NoLags)
+int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *filterFFT, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, double samprate, gsl_vector *Pab, gsl_matrix *PRCLWN, gsl_matrix *PRCLOFWM, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes, int productSize, int tooshortPulse_NoLags)
 {
     log_trace("calculateEnergy...");    
     if (filter)
@@ -12147,12 +12153,12 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
     }
     //if (LowRes!=1){for (int i=0;i<10;i++) cout<<i<<" "<<gsl_vector_get(filter,i)<<endl;}
 
-    /*cout<<"pulse->size: "<<pulse->size<<endl;
+    cout<<"pulse->size: "<<pulse->size<<endl;
     for (int i=0;i<pulse->size;i++)
         cout<<i<<" "<<gsl_vector_get(pulse,i)<<endl;
     cout<<"filter->size: "<<filter->size<<endl;
     for (int i=0;i<filter->size;i++)
-        cout<<i<<" "<<gsl_vector_get(filter,i)<<endl;*/
+        cout<<i<<" "<<gsl_vector_get(filter,i)<<endl;
 
     gsl_vector *vector;
     
@@ -12182,14 +12188,14 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
     else if (reconstruct_init->Fitting35 == 5)    numlags = 5;
     *lagsShift = 0;
     
-    if (((int)(pulse->size) <= numlags) && (runEMethod == 0) && (strcmp(reconstruct_init->OFNoise,"NSD") == 0))
+    if (((int)(pulse->size) <= numlags) && ((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0)) && (strcmp(reconstruct_init->OFNoise,"NSD") == 0))
     {
         *calculatedEnergy = -1.0;
     }
     else
     {
-        if (((runEMethod == 0) && (strcmp(reconstruct_init->OFNoise,"NSD") == 0)) || (LowRes == 1))
-            // OPTFILT	I2R => OPTFILT
+        if ((((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0)) && (strcmp(reconstruct_init->OFNoise,"NSD") == 0)) || (LowRes == 1))
+            // OPTFILT	I2R  I2RFITTED=> OPTFILT
         {
             gsl_vector_view temp;
             
@@ -12234,14 +12240,14 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
             bool maxParabolaFound = false;
             
             double SelectedTimeDuration;
-            if (domain == 0)	SelectedTimeDuration = filter->size/samprate;
+            if (strcmp(reconstruct_init->FilterDomain,"T") == 0)	SelectedTimeDuration = filter->size/samprate;
             else 			SelectedTimeDuration = filterFFT->size/samprate;
             //SelectedTimeDuration = productSize/samprate;
             *calculatedEnergy = 0.0;
             
             int indexLags;
 
-            if (domain == 0)	// Time domain filtering
+            if (strcmp(reconstruct_init->FilterDomain,"T") == 0)	// Time domain filtering
             {
                 if ((numlags == 0) && (pulse->size != filter->size)) *calculatedEnergy = 0.0;
                 else
@@ -12490,7 +12496,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                     }
                 }
             }
-            else if (domain == 1)	// Frequency domain filtering (multiply vectorFFT and filterFFT)
+            else if (strcmp(reconstruct_init->FilterDomain,"F") == 0)	// Frequency domain filtering (multiply vectorFFT and filterFFT)
             {
 
                 if ((numlags == 0) && (pulse->size != filterFFT->size)) *calculatedEnergy = 0.0;
@@ -12783,7 +12789,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
             gsl_vector_free(lags_vector); lags_vector = 0;
             gsl_vector_free(calculatedEnergy_vector); calculatedEnergy_vector = 0;
         }
-        else if ((runEMethod == 0) && (strcmp(reconstruct_init->OFNoise,"WEIGHTM") == 0))
+        else if ((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) && (strcmp(reconstruct_init->OFNoise,"WEIGHTM") == 0))
         {
             gsl_vector *EB = gsl_vector_alloc(2);
             
@@ -12794,7 +12800,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
             
             gsl_vector_free(EB); EB = 0;
         }
-        else if (runEMethod == 1) //WEIGHT
+        else if (strcmp(reconstruct_init->EnergyMethod,"WEIGHT") == 0)
         {
             // It is not necessary to check the allocation because 'vector' size must already be > 0 and 'reconstruct_init->pulse_length'=PulseLength(input parameter) has been checked previously
             gsl_vector *D = gsl_vector_alloc(pulse->size);
@@ -12932,7 +12938,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
             gsl_vector_free(Z); Z = 0;
             gsl_vector_free(vector_aux); vector_aux = 0;
         }
-        else if (runEMethod == 2) //WEIGHTN
+        else if (strcmp(reconstruct_init->EnergyMethod,"WEIGHTN") == 0)
         {
             if (reconstruct_init->OFLib == 0)
             {
