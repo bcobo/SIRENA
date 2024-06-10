@@ -64,16 +64,16 @@ void detection_worker()
 {
   //log_trace("Starting detection worker...");
   while(1){
-    sirena_data* data;
-    if(detection_queue.wait_and_pop(data)){
-      //log_trace("Extracting detection data from queue...");
-      th_runDetect(data->rec, data->trig_reclength,
-                data->last_record,
-                data->n_record,
-                data->all_pulses,
-                &(data->rec_init),
-                &(data->record_pulses));
-      detected_queue.push(data);
+    sirena_data* datax;
+    if(detection_queue.wait_and_pop(datax)){
+      //log_trace("Extracting detection datax from queue...");
+      th_runDetect(datax->rec, datax->trig_reclength,
+                datax->last_record,
+                datax->n_record,
+                datax->all_pulses,
+                &(datax->rec_init),
+                &(datax->record_pulses));
+      detected_queue.push(datax);
       std::unique_lock<std::mutex> lk(records_detected_mut);
       ++records_detected;
       lk.unlock();
@@ -91,15 +91,15 @@ void energy_worker()
 {
   //log_trace("Starting energy worker...");
   while(1){
-    sirena_data* data;
-    if(energy_queue.wait_and_pop(data)){
-      //log_trace("Extracting energy data from queue...");
-      //log_debug("Energy data in record %i",data->n_record);
-      th_runEnergy(data->rec, data->n_record, data->trig_reclength,
-                   &(data->rec_init),
-                   &(data->record_pulses),
-                   data->all_pulses);
-      end_queue.push(data);
+    sirena_data* datax;
+    if(energy_queue.wait_and_pop(datax)){
+      //log_trace("Extracting energy datax from queue...");
+      //log_debug("Energy datax in record %i",datax->n_record);
+      th_runEnergy(datax->rec, datax->n_record, datax->trig_reclength,
+                   &(datax->rec_init),
+                   &(datax->record_pulses),
+                   datax->all_pulses);
+      end_queue.push(datax);
       std::unique_lock<std::mutex> lk(records_energy_mut);
       ++records_energy;
       lk.unlock();
@@ -117,15 +117,15 @@ void energy_worker_v2()
 {
   //log_trace("Starting energy worker...");
   while(1){
-    sirena_data* data;
-    if(detected_queue.wait_and_pop(data)){
-      //log_trace("Extracting energy data from queue...");
-      //log_debug("Energy data in record %i",data->n_record);
-      th_runEnergy(data->rec, data->n_record, data->trig_reclength,
-                   &(data->rec_init),
-                   &(data->record_pulses),
-                   data->all_pulses);
-      end_queue.push(data);
+    sirena_data* datax;
+    if(detected_queue.wait_and_pop(datax)){
+      //log_trace("Extracting energy datax from queue...");
+      //log_debug("Energy datax in record %i",datax->n_record);
+      th_runEnergy(datax->rec, datax->n_record, datax->trig_reclength,
+                   &(datax->rec_init),
+                   &(datax->record_pulses),
+                   datax->all_pulses);
+      end_queue.push(datax);
       std::unique_lock<std::mutex> lk(records_energy_mut);
       ++records_energy;
       lk.unlock();
@@ -150,7 +150,7 @@ void scheduler::push_detection(TesRecord* record, int trig_reclength,
                                PulsesCollection** pulsesInRecord,
                                TesEventList* event_list)
 {
-  //log_trace("pushing detection data into the queue...");
+  //log_trace("pushing detection datax into the queue...");
   sirena_data* input = new sirena_data;
   tesrecord* rec = new tesrecord(record);
   input->rec = rec->get_TesRecord();
@@ -218,9 +218,9 @@ void scheduler::finish_reconstruction(PulsesCollection** pulsesAll)
   //log_debug("Number of records %i", this->num_records);
   this->data_array = new sirena_data*[this->num_records];//+1];
   while(!detected_queue.empty()){
-    sirena_data* data;
-    if(detected_queue.wait_and_pop(data)){
-      data_array[data->n_record-1] = data;
+    sirena_data* datax;
+    if(detected_queue.wait_and_pop(datax)){
+      data_array[datax->n_record-1] = datax;
     }
   }
 
@@ -425,9 +425,9 @@ void scheduler::finish_reconstruction_v2(PulsesCollection** pulsesAll)
   //log_debug("Number of records %i", this->num_records);
   this->data_array = new sirena_data*[this->num_records];//+1];
   while(!end_queue.empty()){
-    sirena_data* data;
-    if(end_queue.wait_and_pop(data)){
-      data_array[data->n_record-1] = data;
+    sirena_data* datax;
+    if(end_queue.wait_and_pop(datax)){
+      data_array[datax->n_record-1] = datax;
     }
   }
   //
@@ -873,7 +873,7 @@ TesRecord* tesrecord::get_TesRecord() const
   return ret;
 }
 
-data::data():
+datax::datax():
   n_record(0),
   last_record(0),
   all_pulses(0),
@@ -882,7 +882,7 @@ data::data():
   
 }
 
-data::data(const data& other):
+datax::datax(const datax& other):
   rec(other.rec),
   rec_init(other.rec_init),
   n_record(other.n_record),
@@ -893,7 +893,7 @@ data::data(const data& other):
   
 }
 
-data& data::operator=(const data& other)
+datax& datax::operator=(const datax& other)
 {
   //printf("operator = date\n");
   if(this != &other){
@@ -905,7 +905,7 @@ data& data::operator=(const data& other)
   return *this;
 }
 
-data::~data()
+datax::~datax()
 {
 
 }

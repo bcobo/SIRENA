@@ -280,7 +280,7 @@ int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par,
         return(EXIT_FAILURE);
     }
 
-    // Check if input XML file and XMl file to build the library to be used to reconstruct are the same
+    // Check if input XML file and XML file to build the library to be used to reconstruct are the same
     if (par.opmode == 1)
     {
         status = checkXmls(&par);
@@ -559,6 +559,41 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
         }
     }*/
 
+    //Check prebuff_0pad input parameter (preBuffer when 0-padding)
+    if ((par.opmode == 1) && (strcmp(par.EnergyMethod,"0PAD") == 0))
+    {
+        gsl_vector *pBsXML = gsl_vector_alloc((*reconstruct_init_sirena)->grading->gradeData->size1);
+        gsl_matrix_get_col(pBsXML,(*reconstruct_init_sirena)->grading->gradeData,2);
+        if (par.prebuff_0pad > gsl_vector_max(pBsXML))
+        {
+            SIXT_ERROR("Prebuffer to be used with 0-padding (prebuff_0pad) is bigger than the preBuffers of the optimal filters in the library");
+            return(EXIT_FAILURE);
+        }
+    }
+
+     // Loading in the reconstruct_init structure values related to grading and preBuffer values from the XML file
+    gsl_vector *pBi = gsl_vector_alloc(1);   // preBuffer values
+    gsl_vector *posti = gsl_vector_alloc(1); // Filter length (including preBuffer)
+    // post in (grading=>pre,post and pB)
+    // filtlen in (grading=>pre,post and filtlen)
+
+    if (par.preBuffer == 1)
+    {
+        gsl_vector_free(pBi); pBi=0;
+        pBi = gsl_vector_alloc((*reconstruct_init_sirena)->grading->ngrades);
+        gsl_matrix_get_col(pBi,(*reconstruct_init_sirena)->grading->gradeData,2);
+        (*reconstruct_init_sirena)->preBuffer_max_value = gsl_vector_max(pBi);
+        (*reconstruct_init_sirena)->preBuffer_min_value = gsl_vector_min(pBi);
+        gsl_vector_free(posti); posti=0;
+        posti = gsl_vector_alloc((*reconstruct_init_sirena)->grading->ngrades);
+        gsl_matrix_get_col(posti,(*reconstruct_init_sirena)->grading->gradeData,1);
+        (*reconstruct_init_sirena)->post_max_value = gsl_vector_max(posti);
+        (*reconstruct_init_sirena)->post_min_value = gsl_vector_min(posti);
+
+        if (pBi != NULL) {gsl_vector_free(pBi); pBi = 0;}
+        if (posti != NULL) {gsl_vector_free(posti); posti = 0;}
+    }
+
     return(status);
 }
 /*xxxx end of SECTION 6 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
@@ -598,7 +633,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
 
     initializeReconstructionSIRENA(reconstruct_init_sirena, par.RecordFile, record_file->fptr,
-        par.LibraryFile, par.TesEventFile, par.OFLengthNotPadded, par.scaleFactor, par.samplesUp,
+        par.LibraryFile, par.TesEventFile, par.flength_0pad, par.prebuff_0pad, par.scaleFactor, par.samplesUp,
         par.samplesDown, par.nSgms, par.detectSP, par.opmode, par.detectionMode, par.LrsT,
         par.LbT, par.NoiseFile, par.FilterDomain, par.FilterMethod, par.EnergyMethod,
         par.filtEev, par.Ifit, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter,
@@ -656,7 +691,8 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
         float progress = (float)nrecord / (numrecords-1);
         int bar_width = 50;
         int pos = bar_width * progress;
-        printf("Simulating |");
+        if (par.opmode == 0)        printf("Building the library |");
+        else if (par.opmode == 1)   printf("Reconstructing |");
         for (int j = 0; j < bar_width; j++) {
             if (j < pos)
                 printf("=");

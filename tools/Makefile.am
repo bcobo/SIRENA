@@ -7,7 +7,7 @@ SUBDIRS=phogen phoimg psfgen htrssim xms_pixtemp ero_fits2tm		\
         orbatt nustarsim athenawfisim epicpn_events epicmos1_events    \
         epicmos2_events piximpacts tesstream pixdetillum pulsetemplgen  \
         pulsetemplimport streamtotriggers runtes tesconstpileup tessim  \
-	comaimgPM comabackpro xml2svg tesreconstruction xifupipeline   \
+	comaimgPM comabackpro xml2svg xifupipeline   \
 	gennoisespec exposure_map gradeddetection tesgenimpacts         \
 	pha2pi radec2xy runmask sixteversion attgen_dither sixte_arfgen  \
 	teslib tesrecons

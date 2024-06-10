@@ -19,12 +19,13 @@
    CANTABRIA (CSIC-UC) with funding from the Spanish Ministry of Science and 
    Innovation (MICINN) under project  ESP2006-13608-C02-01, and Spanish 
    Ministry of Economy (MINECO) under projects AYA2012-39767-C02-01, 
-   ESP2013-48637-C2-1-P, ESP2014-53672-C3-1-P and RTI2018-096686-B-C21.
+   ESP2013-48637-C2-1-P, ESP2014-53672-C3-1-P, RTI2018-096686-B-C21
+   and PID2021-122955OB-C41.
 
 ***********************************************************************
 *                      TESRECONS
 *
-*  File:       tesLIB.c
+*  File:       tesrecons.c
 *  Developers: Beatriz Cobo
 * 	           cobo@ifca.unican.es
 *              IFCA
@@ -66,7 +67,7 @@
 * - FilterDomain: Filtering Domain: Time (T) or Frequency (F)
 ******* - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline) or F0B0 (deleting always the baseline)
 * - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)
-* - EnergyMethod: Energy calculation Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED, I2RDER or PCA
+* - EnergyMethod: Energy calculation Method: OPTFILT, 0PAD, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED, I2RDER or PCA
 * - Ifit: Constant to apply the I2RFITTED conversion
 
 * - intermediate: Write or not intermediate files (1/0)
@@ -132,7 +133,12 @@ int tesrecons_main() {
     det = loadAdvDet(par.XMLFile, &status);
     CHECK_STATUS_BREAK(status);
     sampling_rate_XML = det->SampleFreq;
-    if (par.preBuffer == 1)    printf("%s","Attention: preBuffer used => Parameters of library filters read from XML file\n");
+    if ((strcmp(par.EnergyMethod,"0PAD") == 0) && (strcmp(par.OFStrategy,"FIXED") != 0))
+    {
+        printf("%s","Attention: EnergyMethod=0PAD => OFStrategy set to FIXED\n");
+        strcpy(par.OFStrategy,"FIXED");
+    }
+    if ((par.preBuffer == 1) && (strcmp(par.EnergyMethod,"0PAD") != 0))    printf("%s","Attention: preBuffer used => Parameters of library filters read from XML file\n");
 
     // Obtain the 'trig_reclength' and the sampling rate
     double sampling_rate = -999.0;
@@ -203,16 +209,16 @@ int tesrecons_main() {
   
   if (EXIT_SUCCESS==status) 
   {
-	headas_chat(3, "finished successfully!\n\n");
-        time_t ttcurrent = time(0);
-        printf("Elapsed time: %f\n", ((float)(ttcurrent - ttstart)));
-	return(EXIT_SUCCESS);
+      headas_chat(3, "finished successfully!\n\n");
+      time_t ttcurrent = time(0);
+      printf("Elapsed time: %f\n", ((float)(ttcurrent - ttstart)));
+      return(EXIT_SUCCESS);
   } 
-  else 
+  else
   {
-        time_t ttcurrent = time(0);
-        printf("Elapsed time: %f\n", ((float)(ttcurrent - ttstart)));
-	return(status);
+      //time_t ttcurrent = time(0);
+      //printf("Elapsed time: %f\n", ((float)(ttcurrent - ttstart)));
+      return(status);
   }
 }
 /*xxxx end of SECTION 1 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
@@ -342,12 +348,15 @@ int getpar_tesrecons(struct Parameters* const par)
 
   status=ape_trad_query_int("OFLength", &par->OFLength);
 
-  status=ape_trad_query_int("OFLengthNotPadded", &par->OFLengthNotPadded);
+  status=ape_trad_query_int("flength_0pad", &par->flength_0pad);
   if (EXIT_SUCCESS!=status) {
-    SIXT_ERROR("failed reading the OFLengthNotPadded parameter");
+    SIXT_ERROR("failed reading the flength_0pad parameter");
     return(status);
   }
-  assert(par->OFLengthNotPadded > 0);
+  assert(par->flength_0pad > 0);
+
+  status=ape_trad_query_int("prebuff_0pad", &par->prebuff_0pad);
+  assert(par->prebuff_0pad >= 0);
 
   status=ape_trad_query_int("errorT", &par->errorT);
   status=ape_trad_query_int("Sum0Filt", &par->Sum0Filt);
@@ -380,8 +389,8 @@ int getpar_tesrecons(struct Parameters* const par)
   //MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0) || (strcmp(par->FilterMethod,"F0B0") == 0),"FilterMethod must be F0 or B0 or F0B0");
   MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0),"FilterMethod must be F0 or B0");
 
-  MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0) ||
-  (strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0) || (strcmp(par->EnergyMethod,"PCA") == 0), "EnergyMethod must be OPTFILT, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA");
+  MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"0PAD") == 0) || (strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0) ||
+  (strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0) || (strcmp(par->EnergyMethod,"PCA") == 0), "EnergyMethod must be OPTFILT, 0PAD, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA");
 
   if ((isNumber == 0) && (strcmp(par->FilterDomain,"F") == 0))    // It is only implemented tstartPulse1 as a file for time domain
   {
@@ -430,15 +439,25 @@ int getpar_tesrecons(struct Parameters* const par)
    return(EXIT_FAILURE);
   }*/
 
-  if ((par->OFLengthNotPadded < par->OFLength) && (strcmp(par->FilterDomain,"F") == 0))
+  if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (strcmp(par->FilterDomain,"F") == 0))
   {
-      SIXT_ERROR("Code is not prepared to run 0-padding in Frequency domain");
+      SIXT_ERROR("parameter error: Code is not prepared to run 0-padding in Frequency domain");
       // To run 0-padding in Frequency domain the steps should be:
       //1. Take the 8192-samples-length filter in Time domain
       //2. Cut the 0-padding length first samples (the first 4096 samples, or the first 2048 samples...) => 0-padding filter
       //3. FFT of the 0-padding filter
       //4. FFT of the 0-padding pulse (pulse cut according the 0-padding)
       //5. Scalar product in Frequency domain
+      return(EXIT_FAILURE);
+  }
+  if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (strcmp(par->OFNoise,"WEIGHTM") == 0))
+  {
+      SIXT_ERROR("parameter error: EnergyMethod=0PAD && OFNoise=WEIGHTM not a valid choice => OFNoise should be NSD");
+      return(EXIT_FAILURE);
+  }
+  if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (par->flength_0pad >= par->OFLength))
+  {
+      SIXT_ERROR("parameter error: EnergyMethod=0PAD => flength_0pad should be lower than the maximum filter length (OFLength)");
       return(EXIT_FAILURE);
   }
 

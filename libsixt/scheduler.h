@@ -101,7 +101,7 @@ struct tesrecord{
   TesRecord* get_TesRecord() const;
 };//TesRecord;
 
-struct data
+struct datax
 { 
   TesRecord* rec;
   int trig_reclength;
@@ -113,13 +113,13 @@ struct data
   OptimalFilterSIRENA* optimal_filter;
   TesEventList* event_list;
 
-  data();
-  data(const data& other);
-  data& operator=(const data& other);
-  ~data();
+  datax();
+  datax(const datax& other);
+  datax& operator=(const datax& other);
+  ~datax();
 };
 
-#define sirena_data data
+#define sirena_data datax
 
 class scheduler
 {
