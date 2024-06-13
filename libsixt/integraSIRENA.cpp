@@ -163,7 +163,7 @@
                                                 char* const tstartPulse1, int tstartPulse2, int tstartPulse3,
                                                 double energyPCA1, double energyPCA2,
                                                 char * const XMLFile, int* const status)
- {  
+{  
     string message = "";
 
     // Fill in reconstruct_init
@@ -250,7 +250,7 @@
 
      // Inititalize PulsesCollection structure
      PulsesCollection* pulsesInRecord = new PulsesCollection;
-     //PulsesCollection* pulsesAllAux = new PulsesCollection;
+     PulsesCollection* pulsesAllAux = new PulsesCollection;
 
      // Check consistency of some input parameters
      if (record->trigger_size <= 0)
@@ -318,16 +318,207 @@
      log_trace("After runEnergy");
          
      // Fill in the pulsesAll structure
-     *status = fillPulsesAll(pulsesAll, pulsesInRecord);
+     /**status = fillPulsesAll(pulsesAll, pulsesInRecord);
      
      log_trace("pulsesAll: %i",(*pulsesAll)->ndetpulses);
      //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
      //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
      
      // Free & Fill TesEventList structure
-     *status = fillEventList (event_list, *pulsesAll, pulsesInRecord, reconstruct_init, record, lastRecord);
+     *status = fillEventList (event_list, *pulsesAll, pulsesInRecord, reconstruct_init, record, lastRecord);*/
+     
+     if ((pulsesInRecord->ndetpulses != 0) && ((*pulsesAll)->ndetpulses == 0))
+     {
+         (*pulsesAll)->ndetpulses = pulsesInRecord->ndetpulses;
+         if((*pulsesAll)->pulses_detected != 0 && (*pulsesAll)->size < pulsesInRecord->ndetpulses){
+             delete [] (*pulsesAll)->pulses_detected; (*pulsesAll)->pulses_detected = 0;
+             (*pulsesAll)->size = resize_array((*pulsesAll)->size, (*pulsesAll)->ndetpulses);
+             (*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->size];
+         }
 
-     //delete pulsesAllAux; pulsesAllAux = 0;
+         #ifndef POOLS
+         if((*pulsesAll)->pulses_detected == 0)
+         {
+             (*pulsesAll)->pulses_detected = new PulseDetected[pulsesInRecord->ndetpulses];
+             (*pulsesAll)->size = pulsesInRecord->ndetpulses;
+         }
+         #endif
+         for (int i=0;i<(*pulsesAll)->ndetpulses;i++)
+         {
+             (*pulsesAll)->pulses_detected[i] = pulsesInRecord->pulses_detected[i];
+         }
+     }
+     else
+     {
+         pulsesAllAux->ndetpulses = (*pulsesAll)->ndetpulses;
+
+         (*pulsesAll)->ndetpulses = (*pulsesAll)->ndetpulses + pulsesInRecord->ndetpulses;
+
+         if ((*pulsesAll)->pulses_detected != NULL && (*pulsesAll)->size < (*pulsesAll)->ndetpulses)
+         {
+             pulsesAllAux->pulses_detected = new PulseDetected[(*pulsesAll)->ndetpulses];
+
+             for (int i=0;i<pulsesAllAux->ndetpulses;i++){
+                 pulsesAllAux->pulses_detected[i] = (*pulsesAll)->pulses_detected[i];
+             }
+
+             delete [] (*pulsesAll)->pulses_detected; (*pulsesAll)->pulses_detected = 0;
+             (*pulsesAll)->size = resize_array((*pulsesAll)->size, (*pulsesAll)->ndetpulses);
+             (*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->size];
+
+             for (int i=0;i<pulsesAllAux->ndetpulses;i++){
+                 (*pulsesAll)->pulses_detected[i] = pulsesAllAux->pulses_detected[i];
+             }
+             delete [] pulsesAllAux->pulses_detected; pulsesAllAux->pulses_detected = 0;
+         }
+
+         #ifndef POOLS
+         if((*pulsesAll)->pulses_detected == 0){
+             (*pulsesAll)->pulses_detected = new PulseDetected[(*pulsesAll)->ndetpulses];
+             (*pulsesAll)->size = (*pulsesAll)->ndetpulses;
+         }
+         #endif
+
+         // Save pulses detected in current record
+         for (int i=0;i<pulsesInRecord->ndetpulses;i++)
+         {
+             (*pulsesAll)->pulses_detected[i+pulsesAllAux->ndetpulses] = pulsesInRecord->pulses_detected[i];
+         }
+     }
+
+     log_trace("pulsesAll: %i",(*pulsesAll)->ndetpulses);
+     //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
+     //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
+
+     // Free & Fill TesEventList structure
+     event_list->index = pulsesInRecord->ndetpulses;
+     event_list->energies = new double[event_list->index];
+     event_list->avgs_4samplesDerivative = new double[event_list->index];
+     event_list->Es_lowres = new double[event_list->index];
+     event_list->phis = new double[event_list->index];
+     event_list->lagsShifts = new int[event_list->index];
+     event_list->bsln = new double[event_list->index];
+     event_list->rmsbsln = new double[event_list->index];
+     event_list->grading = new int[event_list->index];
+     event_list->grades2 = new int[event_list->index];
+     event_list->ph_ids = new long[event_list->index];
+     event_list->ph_ids2 = new long[event_list->index];
+     event_list->ph_ids3 = new long[event_list->index];
+     event_list->pix_ids = new long[event_list->index];
+     event_list->tends = new double[event_list->index];
+     event_list->tstarts = new double[event_list->index];
+     event_list->risetimes = new double[event_list->index];
+     event_list->falltimes = new double[event_list->index];
+
+     if (strcmp(reconstruct_init->EnergyMethod,"PCA") != 0)     // Different from PCA
+     {
+         for (int ip=0; ip<pulsesInRecord->ndetpulses; ip++)
+         {
+             event_list->event_indexes[ip] = (pulsesInRecord->pulses_detected[ip].Tstart - record->time)/record->delta_t;
+
+             if (reconstruct_init->opmode == 1)
+             {
+                 event_list->energies[ip] = pulsesInRecord->pulses_detected[ip].energy;
+             }
+             else if (reconstruct_init->opmode == 0)
+             {
+                 event_list->energies[ip] = 999.;
+             }
+
+             event_list->avgs_4samplesDerivative[ip] = pulsesInRecord->pulses_detected[ip].avg_4samplesDerivative;
+             event_list->Es_lowres[ip] = pulsesInRecord->pulses_detected[ip].E_lowres;
+             event_list->phis[ip] = pulsesInRecord->pulses_detected[ip].phi;
+             event_list->lagsShifts[ip] = pulsesInRecord->pulses_detected[ip].lagsShift;
+             event_list->bsln[ip] = pulsesInRecord->pulses_detected[ip].bsln;
+             event_list->rmsbsln[ip] = pulsesInRecord->pulses_detected[ip].rmsbsln;
+             event_list->grading[ip]  = pulsesInRecord->pulses_detected[ip].grading;
+             event_list->grades1[ip]  = pulsesInRecord->pulses_detected[ip].grade1;
+             event_list->grades2[ip]  = pulsesInRecord->pulses_detected[ip].grade2;
+             event_list->pulse_heights[ip]  = pulsesInRecord->pulses_detected[ip].pulse_height;
+             event_list->pix_ids[ip]  = pulsesInRecord->pulses_detected[ip].pixid;
+             event_list->ph_ids[ip]  = pulsesInRecord->pulses_detected[ip].phid;
+             event_list->ph_ids2[ip]  = pulsesInRecord->pulses_detected[ip].phid2;
+             event_list->ph_ids3[ip]  = pulsesInRecord->pulses_detected[ip].phid3;
+             event_list->tstarts[ip]  = pulsesInRecord->pulses_detected[ip].Tstart;
+             event_list->tends[ip]  = pulsesInRecord->pulses_detected[ip].Tend;
+             event_list->risetimes[ip]  = pulsesInRecord->pulses_detected[ip].riseTime;
+             event_list->falltimes[ip]  = pulsesInRecord->pulses_detected[ip].fallTime;
+         }
+
+         if (lastRecord == 1)
+         {
+             double numLagsUsed_mean;
+             double numLagsUsed_sigma;
+             gsl_vector *numLagsUsed_vector = gsl_vector_alloc((*pulsesAll)->ndetpulses);
+             //gsl_vector_set_all(numLagsUsed_vector,-999); // Debugger complains about an initialized variable in a conditional jump
+                                                          // (in findMeanSigma 6 lines forward)
+
+             for (int ip=0; ip<(*pulsesAll)->ndetpulses; ip++)
+             {
+                 gsl_vector_set(numLagsUsed_vector,ip,(*pulsesAll)->pulses_detected[ip].numLagsUsed);
+             }
+             if (findMeanSigma (numLagsUsed_vector, &numLagsUsed_mean, &numLagsUsed_sigma))
+             {
+                 EP_EXIT_ERROR("Cannot run findMeanSigma routine for calculating numLagsUsed statistics",EPFAIL);
+             }
+             if (numLagsUsed_vector != NULL) {gsl_vector_free(numLagsUsed_vector); numLagsUsed_vector = 0;}
+         }
+     }
+     else
+     {
+         if (lastRecord == 1)
+         {
+             // Free & Fill TesEventList structure
+             event_list->index = (*pulsesAll)->ndetpulses;
+             //event_list->event_indexes = new double[event_list->index];
+             event_list->energies = new double[event_list->index];
+             event_list->avgs_4samplesDerivative = new double[event_list->index];
+             event_list->Es_lowres = new double[event_list->index];
+             event_list->phis = new double[event_list->index];
+             event_list->lagsShifts = new int[event_list->index];
+             event_list->bsln = new double[event_list->index];
+             event_list->rmsbsln = new double[event_list->index];
+             event_list->grading  = new int[event_list->index];
+             //event_list->grades1  = new int[event_list->index];
+             event_list->grades2  = new int[event_list->index];
+             //event_list->pulse_heights  = new double[event_list->index];
+             event_list->ph_ids   = new long[event_list->index];
+             event_list->pix_ids   = new long[event_list->index];
+             event_list->risetimes   = new double[event_list->index];
+             event_list->falltimes   = new double[event_list->index];
+
+             for (int ip=0; ip<(*pulsesAll)->ndetpulses; ip++)
+             {
+                 event_list->event_indexes[ip] = ((*pulsesAll)->pulses_detected[ip].Tstart - record->time)/record->delta_t;
+
+                 if (reconstruct_init->opmode == 1)
+                 {
+                     event_list->energies[ip] = (*pulsesAll)->pulses_detected[ip].energy;
+                 }
+                 else if (reconstruct_init->opmode == 0)
+                 {
+                     event_list->energies[ip] = 999.;
+                 }
+
+                 event_list->avgs_4samplesDerivative[ip]  = (*pulsesAll)->pulses_detected[ip].avg_4samplesDerivative;
+                 event_list->Es_lowres[ip]  = (*pulsesAll)->pulses_detected[ip].E_lowres;
+                 event_list->phis[ip] = (*pulsesAll)->pulses_detected[ip].phi;
+                 event_list->lagsShifts[ip] = (*pulsesAll)->pulses_detected[ip].lagsShift;
+                 event_list->bsln[ip] = (*pulsesAll)->pulses_detected[ip].bsln;
+                 event_list->rmsbsln[ip] = (*pulsesAll)->pulses_detected[ip].rmsbsln;
+                 event_list->grading[ip]  = (*pulsesAll)->pulses_detected[ip].grading;
+                 event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
+                 event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
+                 event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
+                 event_list->ph_ids[ip]   = (*pulsesAll)->pulses_detected[ip].phid;
+                 event_list->pix_ids[ip]  = (*pulsesAll)->pulses_detected[ip].pixid;
+                 event_list->risetimes[ip]  = (*pulsesAll)->pulses_detected[ip].riseTime;
+                 event_list->falltimes[ip]  = (*pulsesAll)->pulses_detected[ip].fallTime;
+             }
+         }
+     }
+     
+     delete pulsesAllAux; pulsesAllAux = 0;
      delete [] pulsesInRecord->pulses_detected; pulsesInRecord->pulses_detected = 0;
      delete pulsesInRecord; pulsesInRecord = 0;
      
@@ -2786,8 +2977,11 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
     strncpy(reconstruct_init->event_file,event_file,255);
     reconstruct_init->event_file[255]='\0';
 
-    reconstruct_init->flength_0pad = flength_0pad;
-    reconstruct_init->prebuff_0pad = prebuff_0pad;
+    if (opmode == 1)
+    {
+        reconstruct_init->flength_0pad = flength_0pad;
+        reconstruct_init->prebuff_0pad = prebuff_0pad;
+    }
 
     if (opmode == 0)	// Calibration
     {
@@ -2805,11 +2999,11 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
 
     reconstruct_init->scaleFactor  	= scaleFactor;
     reconstruct_init->samplesUp    	= samplesUp;
-    reconstruct_init->samplesDown  	= samplesDown;
+    if (opmode == 1)    reconstruct_init->samplesDown  	= samplesDown;
     reconstruct_init->nSgms        	= nSgms;
-    reconstruct_init->detectSP      = detectSP;
+    if (opmode == 1)    reconstruct_init->detectSP      = detectSP;
     reconstruct_init->opmode	= opmode;
-    strcpy(reconstruct_init->detectionMode,detectionMode);
+    if (opmode == 1)    strcpy(reconstruct_init->detectionMode,detectionMode);
 
     reconstruct_init->LrsT		= LrsT;
     reconstruct_init->LbT		= LbT;
@@ -2817,31 +3011,35 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
     strncpy(reconstruct_init->noise_file,noise_file,255);
     reconstruct_init->noise_file[255]='\0';
 
-    strcpy(reconstruct_init->FilterDomain,filter_domain);
+    if (opmode == 1)    strcpy(reconstruct_init->FilterDomain,filter_domain);
     strcpy(reconstruct_init->FilterMethod,filter_method);
 
     strcpy(reconstruct_init->EnergyMethod,energy_method);
-    reconstruct_init->filtEev     = filtEev;
+    if (opmode == 1)    reconstruct_init->filtEev     = filtEev;
     reconstruct_init->Ifit     = Ifit;
 
-    strcpy(reconstruct_init->OFNoise,ofnoise);
-    reconstruct_init->LagsOrNot = lagsornot;
-    reconstruct_init->nLags = nLags;
-    reconstruct_init->Fitting35 = Fitting35;
-    reconstruct_init->OFIter = ofiter;
-    if (0 != oflib)	reconstruct_init->OFLib = 1;
-    else		reconstruct_init->OFLib = 0;
-    strcpy(reconstruct_init->OFInterp,ofinterp);
+    if (opmode == 1)
+    {
+        strcpy(reconstruct_init->OFNoise,ofnoise);
+        reconstruct_init->LagsOrNot = lagsornot;
+        reconstruct_init->nLags = nLags;
+        reconstruct_init->Fitting35 = Fitting35;
+        reconstruct_init->OFIter = ofiter;
 
-    strcpy(reconstruct_init->OFStrategy,oflength_strategy);
-    reconstruct_init->OFLength      = oflength;
-    if (0 != preBuffer)	reconstruct_init->preBuffer = 1;
-    else			        reconstruct_init->preBuffer = 0;
+        if (oflib)	reconstruct_init->OFLib = 1;
+        else		reconstruct_init->OFLib = 0;
+        strcpy(reconstruct_init->OFInterp,ofinterp);
+    }
+
+    if (opmode == 1)    strcpy(reconstruct_init->OFStrategy,oflength_strategy);
+    if (opmode == 1)    reconstruct_init->OFLength      = oflength;
+    if (preBuffer)	reconstruct_init->preBuffer = 1;
+    else            reconstruct_init->preBuffer = 0;
 
     reconstruct_init->monoenergy 	= monoenergy;
-    if (0 != hduPRECALWN)	reconstruct_init->hduPRECALWN = 1;
+    if (hduPRECALWN)	reconstruct_init->hduPRECALWN = 1;
     else			reconstruct_init->hduPRECALWN = 0;
-    if (0 != hduPRCLOFWM)	reconstruct_init->hduPRCLOFWM = 1;
+    if (hduPRCLOFWM)	reconstruct_init->hduPRCLOFWM = 1;
     else			reconstruct_init->hduPRCLOFWM = 0;
     reconstruct_init->largeFilter 	= largeFilter;
 
@@ -2849,12 +3047,12 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
     strncpy(reconstruct_init->detectFile,detectFile,255);
     reconstruct_init->detectFile[255]='\0';
 
-    reconstruct_init->errorT = errorT;
+    if (opmode == 1)    reconstruct_init->errorT = errorT;
 
-    reconstruct_init->Sum0Filt = Sum0Filt;
+    if (opmode == 1)    reconstruct_init->Sum0Filt = Sum0Filt;
 
-    if (0 != clobber)	reconstruct_init->clobber = 1;
-    else		        reconstruct_init->clobber = 0;
+    if (clobber)	reconstruct_init->clobber = 1;
+    else		    reconstruct_init->clobber = 0;
     reconstruct_init->maxPulsesPerRecord = maxPulsesPerRecord;
     reconstruct_init->SaturationValue  = SaturationValue;
 
@@ -2871,8 +3069,11 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
     }
     else			reconstruct_init->tstartPulse3 = tstartPulse3;
 
-    reconstruct_init->energyPCA1 	= energyPCA1;
-    reconstruct_init->energyPCA2 	= energyPCA2;
+    if (opmode == 1)
+    {
+        reconstruct_init->energyPCA1 	= energyPCA1;
+        reconstruct_init->energyPCA2 	= energyPCA2;
+    }
 
     strncpy(reconstruct_init->XMLFile,XMLFile,255);
     reconstruct_init->XMLFile[255]='\0';
@@ -3464,7 +3665,6 @@ int fillPulsesAll (PulsesCollection** pulsesAll, PulsesCollection* pulsesInRecor
             (*pulsesAll)->pulses_detected[i+pulsesAllAux->ndetpulses] = pulsesInRecord->pulses_detected[i];
         }
     }
-    log_trace("fillPulsesAll_pulsesAll: %i",(*pulsesAll)->ndetpulses);
 
     delete pulsesAllAux; pulsesAllAux = 0;
 

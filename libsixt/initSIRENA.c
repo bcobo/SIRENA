@@ -589,10 +589,9 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
         gsl_matrix_get_col(posti,(*reconstruct_init_sirena)->grading->gradeData,1);
         (*reconstruct_init_sirena)->post_max_value = gsl_vector_max(posti);
         (*reconstruct_init_sirena)->post_min_value = gsl_vector_min(posti);
-
-        if (pBi != NULL) {gsl_vector_free(pBi); pBi = 0;}
-        if (posti != NULL) {gsl_vector_free(posti); posti = 0;}
     }
+    if (pBi != NULL) {gsl_vector_free(pBi); pBi = 0;}
+    if (posti != NULL) {gsl_vector_free(posti); posti = 0;}
 
     return(status);
 }
