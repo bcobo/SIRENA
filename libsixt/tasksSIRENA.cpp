@@ -11836,14 +11836,14 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
         str.clear();
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
-    if (gradelim->size < 4)
+    /*if (gradelim->size < 4)
     {
         sprintf(valERROR,"%d",__LINE__+7);
         string str(valERROR);
         message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
         str.clear();
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-    }
+    }*/
     for (int i=0;i<reconstruct_init->grading->ngrades;i++)
         gsl_vector_set(gradelim,i,gsl_matrix_get(reconstruct_init->grading->gradeData,i,0));	
     int gradelim_pre = gsl_vector_max(gradelim);

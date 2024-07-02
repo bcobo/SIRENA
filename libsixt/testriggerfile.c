@@ -188,7 +188,7 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
         fits_movnam_hdu(file->fptr, ANY_HDU,"TESRECORDS", 0, status);
         if (*status != 0)                
         {
-            printf("%s","Cannot move to TESRECORDS HDU in input FITS file\n");
+            printf("Cannot move to TESRECORDS HDU in input FITS file\n");
             CHECK_STATUS_RET(*status, NULL);
         }
         else
@@ -209,20 +209,49 @@ TesTriggerFile* openexistingTesTriggerFile(const char* const filename,SixtStdKey
 	//Read standard keywords
 	//(shouldn't we read these from the record extension?)
 	sixt_read_fits_stdkeywords(file->fptr,keywords,status);
+    if (*status != 0)
+    {
+        *status=EXIT_FAILURE;
+        SIXT_ERROR("Cannot read standard keywords in the input FITS file");
+        CHECK_STATUS_RET(*status,0);
+    }
 
 	//Get number of rows
 	fits_read_key(file->fptr, TINT, "NAXIS2", &(file->nrows), comment, status);
         
-        //Associate column numbers
+    //Associate column numbers
 	fits_get_colnum(file->fptr, CASEINSEN,"TIME", &(file->timeCol), status);
+    if (*status != 0)
+    {
+        *status=EXIT_FAILURE;
+        SIXT_ERROR("Cannot get TIME column number in the input FITS file (TESRECORDS)");
+        CHECK_STATUS_RET(*status,0);
+    }
 	fits_get_colnum(file->fptr, CASEINSEN,"ADC", &(file->trigCol), status);
+    if (*status != 0)
+    {
+        *status=EXIT_FAILURE;
+        SIXT_ERROR("Cannot get ADC column number in the input FITS file (TESRECORDS)");
+        CHECK_STATUS_RET(*status,0);
+    }
     int colnum = file->trigCol;
     fits_get_colnum(file->fptr, CASEINSEN,"EXTEND", &(file->extendCol), status);
     if (*status != 0) *status = 0; // status!=0 if no EXTEND column
     
 	fits_get_colnum(file->fptr, CASEINSEN,"PIXID", &(file->pixIDCol), status);
+    if (*status != 0)
+    {
+        *status=EXIT_FAILURE;
+        SIXT_ERROR("Cannot get PIXID column number in the input FITS file (TESRECORDS)");
+        CHECK_STATUS_RET(*status,0);
+    }
 	fits_get_colnum(file->fptr, CASEINSEN,"PH_ID", &(file->ph_idCol), status);
-	CHECK_STATUS_RET(*status, NULL);
+	if (*status != 0)
+    {
+        *status=EXIT_FAILURE;
+        SIXT_ERROR("Cannot get PH_ID column number in the input FITS file (TESRECORDS)");
+        CHECK_STATUS_RET(*status,0);
+    }
 
     file->delta_t = -999;
     int deltat_exists = 0;
