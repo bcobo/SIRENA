@@ -55,7 +55,7 @@
   * 
   *******************************************************************************/
  
- #include <gennoisespec.h>
+ #include "gennoisespec.hpp"
  #include <tasksSIRENA.h>
  
  #include "versionSIRENA.h"
