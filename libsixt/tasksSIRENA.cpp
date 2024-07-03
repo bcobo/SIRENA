@@ -8336,7 +8336,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
             break;
         }
     }
-    if ((filter8_exist == 0) && ((*reconstruct_init)->OFLib == 1))
+    if ((filter8_exist == 0) && ((*reconstruct_init)->OFLib == 1) && (nrecord == 1))
     {
         message = "There is not a 8-length filter in the library to calculate the low energy resolution estimator => Not calculated (ELOWRES=-999)";
         EP_PRINT_ERROR(message,-999); // Only a warning 
@@ -9414,7 +9414,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
             break;
         }
     }
-    if (filter8_exist == 0)
+    if ((filter8_exist == 0) && ((*reconstruct_init)->OFLib == 1) && (nrecord == 1))
     {
         message = "There is not a 8-length filter in the library to calculate the low energy resolution estimator => Not calculated (ELOWRES=-999)";
         EP_PRINT_ERROR(message,-999); // Only a warning 
