@@ -67,7 +67,7 @@
 * - FilterDomain: Filtering Domain: Time (T) or Frequency (F)
 ******* - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline) or F0B0 (deleting always the baseline)
 * - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)
-* - EnergyMethod: Energy calculation Method: OPTFILT, 0PAD, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED, I2RDER or PCA
+* - EnergyMethod: Energy calculation Method: OPTFILT, 0PAD, INTCOVAR, COVAR, I2R or I2RFITTED
 * - Ifit: Constant to apply the I2RFITTED conversion
 
 * - intermediate: Write or not intermediate files (1/0)
@@ -94,8 +94,8 @@ int tesrecons_main() {
   
   // Containing all programm parameters read by PIL.
   struct Parameters par;
-  par.hduPRCLOFWM = 0;  // Debugger complains about an initialized variable (only the boolean type)
-  par.hduPRECALWN = 0;  // Debugger complains about an initialized variable (only the boolean type)
+  //par.hduPRCLOFWM = 0;  // Debugger complains about an initialized variable (only the boolean type)
+  //par.hduPRCLW = 0;     // Debugger complains about an initialized variable (only the boolean type)
   par.preBuffer = 0;    // Debugger complains about an initialized variable (only the boolean type)
   par.OFLib = 1;        // Debugger complains about an initialized variable (only the boolean type)
   
@@ -333,7 +333,7 @@ int getpar_tesrecons(struct Parameters* const par)
 
   status=ape_trad_query_bool("OFLib", &par->OFLib);
 
-  strcpy(par->OFInterp, "DAB");
+  strcpy(par->OFInterp, "SAB");
 
   status=ape_trad_query_string("OFStrategy", &sbuffer);
   strcpy(par->OFStrategy, sbuffer);
@@ -374,8 +374,10 @@ int getpar_tesrecons(struct Parameters* const par)
   }
   status=ape_trad_query_int("tstartPulse2", &par->tstartPulse2);
   status=ape_trad_query_int("tstartPulse3", &par->tstartPulse3);
-  status=ape_trad_query_double("energyPCA1", &par->energyPCA1);
-  status=ape_trad_query_double("energyPCA2", &par->energyPCA2);
+  //status=ape_trad_query_double("energyPCA1", &par->energyPCA1);
+  //status=ape_trad_query_double("energyPCA2", &par->energyPCA2);
+  par->energyPCA1 = -999;
+  par->energyPCA1 = -999;
       
   if (EXIT_SUCCESS!=status) {
       SIXT_ERROR("failed reading some TESRECONS parameter");
@@ -389,8 +391,10 @@ int getpar_tesrecons(struct Parameters* const par)
   //MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0) || (strcmp(par->FilterMethod,"F0B0") == 0),"FilterMethod must be F0 or B0 or F0B0");
   MyAssert((strcmp(par->FilterMethod,"F0") == 0) || (strcmp(par->FilterMethod,"B0") == 0),"FilterMethod must be F0 or B0");
 
-  MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"0PAD") == 0) || (strcmp(par->EnergyMethod,"WEIGHT") == 0) || (strcmp(par->EnergyMethod,"WEIGHTN") == 0) ||
-  (strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0) || (strcmp(par->EnergyMethod,"PCA") == 0), "EnergyMethod must be OPTFILT, 0PAD, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA");
+  //MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"0PAD") == 0) || (strcmp(par->EnergyMethod,"INTCOVAR") == 0) || (strcmp(par->EnergyMethod,"COVAR") == 0) ||
+  //(strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0) ||	(strcmp(par->EnergyMethod,"PCA") == 0)), "EnergyMethod must be OPTFILT, 0PAD, INTCOVAR, COVAR, I2R, I2RFITTED or PCA");
+  MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"0PAD") == 0) || (strcmp(par->EnergyMethod,"INTCOVAR") == 0) || (strcmp(par->EnergyMethod,"COVAR") == 0) ||
+  (strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0), "EnergyMethod must be OPTFILT, 0PAD, INTCOVAR, COVAR, I2R or I2RFITTED");
 
   if ((isNumber == 0) && (strcmp(par->FilterDomain,"F") == 0))    // It is only implemented tstartPulse1 as a file for time domain
   {
@@ -400,7 +404,7 @@ int getpar_tesrecons(struct Parameters* const par)
 
   MyAssert((par->intermediate == 0) || (par->intermediate == 1), "intermediate must be 0 or 1");
 
-  MyAssert((strcmp(par->OFNoise,"NSD") == 0) || (strcmp(par->OFNoise,"WEIGHTM") == 0), "OFNoise must be NSD or WEIGHTM");
+  MyAssert((strcmp(par->OFNoise,"NSD") == 0) || (strcmp(par->OFNoise,"WEIGHTN") == 0), "OFNoise must be NSD or WEIGHTN");
 
   MyAssert((strcmp(par->detectionMode,"AD") == 0) || (strcmp(par->detectionMode,"STC") == 0), "detectionMode must be AD or STC");
 
@@ -424,9 +428,9 @@ int getpar_tesrecons(struct Parameters* const par)
 
   MyAssert((par->Sum0Filt ==0) || (par->Sum0Filt ==1), "Sum0Filt must be 0 or 1");
 
-  if ((strcmp(par->EnergyMethod,"WEIGHT") == 0) && (par->LagsOrNot == 1))
+  if ((strcmp(par->EnergyMethod,"INTCOVAR") == 0) && (par->LagsOrNot == 1))
   {
-      SIXT_ERROR("parameter error: EnergyMethod=WEIGHT and Lags not implemented yet");
+      SIXT_ERROR("parameter error: EnergyMethod=INTCOVAR and Lags not implemented yet");
       return(EXIT_FAILURE);
   }
 
@@ -450,9 +454,9 @@ int getpar_tesrecons(struct Parameters* const par)
       //5. Scalar product in Frequency domain
       return(EXIT_FAILURE);
   }
-  if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (strcmp(par->OFNoise,"WEIGHTM") == 0))
+  if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (strcmp(par->OFNoise,"WEIGHTN") == 0))
   {
-      SIXT_ERROR("parameter error: EnergyMethod=0PAD && OFNoise=WEIGHTM not a valid choice => OFNoise should be NSD");
+      SIXT_ERROR("parameter error: EnergyMethod=0PAD && OFNoise=WEIGHTN not a valid choice => OFNoise should be NSD");
       return(EXIT_FAILURE);
   }
   if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (par->flength_0pad >= par->OFLength))
@@ -461,15 +465,15 @@ int getpar_tesrecons(struct Parameters* const par)
       return(EXIT_FAILURE);
   }
 
-  if ((strcmp(par->EnergyMethod,"WEIGHT") == 0) && (par->OFLib == 1))
+  if ((strcmp(par->EnergyMethod,"INTCOVAR") == 0) && (par->OFLib == 1))
   {
-      SIXT_ERROR("parameter error: EnergyMethod=WEIGHT => OFLib should be 'no'");
+      SIXT_ERROR("parameter error: EnergyMethod=INTCOVAR => OFLib should be 'no'");
       return(EXIT_FAILURE);
   }
 
-  if ((strcmp(par->EnergyMethod,"OPTFILT") == 0) && (strcmp(par->OFNoise,"WEIGHTM") == 0) && (par->OFLib == 0))
+  if ((strcmp(par->EnergyMethod,"OPTFILT") == 0) && (strcmp(par->OFNoise,"WEIGHTN") == 0) && (par->OFLib == 0))
   {
-      SIXT_ERROR("parameter error: EnergyMethod=OPTFILT && OFNoise=WEIGHTM => OFLib should be 'yes'");
+      SIXT_ERROR("parameter error: EnergyMethod=OPTFILT && OFNoise=WEIGHTN => OFLib should be 'yes'");
       return(EXIT_FAILURE);
   }
 
@@ -478,8 +482,8 @@ int getpar_tesrecons(struct Parameters* const par)
 
   MyAssert(par->OFLength > 0, "OFLength must be greater than 0");
 
-  MyAssert(par->energyPCA1 > 0, "energyPCA1 must be greater than 0");
-  MyAssert(par->energyPCA2 > 0, "energyPCA2 must be greater than 0");
+  //MyAssert(par->energyPCA1 > 0, "energyPCA1 must be greater than 0");
+  //MyAssert(par->energyPCA2 > 0, "energyPCA2 must be greater than 0");
 
   return(status);
 }

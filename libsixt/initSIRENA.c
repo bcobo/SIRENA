@@ -456,6 +456,12 @@ int getSamplingrate_trigreclength (char* inputFile, struct Parameters par, doubl
 * fillReconstructInitSIRENAGrading: This function reads the grading data from the XML file
 *                            and store it in 'reconstruct_init_sirena->grading'
 *
+*  It also checks if prebuff_0pad input parameter value (preBuffer when 0-padding) is possible
+*  depending on the prebuffer values in the XML file
+*
+* `reconstruct_init_sirena->grading` number of rows = Number of grades in the XML file
+* `reconstruct_init_sirena->grading` number of columns = 3 (0->pre, 1->filter length inlcuding prebuffer, 2->prebuffer values)
+*
 * Parameters:
 * - par: Input parameters
 * - det: Pixel detector
@@ -624,7 +630,7 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
 int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFile * outfile)
 {
     // Error status.
-    int status=EXIT_SUCCESS;
+    int status = EXIT_SUCCESS;
 
     // Open record file
     TesTriggerFile* record_file;
@@ -637,9 +643,10 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
         par.LbT, par.NoiseFile, par.FilterDomain, par.FilterMethod, par.EnergyMethod,
         par.filtEev, par.Ifit, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter,
         par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer, par.monoenergy,
-        par.hduPRECALWN, par.hduPRCLOFWM, par.largeFilter, par.intermediate, par.detectFile,
+        par.addCOVAR, par.addINTCOVAR, par.addOFWN, par.largeFilter, par.intermediate, par.detectFile,
         par.errorT, par.Sum0Filt, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1,
         par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
+    if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
 
     // Build up TesRecord to read the file
     TesRecord* record;
@@ -869,3 +876,74 @@ int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA
     return (status);
 }
 /*xxxx end of SECTION 8 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+
+/***** SECTION 9 ************************************************************
+* checkpreBuffer function: Check if the preBuffer value (HISTORY) in the library is the same to preBuffer input parameter
+*
+* Parameters:
+* - par: Structure containing the input parameters
+******************************************************************************/
+int checkpreBuffer(struct Parameters* const par)
+{
+    // Error status.
+    int status = EXIT_SUCCESS;
+
+    fitsfile* libptr = NULL;
+
+    // If the library exists => Open it
+    fits_open_file(&libptr, par->LibraryFile, READONLY, &status);
+    if (status == EXIT_SUCCESS)
+    {
+        // Move to "Primary" HDU of the library file
+        if (fits_movabs_hdu(libptr, 1, NULL, &status))
+        {
+            SIXT_ERROR("Error moving to Primary HDU in the LibraryFile");
+            return(EXIT_FAILURE);
+        }
+
+        char *libheaderPrimary = NULL;
+        int numberkeywords;
+        if (fits_hdr2str(libptr, 0, NULL, 0,&libheaderPrimary, &numberkeywords, &status))
+        {
+            free(libheaderPrimary);
+            SIXT_ERROR("Error reading Primary HDU in the LibraryFile");
+            return(EXIT_FAILURE);
+        }
+
+        char *preBuffer_pointer = NULL;
+        preBuffer_pointer = strstr(libheaderPrimary,"preBuffer = ");
+        if(!preBuffer_pointer)
+        {
+            SIXT_ERROR("preBuffer value not included in Primary HDU (HISTORY) in LibraryFile");
+            return(EXIT_FAILURE);
+        }
+        char preBuffer_value_library[2];
+        strncpy(preBuffer_value_library,preBuffer_pointer+12,1);  // 12 -> "preBuffer = "
+        strcat(preBuffer_value_library,"\0");
+        char preBuffer_inputParam[2];
+        if  (par->preBuffer)
+        {
+            strcpy(preBuffer_inputParam,"y\0");
+        }
+        else
+        {
+            strcpy(preBuffer_inputParam,"n\0");
+        }
+        //printf("preBuffer_value_library=%s\n",preBuffer_value_library);
+        //printf("El valor de preBuffer es: %s\n", par->preBuffer ? "true" : "false");
+        //printf("preBuffer_inputParam=%s\n",preBuffer_inputParam);
+
+        if (strcmp(preBuffer_value_library,preBuffer_inputParam)!=0)
+        {
+            SIXT_ERROR("preBuffer value used to build the existing LibraryFile and preBuffer input parameter do not match");
+            return(EXIT_FAILURE);
+        }
+
+        fits_close_file(libptr,&status);
+    }
+    else status = EXIT_SUCCESS;
+
+    return(status);
+}
+/*xxxx end of SECTION 9 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/

@@ -1849,7 +1849,6 @@ int findPulsesCAL
 		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
 	}
 	*threshold = thresholdmediankappa;
-    //cout<<*threshold<<endl;
 
     /*cout<<"threshold: "<<*threshold<<endl;
     cout<<"DERIVATIVE:"<<endl;
@@ -2615,7 +2614,7 @@ int FindSecondaries
                                         gsl_vector_set(*samp1DERgsl,*numberPulses-1,gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-
                                         1)));
                                     }
-                                    
+
                                     gsl_vector_set(indexMin,indexM,indexMinNew);
                                     gsl_vector_set(indexMax,indexM,indexMaxNew);
                                     
@@ -2698,12 +2697,11 @@ int FindSecondaries
                                     
                                 indexM = indexM + 1;
                             } while ((i_indexMin != i_indexMax) && (gsl_vector_get(*tstartgsl,*numberPulses-1)+1 < sizeRecord));
-                                
 
                             //cout<<"tstartJITTER: "<<tstartJITTER<<endl;
 
-                            if (indexMin != NULL) {gsl_vector_free(indexMin); indexMin = 0;}
-                            if (indexMax != NULL) {gsl_vector_free(indexMax); indexMax = 0;}
+                            //if (indexMin != NULL) {gsl_vector_free(indexMin); indexMin = 0;}
+                            //if (indexMax != NULL) {gsl_vector_free(indexMax); indexMax = 0;}
 
                             if ((tstartJITTER >= 0) && (tstartJITTER+1 < sizeRecord))
                             {
@@ -2907,6 +2905,9 @@ int FindSecondaries
         
     gsl_vector_free(ThreePoints_x); ThreePoints_x = 0;
     gsl_vector_free(ThreePoints_y); ThreePoints_y = 0;
+
+    if (indexMin != NULL) {gsl_vector_free(indexMin); indexMin = 0;}
+    if (indexMax != NULL) {gsl_vector_free(indexMax); indexMax = 0;}
         
     message.clear();
 

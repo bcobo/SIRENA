@@ -142,7 +142,7 @@ typedef struct LibraryCollection
 	int nfixedfilters;
 
 	/** Margin to be applied when several energies in the library to choose the proper filter */
-	/** To be used in 'find_matchedfilterDAB', 'find_optimalfilterDAB', 'find_prclwn', 'find_Esboundary' and 'find_prclofwm' */
+	/** To be used in 'find_matchedfilterSAB', 'find_optimalfilterSAB', 'find_prclcov', 'find_Esboundary' and 'find_prclofwn' */
 	/** Also included in 'find_matchedfilter' and 'find_optimalfilter' */
 	double margin; // %
 
@@ -210,17 +210,17 @@ typedef struct LibraryCollection
 	/** r escalar */
 	gsl_vector *r;
 
-	/** PAB vector */
-	gsl_matrix *PAB;
-
-	/** PABMXLFF vector */
-	gsl_matrix *PABMXLFF;
-	
 	/** DAB vector */
 	gsl_matrix *DAB;
+
+	/** DABMXLFF vector */
+	gsl_matrix *DABMXLFF;
+	
+	/** SAB vector */
+	gsl_matrix *SAB;
 	
 	/** Structure containing all the optimal filters AB from the library */
-	OptimalFilterSIRENA* optimal_filtersab;
+	//OptimalFilterSIRENA* optimal_filtersab;
 	
 	/** Structure containing all the fixed optimal filters AB in time domain from the library */
 	OptimalFilterSIRENA* optimal_filtersabTIME;
@@ -228,11 +228,11 @@ typedef struct LibraryCollection
 	/** Structure containing all the fixed optimal filters AB in frequency domain from the library */
 	OptimalFilterSIRENA* optimal_filtersabFREQ;
 
-	/** PRECALWN vector */
-	gsl_matrix *PRECALWN;
+	/** PRCLCOV vector */
+	gsl_matrix *PRCLCOV;
 	
-	/** PRECALOFWM vector */
-	gsl_matrix *PRCLOFWM;
+	/** PRCLOFWN vector */
+	gsl_matrix *PRCLOFWN;
 #ifdef __cplusplus
   	LibraryCollection();
   	LibraryCollection(const LibraryCollection& other);
@@ -474,11 +474,14 @@ typedef struct ReconstructInitSIRENA
   	/** Monochromatic energy for library creation **/
   	double monoenergy;
   
-  	/** Add the PRECALWN HDU in the library file (1) or not (0) **/
-  	int hduPRECALWN;
+  	/** Add pre-calculated values related to COVAR reconstruction method in the library file (1) or not (0) **/
+  	int addCOVAR;
   
-  	/** Add the PRCLOFWM HDU in the library file (1) or not (0) **/
-  	int hduPRCLOFWM;
+  	/** Add pre-calculated values related to INTCOVAR reconstruction method in the library file (1) or not (0) **/
+  	int addINTCOVAR;
+
+	/** Add pre-calculated values related to Optimal Filtering by using Weight Noise matrix in the library file (1) or not (0) **/
+  	int addOFWN;
   
   	/** Length of the longest fixed filter for library creation **/
   	int largeFilter;
@@ -504,7 +507,7 @@ typedef struct ReconstructInitSIRENA
   	/** Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline) or F0B0 (deleting always the baseline) **/
  	char FilterMethod[5];
   
-  	/** Energy Method: OPTFILT, 0PAD, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA **/
+  	/** Energy Method: OPTFILT, 0PAD, INTCOVAR, COVAR, I2R, I2RFITTED or PCA **/
   	char EnergyMethod[10];
   
   	/** Energy of the filters of the library to be used to calculate energy (only for OPTFILT, 0PAD, I2R and I2RFITTED) **/
@@ -531,7 +534,7 @@ typedef struct ReconstructInitSIRENA
   	/** Use a library with optimal filters (1) or calculate the optimal filter to each pulse (0) **/
   	int OFLib;
   
-  	//Optimal Filter by using the Matched Filter (MF) or the DAB as matched filter (MF, DAB) **/
+  	//Optimal Filter by using the Matched Filter (MF) or the SAB as matched filter (MF, SAB) **/
   	char OFInterp[4];
   
   	/** Optimal Filter length Strategy: FREE, BASE2, BYGRADE or FIXED **/
@@ -646,8 +649,9 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, 
                                     char *ofinterp, char* oflength_strategy, 
                                     int oflength, char preBuffer,
-                                    double monoenergy, char hduPRECALWN, 
-                                    char hduPRCLOFWM, int largeFilter, 
+                                    double monoenergy,
+									char addCOVAR, char addINTCOVAR, char addOFWN,
+									int largeFilter,
                                     int interm, char* detectFile, 
                                     int errorT, int Sum0Filt, char clobber, 
                                     int maxPulsesPerRecord, 
@@ -688,11 +692,9 @@ extern "C"
 void IntegrafreeTesEventListSIRENA(TesEventList* event_list);
 
 int loadLibrary (ReconstructInitSIRENA* reconstruct_init);
-//LibraryCollection* getLibraryCollection(const char* const filename, int opmode, int hduPRECALWN, int hduPRCLOFWM, int largeFilter, char *filter_domain, int pulse_length, char *energy_method, char *ofnoise, char *filter_method, char oflib, char **ofinterp, double filtEev, int lagsornot, int preBuffer, gsl_vector *pBi, gsl_vector *posti, int* const status);
 LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init, gsl_vector *pBi, gsl_vector *posti, int* const status);
 
 int loadNoise (ReconstructInitSIRENA* reconstruct_init);
-//NoiseSpec* getNoiseSpec(const char* const filename,int opmode,int hduPRCLOFWM,char *energy_method,char *ofnoise,char *filter_method,int* const status);
 NoiseSpec* getNoiseSpec(ReconstructInitSIRENA* reconstruct_init, int* const status);
 
 int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
@@ -705,7 +707,7 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
 	char* energy_method, double filtEev, double Ifit,
 	char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
 	char* oflength_strategy, int oflength, char preBuffer,
-	double monoenergy, char hduPRECALWN, char hduPRCLOFWM, int largeFilter,
+	double monoenergy, char addCOVAR, char addINTCOVAR, char addOFWN, int largeFilter,
 	int interm, char* const detectFile,
 	int errorT,
 	int Sum0Filt,

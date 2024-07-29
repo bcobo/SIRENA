@@ -1,28 +1,30 @@
 ###########################################################################################
 #Parameters used to build the library:
 ###########################################################################################
-RecordFile,s,lq,"record.fits",,,"Record FITS file"
-TesEventFile,s,lq,"event.fits",,,"Output event list file"
-LibraryFile,s,h,"library.fits",,,"File with calibration library"
-NoiseFile,s,h,"noise.fits",,,"Noise FITS file with noise spectrum"
-XMLFile,s,h,"xifu_pipeline.xml",,,"XML input FITS file with instrument definition"
+RecordFile,s,lq,"record.fits",,,"Input record FITS file"
+TesEventFile,s,lq,"event.fits",,,"Output event list FITS file"
+LibraryFile,s,h,"library.fits",,,"Output library FITS file"
+NoiseFile,s,h,"noise.fits",,,"Noise FITS file with noise spectrum (and noise weight matrices)"
+XMLFile,s,h,"xifu_pipeline.xml",,,"XML input file with instrument information"
 preBuffer,b,h,no,,,"Some samples added or not before the starting time of a pulse (number of added samples read from the XML file)"
-EventListSize,i,h,1000,,,"Default size of the event list"
-clobber,b,h,yes,,,"Overwrite or not output files if exist (yes/no)"
-history,b,h,yes,,,"Write program parameters into output file?"
+EventListSize,i,h,1000,,,"Default size of the event list per record"
+clobber,b,h,yes,,,"Overwrite or not output files if they exist (yes/no)"
+history,b,h,yes,,,"Write program parameters into output FITS file (yes/no)"
 
-scaleFactor,r,h,0,,,"Detection scale factor for initial filtering"
-samplesUp,i,h,3,,,"Number of consecutive samples up for threshold trespassing (only used in calibration run, and in production run with STC detection mode)"
+scaleFactor,r,h,0,,,"Detection scale factor for initial filtering (to enable a varying cut-off frequency of a low-pass filter)"
+samplesUp,i,h,3,,,"Number of consecutive samples up for threshold trespassing"
 nSgms,r,h,3.5,,,"Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm"
 
 LrsT,r,h,30E-6,,,"Running sum length for the RS raw energy estimation (seconds)"
 LbT,r,h,6.4E-3,,,"Baseline averaging length (seconds)"
 
-monoenergy,r,h,6000.,,,"Monochromatic energy of the pulses in the input FITS file in eV (only for library creation)"
+monoenergy,r,h,6000.,,,"Monochromatic energy of the pulses in the input FITS file in eV"
 
-hduPRECALWN,b,h,no,,,"Add or not the PRECALWN HDU in the library file (yes/no) (only for library creation)"
-hduPRCLOFWM,b,h,no,,,"Add or not the PRCLOFWM HDU in the library file (yes/no) (only for library creation)"
-largeFilter,i,h,8192,,,"Length of the longest fixed filter (only for library creation)"
+addCOVAR,b,h,no,,,"Add or not pre-calculated values in the library file related to COVAR reconstruction method (yes/no)"
+addINTCOVAR,b,h,no,,,"Add or not pre-calculated values in the library file related to INTCOVAR reconstruction method (yes/no)"
+addOFWN,b,h,no,,,"Add or not pre-calculated values in the library file related to Optimal Filtering by using Weight Noise matrix (yes/no)"
+
+largeFilter,i,h,8192,,,"Length of the longest fixed filter (only if preBuffer=no)"
 
 EnergyMethod,s,h,"OPTFILT",,,"Energy calculation Method: OPTFILT, I2R or I2RFITTED"
 Ifit,r,h,0.0,,,"Constant to apply the I2RFITTED conversion"

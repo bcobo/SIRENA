@@ -37,7 +37,7 @@ struct Parameters {
 	// Calibration factor
 	double Calfac;
 
-	// Default size of the event list
+	// Default size of the event list per record
 	int EventListSize;
 
 	// Minimal distance before using OFs after a mireconstruction
@@ -82,11 +82,14 @@ struct Parameters {
 	// Monochromatic energy for library creation
 	double monoenergy;
 
-	// Boolean to choose whether to add the PRECALWN HDU in the library file
-	char hduPRECALWN;
+	// Boolean to add or not pre-calculated values related to COVAR reconstruction method in the library file
+	char addCOVAR;
 
-	// Boolean to choose whether to add the PRCLOFWM HDU in the library file
-	char hduPRCLOFWM;
+	// Boolean to add or not pre-calculated values related to INT_COVAR reconstruction method in the library file
+	char addINTCOVAR;
+
+	// Boolean to add or not pre-calculated values related to Optimal Filtering by using Weight Noise matrix in the library file
+	char addOFWN;
 
 	// Length of the longest fixed filter for library creation
 	int largeFilter;
@@ -106,7 +109,7 @@ struct Parameters {
 	// Filtering Method: F0 (deleting the zero frequency bin) or F0 (deleting the baseline) of F0B0 (deleting always the baseline)
 	char FilterMethod[5];
 
-	// Energy Method: OPTFILT, 0PAD, WEIGHT, WEIGHTN, I2R, I2RFITTED or PCA
+	// Energy Method: OPTFILT, 0PAD, INTCOVAR, COVAR, I2R, I2RFITTED or PCA
 	char EnergyMethod[10];
 
     // Energy of the filters of the library to be used to calculate energy (only for OPTFILT, I2R and I2RFITTED)
@@ -115,7 +118,7 @@ struct Parameters {
     // Constant to apply the I2RFITTED conversion
     double Ifit;
 
-	// Noise to use with Optimal Filtering: NSD (Noise Spectral Density) or WEIGHTM (weight matrix)
+	// Noise to use with Optimal Filtering: NSD (Noise Spectral Density) or WEIGHTN (weight matrix)
 	char OFNoise[8];
 
 	// LagsOrNot: LAGS == 1 or NOLAGS == 0
@@ -142,7 +145,6 @@ struct Parameters {
 	// Optimal Filter length (taken into account if OFStrategy=FIXED)
 	int OFLength;
 
-    // 0-padding filter if 0 (from pulseLength to OFLength filter filled in with 0's) or filter with a filter+preBuffer if different from 0
 	char preBuffer;
 
 	// Write intermediate files (Yes:1, No:0)
@@ -189,5 +191,7 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
 
 int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFile * outfile);
 int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFile * outfile);
+
+int checkpreBuffer(struct Parameters* const par);
 
 #endif /* INITSIRENA_H */

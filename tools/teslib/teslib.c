@@ -19,7 +19,8 @@
    CANTABRIA (CSIC-UC) with funding from the Spanish Ministry of Science and 
    Innovation (MICINN) under project  ESP2006-13608-C02-01, and Spanish 
    Ministry of Economy (MINECO) under projects AYA2012-39767-C02-01, 
-   ESP2013-48637-C2-1-P, ESP2014-53672-C3-1-P and RTI2018-096686-B-C21.
+   ESP2013-48637-C2-1-P, ESP2014-53672-C3-1-P, RTI2018-096686-B-C21 and
+   PID2021-122955OB-C41.
 
 ***********************************************************************
 *                      TESLIB
@@ -54,21 +55,23 @@
 *              SIRENA's format XML file (grading=>pre,post and pB) or new format XML file (grading=>pre,post and filtlen)
 *                                      pre=494, post=8192, pB=1000                          pre=494, post=7192, filtlen=8192
 *                                                                                             preBuffer=filtlen-post
-* - EventListSize: Default size of the event list
+* - EventListSize: Default size of the event list per record
 * - clobber:Overwrite or not output files if exist (1/0)
 * - history: write program parameters into output file
 * - scaleFactor: Detection scale factor for initial filtering
+* - samplesUp: Number of consecutive samples up for threshold trespassing
 * - nSgms: Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm
 * - LrsT: Running sum length for the RS raw energy estimation (seconds) 
 * - LbT: Baseline averaging length (seconds)
 * - monoenergy: Monochromatic energy of the pulses in the input FITS file in eV 
-* - hduPRECALWN: Add or not the PRECALWN HDU in the library file (1/0) 
-* - hduPRCLOFWM: Add or not the PRCLOFWM HDU in the library file (1/0) 
+* - addCOVAR: Add or not pre-calculated values related to COVAR reconstruction method in the library file (1/0)
+* - addINTCOVAR: Add or not pre-calculated values related to INTCOVAR reconstruction method in the library file (1/0)
+* - addOFWN: Add or not pre-calculated values related to Optimal Filtering by using Weight Noise matrix in the library file (1/0)
 * - largeFilter: Length of the longest fixed filter 
 * - FilterDomain: Filtering Domain: Time (T) or Frequency (F)
 ****** - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline) or F0B0 (deleting always the baseline)
 * - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)
-* - EnergyMethod: Energy calculation Method: OPTFILT, WEIGHT, WEIGHTN, I2R, I2RALL, I2RNOL, I2RFITTED or PCA
+* - EnergyMethod: Energy calculation Method: OPTFILT, INTCOVAR, COVAR, I2R, I2RALL, I2RNOL, I2RFITTED or PCA
 * - Ifit: Constant to apply the I2RFITTED conversion
 * - intermediate: Write or not intermediate files (1/0)
 * - detectFile: Intermediate detections file (if intermediate=1)
@@ -77,6 +80,7 @@
 * 
 * - Register HEATOOL
 * - Reading all programm parameters by using PIL
+* - Check preBuffer values if the library already exists
 * - Read XML info
 * - getSamplingrate_trigreclength => Obtain the 'trig_reclength' and the sampling rate
 * - Sixt standard keywords structure
@@ -94,8 +98,9 @@ int teslib_main() {
 
   // Containing all programm parameters read by PIL.
   struct Parameters par;
-  par.hduPRCLOFWM = 0;  // Debugger complains about an initialized variable (only the boolean type)
-  par.hduPRECALWN = 0;  // Debugger complains about an initialized variable (only the boolean type)
+  par.addOFWN = 0;  // Debugger complains about an initialized variable (only the boolean type)
+  par.addCOVAR = 0;  // Debugger complains about an initialized variable (only the boolean type)
+  par.addINTCOVAR = 0;  // Debugger complains about an initialized variable (only the boolean type)
   par.preBuffer = 0;    // Debugger complains about an initialized variable (only the boolean type)
   par.OFLib = 1;        // Debugger complains about an initialized variable (only the boolean type)
   
@@ -111,14 +116,20 @@ int teslib_main() {
     headas_chat(3, "initialize ...\n");
 
     // Get program parameters
-    status=getpar_teslib(&par);
+    status = getpar_teslib(&par);
     //CHECK_STATUS_BREAK(status);
     if (status != EXIT_SUCCESS)
     {
-    	//printf("getpar_teslib error\n");
     	return(status);
     }
     par.opmode = 0; // Building the library
+
+    // Check preBuffer values if the library already exists
+    status = checkpreBuffer(&par);
+    if (status != EXIT_SUCCESS)
+    {
+    	return(status);
+    }
 
     if ((strcmp(par.EnergyMethod,"I2RFITTED") == 0) && (par.Ifit == 0.0))
     {
@@ -176,6 +187,7 @@ int teslib_main() {
     {
         // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
         status = fillReconstructInitSIRENAGrading (par, det, &reconstruct_init_sirena);
+        par.largeFilter = reconstruct_init_sirena->post_max_value;
     }
     destroyAdvDet(&det);
 
@@ -186,6 +198,7 @@ int teslib_main() {
             
     // Call SIRENA to build the library
     status = callSIRENA(par.RecordFile, keywords, reconstruct_init_sirena, par, sampling_rate, &trig_reclength, pulsesAll, outfile);
+    CHECK_STATUS_BREAK(status);
 
     // Save GTI extension to event file
     GTI* gti=getGTIFromFileOrContinuous("none",keywords->tstart, keywords->tstop,keywords->mjdref, &status);
@@ -278,6 +291,7 @@ int getpar_teslib(struct Parameters* const par)
   free(sbuffer);
 
   status=ape_trad_query_bool("preBuffer", &par->preBuffer);
+  //printf("El valor de preBuffer es: %s\n", par->preBuffer ? "true" : "false");
 
   status=ape_trad_query_int("EventListSize", &par->EventListSize);
   if (EXIT_SUCCESS!=status) {
@@ -294,7 +308,6 @@ int getpar_teslib(struct Parameters* const par)
   status=ape_trad_query_bool("history", &par->history);
   if (EXIT_SUCCESS!=status) {
     SIXT_ERROR("failed reading the history parameter");
-    //printf("failed reading the history parameter\n");
     return(status);
   }
 
@@ -307,14 +320,14 @@ int getpar_teslib(struct Parameters* const par)
 
   status=ape_trad_query_double("monoenergy", &par->monoenergy);
 
-  status=ape_trad_query_bool("hduPRECALWN", &par->hduPRECALWN);
-  status=ape_trad_query_bool("hduPRCLOFWM", &par->hduPRCLOFWM);
+  status=ape_trad_query_bool("addCOVAR", &par->addCOVAR);
+  status=ape_trad_query_bool("addINTCOVAR", &par->addINTCOVAR);
+  status=ape_trad_query_bool("addOFWN", &par->addOFWN);
   status=ape_trad_query_int("largeFilter", &par->largeFilter);
 
   status=ape_trad_query_string("EnergyMethod", &sbuffer);
   strcpy(par->EnergyMethod, sbuffer);
   free(sbuffer);
-  //if (strcmp(par->EnergyMethod,"0PAD") == 0)  strcpy(par->EnergyMethod,"OPTFILT");
 
   status=ape_trad_query_double("Ifit", &par->Ifit);
 
@@ -341,6 +354,11 @@ int getpar_teslib(struct Parameters* const par)
 
   MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"0PAD") == 0) || (strcmp(par->EnergyMethod,"I2R") == 0) || (strcmp(par->EnergyMethod,"I2RFITTED") == 0),
            "EnergyMethod must be OPTFILT, 0PAD, I2R or I2RFITTED");
+
+  if (((strcmp(par->EnergyMethod,"I2R") == 0) || (strcmp(par->EnergyMethod,"I2RFITTED") == 0)) && (par->addCOVAR || par->addINTCOVAR))
+  {
+    MyAssert(0,"EnergyMethod=I2R/I2RFITTED incompatible with addCOVAR/addINTCOVAR=yes");
+  }
 
   MyAssert((par->intermediate == 0) || (par->intermediate == 1), "intermediate must be 0 or 1");
 

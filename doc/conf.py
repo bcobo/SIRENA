@@ -1,6 +1,6 @@
 from docutils.parsers.rst.directives.admonitions import BaseAdmonition
-from sphinx.util import compat
-compat.make_admonition = BaseAdmonition
+#from sphinx.util import compat
+#compat.make_admonition = BaseAdmonition
 
 # -*- coding: utf-8 -*-
 #
@@ -44,13 +44,14 @@ def setup(app):
 
 extensions = [
 	   'sphinx.ext.imgmath',
+	   #'sphinx.ext.strikethrough',  # Para tachar haciendo ~~textotachado~~, pero me da error
 	   #'sphinx_rtd_theme',
 	  'sphinx.ext.autodoc',
           'sphinx.ext.doctest',
           'ipython_console_highlighting',
           'sphinx.ext.inheritance_diagram',
-          #'numpydoc',
-          'hidden_code_block',
+          'numpydoc',
+          #'hidden_code_block',
 	  'sphinxcontrib.bibtex',
 ]
 bibtex_bibfiles = ['references.bib']

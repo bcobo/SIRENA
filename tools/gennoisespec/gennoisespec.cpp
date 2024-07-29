@@ -66,12 +66,12 @@
   *                If there are pulses in a record, the pulses are rejected and it is going to look for pulse-free intervals of a given size (intervalMinBins).
   *                If there are no pulses in a record, the event is divided into pulse-free intervals of a given size (intervalMinBins).
   *                It is going to look for pulse-free intervals, calculate their FFT(not filtered data) and average them.
-  * 		 Another facillity is calculate the weight matrix of the noise (in fact, weight matrixes of the noise of different lengths).
+  * 		       Another feature is calculate the weight matrix of the noise (in fact, weight matrices of the noise of different lengths).
   * 
   * The output FITS file (_noisespec) contains three columns in two extensions, NOISE and NOISEALL:
   * 	- Frequency
   *  	- Current noise spectral density: Amount of current per unit (density) of frequency (spectral), as a function of the frequency
-  * 	- Standard error of the mean
+  * 	- Standard error of the mean (filled out with 0's at the moment)
   * 
   * There is also other extension, WEIGHTMS, where the weight matrices of the noise are stored.
   * 	
@@ -86,7 +86,7 @@
   * - samplesUp: Consecutive samples over the threshold to locate a pulse
   * - nSgms: Number of Sigmas to establish the threshold
   * - pulse_length: Pulse length (samples)
-  * - weightMS: Calculate and write the weight matrixes if weightMS=yes
+  * - weightMS: Calculate and write the weight matrices if weightMS=yes
   * - EnergyMethod: Transform to resistance space (I2R or I2RFITTED) or not (OPTFILT)
   * - clobber: Re-write output files if clobber=yes
   * - matrixSize: Size of noise matrix if only one to be created
@@ -100,7 +100,7 @@
   * - To calculate 'aducnv' (conversion factor between arbitrary units and A)...
   * -...or read ADU_CNV, I_BIAS and ADU_BIAS
   * - Get structure of input FITS file columns
-  * - Read info to transform to resistance space
+  * - Read info to transform to resistance space (if it is necessary)
   * - Read and check other input keywords
   * - Read other necessary keywords from ANY HDU
   * - Calculate the sampling rate 
@@ -114,7 +114,7 @@
   * - Called iteration function: inDataIterator
   * - Close input FITS file
   * - Generate CSD representation
-  *   - Applying medianKappaClipping in order to remove the noise intervals with a high sigma
+  *   - Applying medianKappaClipping_noiseSigma in order to remove the noise intervals with a high sigma (if `rmNoiseInterval`= yes)
   *   - FFT calculus (EventSamplesFFT)
   *   - Add to mean FFT samples
   *   - Current noise spectral density
@@ -206,70 +206,69 @@
          EP_EXIT_ERROR(message,status);
      }
      
-
      // To calculate 'aducnv'...
      strcpy(extname,"ADCPARAM");
      fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
      if (status == 0)
      {
-        strcpy(keyname,"IMIN");
-        if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
-        {
-            //message = "Cannot read keyword " + string(keyname) + " in input file (ADCPARAM HDU)";
-            //EP_PRINT_ERROR(message,status); return(EPFAIL);
-            status = 0;
-        }
-        strcpy(keyname,"IMAX");
-        if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
-        {
-            //message = "Cannot read keyword " + string(keyname) + " in input file (ADCPARAM HDU)";
-            //EP_PRINT_ERROR(message,status); return(EPFAIL);
-            status = 0;
-        }
-    }
-    else
-    {
-        status = 0;
-        strcpy(extname,"TESRECORDS");
-        fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status);
-        if (status == 0)
-        {
-            strcpy(keyname,"IMIN");
-            if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
-            {
-                //message = "Cannot read keyword " + string(keyname) + " in input file (TESRECORDS HDU)";
-                //EP_PRINT_ERROR(message,status); return(EPFAIL);
-                status = 0;
-            }
-            strcpy(keyname,"IMAX");
-            if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
-            {
-                //message = "Cannot read keyword " + string(keyname) + " in input file (TESRECORDS HDU)";
-                //EP_PRINT_ERROR(message,status); return(EPFAIL);
-                status = 0;
-            }
-        }
-        else
-        {
-            status = 0;
-            strcpy(extname,"RECORDS");
-            fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status);
-            strcpy(keyname,"IMIN");
-            if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
-            {
-                //message = "Cannot read keyword " + string(keyname) + " in input file (RECORDS HDU)";
-                //EP_PRINT_ERROR(message,status); return(EPFAIL);
-                status = 0;
-            }
-            strcpy(keyname,"IMAX");
-            if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
-            {
-                //message = "Cannot read keyword " + string(keyname) + " in input file (RECORDS HDU)";
-                //EP_PRINT_ERROR(message,status); return(EPFAIL);
-                status = 0;
-            }
-        }
-    }
+         strcpy(keyname,"IMIN");
+         if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
+         {
+             //message = "Cannot read keyword " + string(keyname) + " in input file (ADCPARAM HDU)";
+             //EP_PRINT_ERROR(message,status); return(EPFAIL);
+             status = 0;
+         }
+         strcpy(keyname,"IMAX");
+         if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
+         {
+             //message = "Cannot read keyword " + string(keyname) + " in input file (ADCPARAM HDU)";
+             //EP_PRINT_ERROR(message,status); return(EPFAIL);
+             status = 0;
+         }
+     }
+     else
+     {
+         status = 0;
+         strcpy(extname,"TESRECORDS");
+         fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status);
+         if (status == 0)
+         {
+             strcpy(keyname,"IMIN");
+             if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
+             {
+                 //message = "Cannot read keyword " + string(keyname) + " in input file (TESRECORDS HDU)";
+                 //EP_PRINT_ERROR(message,status); return(EPFAIL);
+                 status = 0;
+             }
+             strcpy(keyname,"IMAX");
+             if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
+             {
+                 //message = "Cannot read keyword " + string(keyname) + " in input file (TESRECORDS HDU)";
+                 //EP_PRINT_ERROR(message,status); return(EPFAIL);
+                 status = 0;
+             }
+         }
+         else
+         {
+             status = 0;
+             strcpy(extname,"RECORDS");
+             fits_movnam_hdu(infileObject,ANY_HDU,extname, 0, &status);
+             strcpy(keyname,"IMIN");
+             if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
+             {
+                 //message = "Cannot read keyword " + string(keyname) + " in input file (RECORDS HDU)";
+                 //EP_PRINT_ERROR(message,status); return(EPFAIL);
+                 status = 0;
+             }
+             strcpy(keyname,"IMAX");
+             if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
+             {
+                 //message = "Cannot read keyword " + string(keyname) + " in input file (RECORDS HDU)";
+                 //EP_PRINT_ERROR(message,status); return(EPFAIL);
+                 status = 0;
+             }
+         }
+     }
 
     //...or read ADU_CNV, I_BIAS and ADU_BIAS
     // ADU_CNV(A/ADU)
@@ -918,7 +917,7 @@
      else if	(NumMeanSamples >= par.nintervals)
      {
         sprintf(str_stat,"%d",par.nintervals);
-        message = "0CSD and all Wx matrixes calculated with " + string(str_stat);
+        message = "0CSD and all Wx matrices calculated with " + string(str_stat);
         cout<<message<<endl;
      }*/
      
@@ -1017,7 +1016,7 @@
      else if	(cnt >= par.nintervals)
      {
          sprintf(str_stat,"%d",par.nintervals);
-         message = "CSD and all Wx matrixes calculated with " + string(str_stat) + " intervals";
+         message = "CSD and all Wx matrices calculated with " + string(str_stat) + " intervals";
          cout<<message<<endl;
      }
      
