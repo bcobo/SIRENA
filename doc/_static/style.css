@@ -1,0 +1,50 @@
+/**
+ * Addition of coolours by MTC
+ */
+
+.bred{
+    color: #FF0000;
+    font-weight: bold;
+}
+.red{
+    color: #FF0000;
+}
+
+.pageblue {
+    color: #2491CF;
+}
+.blue {
+    color: blue;
+}
+.bblue {
+    color: blue;
+    font-weight: bold;
+}
+.green {
+    color: green;
+}
+.bgreen {
+    color: green;
+    font-weight: bold;
+}
+.magenta{
+    color: #FF00FF;
+}
+.bmagenta{
+    color: #FF00FF;
+    font-weight: bold;
+}
+.gray{
+    color: #2A415E;
+}
+.bgray{
+    color: #2A415E;
+    font-weight: bold;
+}
+.orange{
+    color: #CA7900;
+}
+.borange{
+    color: #CA7900;
+    font-weight: bold;    
+}
