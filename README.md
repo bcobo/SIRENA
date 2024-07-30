@@ -1,3 +1,5 @@
+[![SQAaaS badge](https://github.com/EOSC-synergy/SQAaaS/raw/master/badges/badges_150x116/badge_software_bronze.png)](https://api.eu.badgr.io/public/assertions/5GEdTdkzR2KDlXkZTCgrLg "SQAaaS bronze badge achieved")
+
 # SIRENA
 Sub-package of files developed @IFCA(CSIC-UC) for the onboard event processing of Athena/XIFU data
 Release versions integrated in the simulator [SIXTE](https://www.sternwarte.uni-erlangen.de/research/sixte/index.php)/SIRENA 
