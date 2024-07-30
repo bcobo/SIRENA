@@ -208,7 +208,6 @@ AC_CONFIG_FILES([Makefile
 		tools/streamtotriggers/Makefile
 		tools/tes_grades/Makefile
 		tools/tesconstpileup/Makefile
-		tools/tesreconstruction/Makefile
 		tools/teslib/Makefile
 		tools/tesrecons/Makefile
 		tools/tessim/Makefile
