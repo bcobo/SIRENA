@@ -54,24 +54,40 @@
 *              SIRENA's format XML file (grading=>pre,post and pB) or new format XML file (grading=>pre,post and filtlen)
 *                                      pre=494, post=8192, pB=1000                          pre=494, post=7192, filtlen=8192
 *                                                                                             preBuffer=filtlen-post
-* - EventListSize: Default size of the event list
+* - EventListSize: Default size of the event list per record
 * - clobber:Overwrite or not output files if exist (1/0)
 * - history: write program parameters into output file
 * - scaleFactor: Detection scale factor for initial filtering
 * - samplesUp: Number of consecutive samples up for threshold trespassing (only used with STC detection mode)
 * - samplesDown: Number of consecutive samples below the threshold to look for other pulse (only used with STC detection mode)
 * - nSgms: Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm
+* - detectionMode: Adjusted Derivative (AD) or Single Threshold Crossing (STC)
+* - detectSP: Detect secondary pulses (1) or not (0)
 * - LbT: Baseline averaging length (seconds)
-
-
+* - intermediate: Write or not intermediate files (1/0)
+* - detectFile: Intermediate detections file (if intermediate=1)
 * - FilterDomain: Filtering Domain: Time (T) or Frequency (F)
 ******* - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline) or F0B0 (deleting always the baseline)
 * - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)
 * - EnergyMethod: Energy calculation Method: OPTFILT, 0PAD, INTCOVAR, COVAR, I2R or I2RFITTED
 * - Ifit: Constant to apply the I2RFITTED conversion
-
-* - intermediate: Write or not intermediate files (1/0)
-* - detectFile: Intermediate detections file (if intermediate=1)
+* - OFNoise: Noise to use with Optimal Filtering: NSD or WEIGHTN
+* - LagsOrNot: Lags or no lags (1/0)
+* - nLags: Number of lags (positive odd number)
+* - Fitting35: Number of lags to analytically calculate a parabola (3) or to fit a parabola (5)
+* - OFIter: Iterate or not iterate (1/0)
+* - OFLib: Work or not with a library with optimal filters (yes/no)
+* - OFStrategy: Optimal Filter length Strategy: **FREE**, **BYGRADE** or **FIXED**
+* - OFLength: Optimal Filter length (taken into account if :option:`OFStrategy` = **FIXED**)
+* - flength_0pad: 0-padding filter length
+* - prebuff_0pad: preBuffer when 0-padding
+* - int errorT: Additional error (in samples) added to the detected time (Logically, it changes the reconstructed energies)
+* - Sum0Filt: If 0-padding, subtract the sum of the filter (1) or not (0)
+* - tstartPulse1: Integer number: Sample where the first pulse starts or nameFile: File where the tstart (seconds) of every pulse is
+* - tstartPulse2: Tstart (samples) of the second pulse
+* - tstartPulse3: Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS)
+* - energyPCA1: First energy (only for PCA)
+* - energyPCA2: Second energy (only for PCA)
 * 
 * Steps:
 * 

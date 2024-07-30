@@ -4214,12 +4214,14 @@ int eigenVV (gsl_matrix *matrixin, gsl_matrix **eigenvectors, gsl_vector **eigen
  * - samprate: Sampling rate
  * - estenergy: Pulse height of the template whose energy is going to be added to the library
  * - pulsetemplate: GSL vector with the pulse template whose energy is going to be added to the library
+ * - pulsetemplate_B0: GSL vector with the pulse template whose energy is going to be added to the library (without baseline)
  * - covariance: GSL matrix with covariance 
  * - weight: GSL matrix with weight matrix
  * - appendToLibrary: 'true' if adding a new row to the library
  *                    'false' if it is the first row to be added
  * - inLibObject: FITS object containing information of the library FITS file 
  * - pulsetemplateMaxLengthFixedFilter: GSL vector with the largeFilter-length template whose energy is going to be added to the library
+ * - pulsetemplateMaxLengthFixedFilter_B0: GSL vector with the largeFilter-length template whose energy is going to be added to the library (without baseline)
  ******************************************************************************/
 int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, double estenergy, gsl_vector *pulsetemplate, gsl_vector *pulsetemplate_B0, gsl_matrix *covariance, gsl_matrix *weight, bool appendToLibrary, fitsfile **inLibObject, gsl_vector *pulsetemplateMaxLengthFixedFilter, gsl_vector *pulsetemplateMaxLengthFixedFilter_B0)
 {
@@ -5493,9 +5495,11 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
  * - eventcntLib: Number of templates in the library
  * - estenergy: Pulse height of the template whose energy is going to be added to the library
  * - pulsetemplate: GSL vector with the pulse template whose energy is going to be added to the library
+ * - pulsetemplate: GSL vector with the pulse template whose energy is going to be added to the library (without baseñine)
  * - covariance: GSL matrix with covariance matrix of the energy which is going to be added to the library
  * - weight: GSL matrix with weight matrix of the energy which is going to be added to the library
  * - pulsetemplateMaxLengthFixedFilter: GSL vector with the largeFilter-length template whose energy is going to be added to the library
+ * - pulsetemplateMaxLengthFixedFilter_B0: GSL vector with the largeFilter-length template whose energy is going to be added to the library (without baseline)
  ******************************************************************************/
 int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibObject,double samprate,int eventcntLib, double estenergy, gsl_vector *pulsetemplate, gsl_vector *pulsetemplate_B0, gsl_matrix *covariance, gsl_matrix *weight, gsl_vector *pulsetemplateMaxLengthFixedFilter, gsl_vector *pulsetemplateMaxLengthFixedFilter_B0)
 {
@@ -8246,7 +8250,7 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
  * - Subtract the baseline if INTCOVAR
  * - Check Quality
  * - For each pulse:
- * 	- Establish the pulse grade (for example VeryHighRes=1, HighRes=2, IntRes=3, MedRes=4, LimRes=5, LowRes=6, Rejected=-1, Pileup=-2) and the optimal filter length
+ * 	- Establish the pulse grade (for example VeryHighRes=1, HighRes=2, IntRes=3, MedRes=4, LimRes=5, LowRes=6, Rejected=-1) and the optimal filter length
  *  - Subtract the baseline if OPTFILT/0PAD and 'runF0orB0val'= 1/2 ('FilterMethod'=B0/F0B0)
  * 	- Pulse: Load the proper piece of the record in 'pulse'
  *       - Get the low resolution energy estimator by filtering with a 8-samples-length filter:
