@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Attempt to generate templates for module reference with Sphinx
 
 XXX - we exclude extension modules
