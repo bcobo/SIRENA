@@ -15,7 +15,7 @@ It will:
 .. [1] http://projects.scipy.org/scipy/numpy/wiki/CodingStyleGuidelines#docstring-standard
 
 """
-
+# -*- coding: utf-8 -*-
 import os, re, pydoc
 from docscrape_sphinx import get_doc_object, SphinxDocString
 import inspect
