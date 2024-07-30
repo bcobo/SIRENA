@@ -1,10 +1,11 @@
+
 """reST directive for syntax-highlighting ipython interactive sessions.
 
 XXX - See what improvements can be made based on the new (as of Sept 2009)
 'pycon' lexer for the python console.  At the very least it will give better
 highlighted tracebacks.
 """
-
+# -*- coding: utf-8 -*-
 #-----------------------------------------------------------------------------
 # Needed modules
 
