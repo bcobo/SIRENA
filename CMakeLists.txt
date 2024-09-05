@@ -30,8 +30,8 @@ target_compile_options(compiler_flags INTERFACE
 # alternative path can be set via the SIMPUT_ROOT variable.
 # Usage: cmake -DSIMPUT_ROOT=simputdir).
 set(SIMPUT_ROOT ${CMAKE_INSTALL_PREFIX} CACHE STRING "Directory that contains the SIMPUT installation")
-set(SIMPUT_INCLUDE_DIR ${SIMPUT_ROOT}/include)
-set(SIMPUT_LIBRARY_DIR ${SIMPUT_ROOT}/lib)
+set(SIMPUT_INCLUDE_DIR ${SIMPUT_ROOT}/${CMAKE_INSTALL_INCLUDEDIR})
+set(SIMPUT_LIBRARY_DIR ${SIMPUT_ROOT}/${CMAKE_INSTALL_LIBDIR})
 set(SIMPUT_LIBRARIES ape_simput atFunctions_simput cfitsio_simput fftw3_simput heainit_simput heaio_simput heasp_simput heautils_simput labnh posstring simput wcs-7.7_simput)
 find_library(SIMPUT_LIBRARY
         NAMES ${SIMPUT_LIBRARIES}
@@ -48,8 +48,9 @@ message(STATUS "Using SIMPUT at ${SIMPUT_ROOT}")
 # alternative path can be set via the SIXTE_ROOT variable.
 # Usage: cmake -DSIXTE_ROOT=sixtedir).
 set(SIXTE_ROOT ${CMAKE_INSTALL_PREFIX} CACHE STRING "Directory that contains the SIXTE installation")
-set(SIXTE_INCLUDE_DIR ${SIXTE_ROOT}/include)
-set(SIXTE_LIBRARY_DIR ${SIXTE_ROOT}/lib)
+set(SIXTE_INCLUDE_DIR ${SIXTE_ROOT}/${CMAKE_INSTALL_INCLUDEDIR})
+set(SIXTE_LIBRARY_DIR ${SIXTE_ROOT}/${CMAKE_INSTALL_LIBDIR})
+
 set(SIXTE_LIBRARIES libsixt) # TODO may need to add libs
 find_library(SIXTE_LIBRARY
         NAMES ${SIXTE_LIBRARIES}

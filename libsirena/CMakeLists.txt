@@ -42,5 +42,12 @@ target_link_libraries(${LIB_NAME} PUBLIC
 
 # INSTALL
 set(installable_libs ${LIB_NAME})
-install(TARGETS ${installable_libs} DESTINATION lib)
-install(FILES ${LIBSIRENA_HEADERS} DESTINATION include)
+install(TARGETS ${installable_libs})
+install(FILES ${LIBSIRENA_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+### Apple Adjustments for missing boost headers ###
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+        target_compile_definitions(${LIB_NAME} PUBLIC unary_function=__unary_function)
+        target_compile_definitions(${LIB_NAME} PUBLIC binary_function=__binary_function)
+        target_compile_definitions(${LIB_NAME} PUBLIC sincos=__sincos)
+endif ()
