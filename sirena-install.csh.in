@@ -1,0 +1,83 @@
+#!/bin/csh
+
+# install for SIRENA - csh version
+#
+# This script assumes that the SIRENA environment variable is set
+# and uses nifty tricks from HEADAS' setup scripts
+#
+# Author: Joern Wilms, joern.wilms@sternwarte.uni-erlangen.de
+#
+
+if (${?SIRENA} == 0) then
+  echo "sirena-install.csh: ERROR -- set SIRENA before sourcing sirena-install.csh"
+  exit 1
+endif
+
+if (! -d ${SIRENA}) then
+    echo "Directory ${SIRENA} does not exist"
+    exit 2
+endif
+
+#
+# set the SIMPUT environment variable
+#
+
+if (${?SIMPUT} == 0) then
+  setenv SIMPUT ${SIRENA}
+    if (! -e ${SIMPUT}/bin/simput-install.csh) then
+	echo "sirena-install.csh: ERROR -- set SIMPUT environment variable before sourcing sirena-install.csh"
+	exit 1
+    endif
+endif
+
+#
+# set the SIXTE environment variable
+#
+
+if (${?SIXTE} == 0) then
+  setenv SIXTE ${SIRENA}
+    if (! -e ${SIXTE}/bin/sixte-install.csh) then
+	echo "sirena-install.csh: ERROR -- set SIXTE environment variable before sourcing sirena-install.csh"
+	exit 1
+    endif
+endif
+
+
+#
+# set paths
+#
+set SIRENA_BIN = ${SIRENA}/bin
+setenv PATH ${SIRENA_BIN}:${PATH}
+
+#
+# setup parameter files
+#
+if (${?PFILES} == 0) then
+    mkdir -p ${HOME}/pfiles
+    setenv PFILES "${HOME}/pfiles;${SIRENA}/share/sirena/pfiles"
+else
+    setenv PFILES "${PFILES}:${SIRENA}/share/sirena/pfiles"
+endif
+
+#
+# set LD_LIBRARY_PATH
+#
+# CMAKE_INSTALL_LIBDIR set by configure_file in CMakeLists.txt
+set SIRENA_LIB = ${SIRENA}/@CMAKE_INSTALL_LIBDIR@
+
+if (${?LD_LIBRARY_PATH} == 0) then
+    setenv LD_LIBRARY_PATH ${SIRENA_LIB}
+else
+    setenv LD_LIBRARY_PATH `echo ":${LD_LIBRARY_PATH}:" | sed "s%:${SIRENA_LIB}:%:%g" | sed 's%::*$%%'`
+    setenv LD_LIBRARY_PATH ${SIRENA_LIB}${LD_LIBRARY_PATH}
+endif
+
+set build_os = `uname`
+if (${build_os} == "Darwin") then
+    if (${?DYLD_LIBRARY_PATH} == 0) then
+	setenv DYLD_LIBRARY_PATH ${SIMPUT_LIB}
+    else
+	setenv DYLD_LIBRARY_PATH `echo ":${DYLD_LIBRARY_PATH}:" | sed "s%:${SIMPUT_LIB}:%:%g" | sed 's%::*$%%'`
+	setenv DYLD_LIBRARY_PATH ${SIMPUT_LIB}${DYLD_LIBRARY_PATH}
+    endif
+endif

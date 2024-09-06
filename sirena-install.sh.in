@@ -1,0 +1,74 @@
+#!/bin/sh
+
+# install for SIRENA - sh version
+#
+# This script assumes that the SIRENA environment variable is set
+# and uses nifty tricks from HEADAS' setup scripts
+#
+# Author: Joern Wilms, joern.wilms@sternwarte.uni-erlangen.de
+#
+
+if [[ "X${SIRENA}" == X ]];  then
+  echo "sirena-install.sh: ERROR -- set SIRENA before sourcing sirena-install.sh"
+  exit 1
+fi
+
+if ! [[ -d ${SIRENA} ]]; then
+    echo "Directory ${SIRENA} does not exist"
+    exit 2
+fi
+
+if [[ "X${SIMPUT}" == X ]];  then
+    export SIMPUT=${SIRENA}
+    if ! [[ -e ${SIMPUT}/bin/simput-install.sh ]]; then
+	echo "sirena-install.sh: ERROR -- set SIMPUT environment variable before sourcing sirena-install.sh"
+	exit 1
+    fi
+fi
+
+if [[ "X${SIXTE}" == X ]];  then
+    export SIXTE=${SIRENA}
+    if ! [[ -e ${SIXTE}/bin/sixte-install.sh ]]; then
+	echo "sirena-install.sh: ERROR -- set SIXTE environment variable before sourcing sirena-install.sh"
+	exit 1
+    fi
+fi
+
+#
+# set paths
+#
+SIRENA_BIN=${SIRENA}/bin
+PATH=${SIRENA_BIN}:${PATH}
+
+#
+# setup parameter files
+#
+if [[ "X${PFILES}" == X ]]; then
+    mkdir -p ${HOME}/pfiles
+    PFILES="${HOME}/pfiles;${SIRENA}/share/sirena/pfiles"
+else
+    PFILES="${PFILES}:${SIRENA}/share/sirena/pfiles"
+fi
+
+
+export DYLD_LIBRARY_PATH LD_LIBRARY_PATH PATH PFILES
+
+# CMAKE_INSTALL_LIBDIR set by configure_file in CMakeLists.txt
+SIRENA_LIB=${SIRENA}/@CMAKE_INSTALL_LIBDIR@
+
+if [[ "x$LD_LIBRARY_PATH" = x ]]; then
+  LD_LIBRARY_PATH="$SIRENA_LIB"
+else
+  LD_LIBRARY_PATH=`echo ":$LD_LIBRARY_PATH:" | sed "s%:$SIRENA_LIB:%:%g" | sed "s%::*$%%"`
+  LD_LIBRARY_PATH="$SIRENA_LIB$LD_LIBRARY_PATH"
+fi
+
+build_os=`uname`
+if [[ "$build_os" == "Darwin" ]]; then
+    if [[ "x$DYLD_LIBRARY_PATH" = x ]]; then
+	DYLD_LIBRARY_PATH="$SIRENA_LIB"
+    else
+	DYLD_LIBRARY_PATH=`echo ":$DYLD_LIBRARY_PATH:" | sed "s%:$SIRENA_LIB:%:%g" | sed "s%::*$%%"`
+	DYLD_LIBRARY_PATH="$SIRENA_LIB$DYLD_LIBRARY_PATH"
+    fi
+fi
