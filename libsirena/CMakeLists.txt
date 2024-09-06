@@ -21,11 +21,10 @@ set(LIBSIRENA_HEADERS
        threadsafe_queue.h
        versionSIRENA.h)
 
-#SET(LIB_NAME libsirena)
 SET(LIB_NAME sirena)
 
 add_library(${LIB_NAME} SHARED ${LIBSIRENA_SOURCES} ${LIBSIRENA_HEADERS})
-set_target_properties(${LIB_NAME} PROPERTIES VERSION "9.1.5")
+set_target_properties(${LIB_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 target_include_directories(${LIB_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${EXT_INCLUDE_DIRS}

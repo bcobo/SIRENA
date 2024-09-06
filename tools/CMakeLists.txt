@@ -27,7 +27,6 @@ foreach(TOOL ${C_TOOLS};${CPP_TOOLS})
             ${EXT_LIBRARIES}
             ${SIMPUT_LIBRARIES}
             ${SIXTE_LIBRARIES}
-	    #            libsirena)
 	    sirena)
 
     install(TARGETS ${TOOL} DESTINATION bin)
