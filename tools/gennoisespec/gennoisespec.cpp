@@ -2537,13 +2537,13 @@
      t = clock();
      // Calculate the weight matrix
      // It is not necessary to check the allocation because 'covarianze' size must already be > 0
-     //gsl_matrix *covarianceaux = gsl_matrix_alloc(covariance->size1,covariance->size2);
-     //gsl_matrix_memcpy(covarianceaux,covariance);
+     gsl_matrix *covarianceaux = gsl_matrix_alloc(covariance->size1,covariance->size2);
+     gsl_matrix_memcpy(covarianceaux,covariance);
      cout<<"Preparation to the inversion ended "<<covariance->size1<<"x"<<covariance->size2<<endl;
      t = clock() - t;
      cout<<"Consumed "<<((float)t)/CLOCKS_PER_SEC<<" sec"<<endl;
      t = clock();
-     gsl_linalg_LU_decomp(covariance, perm, &s);
+     gsl_linalg_LU_decomp(covarianceaux, perm, &s);
      if (gsl_linalg_LU_invert(covariance, perm, *weight) != 0) 
      {
          sprintf(valERROR,"%d",__LINE__-2);
@@ -2553,7 +2553,7 @@
          EP_PRINT_ERROR(message,EPFAIL);	return(EPFAIL);
      }
      
-     //gsl_matrix_free(covarianceaux); covarianceaux=0;
+     gsl_matrix_free(covarianceaux); covarianceaux=0;
      gsl_matrix_free(covariance); covariance=0;
      gsl_permutation_free(perm); perm=0;
      

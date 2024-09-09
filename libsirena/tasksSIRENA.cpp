@@ -84,6 +84,7 @@
 #include "scheduler.h"
 
 #include "versionSIRENA.h"
+#include <gsl/gsl_vector_double.h>
 
 /***** SECTION A ************************************************************
  * runDetect: This function is responsible for the detection in SIRENA, record by record.
@@ -3949,9 +3950,11 @@ int weightMatrix (ReconstructInitSIRENA *reconstruct_init, bool saturatedPulses,
         cout<<"Replacing 0's ended"<<endl;
         t = clock() - t;
         cout<<"Consumed "<<((float)t)/CLOCKS_PER_SEC<<" sec"<<endl;
-        
+
         t = clock();
-        gsl_linalg_LU_decomp(*covariance, perm, &s);
+        gsl_matrix *covarianceaux = gsl_matrix_alloc((*covariance)->size1,(*covariance)->size2);
+        gsl_matrix_memcpy(covarianceaux,*covariance);
+        gsl_linalg_LU_decomp(covarianceaux, perm, &s);
         if (gsl_linalg_LU_invert(*covariance, perm, *weight) != 0)
         {
             sprintf(valERROR,"%d",__LINE__-2);
@@ -3965,6 +3968,7 @@ int weightMatrix (ReconstructInitSIRENA *reconstruct_init, bool saturatedPulses,
         cout<<"Consumed "<<((float)t)/CLOCKS_PER_SEC<<" sec"<<endl;
 
         gsl_permutation_free(perm); perm = 0;
+        gsl_matrix_free(covarianceaux); covarianceaux = 0;
     }
     else	// PCA
     {
@@ -4080,7 +4084,9 @@ int weightMatrixReduced (ReconstructInitSIRENA *reconstruct_init, bool saturated
     
     // Calculate the weight matrix
     // It is not necessary to check the allocation because 'covarianzer' size must already be > 0
-    gsl_linalg_LU_decomp(*covariancer, perm, &s);
+    gsl_matrix *covarianceraux = gsl_matrix_alloc((*covariancer)->size1,(*covariancer)->size2);
+    gsl_matrix_memcpy(covarianceraux,*covariancer);
+    gsl_linalg_LU_decomp(covarianceraux, perm, &s);
     if (gsl_linalg_LU_invert(*covariancer, perm, *weightr) != 0)
     {
         sprintf(valERROR,"%d",__LINE__-2);
@@ -4091,6 +4097,7 @@ int weightMatrixReduced (ReconstructInitSIRENA *reconstruct_init, bool saturated
     }
     
     gsl_permutation_free(perm); perm = 0;
+    gsl_matrix_free(covarianceraux); covarianceraux = 0;
 
     message.clear();
     
