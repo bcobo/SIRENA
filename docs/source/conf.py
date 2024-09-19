@@ -27,3 +27,4 @@ exclude_patterns = []
 html_theme = 'alabaster'
 html_theme = 'classic'
 html_static_path = ['_static']
+html_logo = 'images/SIRENA_black.png'
