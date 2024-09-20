@@ -42,7 +42,7 @@ The SIRENA installation procedure is as follows:
    For csh shell:
    ```
      > setenv SIRENA sirenadir
-     > source ${SIRENA}/bin/sirena-install.sh
+     > source ${SIRENA}/bin/sirena-install.csh
    ```
 
 Help Desk: 
