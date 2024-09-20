@@ -6,9 +6,9 @@
 
 .. _SIRENAtools:
 
-##########################
+###########################
 SIRENA Tools CLI
-##########################
+###########################
 
 Here we describe the command line options for the tools run for SIRENA reconstruction (``gennoisespec``, ``teslib`` and ``tesrecons``).
 At the end, links to the documentation of other SIXTE tools required for the simulation of data files are provided (``tessim`` and ``tesconstpileup``) and XIFUSIM.
