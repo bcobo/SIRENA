@@ -194,4 +194,105 @@ int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA
 
 int checkpreBuffer(struct Parameters* const par);
 
+typedef struct {
+	/** Current size of the list */
+	int size;
+
+	/** Current size of the energy/grade lists */
+	int size_energy;
+
+	/** Current end index of the list */
+	int index;
+
+	/** Index arrival time of the photons inside a record */
+	//int * event_indexes;
+	double * event_indexes;	//SIRENA
+
+	/** Pulse height of the photons */
+	double * pulse_heights;
+
+	/** Average of the first 4 samples of the derivative of the event (pulse) */
+	double * avgs_4samplesDerivative;  //SIRENA
+
+	/** Low resolution energy estimator (4 samples-long filter) */
+	double * Es_lowres;  //SIRENA
+
+	/** Offset relative to the central point of the parabola */
+	double * phis;  //SIRENA
+
+	/** Number of samples shifted to find the maximum of the parabola */
+	int * lagsShifts;  //SIRENA
+
+	/** Baseline calculated just previously to the pulse (in general)(see 'getB') */
+	double * bsln;  //SIRENA
+
+        /** Rms of the baseline calculated just previously to the pulse (in general)(see 'getB') */
+	double * rmsbsln;  //SIRENA
+
+	/** Pulse grade */
+	int * grading;  //SIRENA
+
+	/** Energy of the photons */
+	double * energies;
+
+	/** Grade 1: length of the filter used during the reconstruction */
+	int * grades1;
+
+	/** Grade 2: distance in samples to the previous pulse */
+	int * grades2;
+
+	/** PH_ID of the reconstructed photons */
+	long * ph_ids;
+    long * ph_ids2;
+    long * ph_ids3;
+
+	/** PIX_ID of the reconstructed photons */
+	long * pix_ids;
+
+	/** Tstart of the reconstructed photons (in time) */
+	double * tstarts;
+
+	/** Tend of the reconstructed photons (in time) */
+	double * tends;
+
+	/** Rise time of the reconstructed photons (in time) */
+	double * risetimes;
+
+	/** Fall time of the reconstructed photons (in time) */
+	double * falltimes;
+
+} TesEventListSIRENA;
+
+typedef struct {
+	/** Pointer to the FITS file. */
+	fitsfile* fptr;
+
+	/** Number of the current row in the FITS file. The numbering
+	starts at 1 for the first line. If row is equal to 0, no row
+	has been read or written so far. */
+	long row;
+
+	/** Total number of rows */
+	long nrows;
+
+	/** Column numbers for time, energy, grade1, grade2, pixID, RA and DEC columns */
+	int timeCol,energyCol,avg_4samplesDerivativeCol,E_lowresCol,grade1Col,grade2Col,phiCol,lagsShiftCol,bslnCol,rmsbslnCol,pixIDCol,riseCol,fallCol,phIDCol,raCol,decCol,detxCol,detyCol,gradingCol,srcIDCol,nxtCol,extCol; //SIRENA
+
+} TesEventFileSIRENA;
+
+TesEventListSIRENA* newTesEventListSIRENA(int* const status);
+void freeTesEventListSIRENA(TesEventListSIRENA* event_list);
+
+TesEventFileSIRENA* newTesEventFileSIRENA(int* const status);
+
+/** Create and open a new TesEventFile. */
+TesEventFileSIRENA* opennewTesEventFileSIRENA(const char* const filename,
+				  SixtStdKeywords* keywords,
+			      const char* const sirenaVersion,
+				  const char clobber,
+				  int* const status);
+
+void saveEventListToFileSIRENA(TesEventFileSIRENA* file,TesEventListSIRENA * event_list,
+		double start_time,double delta_t,long pixID,int* const status);
+
 #endif /* INITSIRENA_H */
