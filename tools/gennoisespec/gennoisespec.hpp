@@ -47,7 +47,6 @@
 	
 	#include <time.h>
     #include <memory>
-	#include <boost/progress.hpp>
         
 struct Parameters {
     
@@ -163,7 +162,7 @@ struct Parameters {
         
 //AUXILIARY VARIABLES
 
-	unique_ptr<boost::progress_display> p_show_progress;
+	//unique_ptr<boost::progress_display> p_show_progress;
 
 	int hdunum;
 	int real_data = 0;

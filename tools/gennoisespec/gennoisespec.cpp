@@ -138,6 +138,7 @@
      //////// Setup
      message="=== Setup ===";
      cout<<message<<endl;
+     int row_probressbar;
 
      time_t t_start = time(NULL);
      
@@ -205,7 +206,7 @@
          message = "Neither the 'RECORDS' nor 'TESRECORDS' HDUs are in the input FITS file";
          EP_EXIT_ERROR(message,status);
      }
-     
+
      // To calculate 'aducnv'...
      strcpy(extname,"ADCPARAM");
      fits_movnam_hdu(infileObject, ANY_HDU,extname, extver, &status);
@@ -881,11 +882,6 @@
          EP_PRINT_ERROR(message,-999);
      }
 
-     // Initialize the progress bar.
-     message="=== Simulating ===";
-     cout<<message<<endl;
-     p_show_progress.reset( new boost::progress_display(par.nintervals));
-
      // Called iteration function
      if (fits_iterate_data(n_cols,cols,offset,rows_per_loop,inDataIterator,0L,&status))
      {
@@ -1498,16 +1494,31 @@
              gsl_vector_memcpy(EventSamples,&temp.vector);
           
              gsl_matrix_set_row(noiseIntervals,NumMeanSamples,EventSamples);
+
+             // Progress bar
+             float progress = (float)NumMeanSamples / (totalrows-1);
+             int bar_width = 50;
+             int pos = bar_width * progress;
+             printf("Generating the noise spectrum |");
+             for (int j = 0; j < bar_width; j++) {
+                if (j < pos)
+                    printf("=");
+                else if (j == pos)
+                    printf(">");
+                else
+                    printf(" ");
+                }
+             printf("| %.2f%%\r", progress * 100);
+             fflush(stdout);
+             if (NumMeanSamples == totalrows-1)
+             {
+                printf("\n"); // New line after ending "Generating the noise spectrum...."
+             }
                  
              NumMeanSamples = NumMeanSamples + 1;
-             //Update the progressbar
-             ++(*p_show_progress);
          }
          
          ntotalrows++;
-
-         //Update the progressbar
-         //++(*p_show_progress);
      }
      
      // Free allocated GSL vectors

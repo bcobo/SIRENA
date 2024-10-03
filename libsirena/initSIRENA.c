@@ -709,10 +709,9 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
         }
         printf("| %.2f%%\r", progress * 100);
         fflush(stdout);
-        usleep(100000); // Sleep for a short time to simulate progress
         if (nrecord == numrecords-1)
         {
-            printf("\n"); // New line after ending "Simulating...."
+            printf("\n"); // New line after ending "Building the library..../Reconstructing..."
         }
 
         nrecord = nrecord + 1;
