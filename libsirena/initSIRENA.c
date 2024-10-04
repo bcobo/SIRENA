@@ -506,11 +506,11 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
             gsl_matrix_set((*reconstruct_init_sirena)->grading->gradeData,i,0,(int) (det->pix->grades[i].gradelim_pre));
             gsl_matrix_set((*reconstruct_init_sirena)->grading->gradeData,i,1,(int) (det->pix->grades[i].gradelim_post));
             gsl_matrix_set((*reconstruct_init_sirena)->grading->gradeData,i,2,(int) (det->pix->grades[i].grade_preBuffer));
-            if (((int) (det->pix->grades[i].gradelim_post) == 8) && ((int) (det->pix->grades[i].grade_preBuffer) != 0))
+            /*if (((int) (det->pix->grades[i].gradelim_post) == 8) && ((int) (det->pix->grades[i].grade_preBuffer) != 0))
             {
                 printf("%s","Attention: preBuffer!=0 for low resolution (filter length 8) but preBuffer=0 is going to be used\n");
                 gsl_matrix_set((*reconstruct_init_sirena)->grading->gradeData,i,2,0);
-            }
+            }*/
         }
     }
     else if(((det->nrecons != 0) && (det->npix == 0)) || ((det->nrecons == 1) && (det->npix == 1)))
@@ -536,11 +536,11 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
             gsl_matrix_set((*reconstruct_init_sirena)->grading->gradeData,i,0,(int) (det->recons->grades[i].gradelim_pre));
             gsl_matrix_set((*reconstruct_init_sirena)->grading->gradeData,i,1,(int) (det->recons->grades[i].gradelim_post));
             gsl_matrix_set((*reconstruct_init_sirena)->grading->gradeData,i,2,(int) (det->recons->grades[i].grade_preBuffer));
-            if (((int) (det->recons->grades[i].gradelim_post) == 8) && ((int) (det->recons->grades[i].grade_preBuffer) != 0))
+            /*if (((int) (det->recons->grades[i].gradelim_post) == 8) && ((int) (det->recons->grades[i].grade_preBuffer) != 0))
             {
                 printf("%s","Attention: preBuffer!=0 for low resolution (filter length 8) but preBuffer=0 is going to be used\n");
                 gsl_matrix_set((*reconstruct_init_sirena)->grading->gradeData,i,2,0);
-            }
+            }*/
         }
     }
 
@@ -735,7 +735,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
             strcpy(reconstruct_init_sirena->EnergyMethod,par.EnergyMethod);
         }
 
-        printf("%s %d %s","** nrecord = ",nrecord,"\n");
+        //printf("%s %d %s","** nrecord = ",nrecord,"\n");
         reconstructRecordSIRENA(record,*trig_reclength, event_list,reconstruct_init_sirena,
             lastRecord, startRecordGroup, &pulsesAll, &status);
         CHECK_STATUS_BREAK(status);
