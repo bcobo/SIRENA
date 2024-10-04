@@ -3012,7 +3012,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
   * getNoiseSpec: This function creates and retrieves a NoiseSpec from a file.
   * 
   * - Create *NoiseSpec* structure
-  * - Open FITS file, move to the NOISE, NOISEALL and WEIGHTNS HDUs and get necessary keywords
+  * - Open FITS file, move to the NOISE, NOISEALL and WEIGHTMS HDUs and get necessary keywords
   * - Allocate *NoiseSpec* structure
   * - Get noise spectrum (CSD), and noise frequencies (FREQ) column numbers
   * - Read column CSD and save it into the structure
@@ -3149,11 +3149,11 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          if (((reconstruct_init->opmode == 0) && (reconstruct_init->addOFWN == 1))
              || ((reconstruct_init->opmode == 1) && ((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RFITTED") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RDER") == 0)) && (strcmp(reconstruct_init->OFNoise,"WEIGHTN") == 0)))
          {
-             // Move to the WEIGHTNS hdu
-             strcpy(HDUname,"WEIGHTNS");
+             // Move to the WEIGHTMS hdu
+             strcpy(HDUname,"WEIGHTMS");
              if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
              {
-                 EP_PRINT_ERROR("Error moving to HDU WEIGHTNS in noise file",*status);
+                 EP_PRINT_ERROR("Error moving to HDU WEIGHTMS in noise file",*status);
                  *status=EPFAIL;return(noise_spectrum);
              }
              
@@ -3161,7 +3161,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              int noiseW_numcols;
              if (fits_get_num_cols(fptr,&noiseW_numcols, status))
              {
-                 EP_PRINT_ERROR("Cannot get number of columns in noise file (WEIGHTNS)",*status);
+                 EP_PRINT_ERROR("Cannot get number of columns in noise file (WEIGHTMS)",*status);
                  *status=EPFAIL;return(noise_spectrum);
              }
              noise_spectrum->weightMatrixes = gsl_matrix_alloc(noiseW_numcols,pow(2,noiseW_numcols)*pow(2,noiseW_numcols));
@@ -3169,7 +3169,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              gsl_vector *weightpoints = gsl_vector_alloc(noiseW_numcols);
              for (int i=0;i<(int)(weightpoints->size);i++)	gsl_vector_set(weightpoints,i,pow(2,noiseW_numcols-i));
              
-             strcpy(obj.nameTable,"WEIGHTNS");
+             strcpy(obj.nameTable,"WEIGHTMS");
              gsl_matrix *weightMatrixi;
              char str_length[125];
              for (int i=0;i<(int)(weightpoints->size);i++)
@@ -3535,7 +3535,7 @@ int loadNoise (ReconstructInitSIRENA* reconstruct_init)
              char valueAux[256];
              sprintf(valueAux,"%d",reconstruct_init->largeFilter);
              string str(valueAux);
-             message = "The noise file needs to have W" + str + " (=largeFilter) in the WEIGHTNS HDU";
+             message = "The noise file needs to have W" + str + " (=largeFilter) in the WEIGHTMS HDU";
              str.clear();
              EP_EXIT_ERROR(message,EPFAIL);
          }
