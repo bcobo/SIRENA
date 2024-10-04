@@ -8423,14 +8423,17 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
     double minimum;
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //int length_lowres = 8;
-    int length_lowres = 16; // Lowres estimator = Shortfilter8+Lags
+    int length_lowres;
+    if ((*reconstruct_init)->LagsOrNot == 1)
+        length_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1) + numlags; // Lowres estimator = Shortfilter+Lags
+    else
+        length_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1); // Lowres estimator = Shortfilter
     double energy_lowres;
     long resize_mf_lowres;
     gsl_vector *pulse_lowres;
-    resize_mf_lowres = 8; // Lowres estimator = Shortfilter8+Lags
-    //pulse_lowres = gsl_vector_alloc(resize_mf_lowres);
+    resize_mf_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1);
     pulse_lowres = gsl_vector_alloc(length_lowres);
+    int preBuffer_value_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,2);
     gsl_vector *filtergsl_lowres = NULL;
     if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		       filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres);
     else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)	   filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres*2);
@@ -8440,20 +8443,6 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
     double Ealpha_lowres, Ebeta_lowres;
     gsl_vector *optimalfilter_lowres = gsl_vector_alloc(filtergsl_lowres->size);	// Resized optimal filter expressed in the time domain (optimalfilter(t))
     gsl_vector_complex *optimalfilter_FFT_complex_lowres = gsl_vector_complex_alloc(filtergsl_lowres->size/2);
-    int filter8_exist = 0;
-    for (int i=0; i<(int)((*reconstruct_init)->grading->gradeData->size1);i++)
-    {
-        if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,i,1) == 8)
-        {
-            filter8_exist = 1;
-            break;
-        }
-    }
-    if ((filter8_exist == 0) && ((*reconstruct_init)->OFLib == 1) && (nrecord == 1))
-    {
-        message = "There is not a 8-length filter in the library to calculate the low energy resolution estimator => Not calculated (ELOWRES=-999)";
-        EP_PRINT_ERROR(message,-999); // Only a warning 
-    }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
     int pulseGrade; 			// Pileup=-2, Rejected=-1, VeryHighRes=1, HighRes=2, IntRes=3, MidRes=4, LimRes=5, LowRes=6
@@ -8654,75 +8643,72 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                     }
 
                     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    //////////// In order to get the low resolution energy estimator by filtering with a 8-samples-length filter ///////////////////
+                    //////////// In order to get the low resolution energy estimator by filtering with the shortest filter ///////////////////
                     log_trace("Calculating the low energy estimator...");
                     energy_lowres = -999;
-                    if (filter8_exist == 1)
+                    // Pulse
+                    if (resize_mf_lowres <= recordAux->size-tstartSamplesRecord-preBuffer_value_lowres)
                     {
-                        // Pulse
-                        if (resize_mf_lowres <= recordAux->size-tstartSamplesRecord-numlags2)
+                        temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres,length_lowres);
+
+                        gsl_vector *vectoraux = gsl_vector_alloc(length_lowres);
+                        gsl_vector_memcpy(vectoraux,&temp.vector);
+
+                        gsl_vector_set_all(pulse_lowres,0.0);
+
+                        for (int k=0;k<length_lowres;k++)
                         {
-                            temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-numlags2,length_lowres);
+                            gsl_vector_set(pulse_lowres,k,gsl_vector_get(vectoraux,k));
+                        }
 
-                            gsl_vector *vectoraux = gsl_vector_alloc(length_lowres);
-                            gsl_vector_memcpy(vectoraux,&temp.vector);
+                        if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
+                        {
+                            gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulse_lowres->size);
+                            gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
+                            gsl_vector_add(pulse_lowres,bslnEachPulsegsl);
+                            gsl_vector_free(bslnEachPulsegsl); bslnEachPulsegsl = 0;
+                        }
 
-                            gsl_vector_set_all(pulse_lowres,0.0);
+                        gsl_vector_free(vectoraux); vectoraux = 0;
 
-                            for (int k=0;k<length_lowres;k++)
+                        // Get the filter
+                        if (strcmp((*reconstruct_init)->OFInterp,"MF") == 0)
+                        {
+                            if (find_optimalfilter((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl_lowres, &Ealpha_lowres, &Ebeta_lowres, (*reconstruct_init)->library_collection->margin))
                             {
-                                gsl_vector_set(pulse_lowres,k,gsl_vector_get(vectoraux,k));
-                            }
-
-                            if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
-                            {
-                                gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulse_lowres->size);
-                                gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
-                                gsl_vector_add(pulse_lowres,bslnEachPulsegsl);
-                                gsl_vector_free(bslnEachPulsegsl); bslnEachPulsegsl = 0;
-                            }
-
-                            gsl_vector_free(vectoraux); vectoraux = 0;
-
-                            // Get the filter
-                            if (strcmp((*reconstruct_init)->OFInterp,"MF") == 0)
-                            {
-                                if (find_optimalfilter((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl_lowres, &Ealpha_lowres, &Ebeta_lowres, (*reconstruct_init)->library_collection->margin))
-                                {
-                                    message = "Cannot run routine find_optimalfilter for filter interpolation";
-                                    EP_EXIT_ERROR(message,EPFAIL);
-                                }
-                            }
-                            else
-                            {
-                                if (find_optimalfilterSAB((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl_lowres, &Dab_lowres,&Ealpha_lowres, &Ebeta_lowres, (*reconstruct_init)->library_collection->margin))
-                                {
-                                    message = "Cannot run routine find_optimalfilterSAB for filter interpolation";
-                                    EP_EXIT_ERROR(message,EPFAIL);
-                                }
-                            }
-
-                            gsl_vector_set_all(optimalfilter_lowres,0);
-                            for (int k=0;k<(int)(filtergsl_lowres->size)/2;k++)
-                            {
-                                gsl_vector_complex_set(optimalfilter_FFT_complex_lowres,k,gsl_complex_rect(0.0,0.0));
-                            }
-                            if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)     gsl_vector_memcpy(optimalfilter_lowres,filtergsl_lowres);
-                            else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)
-                            {
-                                // It is not necessary to check the allocation because 'filtergsl' size has been checked previously
-                                for (int k=0;k<(int)(filtergsl_lowres->size)/2;k++)
-                                {
-                                    gsl_vector_complex_set(optimalfilter_FFT_complex_lowres,k,gsl_complex_rect(gsl_vector_get(filtergsl_lowres,k),gsl_vector_get(filtergsl_lowres,k+filtergsl_lowres->size/2)));
-                                }
-                            }
-
-                            // Calculate the low resolution estimator
-                            if (calculateEnergy(pulse_lowres,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,(*reconstruct_init),1/record->delta_t,Dab_lowres,PRCLCOV_lowres,PRCLOFWN_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
-                            {
-                                message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
+                                message = "Cannot run routine find_optimalfilter for filter interpolation";
                                 EP_EXIT_ERROR(message,EPFAIL);
                             }
+                        }
+                        else
+                        {
+                            if (find_optimalfilterSAB((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl_lowres, &Dab_lowres,&Ealpha_lowres, &Ebeta_lowres, (*reconstruct_init)->library_collection->margin))
+                            {
+                                message = "Cannot run routine find_optimalfilterSAB for filter interpolation";
+                                EP_EXIT_ERROR(message,EPFAIL);
+                            }
+                        }
+
+                        gsl_vector_set_all(optimalfilter_lowres,0);
+                        for (int k=0;k<(int)(filtergsl_lowres->size)/2;k++)
+                        {
+                            gsl_vector_complex_set(optimalfilter_FFT_complex_lowres,k,gsl_complex_rect(0.0,0.0));
+                        }
+                        if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)     gsl_vector_memcpy(optimalfilter_lowres,filtergsl_lowres);
+                        else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)
+                        {
+                            // It is not necessary to check the allocation because 'filtergsl' size has been checked previously
+                            for (int k=0;k<(int)(filtergsl_lowres->size)/2;k++)
+                            {
+                                gsl_vector_complex_set(optimalfilter_FFT_complex_lowres,k,gsl_complex_rect(gsl_vector_get(filtergsl_lowres,k),gsl_vector_get(filtergsl_lowres,k+filtergsl_lowres->size/2)));
+                            }
+                        }
+
+                        // Calculate the low resolution estimator
+                        if (calculateEnergy(pulse_lowres,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,(*reconstruct_init),1/record->delta_t,Dab_lowres,PRCLCOV_lowres,PRCLOFWN_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
+                        {
+                            message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
+                            EP_EXIT_ERROR(message,EPFAIL);
                         }
                     }
                     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9520,35 +9506,26 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
     double minimum;
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    int length_lowres = 16;
+    int length_lowres;
+    if ((*reconstruct_init)->LagsOrNot == 1)
+        length_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1) + numlags; // Lowres estimator = Shortfilter+Lags
+    else
+        length_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1); // Lowres estimator = Shortfilter
     double energy_lowres;
     long resize_mf_lowres;
     gsl_vector *pulse_lowres;
-    resize_mf_lowres = 8; 
+    resize_mf_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1);
     pulse_lowres = gsl_vector_alloc(length_lowres);
+    int preBuffer_value_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,2);
     gsl_vector *filtergsl_lowres = NULL;
-    if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres);
-    else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)	filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres*2);
+    if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)		       filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres);
+    else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)	   filtergsl_lowres= gsl_vector_alloc(resize_mf_lowres*2);
     gsl_vector *Dab_lowres = gsl_vector_alloc(resize_mf_lowres);
     gsl_matrix *PRCLCOV_lowres = NULL;
     gsl_matrix *PRCLOFWN_lowres = NULL;
     double Ealpha_lowres, Ebeta_lowres;
     gsl_vector *optimalfilter_lowres = gsl_vector_alloc(filtergsl_lowres->size);	// Resized optimal filter expressed in the time domain (optimalfilter(t))
     gsl_vector_complex *optimalfilter_FFT_complex_lowres = gsl_vector_complex_alloc(filtergsl_lowres->size/2);
-    int filter8_exist = 0;
-    for (int i=0; i<(int)((*reconstruct_init)->grading->gradeData->size1);i++)
-    {
-        if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,i,1) == 8)
-        {
-            filter8_exist = 1;
-            break;
-        }
-    }
-    if ((filter8_exist == 0) && ((*reconstruct_init)->OFLib == 1) && (nrecord == 1))
-    {
-        message = "There is not a 8-length filter in the library to calculate the low energy resolution estimator => Not calculated (ELOWRES=-999)";
-        EP_PRINT_ERROR(message,-999); // Only a warning 
-    }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
     int pulseGrade; 			// Pileup=-2, Rejected=-1, HighRes=1, MidRes=2, LimRes=3, LowRes=4
@@ -9734,72 +9711,69 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
                     }
 
                     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    //////////// In order to get the low resolution energy estimator by filtering with a 8-samples-length filter ///////////////////
+                    //////////// In order to get the low resolution energy estimator by filtering with the shortest filter ///////////////////
                     energy_lowres = -999;
-                    if (filter8_exist == 1)
+                    // Pulse
+                    if (resize_mf_lowres <= recordAux->size-tstartSamplesRecord-preBuffer_value_lowres)
                     {
-                        // Pulse
-                        if (resize_mf_lowres <= recordAux->size-tstartSamplesRecord)
+                        temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres,length_lowres);
+
+                        gsl_vector *vectoraux = gsl_vector_alloc(length_lowres);
+                        gsl_vector_memcpy(vectoraux,&temp.vector);
+
+                        gsl_vector_set_all(pulse_lowres,0.0);
+
+                        for (int k=0;k<length_lowres;k++)
                         {
-                            temp = gsl_vector_subvector(recordAux,tstartSamplesRecord,length_lowres);
+                            gsl_vector_set(pulse_lowres,k,gsl_vector_get(vectoraux,k));
+                        }
 
-                            gsl_vector *vectoraux = gsl_vector_alloc(length_lowres);
-                            gsl_vector_memcpy(vectoraux,&temp.vector);
+                        if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
+                        {
+                            gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulse_lowres->size);
+                            gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
+                            gsl_vector_add(pulse_lowres,bslnEachPulsegsl);
+                            gsl_vector_free(bslnEachPulsegsl); bslnEachPulsegsl = 0;
+                        }
 
-                            gsl_vector_set_all(pulse_lowres,0.0);
+                        gsl_vector_free(vectoraux); vectoraux = 0;
 
-                            for (int k=0;k<length_lowres;k++)
+                        // Filter
+                        if (strcmp((*reconstruct_init)->OFInterp,"MF") == 0)
+                        {
+                            if (find_optimalfilter((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl_lowres, &Ealpha_lowres, &Ebeta_lowres, (*reconstruct_init)->library_collection->margin))
                             {
-                                gsl_vector_set(pulse_lowres,k,gsl_vector_get(vectoraux,k));
-                            }
-
-                            if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
-                            {
-                                gsl_vector *bslnEachPulsegsl = gsl_vector_alloc(pulse_lowres->size);
-                                gsl_vector_set_all(bslnEachPulsegsl,-1.0*(*pulsesInRecord)->pulses_detected[i].bsln);
-                                gsl_vector_add(pulse_lowres,bslnEachPulsegsl);
-                                gsl_vector_free(bslnEachPulsegsl); bslnEachPulsegsl = 0;
-                            }
-
-                            gsl_vector_free(vectoraux); vectoraux = 0;
-
-                            // Filter
-                            if (strcmp((*reconstruct_init)->OFInterp,"MF") == 0)
-                            {
-                                if (find_optimalfilter((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl_lowres, &Ealpha_lowres, &Ebeta_lowres, (*reconstruct_init)->library_collection->margin))
-                                {
-                                    message = "Cannot run routine find_optimalfilter for filter interpolation";
-                                    EP_EXIT_ERROR(message,EPFAIL);
-                                }
-                            }
-                            else
-                            {
-                                if (find_optimalfilterSAB((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl_lowres, &Dab_lowres,&Ealpha_lowres, &Ebeta_lowres, (*reconstruct_init)->library_collection->margin))
-                                {
-                                    message = "Cannot run routine find_optimalfilterSAB for filter interpolation";
-                                    EP_EXIT_ERROR(message,EPFAIL);
-                                }
-                            }
-                            gsl_vector_set_all(optimalfilter_lowres,0);
-                            for (int k=0;k<(int)(filtergsl_lowres->size)/2;k++)
-                            {
-                                gsl_vector_complex_set(optimalfilter_FFT_complex_lowres,k,gsl_complex_rect(0.0,0.0));
-                            }
-                            if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)     gsl_vector_memcpy(optimalfilter_lowres,filtergsl_lowres);
-                            else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)
-                            {
-                                // It is not necessary to check the allocation because 'filtergsl' size has been checked previously
-                                for (int k=0;k<(int)(filtergsl_lowres->size)/2;k++)
-                                {
-                                    gsl_vector_complex_set(optimalfilter_FFT_complex_lowres,k,gsl_complex_rect(gsl_vector_get(filtergsl_lowres,k),gsl_vector_get(filtergsl_lowres,k+filtergsl_lowres->size/2)));
-                                }
-                            }
-                            // Calculate the low resolution estimator
-                            if (calculateEnergy(pulse_lowres,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,(*reconstruct_init),1/record->delta_t,Dab_lowres,PRCLCOV_lowres,PRCLOFWN_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
-                            {
-                                message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
+                                message = "Cannot run routine find_optimalfilter for filter interpolation";
                                 EP_EXIT_ERROR(message,EPFAIL);
                             }
+                        }
+                        else
+                        {
+                            if (find_optimalfilterSAB((*pulsesInRecord)->pulses_detected[i].maxDER, (*reconstruct_init)->library_collection->maxDERs, (*reconstruct_init), &filtergsl_lowres, &Dab_lowres,&Ealpha_lowres, &Ebeta_lowres, (*reconstruct_init)->library_collection->margin))
+                            {
+                                message = "Cannot run routine find_optimalfilterSAB for filter interpolation";
+                                EP_EXIT_ERROR(message,EPFAIL);
+                            }
+                        }
+                        gsl_vector_set_all(optimalfilter_lowres,0);
+                        for (int k=0;k<(int)(filtergsl_lowres->size)/2;k++)
+                        {
+                            gsl_vector_complex_set(optimalfilter_FFT_complex_lowres,k,gsl_complex_rect(0.0,0.0));
+                        }
+                        if (strcmp((*reconstruct_init)->FilterDomain,"T") == 0)     gsl_vector_memcpy(optimalfilter_lowres,filtergsl_lowres);
+                        else if (strcmp((*reconstruct_init)->FilterDomain,"F") == 0)
+                        {
+                            // It is not necessary to check the allocation because 'filtergsl' size has been checked previously
+                            for (int k=0;k<(int)(filtergsl_lowres->size)/2;k++)
+                            {
+                                gsl_vector_complex_set(optimalfilter_FFT_complex_lowres,k,gsl_complex_rect(gsl_vector_get(filtergsl_lowres,k),gsl_vector_get(filtergsl_lowres,k+filtergsl_lowres->size/2)));
+                            }
+                        }
+                        // Calculate the low resolution estimator
+                        if (calculateEnergy(pulse_lowres,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,(*reconstruct_init),1/record->delta_t,Dab_lowres,PRCLCOV_lowres,PRCLOFWN_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
+                        {
+                            message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
+                            EP_EXIT_ERROR(message,EPFAIL);
                         }
                     }
                     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -12420,6 +12394,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                         for (int i=0;i<productSize;i++)
                         {
                             gsl_vector_set(calculatedEnergy_vector,0,gsl_vector_get(calculatedEnergy_vector,0)+gsl_vector_get(vector,i+0)*gsl_vector_get(filter,i));
+                            //if (LowRes==1) cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
                         }
                         // Because of the FFT and FFTinverse normalization factors
                         gsl_vector_set(calculatedEnergy_vector,0,fabs(gsl_vector_get(calculatedEnergy_vector,0))/filter->size);

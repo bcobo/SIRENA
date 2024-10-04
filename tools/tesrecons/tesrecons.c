@@ -475,9 +475,9 @@ int getpar_tesrecons(struct Parameters* const par)
       SIXT_ERROR("parameter error: EnergyMethod=0PAD && OFNoise=WEIGHTN not a valid choice => OFNoise should be NSD");
       return(EXIT_FAILURE);
   }
-  if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (par->flength_0pad >= par->OFLength))
+  if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (par->flength_0pad > par->OFLength))
   {
-      SIXT_ERROR("parameter error: EnergyMethod=0PAD => flength_0pad should be lower than the maximum filter length (OFLength)");
+      SIXT_ERROR("parameter error: EnergyMethod=0PAD => flength_0pad should be less than or equal to the maximum filter length (OFLength)");
       return(EXIT_FAILURE);
   }
 
