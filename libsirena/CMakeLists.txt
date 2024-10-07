@@ -1,6 +1,5 @@
 set(LIBSIRENA_SOURCES
         initSIRENA.c
-        testriggerfile.c
         genutils.cpp
         inoututils.cpp
         integraSIRENA.cpp
