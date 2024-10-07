@@ -8647,9 +8647,9 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                     log_trace("Calculating the low energy estimator...");
                     energy_lowres = -999;
                     // Pulse
-                    if (resize_mf_lowres <= recordAux->size-tstartSamplesRecord-preBuffer_value_lowres)
+                    if (resize_mf_lowres <= recordAux->size-tstartSamplesRecord-preBuffer_value_lowres-numlags2)
                     {
-                        temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres,length_lowres);
+                        temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres-numlags2,length_lowres);
 
                         gsl_vector *vectoraux = gsl_vector_alloc(length_lowres);
                         gsl_vector_memcpy(vectoraux,&temp.vector);
@@ -12394,7 +12394,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                         for (int i=0;i<productSize;i++)
                         {
                             gsl_vector_set(calculatedEnergy_vector,0,gsl_vector_get(calculatedEnergy_vector,0)+gsl_vector_get(vector,i+0)*gsl_vector_get(filter,i));
-                            //if (LowRes==1) cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
+                            if (LowRes==1) cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<endl;
                         }
                         // Because of the FFT and FFTinverse normalization factors
                         gsl_vector_set(calculatedEnergy_vector,0,fabs(gsl_vector_get(calculatedEnergy_vector,0))/filter->size);
@@ -12430,10 +12430,10 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                 {
                                     gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i)*gsl_vector_get(filter,i));
                                     //if ((LowRes != 1) && (i<10))
-                                    //if (i<10)
-                                    //{
-                                        //cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size<<endl;
-                                    //}
+                                   /* if (i<10)
+                                    {
+                                        cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size<<endl;
+                                    }*/
                                 }
 
                                 // Because of the FFT and FFTinverse normalization factors

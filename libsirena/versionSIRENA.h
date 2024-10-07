@@ -22,11 +22,11 @@
 //   CANTABRIA (CSIC-UC) with funding from the Spanish Ministry of Science and 
 //   Innovation (MICINN)
 //
-//   DATE: 2023/10/04, 14:47:04
+//   DATE: 2023/10/07, 10:18:44
 
 #ifndef SIRENA_VERSION_H
 #define SIRENA_VERSION_H
 
-#define SIRENA_VERSION "10.4.0"
+#define SIRENA_VERSION "10.4.1"
 
 #endif
