@@ -1,3 +1,20 @@
+/**********************************************************************
+*   This software is part of the grant PID2021-122955OB-C41
+*   and by 'ERDF A way of making Europe'.
+*
+***********************************************************************
+*                      INITSIRENA
+*
+*  File:       initSIRENA.c
+*  Developers: Beatriz Cobo
+* 	           cobo@ifca.unican.es
+*              IFCA
+*              Maite Ceballos
+*              ceballos@ifca.unican.es
+*              IFCA
+*
+***********************************************************************/
+
 #include "initSIRENA.h"
 #include <stdlib.h>
 
