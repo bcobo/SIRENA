@@ -18,11 +18,9 @@
 //   For a copy of the GNU General Public License see
 //   <http://www.gnu.org/licenses/>.
 //
-//   Copyright 2020:  Developed by the INSTITUTO DE FISICA DE 
-//   CANTABRIA (CSIC-UC) with funding from the Spanish Ministry of Science and 
+//   Copyright 2020:  Developed by the INSTITUTO DE FISICA DE
+//   CANTABRIA (CSIC-UC) with funding from the Spanish Ministry of Science and
 //   Innovation (MICINN)
-//
-//   DATE: 2023/10/07, 10:18:44
 
 #ifndef SIRENA_VERSION_H
 #define SIRENA_VERSION_H
