@@ -114,7 +114,7 @@
  {
      headas_chat(3, "initialize ...\n");
 
-     message="Running GENNOISESPEC task version " + string(SIRENA_VERSION);
+     message="Running GENNOISESPEC v" + string(SIRENA_VERSION);
      cout<<message<<endl;
 
      //////// Setup

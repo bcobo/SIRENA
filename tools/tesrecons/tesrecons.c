@@ -84,7 +84,7 @@
 * - Free memory
 *****************************************************/
 int tesrecons_main() {
-  printf("Running TESRECONS\n");
+  printf("Running TESRECONS v%s\n",SIRENA_VERSION);
   time_t ttstart = time(0);
   
   // Containing all programm parameters read by PIL.

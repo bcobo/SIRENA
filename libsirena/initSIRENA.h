@@ -108,9 +108,6 @@ struct Parameters {
 	// Boolean to add or not pre-calculated values related to Optimal Filtering by using Weight Noise matrix in the library file
 	char addOFWN;
 
-	// Length of the longest fixed filter for library creation
-	int largeFilter;
-
 	// Running sum length for the RS raw energy estimation, in seconds (only in CALIBRATION)
 	double LrsT;
 

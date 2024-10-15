@@ -660,7 +660,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
         par.LbT, par.NoiseFile, par.FilterDomain, par.FilterMethod, par.EnergyMethod,
         par.filtEev, par.Ifit, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter,
         par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer, par.monoenergy,
-        par.addCOVAR, par.addINTCOVAR, par.addOFWN, par.largeFilter, par.intermediate, par.detectFile,
+        par.addCOVAR, par.addINTCOVAR, par.addOFWN, par.intermediate, par.detectFile,
         par.errorT, par.Sum0Filt, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1,
         par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);

@@ -134,9 +134,6 @@ typedef struct LibraryCollection
 
 	/** Pulse Heights of the templates */
 	gsl_vector *pulse_heights;
-
-	/** Structure containing all the pulse templates whose length is largeFilter from the library */
-	PulseTemplate* pulse_templatesMaxLengthFixedFilter;
 	
 	/** Structure containing all the pulse templates from the library */
 	PulseTemplate* pulse_templates;
@@ -195,9 +192,6 @@ typedef struct LibraryCollection
 
 	/** DAB vector */
 	gsl_matrix *DAB;
-
-	/** DABMXLFF vector */
-	gsl_matrix *DABMXLFF;
 	
 	/** SAB vector */
 	gsl_matrix *SAB;
@@ -466,9 +460,6 @@ typedef struct ReconstructInitSIRENA
 	/** Add pre-calculated values related to Optimal Filtering by using Weight Noise matrix in the library file (1) or not (0) **/
   	int addOFWN;
   
-  	/** Length of the longest fixed filter for library creation **/
-  	int largeFilter;
-  
   	/** Running sum length for the RS raw energy estimation, in seconds (only in CALIBRATION) **/
   	double LrsT;
   
@@ -634,7 +625,6 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     int oflength, char preBuffer,
                                     double monoenergy,
 									char addCOVAR, char addINTCOVAR, char addOFWN,
-									int largeFilter,
                                     int interm, char* detectFile, 
                                     int errorT, int Sum0Filt, char clobber, 
                                     int maxPulsesPerRecord, 
@@ -690,7 +680,7 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
 	char* energy_method, double filtEev, double Ifit,
 	char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
 	char* oflength_strategy, int oflength, char preBuffer,
-	double monoenergy, char addCOVAR, char addINTCOVAR, char addOFWN, int largeFilter,
+	double monoenergy, char addCOVAR, char addINTCOVAR, char addOFWN,
 	int interm, char* const detectFile,
 	int errorT,
 	int Sum0Filt,

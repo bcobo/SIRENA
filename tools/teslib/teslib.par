@@ -24,8 +24,6 @@ addCOVAR,b,h,no,,,"Add or not pre-calculated values in the library file related 
 addINTCOVAR,b,h,no,,,"Add or not pre-calculated values in the library file related to INTCOVAR reconstruction method (yes/no)"
 addOFWN,b,h,no,,,"Add or not pre-calculated values in the library file related to Optimal Filtering by using Weight Noise matrix (yes/no)"
 
-largeFilter,i,h,8192,,,"Length of the longest fixed filter (only if preBuffer=no)"
-
 EnergyMethod,s,h,"OPTFILT",,,"Energy calculation Method: OPTFILT, I2R or I2RFITTED"
 Ifit,r,h,0.0,,,"Constant to apply the I2RFITTED conversion"
 FilterMethod,s,h,"F0",,,"Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)"

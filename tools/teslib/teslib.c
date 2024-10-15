@@ -46,7 +46,6 @@
 * - addCOVAR: Add or not pre-calculated values related to COVAR reconstruction method in the library file (1/0)
 * - addINTCOVAR: Add or not pre-calculated values related to INTCOVAR reconstruction method in the library file (1/0)
 * - addOFWN: Add or not pre-calculated values related to Optimal Filtering by using Weight Noise matrix in the library file (1/0)
-* - largeFilter: Length of the longest fixed filter 
 * - FilterDomain: Filtering Domain: Time (T) or Frequency (F)
 ****** - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline) or F0B0 (deleting always the baseline)
 * - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)
@@ -72,7 +71,7 @@
 * - Free memory
 *****************************************************/
 int teslib_main() {
-  printf("Running TESLIB\n");
+  printf("Running TESLIB v%s\n",SIRENA_VERSION);
   time_t ttstart = time(0);
 
   // Containing all programm parameters read by PIL.
@@ -166,7 +165,6 @@ int teslib_main() {
     {
         // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
         status = fillReconstructInitSIRENAGrading (par, det, &reconstruct_init_sirena);
-        par.largeFilter = reconstruct_init_sirena->post_max_value;
     }
     destroyAdvDet(&det);
 
@@ -302,7 +300,6 @@ int getpar_teslib(struct Parameters* const par)
   status=ape_trad_query_bool("addCOVAR", &par->addCOVAR);
   status=ape_trad_query_bool("addINTCOVAR", &par->addINTCOVAR);
   status=ape_trad_query_bool("addOFWN", &par->addOFWN);
-  status=ape_trad_query_int("largeFilter", &par->largeFilter);
 
   status=ape_trad_query_string("EnergyMethod", &sbuffer);
   strcpy(par->EnergyMethod, sbuffer);
