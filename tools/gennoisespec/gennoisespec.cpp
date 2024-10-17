@@ -935,6 +935,7 @@
      double SelectedTimeDuration = SelectedTimeDuration = intervalMinBins/((double)samprate);
      double nSgms_sigmaInterval = 1;
      int NumMeanSamples_afterRm = 0;
+     printf("\n"); // New line after ending "Reading the noise file...." (progressbar READING NOISE FILE)
      for (int i=0;i<NumMeanSamples;i++)
      {
          //if (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold)
@@ -973,30 +974,30 @@
                 gsl_vector_add(EventSamplesFFTMean,vector_aux);
              }
          }
+         // Progress bar NOISE SPECTRUM
+         float progress = (float)i / (NumMeanSamples-1);
+         int bar_width = 50;
+         int pos = bar_width * progress;
+         printf("Generating the noise spectrum |");
+         for (int j = 0; j < bar_width; j++) {
+             if (j < pos)
+                 printf("=");
+             else if (j == pos)
+                 printf(">");
+             else
+                 printf(" ");
+         }
+         printf("| %.2f%%\r", progress * 100);
+         fflush(stdout);
+         if (i == NumMeanSamples-1)
+         {
+             printf("\n"); // New line after ending "Generating the noise spectrum...."
+         }
      }
      gsl_vector_free(interval); interval = 0;
      gsl_vector_free(sigmaInterval); sigmaInterval = 0;
      gsl_vector_free(vector_aux); vector_aux = 0;
      gsl_vector_complex_free(vector_aux1); vector_aux1 = 0;
-     
-     if (cnt == 0)
-     {
-         message = "Pulse-free intervals not found";
-         EP_EXIT_ERROR(message,EPFAIL);
-     }
-     else if	(cnt < par.nintervals)
-     {
-         sprintf(str_stat,"%d",cnt);
-         sprintf(str_stat1,"%d",intervalMinBins);
-         message = "Not enough pulse-free intervals for calculus. CSD and W" + string(str_stat1) + " matrix calculated with " + string(str_stat);
-         cout<<message<<endl;
-     }
-     else if	(cnt >= par.nintervals)
-     {
-         sprintf(str_stat,"%d",par.nintervals);
-         message = "CSD and all Wx matrices calculated with " + string(str_stat) + " intervals";
-         cout<<message<<endl;
-     }
      
      // Current noise spectral density
      // sqrt(sum(FFT^2)/NumMeanSamplesCSD) => sqrt(A^2) = A and sqrt(1/NumMeanSamplesCSD)=1/sqrt(Hz)
@@ -1043,7 +1044,7 @@
      NumMeanSamples = cnt;
      
      // Generate WEIGHT representation
-     if (par.weightMS == 1)
+     if ((par.weightMS == 1) && (NumMeanSamples != 0))
      {
          /*weightpoints = gsl_vector_alloc(floor(log2(par.intervalMinSamples)));
          for (int i=0;i<weightpoints->size;i++) 		gsl_vector_set(weightpoints,i,pow(2,floor(log2(par.intervalMinSamples))-i));
@@ -1058,9 +1059,12 @@
 
          if (NumMeanSamples >= par.nintervals)
          {
+             cout<<"Calculating the weight noise matrixes [0"<<"/"<<weightpoints->size<<"][";
+             for (int i=0;i<weightpoints->size;i++) cout<<".";
+             cout<<"]"<<flush;
              for (int i=0;i<weightpoints->size;i++)
              {	
-	         weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,i),gsl_vector_get(weightpoints,i));
+                 weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,i),gsl_vector_get(weightpoints,i));
                  noiseIntervals_weightPoints = gsl_matrix_alloc(cnt,gsl_vector_get(weightpoints,i));
                  
                  tempm = gsl_matrix_submatrix(noiseIntervals,0,0,cnt,gsl_vector_get(weightpoints,i));
@@ -1094,10 +1098,33 @@
                      gsl_matrix_free(weightMatrix);
                      break;
                  } // different matrix sizes ?
+
+                 // Progress bar WEIGHT NOISE MATRIXES
+                 cout<<"\rCalculating the weight noise matrixes [";
+                 cout<<i+1;
+                 cout<<"/";
+                 cout<<weightpoints->size;
+                 cout<<"][";
+                 for (int j = 0; j < weightpoints->size; j++)
+                 {
+                     if (j <= i) {
+                         cout << "#";  // Write '#' for each completed matrix
+                     } else {
+                         cout << ".";  // Write '.' for pending matrixes
+                     }
+                 }
+                 cout << "]" << flush;
+                 if (i == weightpoints->size-1)
+                 {
+                     printf("\n"); // New line after ending "Calculating the weight noise matrixes...."
+                 }
              } // foreach matrix size
          }
          else
          {
+             cout<<"Calculating the weight noise matrixes [0"<<"/"<<weightpoints->size<<"][";
+             for (int i=0;i<weightpoints->size;i++) cout<<".";
+             cout<<"]"<<flush;
              for (int i=0;i<weightpoints->size;i++)
              {	
                  weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,i),gsl_vector_get(weightpoints,i));
@@ -1176,10 +1203,55 @@
                      break;
                      
                  } // different matrix sizes ?
+
+                 // Progress bar WEIGHT NOISE MATRIXES
+                 cout<<"\rCalculating the weight noise matrixes [";
+                 cout<<i+1;
+                 cout<<"/";
+                 cout<<weightpoints->size;
+                 cout<<"][";
+                 for (int j = 0; j < weightpoints->size; j++)
+                 {
+                     if (j <= i) {
+                         cout << "#";  // Write '#' for each completed matrix
+                     } else {
+                         cout << ".";  // Write '.' for pending matrixes
+                     }
+                 }
+                 cout << "]" << flush;
+                 if (i == weightpoints->size-1)
+                 {
+                     printf("\n"); // New line after ending "Calculating the weight noise matrixes...."
+                 }
              } // foreach matrix size
          }
      }
      gsl_vector_free(intervalsgmOK); intervalsgmOK = 0;
+
+     if (cnt == 0)
+     {
+         message = "Pulse-free intervals not found";
+         EP_EXIT_ERROR(message,EPFAIL);
+     }
+     else if	(cnt < par.nintervals)
+     {
+         sprintf(str_stat,"%d",cnt);
+         sprintf(str_stat1,"%d",intervalMinBins);
+         if (par.weightMS == 1)
+            message = "Not enough pulse-free intervals for calculus. CSD and W" + string(str_stat1) + " matrix calculated with " + string(str_stat);
+         else
+            message = "Not enough pulse-free intervals for calculus. CSD calculated with " + string(str_stat);
+         cout<<message<<endl;
+     }
+     else if	(cnt >= par.nintervals)
+     {
+         sprintf(str_stat,"%d",par.nintervals);
+         if (par.weightMS == 1)
+            message = "CSD and all Wx matrices calculated with " + string(str_stat) + " intervals";
+         else
+            message = "CSD calculated with " + string(str_stat) + " intervals";
+         cout<<message<<endl;
+     }
      
      // Create output FITS File: GENNOISESPEC representation file (*_noisespec.fits)
      if(createTPSreprFile())
@@ -1476,33 +1548,32 @@
              gsl_vector_memcpy(EventSamples,&temp.vector);
           
              gsl_matrix_set_row(noiseIntervals,NumMeanSamples,EventSamples);
-
-             // Progress bar
-             float progress = (float)NumMeanSamples / (totalrows-1);
-             int bar_width = 50;
-             int pos = bar_width * progress;
-             printf("Generating the noise spectrum |");
-             for (int j = 0; j < bar_width; j++) {
-                if (j < pos)
-                    printf("=");
-                else if (j == pos)
-                    printf(">");
-                else
-                    printf(" ");
-                }
-             printf("| %.2f%%\r", progress * 100);
-             fflush(stdout);
-             if (NumMeanSamples == totalrows-1)
-             {
-                printf("\n"); // New line after ending "Generating the noise spectrum...."
-             }
                  
              NumMeanSamples = NumMeanSamples + 1;
+         }
+
+         if (ntotalrows != totalrows)
+         {
+             // Progress bar READING NOISE FILE
+             float progress = (float)ntotalrows / (totalrows-1);
+             int bar_width = 50;
+             int pos = bar_width * progress;
+             printf("Reading the noise file        |");
+             for (int j = 0; j < bar_width; j++) {
+                 if (j < pos)
+                     printf("=");
+                 else if (j == pos)
+                     printf(">");
+                 else
+                     printf(" ");
+             }
+             printf("| %.2f%%\r", progress * 100);
+             fflush(stdout);
          }
          
          ntotalrows++;
      }
-     
+
      // Free allocated GSL vectors
      gsl_vector_free(timegsl); timegsl = 0;
      gsl_vector_free(ioutgsl); ioutgsl = 0;
@@ -2491,9 +2562,9 @@
          elementValue1 = 0.0;
          elementValue2 = 0.0;
      }
-     cout<<"Matrix diagonal ended "<<covariance->size1<<"x"<<covariance->size2<<endl;
+     //cout<<"Matrix diagonal ended "<<covariance->size1<<"x"<<covariance->size2<<endl;
      t = clock() - t;
-     cout<<"Consumed "<<((float)t)/CLOCKS_PER_SEC<<" sec"<<endl;
+     //cout<<"Consumed "<<((float)t)/CLOCKS_PER_SEC<<" sec"<<endl;
      
      t = clock();
      // Other elements
@@ -2523,18 +2594,18 @@
          }
      }
      
-     cout<<"Elements out of the matrix diagonal ended "<<covariance->size1<<"x"<<covariance->size2<<endl;
+     //cout<<"Elements out of the matrix diagonal ended "<<covariance->size1<<"x"<<covariance->size2<<endl;
      t = clock() - t;
-     cout<<"Consumed "<<((float)t)/CLOCKS_PER_SEC<<" sec"<<endl;
+     //cout<<"Consumed "<<((float)t)/CLOCKS_PER_SEC<<" sec"<<endl;
      
      t = clock();
      // Calculate the weight matrix
      // It is not necessary to check the allocation because 'covarianze' size must already be > 0
      gsl_matrix *covarianceaux = gsl_matrix_alloc(covariance->size1,covariance->size2);
      gsl_matrix_memcpy(covarianceaux,covariance);
-     cout<<"Preparation to the inversion ended "<<covariance->size1<<"x"<<covariance->size2<<endl;
+     //cout<<"Preparation to the inversion ended "<<covariance->size1<<"x"<<covariance->size2<<endl;
      t = clock() - t;
-     cout<<"Consumed "<<((float)t)/CLOCKS_PER_SEC<<" sec"<<endl;
+     //cout<<"Consumed "<<((float)t)/CLOCKS_PER_SEC<<" sec"<<endl;
      t = clock();
      gsl_linalg_LU_decomp(covarianceaux, perm, &s);
      if (gsl_linalg_LU_invert(covariance, perm, *weight) != 0) 
