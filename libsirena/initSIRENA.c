@@ -479,6 +479,10 @@ int getSamplingrate_trigreclength (char* inputFile, struct Parameters par, doubl
 * `reconstruct_init_sirena->grading` number of rows = Number of grades in the XML file
 * `reconstruct_init_sirena->grading` number of columns = 3 (0->pre, 1->filter length inlcuding prebuffer, 2->prebuffer values)
 *
+* SIRENA's values (grading=>pre,post and pB) or format XML file (grading=>pre,post and filtlen)
+*  post=8192, pB=1000                          pre=494, post=7192, filtlen=8192
+*                                                  preBuffer=filtlen-post
+*
 * Parameters:
 * - par: Input parameters
 * - det: Pixel detector
@@ -561,27 +565,6 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
         }
     }
 
-    /*int OFlengthvsposti = 0;
-    if ((par.preBuffer == 1) && (par.opmode == 1))
-    {
-        for (int i=0;i<(*reconstruct_init_sirena)->grading->ngrades;i++)
-        {
-            if (par.OFLength == gsl_matrix_get((*reconstruct_init_sirena)->grading->gradeData,i,1))
-            {
-                OFlengthvsposti = 1;
-                break;
-            }
-        }
-        if (OFlengthvsposti == 0)
-        printf("%s %d %s","par.: ",par.Pul,"\n");
-        printf("%s %d %s","par.OFLength: ",par.OFLength,"\n");
-        if ((OFlengthvsposti == 0) && ((*reconstruct_init_sirena)->pulse_length >= (*reconstruct_init_sirena)->OFLength)) // Not 0-padding
-        {
-            SIXT_ERROR("The grading/preBuffer info of the XML file does not match the OFLength input parameter");
-            return(EXIT_FAILURE);
-        }
-    }*/
-
     //Check prebuff_0pad input parameter (preBuffer when 0-padding)
     if ((par.opmode == 1) && (strcmp(par.EnergyMethod,"0PAD") == 0))
     {
@@ -594,25 +577,19 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
         }
     }
 
-     // Loading in the reconstruct_init structure values related to grading and preBuffer values from the XML file
-    gsl_vector *pBi = gsl_vector_alloc(1);   // preBuffer values
+    // Loading in the reconstruct_init structure values related to grading and preBuffer values from the XML file
+    gsl_vector *pBi = gsl_vector_alloc((*reconstruct_init_sirena)->grading->ngrades);   // preBuffer values
+    gsl_matrix_get_col(pBi,(*reconstruct_init_sirena)->grading->gradeData,2);
+    (*reconstruct_init_sirena)->preBuffer_max_value = gsl_vector_max(pBi);
+    (*reconstruct_init_sirena)->preBuffer_min_value = gsl_vector_min(pBi);
     gsl_vector *posti = gsl_vector_alloc(1); // Filter length (including preBuffer)
     // post in (grading=>pre,post and pB)
     // filtlen in (grading=>pre,post and filtlen)
+    posti = gsl_vector_alloc((*reconstruct_init_sirena)->grading->ngrades);
+    gsl_matrix_get_col(posti,(*reconstruct_init_sirena)->grading->gradeData,1);
+    (*reconstruct_init_sirena)->post_max_value = gsl_vector_max(posti);
+    (*reconstruct_init_sirena)->post_min_value = gsl_vector_min(posti);
 
-    if (par.preBuffer == 1)
-    {
-        gsl_vector_free(pBi); pBi=0;
-        pBi = gsl_vector_alloc((*reconstruct_init_sirena)->grading->ngrades);
-        gsl_matrix_get_col(pBi,(*reconstruct_init_sirena)->grading->gradeData,2);
-        (*reconstruct_init_sirena)->preBuffer_max_value = gsl_vector_max(pBi);
-        (*reconstruct_init_sirena)->preBuffer_min_value = gsl_vector_min(pBi);
-        gsl_vector_free(posti); posti=0;
-        posti = gsl_vector_alloc((*reconstruct_init_sirena)->grading->ngrades);
-        gsl_matrix_get_col(posti,(*reconstruct_init_sirena)->grading->gradeData,1);
-        (*reconstruct_init_sirena)->post_max_value = gsl_vector_max(posti);
-        (*reconstruct_init_sirena)->post_min_value = gsl_vector_min(posti);
-    }
     if (pBi != NULL) {gsl_vector_free(pBi); pBi = 0;}
     if (posti != NULL) {gsl_vector_free(posti); posti = 0;}
 
@@ -659,7 +636,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
         par.samplesDown, par.nSgms, par.detectSP, par.opmode, par.detectionMode, par.LrsT,
         par.LbT, par.NoiseFile, par.FilterDomain, par.FilterMethod, par.EnergyMethod,
         par.filtEev, par.Ifit, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter,
-        par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.preBuffer, par.monoenergy,
+        par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.monoenergy,
         par.addCOVAR, par.addINTCOVAR, par.addOFWN, par.intermediate, par.detectFile,
         par.errorT, par.Sum0Filt, par.clobber, par.EventListSize, par.SaturationValue, par.tstartPulse1,
         par.tstartPulse2, par.tstartPulse3, par.energyPCA1, par.energyPCA2, par.XMLFile, &status);
@@ -924,35 +901,6 @@ int checkpreBuffer(struct Parameters* const par)
         {
             free(libheaderPrimary);
             SIXT_ERROR("Error reading Primary HDU in the LibraryFile");
-            return(EXIT_FAILURE);
-        }
-
-        char *preBuffer_pointer = NULL;
-        preBuffer_pointer = strstr(libheaderPrimary,"preBuffer = ");
-        if(!preBuffer_pointer)
-        {
-            SIXT_ERROR("preBuffer value not included in Primary HDU (HISTORY) in LibraryFile");
-            return(EXIT_FAILURE);
-        }
-        char preBuffer_value_library[2];
-        strncpy(preBuffer_value_library,preBuffer_pointer+12,1);  // 12 -> "preBuffer = "
-        strcat(preBuffer_value_library,"\0");
-        char preBuffer_inputParam[2];
-        if  (par->preBuffer)
-        {
-            strcpy(preBuffer_inputParam,"y\0");
-        }
-        else
-        {
-            strcpy(preBuffer_inputParam,"n\0");
-        }
-        //printf("preBuffer_value_library=%s\n",preBuffer_value_library);
-        //printf("El valor de preBuffer es: %s\n", par->preBuffer ? "true" : "false");
-        //printf("preBuffer_inputParam=%s\n",preBuffer_inputParam);
-
-        if (strcmp(preBuffer_value_library,preBuffer_inputParam)!=0)
-        {
-            SIXT_ERROR("preBuffer value used to build the existing LibraryFile and preBuffer input parameter do not match");
             return(EXIT_FAILURE);
         }
 

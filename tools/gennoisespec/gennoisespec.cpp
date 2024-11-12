@@ -67,11 +67,9 @@
   * - scaleFactor: Scale factor to apply in order to calculate the LPF box-car length
   * - samplesUp: Consecutive samples over the threshold to locate a pulse
   * - nSgms: Number of Sigmas to establish the threshold
-  * - pulse_length: Pulse length (samples)
   * - weightMS: Calculate and write the weight matrices if weightMS=yes
   * - EnergyMethod: Transform to resistance space (I2R or I2RFITTED) or not (OPTFILT)
   * - clobber: Re-write output files if clobber=yes
-  * - matrixSize: Size of noise matrix if only one to be created
   * - rmNoiseIntervals: Remove some noise intervals before calculating the noise spectrum if rmNoiseIntervals=yes
   * 
   * Steps:
@@ -133,6 +131,7 @@
          message = "Cannot run getpar_noiseSpec routine to get input parameters";
          EP_EXIT_ERROR(message,status); 
      }
+     pulse_length = par.intervalMinSamples;
      
      if ((strcmp(par.EnergyMethod,"I2RFITTED") == 0) && (par.Ifit == 0.0))
      {
@@ -1070,35 +1069,17 @@
                  tempm = gsl_matrix_submatrix(noiseIntervals,0,0,cnt,gsl_vector_get(weightpoints,i));
                  gsl_matrix_memcpy(noiseIntervals_weightPoints,&tempm.matrix);
                  
-                 if (par.matrixSize == 0)
-                 { //do all sizes
-                     weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
-                     for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
+                 weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
+                 for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
+                 {
+                     for (int k=0;k<gsl_vector_get(weightpoints,i);k++)
                      {
-                         for (int k=0;k<gsl_vector_get(weightpoints,i);k++)
-                         {
-                             gsl_matrix_set(weightMatrixes,i,j*gsl_vector_get(weightpoints,i)+k,gsl_matrix_get(weightMatrix,j,k));
-                         }
+                         gsl_matrix_set(weightMatrixes,i,j*gsl_vector_get(weightpoints,i)+k,gsl_matrix_get(weightMatrix,j,k));
                      }
-                     gsl_matrix_free(noiseIntervals_weightPoints);
-                     gsl_matrix_free(weightMatrix);
-                     
                  }
-                 else if (gsl_vector_get(weightpoints,i) == par.matrixSize)
-                 { // do only input param size
-                     weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
-                     for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
-                     {
-                         for (int k=0;k<gsl_vector_get(weightpoints,i);k++)
-                         {
-                             gsl_matrix_set(weightMatrixes,i,j*gsl_vector_get(weightpoints,i)+k,gsl_matrix_get(weightMatrix,j,k));
-                         }
-                     }
-                     gsl_matrix_free(noiseIntervals_weightPoints);
-                     gsl_matrix_free(weightMatrix);
-                     break;
-                 } // different matrix sizes ?
-
+                 gsl_matrix_free(noiseIntervals_weightPoints);
+                 gsl_matrix_free(weightMatrix);
+                     
                  // Progress bar WEIGHT NOISE MATRIXES
                  cout<<"\rCalculating the weight noise matrixes [";
                  cout<<i+1;
@@ -1132,78 +1113,18 @@
                  
                  tempm = gsl_matrix_submatrix(noiseIntervals,0,0,NumMeanSamples,gsl_vector_get(weightpoints,i));
                  gsl_matrix_memcpy(noiseIntervals_weightPoints,&tempm.matrix);
-                 
-                 if (par.matrixSize == 0){ //do all sizes
-                     
-                     weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
-                     for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
-                     {
-                         for (int k=0;k<gsl_vector_get(weightpoints,i);k++)
-                         {
-                             gsl_matrix_set(weightMatrixes,i,j*gsl_vector_get(weightpoints,i)+k,gsl_matrix_get(weightMatrix,j,k));
-                         }
-                     }
-                     gsl_matrix_free(noiseIntervals_weightPoints);
-                     gsl_matrix_free(weightMatrix);
-                     
-                 }else if (gsl_vector_get(weightpoints,i) == par.matrixSize){ // do only input param size
-                     
-                     int NumMeanSamplesNew;
-                     gsl_matrix *matrixi;
-                     gsl_matrix *noiseIntervalsAux;
-                     
-                     weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,i),gsl_vector_get(weightpoints,i));
-                     if (NumMeanSamples*pow(2,i) >= par.nintervals)	NumMeanSamplesNew = par.nintervals;
-                     else 						NumMeanSamplesNew = NumMeanSamples*pow(2,i);
-                     noiseIntervals_weightPoints = gsl_matrix_alloc(NumMeanSamplesNew,gsl_vector_get(weightpoints,i));
-                     
-                     noiseIntervalsAux = gsl_matrix_alloc(NumMeanSamples*pow(2,i),gsl_vector_get(weightpoints,i));
-                     for (int ii=0;ii<pow(2,i);ii++)
-                     {	
-                         matrixi = gsl_matrix_alloc(NumMeanSamples,gsl_vector_get(weightpoints,i));
-                         tempm = gsl_matrix_submatrix(noiseIntervals,0,ii*gsl_vector_get(weightpoints,i),NumMeanSamples,gsl_vector_get(weightpoints,i));
-                         gsl_matrix_memcpy(matrixi,&tempm.matrix);
-                         for (int j=0;j<matrixi->size1;j++)
-                         {
-                             for (int k=0;k<matrixi->size2;k++)
-                             {
-                                 gsl_matrix_set(noiseIntervalsAux,j+ii*NumMeanSamples,k,gsl_matrix_get(matrixi,j,k));
-                             }
-                         }
-                         gsl_matrix_free(matrixi);
-                         
-                         if (NumMeanSamples+NumMeanSamples*ii >= par.nintervals)	
-                         {
-                             tempm = gsl_matrix_submatrix(noiseIntervalsAux,0,0,par.nintervals,gsl_vector_get(weightpoints,i));
-                             gsl_matrix_memcpy(noiseIntervals_weightPoints,&tempm.matrix);
-                             
-                             break;
-                         }
-                     }
-                     gsl_matrix_free(noiseIntervalsAux);
-                     
-                     sprintf(str_stat,"%ld",noiseIntervals_weightPoints->size1);
-                     sprintf(str_stat1,"%d",(int) gsl_vector_get(weightpoints,i));
-                     message = "W" + string(str_stat1) + " matrix calculated with " + string(str_stat);
-                     cout<<message<<endl;
-                     
-                     weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
-                     
-                     for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
-                     {
-                         for (int k=0;k<gsl_vector_get(weightpoints,i);k++)
-                         {
-                             gsl_matrix_set(weightMatrixes,i,j*gsl_vector_get(weightpoints,i)+k,gsl_matrix_get(weightMatrix,j,k));
-                         }
-                     }
-                     
-                     gsl_matrix_free(noiseIntervals_weightPoints);
-                     gsl_matrix_free(weightMatrix);
-                     
-                     break;
-                     
-                 } // different matrix sizes ?
 
+                 weightMatrixNoise(noiseIntervals_weightPoints, &weightMatrix);
+                 for (int j=0;j<gsl_vector_get(weightpoints,i);j++)
+                 {
+                     for (int k=0;k<gsl_vector_get(weightpoints,i);k++)
+                     {
+                         gsl_matrix_set(weightMatrixes,i,j*gsl_vector_get(weightpoints,i)+k,gsl_matrix_get(weightMatrix,j,k));
+                     }
+                 }
+                 gsl_matrix_free(noiseIntervals_weightPoints);
+                 gsl_matrix_free(weightMatrix);
+                     
                  // Progress bar WEIGHT NOISE MATRIXES
                  cout<<"\rCalculating the weight noise matrixes [";
                  cout<<i+1;
@@ -1485,7 +1406,7 @@
          //Finding the pulses: Pulses tstarts are found
          if (findPulsesNoise (ioutgslNOTFIL, ioutgsl_aux, &tstartgsl, &qualitygsl, 
              &nPulses, &threshold,
-             par.scaleFactor, par.pulse_length, samprate,
+             par.scaleFactor, samprate,
              par.samplesUp, par.nSgms,
              stopCriteriaMKC,
              kappaMKC))
@@ -1501,7 +1422,7 @@
          if ((pulseFound == 1) || (tail_duration != 0))
          {
              // Finding the pulse-free intervals in each record 
-             if (findInterval(tail_duration, ioutgsl_aux, tstartgsl, nPulses, par.pulse_length, par.nplPF, intervalMinBins, &nIntervals, &startIntervalgsl))
+             if (findInterval(tail_duration, ioutgsl_aux, tstartgsl, nPulses, pulse_length, par.nplPF, intervalMinBins, &nIntervals, &startIntervalgsl))
              {
                  message = "Cannot run routine findInterval";
                  EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
@@ -1598,7 +1519,7 @@
  /***** SECTION 3 ************************************************************
   * findInterval: This function finds the pulse-free intervals when the input vector has pulses.
   *               The pulse-free intervals must have a minimum length (intervalMinBins).
-  *               The interval with pulse is Tstart,Tend+nPF*pulse_length (being Tend=n*pulse_length).
+  *               The interval with pulse is Tstart,Tend+nPF*pulse_length (being Tend=pulse_length).
   *
   * Parameters:
   * - tail_duration: Length of the tail of a previous pulse
@@ -1908,15 +1829,6 @@
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
      
-     char str_pulse_length[125];			sprintf(str_pulse_length,"%d",par.pulse_length);
-     strhistory=string("pulse_length = ") + string(str_pulse_length);
-     strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
-     {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
-         EP_PRINT_ERROR(message,status); return(EPFAIL);
-     }
-     
      char str_weightMS[125];      sprintf(str_weightMS,"%d",par.weightMS);
      strhistory=string("weightMS = ") + string(str_weightMS);
      strcpy(keyvalstr,strhistory.c_str());
@@ -1945,15 +1857,6 @@
      
      char str_clobber[125];      sprintf(str_clobber,"%d",par.clobber);
      strhistory=string("clobber = ") + string(str_clobber);
-     strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
-     {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
-         EP_PRINT_ERROR(message,status); return(EPFAIL);
-     }
-     
-     char str_matrixSize[125];			sprintf(str_matrixSize,"%d",par.matrixSize);
-     strhistory=string("matrixSize = ") + string(str_matrixSize);
      strcpy(keyvalstr,strhistory.c_str());
      if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
      {
@@ -2201,8 +2104,7 @@
          gsl_vector *weightMatrixesrow= gsl_vector_alloc(weightMatrixes->size2);
          gsl_vector_view(temp);
          
-         // With this 'for' (instead the following 'if (matrixSize == 0)'+'else') all the Wx (being x 'intervalMinSamples') columns appear in the WEIGHTMS HDU. 
-         // The Wx columns different from WmatrixSize will be filled in with 0's 
+         // All the Wx (being x 'intervalMinSamples') columns appear in the WEIGHTMS HDU.
          for (int i=0; i<weightpoints->size;i++)
          {
              snprintf(str_length,125,"%d",(int) gsl_vector_get(weightpoints,i));
@@ -2221,56 +2123,6 @@
              }
              gsl_matrix_free(weightMatrixes_matrix); 
          }
-         
-         // If the next 'if (matrixSize == 0)'+'else' (instead the previous 'for') only the WmatrixSize will be written in the noise spectrum FITS file.
-         // But it couldn't be read by getNoisespec
-         /*if (matrixSize == 0)
-          *                {
-          *                    for (int i=0; i<weightpoints->size;i++)
-          *                    {
-          *                            snprintf(str_length,125,"%d",(int) gsl_vector_get(weightpoints,i));
-          *                            strcpy(obj.nameCol,(string("W")+string(str_length)).c_str());
-          *                            obj.type = TDOUBLE;
-          *                            obj.unit = new char [255];
-          *                            strcpy(obj.unit," ");
-          *                            gsl_matrix_get_row(weightMatrixesrow,weightMatrixes,i);
-          *                            gsl_matrix *weightMatrixes_matrix = gsl_matrix_alloc(1,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
-          *                            temp = gsl_vector_subvector(weightMatrixesrow,0,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
-          *                            gsl_matrix_set_row(weightMatrixes_matrix,0,&temp.vector);
-          *                            if (writeFitsComplex(obj,weightMatrixes_matrix))
-          *                            {
-          *                                    message = "Cannot run routine writeFitsSimple for weightMatrixes_matrix";
-          *                                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-     }
-     gsl_matrix_free(weightMatrixes_matrix); 
-     }
-     }
-     else
-     {
-     for (int i=0; i<weightpoints->size;i++)
-     {
-     if (gsl_vector_get(weightpoints,i) == matrixSize)
-     {
-     snprintf(str_length,125,"%d",(int) gsl_vector_get(weightpoints,i));
-     strcpy(obj.nameCol,(string("W")+string(str_length)).c_str());
-     obj.type = TDOUBLE;
-     obj.unit = new char [255];
-     strcpy(obj.unit," ");
-     gsl_matrix_get_row(weightMatrixesrow,weightMatrixes,i);
-     gsl_matrix *weightMatrixes_matrix = gsl_matrix_alloc(1,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
-     temp = gsl_vector_subvector(weightMatrixesrow,0,gsl_vector_get(weightpoints,i)*gsl_vector_get(weightpoints,i));
-     gsl_matrix_set_row(weightMatrixes_matrix,0,&temp.vector);
-     if (writeFitsComplex(obj,weightMatrixes_matrix))
-     {
-     message = "Cannot run routine writeFitsSimple for weightMatrixes_matrix";
-     EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-     }
-     gsl_matrix_free(weightMatrixes_matrix); 
-     
-     break;
-     }    
-     }
-     }*/
          gsl_vector_free(weightMatrixesrow);
      }
      
@@ -2295,7 +2147,6 @@
   * - nPulses: Number of found pulses
   * - threshold: Threshold used to find the pulses (output parameter because it is necessary out of the function)
   * - scalefactor: Scale factor to calculate the LPF box-car length
-  * - sizepulsebins: Size of the pulse in samples
   * - samplingRate: Sampling rate
   * - samplesup: Number of consecutive samples over the threshold to locate a pulse ('samplesUp')
   * - nsgms: Number of Sigmas to establish the threshold
@@ -2314,7 +2165,6 @@
   double *threshold,
   
   double scalefactor,
-  int sizepulsebins,
   double samplingRate,
   
   int samplesup,
@@ -2822,12 +2672,6 @@
      }
      if (par->nSgms == 0) MyAssert(par->nSgms >= 1, (char *)("nSgms must be greater than 1"));
      
-     status=ape_trad_query_int("pulse_length", &par->pulse_length);
-     if (EXIT_SUCCESS!=status) {
-         message = "failed reading the pulse_length parameter";
-         EP_EXIT_ERROR(message,EPFAIL);
-     }
-     
      status=ape_trad_query_bool("weightMS", &par->weightMS);
      if (par->weightMS == 1)    weightMS = 1;
      
@@ -2854,18 +2698,7 @@
          EP_EXIT_ERROR(message,EPFAIL);
      }
      
-     status=ape_trad_query_int("matrixSize", &par->matrixSize);
-     if (EXIT_SUCCESS!=status) {
-         message = "failed reading the matrixSize parameter";
-         EP_EXIT_ERROR(message,EPFAIL);
-     }
-     if ((par->matrixSize < 0) || (par->matrixSize > 8192))
-     {
-         message = "matrixSize must be an integer in [0,8192]";
-         return(EXIT_FAILURE);
-     }
-     
-     status=ape_trad_query_bool("rmNoiseIntervals", &par->rmNoiseIntervals);
+    status=ape_trad_query_bool("rmNoiseIntervals", &par->rmNoiseIntervals);
      if (EXIT_SUCCESS!=status) {
          message = "failed reading the rmNoiseIntervals parameter";
          EP_EXIT_ERROR(message,EPFAIL);

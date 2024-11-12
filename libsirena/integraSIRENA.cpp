@@ -107,7 +107,6 @@
   *             It has been fixed in 'tesreconstruction' as 'SAB'
   * - oflength_strategy: Optimal Filter length Strategy: FREE, BYGRADE or FIXED
   * - oflength: Optimal filter length (taken into account if :option:`OFStrategy`=FIXED)
-  * - preBuffer: Some samples added or not before the starting time of a pulse (number of added samples read from the XML file)
   * - monoenergy: Monochromatic energy of input file in eV (only for library creation)
   * - addCOVAR: Add or not pre-calculated values related to COVAR reconstruction method in the library file (1/0) (only for library creation)
   * - addINTCOVAR: Add or not tpre-calculated values related to INT_COVAR reconstruction method in the library file (1/0) (only for library creation)
@@ -138,7 +137,7 @@
                                                 char* filter_domain, char* filter_method,
                                                 char* energy_method, double filtEev, double Ifit,
                                                 char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
-                                                char* oflength_strategy, int oflength, char preBuffer,
+                                                char* oflength_strategy, int oflength,
                                                 double monoenergy, char addCOVAR, char addINTCOVAR, char addOFWN,
                                                 int interm, char* const detectFile,
                                                 int errorT,
@@ -161,7 +160,7 @@
                                        filter_domain, filter_method,
                                        energy_method, filtEev, Ifit,
                                        ofnoise, lagsornot, nLags, Fitting35, ofiter, oflib,  ofinterp,
-                                       oflength_strategy, oflength, preBuffer,
+                                       oflength_strategy, oflength,
                                        monoenergy, addCOVAR, addINTCOVAR, addOFWN,
                                        interm, detectFile,
                                        errorT,
@@ -679,7 +678,6 @@
   * 	      It has been fixed in 'tesreconstruction' as 'SAB' (but it would be possible to work with 'MF')
   * - filtEeV: Energy of the filters of the library to be used to calculate energy
   * - lagsornot: Lags (1) or no lags (0)
-  * - preBuffer: Using preBuffer (1) or not using preBuffer (0)
   * - pBi: Vector with the preBuffer values read from the XML file
   * - posti: Vector with the post values read from the XML file
   * - status: Input/output status
@@ -841,21 +839,10 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          *status = EPFAIL; return(library_collection);
      }
      
-     if (reconstruct_init->preBuffer == 0)
+     if ((reconstruct_init->opmode == 0) && (gsl_vector_max(posti) != template_duration))
      {
-        if ((reconstruct_init->opmode == 0) && (reconstruct_init->pulse_length != template_duration))
-        {
-            EP_PRINT_ERROR("It is not possible the PulseLength provided because it does not match with the PulseLength (PULSE_column_length) of the existing library",EPFAIL);
-            *status=EPFAIL; return(library_collection);
-        }
-     }
-     else   // preBuffer = 1
-     {
-        if ((reconstruct_init->opmode == 0) && (gsl_vector_max(posti) != template_duration))
-        {
-            EP_PRINT_ERROR("It is not possible the post and pB values provided in the XML file because it does not match with the template duration of the existing library",EPFAIL);
-            *status=EPFAIL; return(library_collection);
-        }
+         EP_PRINT_ERROR("It is not possible the post and pB values provided in the XML file because it does not match with the template duration of the existing library",EPFAIL);
+         *status=EPFAIL; return(library_collection);
      }
      
      int ncols;
@@ -1356,503 +1343,247 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
      int lengthALL_PRCLOFWN = 0;
      for (int i=0;i<nOFs;i++)
      {
-        if (reconstruct_init->preBuffer == 0)
-        {
-            lengthALL_F = lengthALL_F + pow(2,floor(log2(reconstruct_init->pulse_length))-i)*2;
-            lengthALL_T = lengthALL_T + pow(2,floor(log2(reconstruct_init->pulse_length))-i);
-        }
-        else
-        {
-            lengthALL_F = lengthALL_F + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
-            lengthALL_T = lengthALL_T + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
-        }
+        lengthALL_F = lengthALL_F + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
+        lengthALL_T = lengthALL_T + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
      }
      lengthALL_PRCLCOV = lengthALL_F;
      lengthALL_PRCLOFWN = lengthALL_F;
 
-     // Added new code to handle the new HDUs FIXFILTF, FIXFILTT, PRCLCOV and PRCLOFWN
-     if ((reconstruct_init->opmode == 0) && (reconstruct_init->preBuffer == 0))
-     {
-         gsl_matrix *matrixALL_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
-         gsl_matrix *matrixALL_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
-         gsl_matrix *matrixALLab_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
-         gsl_matrix *matrixALLab_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
-         gsl_matrix *matrixALL_PRCLCOVx = gsl_matrix_alloc(ntemplates,lengthALL_PRCLCOV);
-         //gsl_matrix *matrixALL_PRCLOFWNx = gsl_matrix_alloc(ntemplates,lengthALL_PRCLOFWN);
-         
-         char str_length[125];
-         
-         gsl_matrix *matrixAux_OFFx = NULL;
-         gsl_matrix *matrixAuxab_OFFx = NULL;
-         int index = 0;
-         strcpy(obj.nameTable,"FIXFILTF");
-         obj.iniRow = 1;
-         obj.endRow = ntemplates;
-         for (int i=0;i<nOFs;i++)
-         {
-             snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(reconstruct_init->pulse_length))-i)));
-             matrixAux_OFFx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(reconstruct_init->pulse_length))-i)*2);
-             strcpy(obj.nameCol,(string("F")+string(str_length)).c_str());
-             if (readFitsComplex (obj,&matrixAux_OFFx))
-             {
-                 message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                 EP_PRINT_ERROR(message,*status);
-                 *status=EPFAIL; return(library_collection);
-             }
-             for (int j=0;j<(int)(matrixAux_OFFx->size1);j++)
-             {
-                 for (int k=0;k<(int)(matrixAux_OFFx->size2);k++)
-                 {
-                     gsl_matrix_set(matrixALL_OFFx,j,k+index,gsl_matrix_get(matrixAux_OFFx,j,k));
-                 }
-             }
-             
-             if (ntemplates > 1)
-             {
-                 strcpy(obj.nameCol,(string("ABF")+string(str_length)).c_str());
-                 matrixAuxab_OFFx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(reconstruct_init->pulse_length))-i)*2);
-                 if (readFitsComplex (obj,&matrixAuxab_OFFx))
-                 {
-                     message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                     EP_PRINT_ERROR(message,*status);
-                     *status=EPFAIL; return(library_collection);
-                 }
-                 for (int j=0;j<(int)(matrixAuxab_OFFx->size1);j++)
-                 {
-                     for (int k=0;k<(int)(matrixAuxab_OFFx->size2);k++)
-                     {
-                         gsl_matrix_set(matrixALLab_OFFx,j,k+index,gsl_matrix_get(matrixAuxab_OFFx,j,k));
-                     }
-                 }
-             }
-             
-             index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
-             
-             gsl_matrix_free(matrixAux_OFFx); matrixAux_OFFx = 0;
-             gsl_matrix_free(matrixAuxab_OFFx); matrixAuxab_OFFx = 0;
-         }
-         
-         // FIXFILTT HDU
-         strcpy(HDUname,"FIXFILTT");
-         if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
-         {
-             EP_PRINT_ERROR("Error moving to HDU FIXFILTT in library file",*status);
-             return(library_collection);
-         }
-         
-         gsl_matrix *matrixAux_OFTx = NULL;
-         gsl_matrix *matrixAuxab_OFTx = NULL;
-         index = 0;
-         strcpy(obj.nameTable,"FIXFILTT");
-         for (int i=0;i<nOFs;i++)
-         {
-             snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(reconstruct_init->pulse_length))-i)));
-             matrixAux_OFTx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(reconstruct_init->pulse_length))-i));
-             strcpy(obj.nameCol,(string("T")+string(str_length)).c_str());
-             if (readFitsComplex (obj,&matrixAux_OFTx))
-             {
-                 message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                 EP_PRINT_ERROR(message,*status);
-                 *status=EPFAIL; return(library_collection);
-             }
-             for (int j=0;j<(int)(matrixAux_OFTx->size1);j++)
-             {
-                 for (int k=0;k<(int)(matrixAux_OFTx->size2);k++)
-                 {
-                     gsl_matrix_set(matrixALL_OFTx,j,k+index,gsl_matrix_get(matrixAux_OFTx,j,k));
-                 }
-             }
-             if (ntemplates > 1)
-             {
-                 strcpy(obj.nameCol,(string("ABT")+string(str_length)).c_str());
-                 matrixAuxab_OFTx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(reconstruct_init->pulse_length))-i));
-                 if (readFitsComplex (obj,&matrixAuxab_OFTx))
-                 {
-                     message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                     EP_PRINT_ERROR(message,*status);
-                     *status=EPFAIL; return(library_collection);
-                 }
-                 for (int j=0;j<(int)(matrixAuxab_OFTx->size1);j++)
-                 {
-                     for (int k=0;k<(int)(matrixAuxab_OFTx->size2);k++)
-                     {
-                         gsl_matrix_set(matrixALLab_OFTx,j,k+index,gsl_matrix_get(matrixAuxab_OFTx,j,k));
-                     }
-                 }
-             }
-             
-             index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
-             
-             gsl_matrix_free(matrixAux_OFTx); matrixAux_OFTx = 0;
-             gsl_matrix_free(matrixAuxab_OFTx); matrixAuxab_OFTx = 0;
-         }
-         for (int it=0;it<ntemplates;it++)
-         {
-             library_collection->optimal_filtersFREQ[it].energy		= gsl_vector_get(library_collection->energies,it);
-             library_collection->optimal_filtersFREQ[it].ofilter_duration	= lengthALL_F;
-             library_collection->optimal_filtersFREQ[it].ofilter    		= gsl_vector_alloc(lengthALL_F);
-             
-             gsl_matrix_get_row(library_collection->optimal_filtersFREQ[it].ofilter,matrixALL_OFFx,it);
-             
-             library_collection->optimal_filtersTIME[it].energy		= gsl_vector_get(library_collection->energies,it);
-             library_collection->optimal_filtersTIME[it].ofilter_duration 	= lengthALL_T;
-             library_collection->optimal_filtersTIME[it].ofilter    		= gsl_vector_alloc(lengthALL_T);
-             
-             gsl_matrix_get_row(library_collection->optimal_filtersTIME[it].ofilter,matrixALL_OFTx,it);
-             
-             if (it < ntemplates-1)
-             {
-                 library_collection->optimal_filtersabFREQ[it].energy		= gsl_vector_get(library_collection->energies,it);
-                 library_collection->optimal_filtersabFREQ[it].ofilter_duration  = lengthALL_F;
-                 library_collection->optimal_filtersabFREQ[it].ofilter    	= gsl_vector_alloc(lengthALL_F);
-                 
-                 gsl_matrix_get_row(library_collection->optimal_filtersabFREQ[it].ofilter,matrixALLab_OFFx,it);
-                 
-                 library_collection->optimal_filtersabTIME[it].energy		= gsl_vector_get(library_collection->energies,it);
-                 library_collection->optimal_filtersabTIME[it].ofilter_duration	= lengthALL_F;
-                 library_collection->optimal_filtersabTIME[it].ofilter    	= gsl_vector_alloc(lengthALL_T);
-                 
-                 gsl_matrix_get_row(library_collection->optimal_filtersabTIME[it].ofilter,matrixALLab_OFTx,it);
-             }
-         }
-         
-         if (changedNames == 1)     strcpy(HDUname,"PRCLCOV");
-         else                       strcpy(HDUname,"PRECALWN");
-         if (reconstruct_init->addCOVAR == 1)
-         {
-             if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
-             {
-                 if (status != 0)
-                 {
-                     EP_PRINT_ERROR("The input addCOVAR parameter does not match the existing library",1);
-                     return(library_collection);
-                 }
-             }
-         }
-         if ((ntemplates > 1) && (reconstruct_init->addCOVAR == 1))
-         {
-             // PRCLCOV HDU
-             if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
-             {
-                 if (changedNames == 1)     EP_PRINT_ERROR("Error moving to HDU PRCLCOV in library file",*status);
-                 else                       EP_PRINT_ERROR("Error moving to HDU PRECALWN in library file",*status);
-                 return(library_collection);
-             }
-             
-             if (fits_get_num_cols(fptr,&nOFs, status))
-             {
-                 EP_PRINT_ERROR("Cannot get number of rows in library file",*status);
-                 return(library_collection);
-             }
-             nOFs = nOFs-1;		// -1 because the ENERGY column 
-             gsl_matrix *matrixAux_PRCLCOVx = NULL;
-             index = 0;
-             if (changedNames == 1) strcpy(obj.nameTable,"PRCLCOV");
-             else                   strcpy(obj.nameTable,"PRECALWN");
-             for (int i=0;i<nOFs;i++)
-             {
-                 snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(reconstruct_init->pulse_length))-i)));
-                 if (changedNames == 1) strcpy(obj.nameCol,(string("PCOV")+string(str_length)).c_str());
-                 else                   strcpy(obj.nameCol,(string("PCL")+string(str_length)).c_str());
-                 matrixAux_PRCLCOVx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(reconstruct_init->pulse_length))-i)*2);
-                 if (readFitsComplex (obj,&matrixAux_PRCLCOVx))
-                 {
-                     message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                     EP_PRINT_ERROR(message,*status);
-                     *status=EPFAIL; return(library_collection);
-                 }
-                 for (int j=0;j<(int)(matrixAux_PRCLCOVx->size1);j++)
-                 {
-                     for (int k=0;k<(int)(matrixAux_PRCLCOVx->size2);k++)
-                     {
-                         gsl_matrix_set(matrixALL_PRCLCOVx,j,k+index,gsl_matrix_get(matrixAux_PRCLCOVx,j,k));
-                     }
-                 }
-                 
-                 //index = index + pow(2,floor(log2(reconstruct_init->pulse_length))-i)*2;
-                 index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
+     // To handle HDUs: FIXFILTF, FIXFILTT, PRCLCOV and PRCLOFWN
+     gsl_matrix *matrixALL_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
+     gsl_matrix *matrixALL_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
+     gsl_matrix *matrixALLab_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
+     gsl_matrix *matrixALLab_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
+     gsl_matrix *matrixALL_PRCLCOVx = gsl_matrix_alloc(ntemplates,lengthALL_PRCLCOV);
 
-                 gsl_matrix_free(matrixAux_PRCLCOVx); matrixAux_PRCLCOVx = 0;
-             }
-             
-             gsl_vector *vectorAux_PRCLCOVx = gsl_vector_alloc(lengthALL_PRCLCOV);
-             library_collection->PRCLCOV = gsl_matrix_alloc(ntemplates,lengthALL_PRCLCOV);
-             for (int it=0;it<ntemplates;it++)
+     char str_length[125];
+
+     gsl_matrix *matrixAux_OFFx = NULL;
+     gsl_matrix *matrixAuxab_OFFx = NULL;
+     int index = 0;
+     strcpy(obj.nameTable,"FIXFILTF");
+     obj.iniRow = 1;
+     obj.endRow = ntemplates;
+     for (int i=0;i<(int)(posti->size);i++)
+     {
+         snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
+         matrixAux_OFFx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)*2);
+
+
+         strcpy(obj.nameCol,(string("F")+string(str_length)).c_str());
+         if (readFitsComplex (obj,&matrixAux_OFFx))
+         {
+             message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
+             EP_PRINT_ERROR(message,*status);
+             *status=EPFAIL; return(library_collection);
+         }
+         for (int j=0;j<(int)(matrixAux_OFFx->size1);j++)
+         {
+             for (int k=0;k<(int)(matrixAux_OFFx->size2);k++)
              {
-                 if (it < ntemplates-1)
+                 gsl_matrix_set(matrixALL_OFFx,j,k+index,gsl_matrix_get(matrixAux_OFFx,j,k));
+             }
+         }
+
+         if (ntemplates > 1)
+         {
+             strcpy(obj.nameCol,(string("ABF")+string(str_length)).c_str());
+             matrixAuxab_OFFx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)*2);
+             if (readFitsComplex (obj,&matrixAuxab_OFFx))
+             {
+                 message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
+                 EP_PRINT_ERROR(message,*status);
+                 *status=EPFAIL; return(library_collection);
+             }
+             for (int j=0;j<(int)(matrixAuxab_OFFx->size1);j++)
+             {
+                 for (int k=0;k<(int)(matrixAuxab_OFFx->size2);k++)
                  {
-                     gsl_matrix_get_row(vectorAux_PRCLCOVx,matrixALL_PRCLCOVx,it);
-                     gsl_matrix_set_row(library_collection->PRCLCOV,it,vectorAux_PRCLCOVx);
+                     gsl_matrix_set(matrixALLab_OFFx,j,k+index,gsl_matrix_get(matrixAuxab_OFFx,j,k));
                  }
              }
-             gsl_vector_free(vectorAux_PRCLCOVx); vectorAux_PRCLCOVx = 0;
          }
-         
-         gsl_matrix_free(matrixALL_OFFx); matrixALL_OFFx = 0;
-         gsl_matrix_free(matrixALL_OFTx); matrixALL_OFTx = 0;
-         gsl_matrix_free(matrixALLab_OFFx); matrixALLab_OFFx = 0;
-         gsl_matrix_free(matrixALLab_OFTx); matrixALLab_OFTx = 0;
-         gsl_matrix_free(matrixALL_PRCLCOVx); matrixALL_PRCLCOVx = 0;
+
+         //index = index + gsl_vector_get(posti,i)*2;
+         index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
+
+         gsl_matrix_free(matrixAux_OFFx); matrixAux_OFFx = 0;
+         gsl_matrix_free(matrixAuxab_OFFx); matrixAuxab_OFFx = 0;
      }
-     else if ((reconstruct_init->opmode == 0) && (reconstruct_init->preBuffer == 1))
+
+     // FIXFILTT HDU
+     strcpy(HDUname,"FIXFILTT");
+     if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
      {
-         /*// FIXFILTF HDU
-         strcpy(HDUname,"FIXFILTF");
-         if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
+         EP_PRINT_ERROR("Error moving to HDU FIXFILTT in library file",*status);
+         return(library_collection);
+     }
+
+     gsl_matrix *matrixAux_OFTx = NULL;
+     gsl_matrix *matrixAuxab_OFTx = NULL;
+     index = 0;
+     strcpy(obj.nameTable,"FIXFILTT");
+     for (int i=0;i<(int)(posti->size);i++)
+     {
+         snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
+         matrixAux_OFTx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i));
+
+         strcpy(obj.nameCol,(string("T")+string(str_length)).c_str());
+         if (readFitsComplex (obj,&matrixAux_OFTx))
          {
-             EP_PRINT_ERROR("Error moving to HDU FIXFILTF in library file",*status);
-             return(library_collection);
+             message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
+             EP_PRINT_ERROR(message,*status);
+             *status=EPFAIL; return(library_collection);
          }
-         
-         library_collection->nfixedfilters = posti->size;
-
-         int lengthALL_F = 0;
-         int lengthALL_T = 0;         
-
-         for (int i=0;i<(int)(posti->size);i++)
+         for (int j=0;j<(int)(matrixAux_OFTx->size1);j++)
          {
-             lengthALL_T = lengthALL_T + gsl_vector_get(posti,i);
+             for (int k=0;k<(int)(matrixAux_OFTx->size2);k++)
+             {
+                 gsl_matrix_set(matrixALL_OFTx,j,k+index,gsl_matrix_get(matrixAux_OFTx,j,k));
+             }
          }
-         
-         lengthALL_F = lengthALL_T*2;*/
-         
-         gsl_matrix *matrixALL_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
-         gsl_matrix *matrixALL_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
-         gsl_matrix *matrixALLab_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
-         gsl_matrix *matrixALLab_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
-         gsl_matrix *matrixALL_PRCLCOVx = gsl_matrix_alloc(ntemplates,lengthALL_PRCLCOV);
-         
-         char str_length[125];
-         
-         gsl_matrix *matrixAux_OFFx = NULL;
-         gsl_matrix *matrixAuxab_OFFx = NULL;
-         int index = 0;
-         strcpy(obj.nameTable,"FIXFILTF");
-         obj.iniRow = 1;
-         obj.endRow = ntemplates;
-         for (int i=0;i<(int)(posti->size);i++)
-         {
-             snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
-             matrixAux_OFFx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)*2);
-             
 
-             strcpy(obj.nameCol,(string("F")+string(str_length)).c_str());
-             if (readFitsComplex (obj,&matrixAux_OFFx))
+         if (ntemplates > 1)
+         {
+             strcpy(obj.nameCol,(string("ABT")+string(str_length)).c_str());
+             matrixAuxab_OFTx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i));
+             if (readFitsComplex (obj,&matrixAuxab_OFTx))
              {
                  message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
                  EP_PRINT_ERROR(message,*status);
                  *status=EPFAIL; return(library_collection);
              }
-             for (int j=0;j<(int)(matrixAux_OFFx->size1);j++)
+             for (int j=0;j<(int)(matrixAuxab_OFTx->size1);j++)
              {
-                 for (int k=0;k<(int)(matrixAux_OFFx->size2);k++)
+                 for (int k=0;k<(int)(matrixAuxab_OFTx->size2);k++)
                  {
-                     gsl_matrix_set(matrixALL_OFFx,j,k+index,gsl_matrix_get(matrixAux_OFFx,j,k));
+                     gsl_matrix_set(matrixALLab_OFTx,j,k+index,gsl_matrix_get(matrixAuxab_OFTx,j,k));
                  }
              }
-             
-             /*if (ntemplates > 1)
-             {
-                 *status = 1;
-                 EP_PRINT_ERROR("Code not prepared for ntemplates>1 and preBuffer=yes",*status);
-                 *status=EPFAIL; return(library_collection);
-             }*/
-             if (ntemplates > 1)
-             {
-                 strcpy(obj.nameCol,(string("ABF")+string(str_length)).c_str());
-                 matrixAuxab_OFFx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)*2);
-                 if (readFitsComplex (obj,&matrixAuxab_OFFx))
-                 {
-                     message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                     EP_PRINT_ERROR(message,*status);
-                     *status=EPFAIL; return(library_collection);
-                 }
-                 for (int j=0;j<(int)(matrixAuxab_OFFx->size1);j++)
-                 {
-                     for (int k=0;k<(int)(matrixAuxab_OFFx->size2);k++)
-                     {
-                         gsl_matrix_set(matrixALLab_OFFx,j,k+index,gsl_matrix_get(matrixAuxab_OFFx,j,k));
-                     }
-                 }
-             }
-
-             //index = index + gsl_vector_get(posti,i)*2;
-             index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
-             
-             gsl_matrix_free(matrixAux_OFFx); matrixAux_OFFx = 0;
-             gsl_matrix_free(matrixAuxab_OFFx); matrixAuxab_OFFx = 0;
          }
 
-         // FIXFILTT HDU
-         strcpy(HDUname,"FIXFILTT");
+         //index = index + gsl_vector_get(posti,i);
+         index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
+
+         gsl_matrix_free(matrixAux_OFTx); matrixAux_OFTx = 0;
+         gsl_matrix_free(matrixAuxab_OFTx); matrixAux_OFTx = 0;
+     }
+     for (int it=0;it<ntemplates;it++)
+     {
+         library_collection->optimal_filtersFREQ[it].energy		= gsl_vector_get(library_collection->energies,it);
+         library_collection->optimal_filtersFREQ[it].ofilter_duration	= lengthALL_F;
+         library_collection->optimal_filtersFREQ[it].ofilter    		= gsl_vector_alloc(lengthALL_F);
+
+         gsl_matrix_get_row(library_collection->optimal_filtersFREQ[it].ofilter,matrixALL_OFFx,it);
+
+         library_collection->optimal_filtersTIME[it].energy		= gsl_vector_get(library_collection->energies,it);
+         library_collection->optimal_filtersTIME[it].ofilter_duration 	= lengthALL_T;
+         library_collection->optimal_filtersTIME[it].ofilter    		= gsl_vector_alloc(lengthALL_T);
+
+         gsl_matrix_get_row(library_collection->optimal_filtersTIME[it].ofilter,matrixALL_OFTx,it);
+
+         if (it < ntemplates-1)
+         {
+             library_collection->optimal_filtersabFREQ[it].energy		= gsl_vector_get(library_collection->energies,it);
+             library_collection->optimal_filtersabFREQ[it].ofilter_duration  = lengthALL_F;
+             library_collection->optimal_filtersabFREQ[it].ofilter    	= gsl_vector_alloc(lengthALL_F);
+
+             gsl_matrix_get_row(library_collection->optimal_filtersabFREQ[it].ofilter,matrixALLab_OFFx,it);
+
+             library_collection->optimal_filtersabTIME[it].energy		= gsl_vector_get(library_collection->energies,it);
+             library_collection->optimal_filtersabTIME[it].ofilter_duration	= lengthALL_F;
+             library_collection->optimal_filtersabTIME[it].ofilter    	= gsl_vector_alloc(lengthALL_T);
+
+             gsl_matrix_get_row(library_collection->optimal_filtersabTIME[it].ofilter,matrixALLab_OFTx,it);
+         }
+     }
+
+     if (changedNames == 1)     strcpy(HDUname,"PRCLCOV");
+     else                       strcpy(HDUname,"PRECALWN");
+     if (reconstruct_init->addCOVAR == 1)
+     {
          if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
          {
-             EP_PRINT_ERROR("Error moving to HDU FIXFILTT in library file",*status);
+             if (status != 0)
+             {
+                 EP_PRINT_ERROR("The input addCOVAR parameter does not match the existing library",1);
+                 return(library_collection);
+             }
+         }
+     }
+     if ((ntemplates > 1) && (reconstruct_init->addCOVAR == 1))
+     {
+         // PRCLCOV HDU
+         if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
+         {
+             if (changedNames == 1)     EP_PRINT_ERROR("Error moving to HDU PRCLCOV in library file",*status);
+             else                       EP_PRINT_ERROR("Error moving to HDU PRECALWN in library file",*status);
              return(library_collection);
          }
-         
-         gsl_matrix *matrixAux_OFTx = NULL;
-         gsl_matrix *matrixAuxab_OFTx = NULL;
+
+         if (fits_get_num_cols(fptr,&nOFs, status))
+         {
+             EP_PRINT_ERROR("Cannot get number of rows in library file",*status);
+             return(library_collection);
+         }
+         nOFs = nOFs-1;		// -1 because the ENERGY column
+         gsl_matrix *matrixAux_PRCLCOVx = NULL;
          index = 0;
-         strcpy(obj.nameTable,"FIXFILTT");
-         for (int i=0;i<(int)(posti->size);i++)
+         if (changedNames == 1) strcpy(obj.nameTable,"PRCLCOV");
+         else                   strcpy(obj.nameTable,"PRECALWN");
+         for (int i=0;i<nOFs;i++)
          {
-             snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
-             matrixAux_OFTx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i));
-             
-             strcpy(obj.nameCol,(string("T")+string(str_length)).c_str());
-             if (readFitsComplex (obj,&matrixAux_OFTx))
-             {
-                 message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                 EP_PRINT_ERROR(message,*status);
-                 *status=EPFAIL; return(library_collection);
-             }
-             for (int j=0;j<(int)(matrixAux_OFTx->size1);j++)
-             {
-                 for (int k=0;k<(int)(matrixAux_OFTx->size2);k++)
-                 {
-                     gsl_matrix_set(matrixALL_OFTx,j,k+index,gsl_matrix_get(matrixAux_OFTx,j,k));
-                 }
-             }
-             
-             /*if (ntemplates > 1)
-             {
-                 *status = 1;
-                 EP_PRINT_ERROR("Code not prepared for ntemplates>1 and preBuffer=yes",*status);
-                 *status=EPFAIL; return(library_collection);
-             }*/
-             if (ntemplates > 1)
-             {
-                 strcpy(obj.nameCol,(string("ABT")+string(str_length)).c_str());
-                 matrixAuxab_OFTx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i));
-                 if (readFitsComplex (obj,&matrixAuxab_OFTx))
-                 {
-                     message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                     EP_PRINT_ERROR(message,*status);
-                     *status=EPFAIL; return(library_collection);
-                 }
-                 for (int j=0;j<(int)(matrixAuxab_OFTx->size1);j++)
-                 {
-                     for (int k=0;k<(int)(matrixAuxab_OFTx->size2);k++)
-                     {
-                         gsl_matrix_set(matrixALLab_OFTx,j,k+index,gsl_matrix_get(matrixAuxab_OFTx,j,k));
-                     }
-                 }
-             }
-             
-             //index = index + gsl_vector_get(posti,i);
-             index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
-             
-             gsl_matrix_free(matrixAux_OFTx); matrixAux_OFTx = 0;
-             gsl_matrix_free(matrixAuxab_OFTx); matrixAux_OFTx = 0;
-         }
-         for (int it=0;it<ntemplates;it++)
-         {
-             library_collection->optimal_filtersFREQ[it].energy		= gsl_vector_get(library_collection->energies,it);
-             library_collection->optimal_filtersFREQ[it].ofilter_duration	= lengthALL_F;
-             library_collection->optimal_filtersFREQ[it].ofilter    		= gsl_vector_alloc(lengthALL_F);
-             
-             gsl_matrix_get_row(library_collection->optimal_filtersFREQ[it].ofilter,matrixALL_OFFx,it);
-             
-             library_collection->optimal_filtersTIME[it].energy		= gsl_vector_get(library_collection->energies,it);
-             library_collection->optimal_filtersTIME[it].ofilter_duration 	= lengthALL_T;
-             library_collection->optimal_filtersTIME[it].ofilter    		= gsl_vector_alloc(lengthALL_T);
-             
-             gsl_matrix_get_row(library_collection->optimal_filtersTIME[it].ofilter,matrixALL_OFTx,it);
-             
-             if (it < ntemplates-1)
-             {
-                 library_collection->optimal_filtersabFREQ[it].energy		= gsl_vector_get(library_collection->energies,it);
-                 library_collection->optimal_filtersabFREQ[it].ofilter_duration  = lengthALL_F;
-                 library_collection->optimal_filtersabFREQ[it].ofilter    	= gsl_vector_alloc(lengthALL_F);
-                 
-                 gsl_matrix_get_row(library_collection->optimal_filtersabFREQ[it].ofilter,matrixALLab_OFFx,it);
-                 
-                 library_collection->optimal_filtersabTIME[it].energy		= gsl_vector_get(library_collection->energies,it);
-                 library_collection->optimal_filtersabTIME[it].ofilter_duration	= lengthALL_F;
-                 library_collection->optimal_filtersabTIME[it].ofilter    	= gsl_vector_alloc(lengthALL_T);
-                 
-                 gsl_matrix_get_row(library_collection->optimal_filtersabTIME[it].ofilter,matrixALLab_OFTx,it);
-             }
-         }
-
-         if (changedNames == 1)     strcpy(HDUname,"PRCLCOV");
-         else                       strcpy(HDUname,"PRECALWN");
-         if (reconstruct_init->addCOVAR == 1)
-         {
-             if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
-             {
-                 if (status != 0)
-                 {
-                     EP_PRINT_ERROR("The input addCOVAR parameter does not match the existing library",1);
-                     return(library_collection);
-                 }
-             }
-         }
-         if ((ntemplates > 1) && (reconstruct_init->addCOVAR == 1))
-         {
-             // PRCLCOV HDU
-             if (fits_movnam_hdu(fptr, ANY_HDU,HDUname, extver, status))
-             {
-                 if (changedNames == 1)     EP_PRINT_ERROR("Error moving to HDU PRCLCOV in library file",*status);
-                 else                       EP_PRINT_ERROR("Error moving to HDU PRECALWN in library file",*status);
-                 return(library_collection);
-             }
-
-             if (fits_get_num_cols(fptr,&nOFs, status))
-             {
-                 EP_PRINT_ERROR("Cannot get number of rows in library file",*status);
-                 return(library_collection);
-             }
-             nOFs = nOFs-1;		// -1 because the ENERGY column
-             gsl_matrix *matrixAux_PRCLCOVx = NULL;
-             index = 0;
-             if (changedNames == 1) strcpy(obj.nameTable,"PRCLCOV");
-             else                   strcpy(obj.nameTable,"PRECALWN");
-             for (int i=0;i<nOFs;i++)
+             if (changedNames == 1)
              {
                  snprintf(str_length,125,"%d",(int) gsl_matrix_get(reconstruct_init->grading->gradeData,i,1));
-                 if (changedNames == 1) strcpy(obj.nameCol,(string("PCOV")+string(str_length)).c_str());
-                 else                   strcpy(obj.nameCol,(string("PCL")+string(str_length)).c_str());
+                 strcpy(obj.nameCol,(string("PCOV")+string(str_length)).c_str());
                  matrixAux_PRCLCOVx = gsl_matrix_alloc(ntemplates,gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2);
-                 if (readFitsComplex (obj,&matrixAux_PRCLCOVx))
-                 {
-                     message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                     EP_PRINT_ERROR(message,*status);
-                     *status=EPFAIL; return(library_collection);
-                 }
-                 for (int j=0;j<(int)(matrixAux_PRCLCOVx->size1);j++)
-                 {
-                     for (int k=0;k<(int)(matrixAux_PRCLCOVx->size2);k++)
-                     {
-                         gsl_matrix_set(matrixALL_PRCLCOVx,j,k+index,gsl_matrix_get(matrixAux_PRCLCOVx,j,k));
-                     }
-                 }
-
-                 index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
-
-                 gsl_matrix_free(matrixAux_PRCLCOVx); matrixAux_PRCLCOVx = 0;
              }
-
-             gsl_vector *vectorAux_PRCLCOVx = gsl_vector_alloc(lengthALL_PRCLCOV);
-             library_collection->PRCLCOV = gsl_matrix_alloc(ntemplates,lengthALL_PRCLCOV);
-             for (int it=0;it<ntemplates;it++)
+             else
              {
-                 if (it < ntemplates-1)
+                 snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
+                 strcpy(obj.nameCol,(string("PCL")+string(str_length)).c_str());
+                 matrixAux_PRCLCOVx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i)*2);
+             }
+
+             if (readFitsComplex (obj,&matrixAux_PRCLCOVx))
+             {
+                 message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
+                 EP_PRINT_ERROR(message,*status);
+                 *status=EPFAIL; return(library_collection);
+             }
+             for (int j=0;j<(int)(matrixAux_PRCLCOVx->size1);j++)
+             {
+                 for (int k=0;k<(int)(matrixAux_PRCLCOVx->size2);k++)
                  {
-                     gsl_matrix_get_row(vectorAux_PRCLCOVx,matrixALL_PRCLCOVx,it);
-                     gsl_matrix_set_row(library_collection->PRCLCOV,it,vectorAux_PRCLCOVx);
+                     gsl_matrix_set(matrixALL_PRCLCOVx,j,k+index,gsl_matrix_get(matrixAux_PRCLCOVx,j,k));
                  }
              }
-             gsl_vector_free(vectorAux_PRCLCOVx); vectorAux_PRCLCOVx = 0;
+
+             index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
+
+             gsl_matrix_free(matrixAux_PRCLCOVx); matrixAux_PRCLCOVx = 0;
          }
-         
-         gsl_matrix_free(matrixALL_OFFx); matrixALL_OFFx = 0;
-         gsl_matrix_free(matrixALL_OFTx); matrixALL_OFTx = 0;
-         gsl_matrix_free(matrixALLab_OFFx); matrixALLab_OFFx = 0;
-         gsl_matrix_free(matrixALLab_OFTx); matrixALLab_OFTx = 0;
-         gsl_matrix_free(matrixALL_PRCLCOVx); matrixALL_PRCLCOVx = 0;
+
+         gsl_vector *vectorAux_PRCLCOVx = gsl_vector_alloc(lengthALL_PRCLCOV);
+         library_collection->PRCLCOV = gsl_matrix_alloc(ntemplates,lengthALL_PRCLCOV);
+         for (int it=0;it<ntemplates;it++)
+         {
+             if (it < ntemplates-1)
+             {
+                 gsl_matrix_get_row(vectorAux_PRCLCOVx,matrixALL_PRCLCOVx,it);
+                 gsl_matrix_set_row(library_collection->PRCLCOV,it,vectorAux_PRCLCOVx);
+             }
+         }
+         gsl_vector_free(vectorAux_PRCLCOVx); vectorAux_PRCLCOVx = 0;
      }
+
+     gsl_matrix_free(matrixALL_OFFx); matrixALL_OFFx = 0;
+     gsl_matrix_free(matrixALL_OFTx); matrixALL_OFTx = 0;
+     gsl_matrix_free(matrixALLab_OFFx); matrixALLab_OFFx = 0;
+     gsl_matrix_free(matrixALLab_OFTx); matrixALLab_OFTx = 0;
+     gsl_matrix_free(matrixALL_PRCLCOVx); matrixALL_PRCLCOVx = 0;
+
 
      if ((reconstruct_init->opmode == 0) && (reconstruct_init->addOFWN == 1))
      {
@@ -1884,16 +1615,9 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          char str_length[125];
          for (int i=0;i<nCols;i++)
          {
-             if (reconstruct_init->preBuffer == 0)
-             {
-                snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(reconstruct_init->pulse_length))-i)));
-                matrixAux_PRCLOFWNx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(reconstruct_init->pulse_length))-i)*2);
-             }
-             else if (reconstruct_init->preBuffer == 1)
-             {
-                 snprintf(str_length,125,"%d",(int) (gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)));
-                 matrixAux_PRCLOFWNx = gsl_matrix_alloc(ntemplates,gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2);
-             }
+             snprintf(str_length,125,"%d",(int) (gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)));
+             matrixAux_PRCLOFWNx = gsl_matrix_alloc(ntemplates,gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2);
+
              if (changedNames == 1) strcpy(obj.nameCol,(string("OFWN")+string(str_length)).c_str());
              else                   strcpy(obj.nameCol,(string("OFW")+string(str_length)).c_str());
              if (readFitsComplex (obj,&matrixAux_PRCLOFWNx))
@@ -1957,22 +1681,8 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                  return(library_collection);
              }
              
-             if (reconstruct_init->preBuffer == 0)
-             {
-                if (ntemplates == 1)
-                {
-                    int nOFs_aux;
-                    nOFs_aux = nOFs-1;		// -1 because the ENERGYcolumn
-                    if ((nOFs_aux == floor(log2(template_duration))) || (nOFs_aux == 1 + floor(log2(template_duration))))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
-                    else                                                                            							nOFs = (nOFs-1)/2;	// /2 because the AB column
-                }
-                else 								                                                                            nOFs = (nOFs-1)/2;	// /2 because the AB column
-             }
-             else // preBuffer =1
-             {
-                 if (ntemplates == 1)   nOFs = nOFs-1;		// -1 because the ENERGYcolumn
-                 else                   nOFs = (nOFs-1)/2;	// /2 because the AB column             
-             }
+             if (ntemplates == 1)   nOFs = nOFs-1;		// -1 because the ENERGYcolumn
+             else                   nOFs = (nOFs-1)/2;	// /2 because the AB column
              
              if (nOFs == 0)	
              {
@@ -1983,28 +1693,18 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              
              int lengthALL_F = 0;
              int lengthALL_T = 0;
-             if (reconstruct_init->preBuffer == 0)
+             if (nOFs != (int)(posti->size))
              {
-                 for (int i=0;i<nOFs;i++)
-                {
-                    lengthALL_F = lengthALL_F + pow(2,floor(log2(template_duration))-i)*2;
-                }
+                 EP_PRINT_ERROR("The number of optimal filters in the library does not match the grading info in the XML file",EPFAIL);
+                 *status=EPFAIL; return(library_collection);
              }
-             else  // preBuffer = 1
+             for (int i=0;i<(int)(posti->size);i++)
              {
-                if (nOFs != (int)(posti->size))
-                {
-                    EP_PRINT_ERROR("The number of optimal filters in the library does not match the grading info in the XML file",EPFAIL); 
-                    *status=EPFAIL; return(library_collection);
-                }
-                for (int i=0;i<(int)(posti->size);i++)
-                {
-                    lengthALL_T = lengthALL_T + gsl_vector_get(posti,i) + gsl_vector_get(pBi,i);
-                }
-                
-                lengthALL_F = lengthALL_T*2;  
+                 lengthALL_T = lengthALL_T + gsl_vector_get(posti,i) + gsl_vector_get(pBi,i);
              }
-                  
+
+             lengthALL_F = lengthALL_T*2;
+
              strcpy(obj.nameTable,"FIXFILTF");
              
              if (strcmp(reconstruct_init->OFInterp,"MF") == 0)
@@ -2012,60 +1712,29 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                  gsl_matrix *matrixALL_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
                  gsl_matrix *matrixAux_OFFx = NULL;
                  
-                 if (reconstruct_init->preBuffer == 0)
+                 for (int i=0;i<nOFs;i++)
                  {
-                    for (int i=0;i<nOFs;i++)
-                    {
-                        snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
-                        matrixAux_OFFx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i)*2);
-                        strcpy(obj.nameCol,(string("F")+string(str_length)).c_str());
-                        if (readFitsComplex (obj,&matrixAux_OFFx))
-                        {
-                            message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                            EP_PRINT_ERROR(message,*status);
-                            *status=EPFAIL; return(library_collection);
-                        }
-                        for (int j=0;j<(int)(matrixAux_OFFx->size1);j++)
-                        {
-                            for (int k=0;k<(int)(matrixAux_OFFx->size2);k++)
-                            {
-                                gsl_matrix_set(matrixALL_OFFx,j,k+index,gsl_matrix_get(matrixAux_OFFx,j,k));
-                            }
-                        }
-                        
-                        //index = index + pow(2,floor(log2(template_duration))-i)*2;*/
-                        index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
-                        
-                        gsl_matrix_free(matrixAux_OFFx); matrixAux_OFFx = 0;
-                    }
-                 }
-                 else // preBuffer=1
-                 {
-                    for (int i=0;i<nOFs;i++)
-                    {
-                        snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
-                        matrixAux_OFFx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)*2);
-                        
-                        strcpy(obj.nameCol,(string("F")+string(str_length)).c_str());
-                        if (readFitsComplex (obj,&matrixAux_OFFx))
-                        {
-                            message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                            EP_PRINT_ERROR(message,*status);
-                            *status=EPFAIL; return(library_collection);
-                        }
-                        for (int j=0;j<(int)(matrixAux_OFFx->size1);j++)
-                        {
-                            for (int k=0;k<(int)(matrixAux_OFFx->size2);k++)
-                            {
-                                gsl_matrix_set(matrixALL_OFFx,j,k+index,gsl_matrix_get(matrixAux_OFFx,j,k));
-                            }
-                        }
-                        
-                        //index = index + gsl_vector_get(posti,i)*2;
-                        index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
-                        
-                        gsl_matrix_free(matrixAux_OFFx); matrixAux_OFFx = 0;
-                    }
+                     snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
+                     matrixAux_OFFx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)*2);
+
+                     strcpy(obj.nameCol,(string("F")+string(str_length)).c_str());
+                     if (readFitsComplex (obj,&matrixAux_OFFx))
+                     {
+                         message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
+                         EP_PRINT_ERROR(message,*status);
+                         *status=EPFAIL; return(library_collection);
+                     }
+                     for (int j=0;j<(int)(matrixAux_OFFx->size1);j++)
+                     {
+                         for (int k=0;k<(int)(matrixAux_OFFx->size2);k++)
+                         {
+                             gsl_matrix_set(matrixALL_OFFx,j,k+index,gsl_matrix_get(matrixAux_OFFx,j,k));
+                         }
+                     }
+
+                     index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
+
+                     gsl_matrix_free(matrixAux_OFFx); matrixAux_OFFx = 0;
                  }
                  
                  for (int it=0;it<ntemplates;it++)
@@ -2084,60 +1753,30 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                  gsl_matrix *matrixALLab_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
                  gsl_matrix *matrixAuxab_OFFx = NULL;
                  
-                 if (reconstruct_init->preBuffer == 0)
+                 for (int i=0;i<nOFs;i++)
                  {
-                    for (int i=0;i<nOFs;i++)
-                    {
-                        snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
-                        matrixAuxab_OFFx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i)*2);
-                        strcpy(obj.nameCol,(string("ABF")+string(str_length)).c_str());
-                        if (readFitsComplex (obj,&matrixAuxab_OFFx))
-                        {
-                            message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                            EP_PRINT_ERROR(message,*status);
-                            *status=EPFAIL; return(library_collection);
-                        }
-                        for (int j=0;j<(int)(matrixAuxab_OFFx->size1);j++)
-                        {
-                            for (int k=0;k<(int)(matrixAuxab_OFFx->size2);k++)
-                            {
-                                gsl_matrix_set(matrixALLab_OFFx,j,k+index,gsl_matrix_get(matrixAuxab_OFFx,j,k));
-                            }
-                        }
-                        
-                        //index = index + pow(2,floor(log2(template_duration))-i)*2;*/
-                        index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
-                        
-                        gsl_matrix_free(matrixAuxab_OFFx); matrixAuxab_OFFx = 0;
-                    }
-                 }
-                 else //preBuffer = 1
-                 {
-                     for (int i=0;i<nOFs;i++)
+                     snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
+                     matrixAuxab_OFFx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)*2);
+
+                     strcpy(obj.nameCol,(string("ABF")+string(str_length)).c_str());
+                     if (readFitsComplex (obj,&matrixAuxab_OFFx))
                      {
-                         snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
-                         matrixAuxab_OFFx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)*2);
-                         
-                         strcpy(obj.nameCol,(string("ABF")+string(str_length)).c_str());
-                         if (readFitsComplex (obj,&matrixAuxab_OFFx))
-                         {
-                             message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                             EP_PRINT_ERROR(message,*status);
-                             *status=EPFAIL; return(library_collection);
-                         }
-                         for (int j=0;j<(int)(matrixAuxab_OFFx->size1);j++)
-                         {
-                             for (int k=0;k<(int)(matrixAuxab_OFFx->size2);k++)
-                             {
-                                 gsl_matrix_set(matrixALLab_OFFx,j,k+index,gsl_matrix_get(matrixAuxab_OFFx,j,k));
-                             }
-                         }
-                         
-                         //index = index + gsl_vector_get(posti,i)*2;
-                         index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
-                         
-                         gsl_matrix_free(matrixAuxab_OFFx); matrixAuxab_OFFx = 0;
+                         message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
+                         EP_PRINT_ERROR(message,*status);
+                         *status=EPFAIL; return(library_collection);
                      }
+                     for (int j=0;j<(int)(matrixAuxab_OFFx->size1);j++)
+                     {
+                         for (int k=0;k<(int)(matrixAuxab_OFFx->size2);k++)
+                         {
+                             gsl_matrix_set(matrixALLab_OFFx,j,k+index,gsl_matrix_get(matrixAuxab_OFFx,j,k));
+                         }
+                     }
+
+                     //index = index + gsl_vector_get(posti,i)*2;
+                     index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
+
+                     gsl_matrix_free(matrixAuxab_OFFx); matrixAuxab_OFFx = 0;
                  }
                  
                  for (int it=0;it<ntemplates;it++)
@@ -2170,22 +1809,8 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                  return(library_collection);
              }
              
-             if (reconstruct_init->preBuffer == 0)
-             {
-                if (ntemplates == 1)	
-                {
-                    int nOFs_aux;
-                    nOFs_aux = nOFs-1;		// -1 because the ENERGYcolumn
-                    if ((nOFs_aux == floor(log2(template_duration))) || (nOFs_aux == 1 + floor(log2(template_duration))))		nOFs = nOFs-1;		// -1 because the ENERGYcolumn
-                    else 								nOFs = (nOFs-1)/2;	// /2 because the AB column
-                }
-                else	  nOFs = (nOFs-1)/2;	// /2 because the AB column
-             }
-             else // preBuffer = 1
-             {
-                 if (ntemplates == 1)   nOFs = nOFs-1;		// -1 because the ENERGYcolumn
-                 else                   nOFs = (nOFs-1)/2;	// /2 because the AB column
-             }
+             if (ntemplates == 1)   nOFs = nOFs-1;		// -1 because the ENERGYcolumn
+             else                   nOFs = (nOFs-1)/2;	// /2 because the AB column
 
              if (nOFs == 0)	
              {
@@ -2195,24 +1820,14 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              library_collection->nfixedfilters = nOFs;
              
              int lengthALL_T = 0;
-             if (reconstruct_init->preBuffer == 0)
+             if (nOFs != (int)(posti->size))
              {
-                for (int i=0;i<nOFs;i++)
-                {
-                    lengthALL_T = lengthALL_T + pow(2,floor(log2(template_duration))-i);
-                }
+                 EP_PRINT_ERROR("The number of optimal filters in the library does not match the grading info in the XML file",EPFAIL);
+                 *status=EPFAIL; return(library_collection);
              }
-             else // preBuffer =1
+             for (int i=0;i<nOFs;i++)
              {
-                if (nOFs != (int)(posti->size))
-                {
-                    EP_PRINT_ERROR("The number of optimal filters in the library does not match the grading info in the XML file",EPFAIL); 
-                    *status=EPFAIL; return(library_collection);
-                }
-                for (int i=0;i<nOFs;i++)
-                {
-                    lengthALL_T = lengthALL_T + gsl_vector_get(posti,i) + gsl_vector_get(pBi,i);
-                }
+                 lengthALL_T = lengthALL_T + gsl_vector_get(posti,i) + gsl_vector_get(pBi,i);
              }
              
              strcpy(obj.nameTable,"FIXFILTT");
@@ -2221,62 +1836,31 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                  gsl_matrix *matrixALL_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
                  gsl_matrix *matrixAux_OFTx = NULL;
                  
-                 if (reconstruct_init->preBuffer == 0)
+                 for (int i=0;i<nOFs;i++)
                  {
-                    for (int i=0;i<nOFs;i++)
-                    {
-                        snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
-                        matrixAux_OFTx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i));
-                        strcpy(obj.nameCol,(string("T")+string(str_length)).c_str());
-                        if (readFitsComplex (obj,&matrixAux_OFTx))
-                        {
-                            message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                            EP_PRINT_ERROR(message,*status);
-                            *status=EPFAIL; return(library_collection);
-                        }
-                        
-                        for (int j=0;j<(int)(matrixAux_OFTx->size1);j++)
-                        {
-                            for (int k=0;k<(int)(matrixAux_OFTx->size2);k++)
-                            {
-                                gsl_matrix_set(matrixALL_OFTx,j,k+index,gsl_matrix_get(matrixAux_OFTx,j,k));
-                            }
-                        }
-                        
-                       //index = index + pow(2,floor(log2(template_duration))-i);*/
-                       index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
-                        
-                        gsl_matrix_free(matrixAux_OFTx); matrixAux_OFTx = 0;
-                    }
-                 }
-                 else // preBuffer =1
-                 {
-                    for (int i=0;i<nOFs;i++)
-                    {
-                        snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
-                        matrixAux_OFTx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i));
-                        
-                        strcpy(obj.nameCol,(string("T")+string(str_length)).c_str());
-                        if (readFitsComplex (obj,&matrixAux_OFTx))
-                        {
-                            message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                            EP_PRINT_ERROR(message,*status);
-                            *status=EPFAIL; return(library_collection);
-                        }
-                        
-                        for (int j=0;j<(int)(matrixAux_OFTx->size1);j++)
-                        {
-                            for (int k=0;k<(int)(matrixAux_OFTx->size2);k++)
-                            {
-                                gsl_matrix_set(matrixALL_OFTx,j,k+index,gsl_matrix_get(matrixAux_OFTx,j,k));
-                            }
-                        }
-                        
-                        //index = index + gsl_vector_get(posti,i);
-                        index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
-                        
-                        gsl_matrix_free(matrixAux_OFTx); matrixAux_OFTx = 0;
-                    }
+                     snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
+                     matrixAux_OFTx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i));
+
+                     strcpy(obj.nameCol,(string("T")+string(str_length)).c_str());
+                     if (readFitsComplex (obj,&matrixAux_OFTx))
+                     {
+                         message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
+                         EP_PRINT_ERROR(message,*status);
+                         *status=EPFAIL; return(library_collection);
+                     }
+
+                     for (int j=0;j<(int)(matrixAux_OFTx->size1);j++)
+                     {
+                         for (int k=0;k<(int)(matrixAux_OFTx->size2);k++)
+                         {
+                             gsl_matrix_set(matrixALL_OFTx,j,k+index,gsl_matrix_get(matrixAux_OFTx,j,k));
+                         }
+                     }
+
+                     //index = index + gsl_vector_get(posti,i);
+                     index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
+
+                     gsl_matrix_free(matrixAux_OFTx); matrixAux_OFTx = 0;
                  }
                  
                  for (int it=0;it<ntemplates;it++)
@@ -2295,60 +1879,30 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                  gsl_matrix *matrixALLab_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
                  gsl_matrix *matrixAuxab_OFTx = NULL;
                  
-                 if (reconstruct_init->preBuffer == 0)
+                 for (int i=0;i<nOFs;i++)
                  {
-                    for (int i=0;i<nOFs;i++)
-                    {
-                        snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
-                        matrixAuxab_OFTx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i));
-                        strcpy(obj.nameCol,(string("ABT")+string(str_length)).c_str());
-                        if (readFitsComplex (obj,&matrixAuxab_OFTx))
-                        {
-                            message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                            EP_PRINT_ERROR(message,*status);
-                            *status=EPFAIL; return(library_collection);
-                        }
-                        for (int j=0;j<(int)(matrixAuxab_OFTx->size1);j++)
-                        {
-                            for (int k=0;k<(int)(matrixAuxab_OFTx->size2);k++)
-                            {
-                                gsl_matrix_set(matrixALLab_OFTx,j,k+index,gsl_matrix_get(matrixAuxab_OFTx,j,k));
-                            }
-                        }
-                        
-                        //index = index + pow(2,floor(log2(template_duration))-i);*/
-                        index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
-                        
-                        gsl_matrix_free(matrixAuxab_OFTx); matrixAuxab_OFTx = 0;
-                    }
-                 }
-                 else // preBuffer = 1
-                 {
-                    for (int i=0;i<nOFs;i++)
-                    {
-                        snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
-                        matrixAuxab_OFTx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)+gsl_vector_get(pBi,i));
-                        
-                        strcpy(obj.nameCol,(string("ABT")+string(str_length)).c_str());
-                        if (readFitsComplex (obj,&matrixAuxab_OFTx))
-                        {
-                            message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
-                            EP_PRINT_ERROR(message,*status);
-                            *status=EPFAIL; return(library_collection);
-                        }
-                        for (int j=0;j<(int)(matrixAuxab_OFTx->size1);j++)
-                        {
-                            for (int k=0;k<(int)(matrixAuxab_OFTx->size2);k++)
-                            {
-                                gsl_matrix_set(matrixALLab_OFTx,j,k+index,gsl_matrix_get(matrixAuxab_OFTx,j,k));
-                            }
-                        }
-                        
-                        //index = index + gsl_vector_get(posti,i);
-                        index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
-                        
-                        gsl_matrix_free(matrixAuxab_OFTx); matrixAuxab_OFTx = 0;
-                    }
+                     snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
+                     matrixAuxab_OFTx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)+gsl_vector_get(pBi,i));
+
+                     strcpy(obj.nameCol,(string("ABT")+string(str_length)).c_str());
+                     if (readFitsComplex (obj,&matrixAuxab_OFTx))
+                     {
+                         message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
+                         EP_PRINT_ERROR(message,*status);
+                         *status=EPFAIL; return(library_collection);
+                     }
+                     for (int j=0;j<(int)(matrixAuxab_OFTx->size1);j++)
+                     {
+                         for (int k=0;k<(int)(matrixAuxab_OFTx->size2);k++)
+                         {
+                             gsl_matrix_set(matrixALLab_OFTx,j,k+index,gsl_matrix_get(matrixAuxab_OFTx,j,k));
+                         }
+                     }
+
+                     //index = index + gsl_vector_get(posti,i);
+                     index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
+
+                     gsl_matrix_free(matrixAuxab_OFTx); matrixAuxab_OFTx = 0;
                  }
                  
                  for (int it=0;it<ntemplates;it++)
@@ -2401,36 +1955,18 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          library_collection->nfixedfilters = nOFs;
          
          int lengthALL_PRCLOFWN = 0;
-         if (reconstruct_init->preBuffer == 0)
+         for (int i=0;i<(int)(posti->size);i++)
          {
-            for (int i=0;i<nOFs;i++)
-            {
-                lengthALL_PRCLOFWN = lengthALL_PRCLOFWN + pow(2,floor(log2(template_duration))-i)*2;
-            }
+             lengthALL_PRCLOFWN = lengthALL_PRCLOFWN + gsl_vector_get(posti,i);
          }
-         else
-         {
-            for (int i=0;i<(int)(posti->size);i++)
-            {
-                lengthALL_PRCLOFWN = lengthALL_PRCLOFWN + gsl_vector_get(posti,i);
-            }
-            lengthALL_PRCLOFWN = lengthALL_PRCLOFWN*2;
-         }
+         lengthALL_PRCLOFWN = lengthALL_PRCLOFWN*2;
 
          gsl_matrix *matrixALL_PRCLOFWNx = gsl_matrix_alloc(ntemplates,lengthALL_PRCLOFWN);
          gsl_matrix *matrixAux_PRCLOFWNx = NULL;
          for (int i=0;i<nOFs;i++)
          {
-             if (reconstruct_init->preBuffer == 0)
-             {
-                snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
-                matrixAux_PRCLOFWNx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i)*2);
-             }
-             else if (reconstruct_init->preBuffer == 1)
-             {
-                 snprintf(str_length,125,"%d",(int) (gsl_vector_get(posti,i)));
-                 matrixAux_PRCLOFWNx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)*2);
-             }
+             snprintf(str_length,125,"%d",(int) (gsl_vector_get(posti,i)));
+             matrixAux_PRCLOFWNx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)*2);
              
              strcpy(obj.nameCol,(string("OFWN")+string(str_length)).c_str());
              if (readFitsComplex (obj,&matrixAux_PRCLOFWNx))
@@ -2448,16 +1984,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                  }
              }
              
-             if (reconstruct_init->preBuffer == 0)
-             {
-                //index = index + pow(2,floor(log2(template_duration))-i)*2;*/
-                index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
-             }
-             else
-             {
-                 //index = index + gsl_vector_get(posti,i)*2;
-                 index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
-             }
+             index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
              
              gsl_matrix_free(matrixAux_PRCLOFWNx); matrixAux_PRCLOFWNx = 0;
          }
@@ -2499,10 +2026,11 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          }
          library_collection->nfixedfilters = nOFs;
          
-         int lengthALL_PRCLCOV = 0;
+        // int lengthALL_PRCLCOV = 0;
          for (int i=0;i<nOFs;i++)
          {
-             lengthALL_PRCLCOV = lengthALL_PRCLCOV + pow(2,floor(log2(template_duration))-i)*2;
+             //lengthALL_PRCLCOV = lengthALL_PRCLCOV + pow(2,floor(log2(template_duration))-i)*2;
+            lengthALL_PRCLCOV = lengthALL_PRCLCOV + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
          }
          
          if (changedNames == 1)     strcpy(obj.nameTable,"PRCLCOV");
@@ -2512,10 +2040,20 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          gsl_matrix *matrixAux_PRCLCOVx = NULL;
          for (int i=0;i<nOFs;i++)
          {
-             snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
-             if (changedNames == 1) strcpy(obj.nameCol,(string("PCOV")+string(str_length)).c_str());
-             else                   strcpy(obj.nameCol,(string("PCL")+string(str_length)).c_str());
-             matrixAux_PRCLCOVx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i)*2);
+
+             if (changedNames == 1)
+             {
+                 snprintf(str_length,125,"%d",(int) gsl_matrix_get(reconstruct_init->grading->gradeData,i,1));
+                 strcpy(obj.nameCol,(string("PCOV")+string(str_length)).c_str());
+                 matrixAux_PRCLCOVx = gsl_matrix_alloc(ntemplates,gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2);
+             }
+             else
+             {
+                 snprintf(str_length,125,"%d",(int) (pow(2,floor(log2(template_duration))-i)));
+                 strcpy(obj.nameCol,(string("PCL")+string(str_length)).c_str());
+                 matrixAux_PRCLCOVx = gsl_matrix_alloc(ntemplates,pow(2,floor(log2(template_duration))-i)*2);
+             }
+
              if (readFitsComplex (obj,&matrixAux_PRCLCOVx))
              {
                  message = "Cannot read " + string(obj.nameCol) + " column in library FITS file";
@@ -2837,7 +2375,7 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
     char* filter_domain, char* filter_method,
     char* energy_method, double filtEev, double Ifit,
     char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
-    char* oflength_strategy, int oflength, char preBuffer,
+    char* oflength_strategy, int oflength,
     double monoenergy, char addCOVAR, char addINTCOVAR, char addOFWN,
     int interm, char* const detectFile,
     int errorT,
@@ -2915,8 +2453,6 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
 
     if (opmode == 1)    strcpy(reconstruct_init->OFStrategy,oflength_strategy);
     if (opmode == 1)    reconstruct_init->OFLength      = oflength;
-    if (preBuffer)	reconstruct_init->preBuffer = 1;
-    else            reconstruct_init->preBuffer = 0;
 
     reconstruct_init->monoenergy 	= monoenergy;
     if (addCOVAR)	reconstruct_init->addCOVAR = 1;
@@ -2985,15 +2521,12 @@ int loadLibrary (ReconstructInitSIRENA* reconstruct_init)
     gsl_vector *posti = gsl_vector_alloc(1); // Filter length (including preBuffer)
     // post in (grading=>pre,post and pB)
     // filtlen in (grading=>pre,post and filtlen)
-    if (reconstruct_init->preBuffer == 1)
-    {
-        gsl_vector_free(pBi); pBi=0;
-        pBi = gsl_vector_alloc(reconstruct_init->grading->ngrades);
-        gsl_matrix_get_col(pBi,reconstruct_init->grading->gradeData,2);
-        gsl_vector_free(posti); posti=0;
-        posti = gsl_vector_alloc(reconstruct_init->grading->ngrades);
-        gsl_matrix_get_col(posti,reconstruct_init->grading->gradeData,1);
-    }
+    gsl_vector_free(pBi); pBi=0;
+    pBi = gsl_vector_alloc(reconstruct_init->grading->ngrades);
+    gsl_matrix_get_col(pBi,reconstruct_init->grading->gradeData,2);
+    gsl_vector_free(posti); posti=0;
+    posti = gsl_vector_alloc(reconstruct_init->grading->ngrades);
+    gsl_matrix_get_col(posti,reconstruct_init->grading->gradeData,1);
 
     log_debug("Before getLibraryCollection (integraSIRENA)");
     reconstruct_init->library_collection = getLibraryCollection(reconstruct_init, pBi, posti,&status);
@@ -3018,12 +2551,6 @@ int loadLibrary (ReconstructInitSIRENA* reconstruct_init)
                  EP_PRINT_ERROR("Templates length in the library file must be at least as the pulse length",status);
                  status=EPFAIL; return(status);
              }
-    }
-
-    if (reconstruct_init->preBuffer != 0)
-    {
-        if (pBi != NULL) {gsl_vector_free(pBi); pBi = 0;}
-        if (posti != NULL) {gsl_vector_free(posti); posti = 0;}
     }
 
     return(status);
@@ -3771,7 +3298,6 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  OFIter(0),
  OFLib(0),
  OFLength(0),
- preBuffer(0),
  intermediate(0),
  errorT(0),
  Sum0Filt(0),
@@ -3814,7 +3340,6 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  OFIter(other.OFIter),
  OFLib(other.OFLib),
  OFLength(other.OFLength),
- preBuffer(other.preBuffer),
  intermediate(other.intermediate),
  errorT(other.errorT),
  Sum0Filt(other.Sum0Filt),
@@ -3951,7 +3476,6 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
          strcpy(OFStrategy, other.OFStrategy);
          
          OFLength = other.OFLength;
-         preBuffer = other.preBuffer;
          intermediate = other.intermediate;
          strcpy(detectFile, other.detectFile);
 
@@ -4081,7 +3605,6 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
      strcpy(ret->OFStrategy, this->OFStrategy);
      
      ret->OFLength = this->OFLength;
-     ret->preBuffer = this->preBuffer;
      ret->intermediate = this->intermediate;
      strcpy(ret->detectFile, this->detectFile);
      //sprintf(ret->detectFile, "%s_%i", ret->detectFile, n_record);

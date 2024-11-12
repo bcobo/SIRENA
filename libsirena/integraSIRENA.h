@@ -519,7 +519,6 @@ typedef struct ReconstructInitSIRENA
 	int flength_0pad;
 	int prebuff_0pad;
   
-  	int preBuffer;
   	int preBuffer_min_value;
   	int preBuffer_max_value;
   
@@ -622,7 +621,7 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     double filtEev, double Ifit, char* ofnoise, 
                                     int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, 
                                     char *ofinterp, char* oflength_strategy, 
-                                    int oflength, char preBuffer,
+                                    int oflength,
                                     double monoenergy,
 									char addCOVAR, char addINTCOVAR, char addOFWN,
                                     int interm, char* detectFile, 
@@ -679,7 +678,7 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
 	char* filter_domain, char* filter_method,
 	char* energy_method, double filtEev, double Ifit,
 	char *ofnoise, int lagsornot, int nLags, int Fitting35, int ofiter, char oflib, char *ofinterp,
-	char* oflength_strategy, int oflength, char preBuffer,
+	char* oflength_strategy, int oflength,
 	double monoenergy, char addCOVAR, char addINTCOVAR, char addOFWN,
 	int interm, char* const detectFile,
 	int errorT,

@@ -159,8 +159,6 @@ struct Parameters {
 	// Optimal Filter length (taken into account if OFStrategy=FIXED)
 	int OFLength;
 
-	char preBuffer;
-
 	// Write intermediate files (Yes:1, No:0)
 	int intermediate;
 

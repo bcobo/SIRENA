@@ -30,10 +30,6 @@
 * - LibraryFile: Library FITS file to be created
 * - NoiseFile: Noise FITS file with noise spectrum
 * - XMLFile: XML input FITS file with instrument definition
-* - preBuffer: Some samples added before the starting time of a pulse (number of samples added read from the XML file)
-*              SIRENA's format XML file (grading=>pre,post and pB) or new format XML file (grading=>pre,post and filtlen)
-*                                      pre=494, post=8192, pB=1000                          pre=494, post=7192, filtlen=8192
-*                                                                                             preBuffer=filtlen-post
 * - EventListSize: Default size of the event list per record
 * - clobber:Overwrite or not output files if exist (1/0)
 * - history: write program parameters into output file
@@ -58,7 +54,6 @@
 * 
 * - Register HEATOOL
 * - Reading all programm parameters by using PIL
-* - Check preBuffer values if the library already exists
 * - Read XML info
 * - getSamplingrate_trigreclength => Obtain the 'trig_reclength' and the sampling rate
 * - Sixt standard keywords structure
@@ -79,7 +74,6 @@ int teslib_main() {
   par.addOFWN = 0;  // Debugger complains about an initialized variable (only the boolean type)
   par.addCOVAR = 0;  // Debugger complains about an initialized variable (only the boolean type)
   par.addINTCOVAR = 0;  // Debugger complains about an initialized variable (only the boolean type)
-  par.preBuffer = 0;    // Debugger complains about an initialized variable (only the boolean type)
   par.OFLib = 1;        // Debugger complains about an initialized variable (only the boolean type)
   
   // Error status.
@@ -102,13 +96,6 @@ int teslib_main() {
     }
     par.opmode = 0; // Building the library
 
-    // Check preBuffer values if the library already exists
-    status = checkpreBuffer(&par);
-    if (status != EXIT_SUCCESS)
-    {
-    	return(status);
-    }
-
     if ((strcmp(par.EnergyMethod,"I2RFITTED") == 0) && (par.Ifit == 0.0))
     {
         SIXT_ERROR("Ifit value must be provided");
@@ -118,16 +105,10 @@ int teslib_main() {
     AdvDet *det = newAdvDet(&status);
     CHECK_STATUS_BREAK(status);
     double sampling_rate_XML = -999.; // Sampling rate from XML
-    if (par.preBuffer == 1)
-    {
-        // Read XML info
-        det = loadAdvDet(par.XMLFile, &status);
-        CHECK_STATUS_BREAK(status);
-        
-        sampling_rate_XML = det->SampleFreq;
-
-        printf("%s","Attention: preBuffer used => Parameters of library filters read from XML file\n");
-    }
+    // Read XML info
+    det = loadAdvDet(par.XMLFile, &status);
+    CHECK_STATUS_BREAK(status);
+    sampling_rate_XML = det->SampleFreq;
 
     // Obtain the 'trig_reclength' and the sampling rate
     double sampling_rate = -999.0;
@@ -161,11 +142,8 @@ int teslib_main() {
     OptimalFilterSIRENA* optimalFilter = newOptimalFilterSIRENA();
     CHECK_STATUS_BREAK(status);// define a second structure for calibration
     
-    if (par.preBuffer == 1)
-    {
-        // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
-        status = fillReconstructInitSIRENAGrading (par, det, &reconstruct_init_sirena);
-    }
+    // Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
+    status = fillReconstructInitSIRENAGrading (par, det, &reconstruct_init_sirena);
     destroyAdvDet(&det);
 
     // Build up TesEventList
@@ -266,9 +244,6 @@ int getpar_teslib(struct Parameters* const par)
   }
   strcpy(par->XMLFile, sbuffer);
   free(sbuffer);
-
-  status=ape_trad_query_bool("preBuffer", &par->preBuffer);
-  //printf("El valor de preBuffer es: %s\n", par->preBuffer ? "true" : "false");
 
   status=ape_trad_query_int("EventListSize", &par->EventListSize);
   if (EXIT_SUCCESS!=status) {

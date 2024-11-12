@@ -56,9 +56,6 @@ struct Parameters {
 	//Number of standard deviations in the kappa-clipping process for threshold estimation
 	double nSgms;
         
-    //Pulse length in samples
-	int pulse_length;
-        
     //Calculate and write the weight matrixes if weightMS=yes
 	char weightMS;
         
@@ -70,10 +67,7 @@ struct Parameters {
         
     //Boolean to choose whether to erase an already existing event list
 	char clobber;
-        
-    //Size of noise matrix if only one to be created
-	int matrixSize;
-        
+
     //Remove some noise intervals before calculating the noise spectrum if rmNoiseIntervals=yes
 	char rmNoiseIntervals;
        
@@ -164,6 +158,11 @@ struct Parameters {
 	// Parameters used to write output FITS files
 	IOData obj;
 
+	//Pulse length in samples
+    // We will work with noise intervals whose length is set to the maximum resolution length (intervalMinBins is the longest grade),
+    // and pulse_length is also set to this value (the longest grade).
+    int pulse_length;
+
 	int NumMeanSamples = 0;
 	gsl_vector *EventSamplesFFTMean;
 	//gsl_matrix *EventSamplesFFT;
@@ -221,7 +220,6 @@ struct Parameters {
 		double *threshold,
 
 		double scalefactor,
-		int sizepulsebins,
 		double samplingRate,
 
 		int samplesup,

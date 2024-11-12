@@ -29,10 +29,6 @@
 * - TesEventFile: Output event list file
 * - LibraryFile: Library FITS file to be created
 * - XMLFile: XML input FITS file with instrument definition
-* - preBuffer: Some samples added before the starting time of a pulse (number of samples added read from the XML file)
-*              SIRENA's format XML file (grading=>pre,post and pB) or new format XML file (grading=>pre,post and filtlen)
-*                                      pre=494, post=8192, pB=1000                          pre=494, post=7192, filtlen=8192
-*                                                                                             preBuffer=filtlen-post
 * - EventListSize: Default size of the event list per record
 * - clobber:Overwrite or not output files if exist (1/0)
 * - history: write program parameters into output file
@@ -89,9 +85,6 @@ int tesrecons_main() {
   
   // Containing all programm parameters read by PIL.
   struct Parameters par;
-  //par.hduPRCLOFWM = 0;  // Debugger complains about an initialized variable (only the boolean type)
-  //par.hduPRCLW = 0;     // Debugger complains about an initialized variable (only the boolean type)
-  par.preBuffer = 0;    // Debugger complains about an initialized variable (only the boolean type)
   par.OFLib = 1;        // Debugger complains about an initialized variable (only the boolean type)
   
   // Error status.
@@ -133,7 +126,6 @@ int tesrecons_main() {
         printf("%s","Attention: EnergyMethod=0PAD => OFStrategy set to FIXED\n");
         strcpy(par.OFStrategy,"FIXED");
     }
-    if ((par.preBuffer == 1) && (strcmp(par.EnergyMethod,"0PAD") != 0))    printf("%s","Attention: preBuffer used => Parameters of library filters read from XML file\n");
 
     // Obtain the 'trig_reclength' and the sampling rate
     double sampling_rate = -999.0;
@@ -260,8 +252,6 @@ int getpar_tesrecons(struct Parameters* const par)
   }
   strcpy(par->XMLFile, sbuffer);
   free(sbuffer);
-
-  status=ape_trad_query_bool("preBuffer", &par->preBuffer);
 
   status=ape_trad_query_int("EventListSize", &par->EventListSize);
   if (EXIT_SUCCESS!=status) {
