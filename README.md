@@ -1,5 +1,5 @@
 [![SQAaaS badge](https://github.com/EOSC-synergy/SQAaaS/raw/master/badges/badges_150x116/badge_software_bronze.png)](https://api.eu.badgr.io/public/assertions/5GEdTdkzR2KDlXkZTCgrLg "SQAaaS bronze badge achieved")
-
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md) 
 # SIRENA
 Package developed at the Instituto de Física de Cantabria ([IFCA](https://ifca.unican.es/en-us)), CSIC-UC to process events in Transition Edge Sensors (TES) detectors
 like the [X-IFU](https://x-ifu.irap.omp.eu/) detector, to be onboard the future ESA mission [Athena](https://www.the-athena-x-ray-observatory.eu/en).
