@@ -10848,6 +10848,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
     }
     int gradelim_pre = gsl_vector_max(gradelim);
     gsl_vector_free(gradelim);
+
     
     // pulseGrade and OF length
     //if (OFlength_strategy == 3)    // FIXED
@@ -10871,7 +10872,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
         }
 
         *pulseGrade = 0;
-        for (int i=0;i<reconstruct_init->grading->ngrades;i++)
+        /*for (int i=0;i<reconstruct_init->grading->ngrades;i++)
         {
             if (*OFlength >= gsl_matrix_get(reconstruct_init->grading->gradeData,i,1))
             {
@@ -10886,6 +10887,36 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
             char str_nrecord[125];      snprintf(str_nrecord,125,"%d",nrecord);
             message = "Not enough samples to work with preBuffer (recordrecord=" + string(str_nrecord) +")";
             EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+        }*/
+        if (reconstruct_init->grading->ngrades != 1)
+        {
+            for (int i=0;i<reconstruct_init->grading->ngrades;i++)
+            {
+
+                if (*OFlength >= gsl_matrix_get(reconstruct_init->grading->gradeData,i,1))
+                {
+                    *pulseGrade = i+1;
+
+                    break;
+                }
+            }
+
+            if (tstart < gsl_matrix_get(reconstruct_init->grading->gradeData,*pulseGrade-1,2))
+            {
+                char str_nrecord[125];      snprintf(str_nrecord,125,"%d",nrecord);
+                //message = "Not enough samples to work with preBuffer (recordrecord=" + string(str_nrecord) +")";
+                message = "Not enough samples to work with preBuffer (recordrecord=" + string(str_nrecord) +"): tstart=" + to_string(tstart) + ", prebuffer=" + to_string((int) gsl_matrix_get(reconstruct_init->grading->gradeData,*pulseGrade-1,2));
+                EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+            }
+        }
+        else
+        {
+            if (tstart < gsl_matrix_get(reconstruct_init->grading->gradeData,0,2))
+            {
+                char str_nrecord[125];      snprintf(str_nrecord,125,"%d",nrecord);
+                message = "Not enough samples to work with preBuffer (recordrecord=" + string(str_nrecord) +"): tstart=" + to_string(tstart) + ", prebuffer=" + to_string((int) gsl_matrix_get(reconstruct_init->grading->gradeData,0,2));
+                EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+            }
         }
     }
 
