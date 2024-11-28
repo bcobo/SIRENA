@@ -688,7 +688,11 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     while(getNextRecord(record_file,record,&lastRecord,&startRecordGroup,&status))
     {
         // Progress bar
-        float progress = (float)nrecord / (numrecords-1);
+        float progress;
+        if (numrecords == 1)
+            progress = 1.0;
+        else
+            progress = (float)nrecord / (numrecords-1);
         int bar_width = 50;
         int pos = bar_width * progress;
         if (par.opmode == 0)        printf("Building the library |");
@@ -1149,6 +1153,16 @@ void saveEventListToFileSIRENA(TesEventFileSIRENA* file,TesEventListSIRENA * eve
 	//Save grade2 column
 	fits_write_col(file->fptr, TINT, file->grade2Col,
 					file->row, 1, event_list->index, event_list->grades2, status);
+	CHECK_STATUS_VOID(*status);
+
+    //Save RISETIME column
+ 	fits_write_col(file->fptr, TDOUBLE, file->riseCol,
+					file->row, 1, event_list->index, event_list->risetimes, status);
+	CHECK_STATUS_VOID(*status);
+
+    //Save FALLTIME column
+ 	fits_write_col(file->fptr, TDOUBLE, file->fallCol,
+					file->row, 1, event_list->index, event_list->falltimes, status);
 	CHECK_STATUS_VOID(*status);
 
 	//If PH_ID was computed, save it

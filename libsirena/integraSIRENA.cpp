@@ -289,7 +289,7 @@
          log_trace("reconstructRecordSIRENA:  Threading mode...2");
          return;  // The rest of 'reconstructRecordSIRENA' is not going to run: 'runDetect', 'runEnergy'...
      }
-         
+
      // Detect pulses in record
      log_trace("Before runDetect");
      if (!scheduler::get()->is_threading())
@@ -1491,7 +1491,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              gsl_matrix_get_row(library_collection->optimal_filtersabFREQ[it].ofilter,matrixALLab_OFFx,it);
 
              library_collection->optimal_filtersabTIME[it].energy		= gsl_vector_get(library_collection->energies,it);
-             library_collection->optimal_filtersabTIME[it].ofilter_duration	= lengthALL_F;
+             library_collection->optimal_filtersabTIME[it].ofilter_duration	= lengthALL_T;
              library_collection->optimal_filtersabTIME[it].ofilter    	= gsl_vector_alloc(lengthALL_T);
 
              gsl_matrix_get_row(library_collection->optimal_filtersabTIME[it].ofilter,matrixALLab_OFTx,it);
@@ -1631,11 +1631,8 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              {
                  for (int k=0;k<(int)(matrixAux_PRCLOFWNx->size2);k++)
                  {
-                     //cout<<j<<" "<<k<<" "<<gsl_matrix_get(matrixAux_PRCLOFWNx,j,k)<<endl;
-                     //cout<<"0: "<<j<<" "<<k+index<<" "<<gsl_matrix_get(matrixALL_PRCLOFWNx,j,k)<<endl;
                      gsl_matrix_set(matrixALL_PRCLOFWNx,j,k+index,gsl_matrix_get(matrixAux_PRCLOFWNx,j,k));
-                     //cout<<"1: "<<j<<" "<<k+index<<" "<<gsl_matrix_get(matrixALL_PRCLOFWNx,j,k+index)<<endl;
-                 }
+                  }
              }
 
              index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
@@ -1819,16 +1816,16 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              }
              library_collection->nfixedfilters = nOFs;
              
-             int lengthALL_T = 0;
-             if (nOFs != (int)(posti->size))
-             {
-                 EP_PRINT_ERROR("The number of optimal filters in the library does not match the grading info in the XML file",EPFAIL);
-                 *status=EPFAIL; return(library_collection);
-             }
-             for (int i=0;i<nOFs;i++)
-             {
-                 lengthALL_T = lengthALL_T + gsl_vector_get(posti,i) + gsl_vector_get(pBi,i);
-             }
+             //int lengthALL_T = 0;
+             //if (nOFs != (int)(posti->size))
+             //{
+             //    EP_PRINT_ERROR("The number of optimal filters in the library does not match the grading info in the XML file",EPFAIL);
+             //    *status=EPFAIL; return(library_collection);
+             //}
+             //for (int i=0;i<nOFs;i++)
+             //{
+             //    lengthALL_T = lengthALL_T + gsl_vector_get(posti,i) + gsl_vector_get(pBi,i);
+             //}
              
              strcpy(obj.nameTable,"FIXFILTT");
              if (strcmp(reconstruct_init->OFInterp,"MF") == 0)
@@ -1838,8 +1835,10 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                  
                  for (int i=0;i<nOFs;i++)
                  {
-                     snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
-                     matrixAux_OFTx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i));
+                     //snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
+                     //matrixAux_OFTx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i));
+                     snprintf(str_length,125,"%d",(int) gsl_matrix_get(reconstruct_init->grading->gradeData,i,1));
+                     matrixAux_OFTx = gsl_matrix_alloc(ntemplates,gsl_matrix_get(reconstruct_init->grading->gradeData,i,1));
 
                      strcpy(obj.nameCol,(string("T")+string(str_length)).c_str());
                      if (readFitsComplex (obj,&matrixAux_OFTx))
@@ -1881,8 +1880,8 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                  
                  for (int i=0;i<nOFs;i++)
                  {
-                     snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
-                     matrixAuxab_OFTx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i)+gsl_vector_get(pBi,i));
+                     snprintf(str_length,125,"%d",(int) gsl_matrix_get(reconstruct_init->grading->gradeData,i,1));
+                     matrixAuxab_OFTx = gsl_matrix_alloc(ntemplates,gsl_matrix_get(reconstruct_init->grading->gradeData,i,1));
 
                      strcpy(obj.nameCol,(string("ABT")+string(str_length)).c_str());
                      if (readFitsComplex (obj,&matrixAuxab_OFTx))
@@ -1915,7 +1914,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                  }
                  
                  gsl_matrix_free(matrixALLab_OFTx); matrixALLab_OFTx = 0;
-             }	
+             }
          }  
      }
      

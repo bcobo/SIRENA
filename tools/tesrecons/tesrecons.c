@@ -303,6 +303,7 @@ int getpar_tesrecons(struct Parameters* const par)
   free(sbuffer);
 
   status=ape_trad_query_double("filtEev", &par->filtEev);
+  assert(par->flength_0pad >= 0);
 
   status=ape_trad_query_double("Ifit", &par->Ifit);
 
@@ -450,9 +451,9 @@ int getpar_tesrecons(struct Parameters* const par)
       return(EXIT_FAILURE);
   }
 
-  if ((strcmp(par->EnergyMethod,"INTCOVAR") == 0) && (par->OFLib == 1))
+  if ((strcmp(par->EnergyMethod,"INTCOVAR") == 0) && (par->OFLib == 0))
   {
-      SIXT_ERROR("parameter error: EnergyMethod=INTCOVAR => OFLib should be 'no'");
+      SIXT_ERROR("parameter error: EnergyMethod=INTCOVAR => OFLib should be 'yes'");
       return(EXIT_FAILURE);
   }
 
