@@ -470,7 +470,7 @@
          }
      }
      
-      // Get structure of input FITS file columns
+     // Get structure of input FITS file columns
      strcpy(straux,"Time");
      if (fits_get_colnum(infileObject,0,straux,&colnum,&status))
      {
@@ -483,7 +483,6 @@
          message = "Cannot get column number for " + string(straux) +" in " + string(par.inFile);
          EP_EXIT_ERROR(message,status);
      }
-     
      
      // Read info to transform to resistance space
      if ((adu_cnv_exists == 0) && ((strcmp(par.EnergyMethod,"I2R") == 0) || (strcmp(par.EnergyMethod,"I2RFITTED") == 0)))
@@ -1186,7 +1185,9 @@
          message = "Cannot open file " +  string(par.outFile);
          EP_EXIT_ERROR(message,status);
      }
-     
+
+     //HDpar_stamp(gnoiseObject, 0, &status);  // Write the whole list of input parameters in HISTORY______ Does not work in C++
+
      // Write extensions NOISE and NOISEALL (call writeTPSreprExten)
      if(writeTPSreprExten ())
      {
@@ -1733,18 +1734,20 @@
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
      
-     //HDpar_stamp(gnoiseObject, 0, &status);  // Write the whole list of input parameters in HISTORY
-     
-     strcpy(keyname,"HISTORY");
-     const char * charhistory= "HISTORY Starting parameter list";
-     strcpy(keyvalstr,charhistory);
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
-     {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
-         EP_PRINT_ERROR(message,status); return(EPFAIL);
+     char *history_text = " ";
+     if (fits_write_history(gnoiseObject, history_text, &status)) {
+        message = "Cannot write HISTORY in noise file " + string(par.outFile);
+        EP_PRINT_ERROR(message,status); return(EPFAIL);
+     }
+
+     string strhistory = "START PARAMETER list for gennoisespec_" + string(SIRENA_VERSION);
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status)) {
+        message = "Cannot write HISTORY in noise file " + string(par.outFile);
+        EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
      
-     string strhistory (string("inFile = ") + string(par.inFile));
+     int index = 1;
+     strhistory = "P" + to_string(index) + " inFile = " + string(par.inFile);
      int num_pieces = strhistory.length()/65+1;    // 65 is a bit less than the length line allowed to write in HISTORY
      string piece_i;
      for (int i=0; i<num_pieces; i++)
@@ -1753,14 +1756,15 @@
          else        piece_i = strhistory.substr(0+64*i+1,64+64*i);
          
          strcpy(keyvalstr,piece_i.c_str());
-         if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+         if (fits_write_history(gnoiseObject, piece_i.c_str(), &status))
          {
-             message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
-             EP_PRINT_ERROR(message,status); return(EPFAIL);
+              message = "Cannot write HISTORY in noise file " + string(par.outFile);
+              EP_PRINT_ERROR(message,status); return(EPFAIL);
          }
      }
+     index = index +1;
      
-     strhistory = string("outFile = ") + string(par.outFile);
+     strhistory = "P" + to_string(index) + string(" outFile = ") + string(par.outFile);
      num_pieces = strhistory.length()/65+1;    // 65 is a bit less than the length line allowed to write in HISTORY
      for (int i=0; i<num_pieces; i++)
      {
@@ -1768,117 +1772,129 @@
          else        piece_i = strhistory.substr(0+64*i+1,64+64*i);
          
          strcpy(keyvalstr,piece_i.c_str());
-         if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+         if (fits_write_history(gnoiseObject, piece_i.c_str(), &status))
          {
-             message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+             message = "Cannot write HISTORY in noise file " + string(par.outFile);
              EP_PRINT_ERROR(message,status); return(EPFAIL);
          }
      }
+     index = index +1;
      
      char str_intervalMinSamples[125];		sprintf(str_intervalMinSamples,"%d",par.intervalMinSamples);
-     strhistory=string("intervalMinSamples = ") + string(str_intervalMinSamples);
+     strhistory="P" + to_string(index) + string(" intervalMinSamples = ") + string(str_intervalMinSamples);
      strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status))
      {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+        message = "Cannot write HISTORY in noise file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
+     index = index +1;
      
      char str_nplPF[125];			sprintf(str_nplPF,"%d",par.nplPF);
-     strhistory=string("nplPF = ") + string(str_nplPF);
+     strhistory="P" + to_string(index) + string(" nplPF = ") + string(str_nplPF);
      strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status))
      {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+         message = "Cannot write HISTORY in noise file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
+     index = index +1;
      
      char str_nintervals[125];		sprintf(str_nintervals,"%d",par.nintervals);
-     strhistory=string("nintervals = ") + string(str_nintervals);
+     strhistory="P" + to_string(index) + string(" nintervals = ") + string(str_nintervals);
      strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status))
      {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+        message = "Cannot write HISTORY in noise file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
+     index = index +1;
      
      char str_scaleFactor[125];		sprintf(str_scaleFactor,"%f",par.scaleFactor);
-     strhistory=string("scaleFactor = ") + string(str_scaleFactor);
+     strhistory="P" + to_string(index) + string(" scaleFactor = ") + string(str_scaleFactor);
      strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status))
      {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+         message = "Cannot write HISTORY in noise file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
+     index = index +1;
      
      char str_samplesUp[125];		sprintf(str_samplesUp,"%d",par.samplesUp);
-     strhistory=string("samplesUp = ") + string(str_samplesUp);
+     strhistory="P" + to_string(index) + string(" samplesUp = ") + string(str_samplesUp);
      strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status))
      {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+         message = "Cannot write HISTORY in noise file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
+     index = index +1;
      
      char str_nSgms[125];	    		sprintf(str_nSgms,"%f",par.nSgms);
-     strhistory=string("nSgms = ") + string(str_nSgms);
+     strhistory="P" + to_string(index) + string(" nSgms = ") + string(str_nSgms);
      strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status))
      {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+         message = "Cannot write HISTORY in noise file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
+     index = index +1;
      
      char str_weightMS[125];      sprintf(str_weightMS,"%d",par.weightMS);
-     strhistory=string("weightMS = ") + string(str_weightMS);
+     strhistory="P" + to_string(index) + string(" weightMS = ") + string(str_weightMS);
      strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status))
      {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+         message = "Cannot write HISTORY in noise file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
+     index = index +1;
      
-     string str_energymethod (string("EnergyMethod = ") + string(par.EnergyMethod));
-     strcpy(keyvalstr,str_energymethod.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+     strhistory="P" + to_string(index) + string(" EnergyMethod = ") + string(par.EnergyMethod);
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status))
      {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+         message = "Cannot write HISTORY in noise file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
+     index = index +1;
      
      char str_Ifit[125];			sprintf(str_Ifit,"%f",par.Ifit);
-     strhistory=string("Ifit = ") + string(str_Ifit);
-     strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+     strhistory="P" + to_string(index) + string(" Ifit = ") + string(str_Ifit);
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status))
      {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+         message = "Cannot write HISTORY in noise file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
+     index = index +1;
+
+     char str_rmNoiseIntervals[125];      sprintf(str_rmNoiseIntervals,"%d",par.rmNoiseIntervals);
+     strhistory="P" + to_string(index) + string(" rmNoiseIntervals = ") + string(str_rmNoiseIntervals);
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status))
+     {
+         message = "Cannot write HISTORY in noise file " + string(par.outFile);
+         EP_PRINT_ERROR(message,status); return(EPFAIL);
+     }
+     index = index +1;
      
      char str_clobber[125];      sprintf(str_clobber,"%d",par.clobber);
-     strhistory=string("clobber = ") + string(str_clobber);
+     strhistory="P" + to_string(index) + string(" clobber = ") + string(str_clobber);
      strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status))
      {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
+         message = "Cannot write HISTORY in noise file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
+     index = index +1;
      
-     char str_rmNoiseIntervals[125];      sprintf(str_rmNoiseIntervals,"%d",par.rmNoiseIntervals);
-     strhistory=string("rmNoiseIntervals = ") + string(str_rmNoiseIntervals);
-     strcpy(keyvalstr,strhistory.c_str());
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
-     {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
-         EP_PRINT_ERROR(message,status); return(EPFAIL);
+     strhistory = "END PARAMETER list for gennoisespec_" + string(SIRENA_VERSION);
+     if (fits_write_history(gnoiseObject, strhistory.c_str(), &status)) {
+        message = "Cannot write HISTORY in noise file " + string(par.outFile);
+        EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
-     
-     charhistory= "HISTORY Ending parameter list";
-     strcpy(keyvalstr,charhistory);
-     if (fits_write_key(gnoiseObject,TSTRING,keyname,keyvalstr,comment,&status))
-     {
-         message = "Cannot write keyword " + string(keyname) + " in noise file " + string(par.outFile);
-         EP_PRINT_ERROR(message,status); return(EPFAIL);
+
+     if (fits_write_history(gnoiseObject, history_text, &status)) {
+        message = "Cannot write HISTORY in noise file " + string(par.outFile);
+        EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
      
      strcpy(keyname,"CREADATE");
@@ -1901,8 +1917,8 @@
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
      
-     strhistory.clear();
-     piece_i.clear();
+     //strhistory.clear();
+     //piece_i.clear();
      
      return EPOK;
  }

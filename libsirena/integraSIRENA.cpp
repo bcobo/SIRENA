@@ -735,14 +735,14 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
      }
      
      library_collection->baseline = -999.0;
-     if ((strcmp(reconstruct_init->FilterMethod,"B0") == 0) || (strcmp(reconstruct_init->EnergyMethod,"INTCOVAR") == 0))
-     {
+     //if ((strcmp(reconstruct_init->FilterMethod,"B0") == 0) || (strcmp(reconstruct_init->EnergyMethod,"INTCOVAR") == 0))
+     //{
          if (fits_read_key(fptr,TDOUBLE,"BASELINE", &library_collection->baseline,NULL,status))
          {
              EP_PRINT_ERROR("Cannot read BASELINE keyword from HDU LIBRARY in library file => Check the noise file",-999);
              *status = 0;
          }
-     }
+     //}
      
      // Get number of templates (rows)
      long ntemplates;
@@ -1168,7 +1168,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              EP_PRINT_ERROR("Cannot read DAB column in library FITS file",*status);
              *status=EPFAIL; return(library_collection);
          }
-         
+
          // It is not necessary to check the allocation because dim > 0 and 'template_duration' has been checked previously
          matrixAux_SAB = gsl_matrix_alloc(dim,template_duration);
          vectorAux_SAB = gsl_vector_alloc(template_duration);
@@ -1233,7 +1233,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              {
                  gsl_matrix_get_row(vectorAux_DAB,matrixAux_DAB,it);
                  gsl_matrix_set_row(library_collection->DAB,it,vectorAux_DAB);
-                 
+
                  gsl_matrix_get_row(vectorAux_SAB,matrixAux_SAB,it);
                  gsl_matrix_set_row(library_collection->SAB,it,vectorAux_SAB);
              }
@@ -1280,7 +1280,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          {
              gsl_matrix_get_row(vectorAux_DAB,matrixAux_DAB,it);
              gsl_matrix_set_row(library_collection->DAB,it,vectorAux_DAB);
-             
+
              gsl_matrix_get_row(vectorAux_SAB,matrixAux_SAB,it);
              gsl_matrix_set_row(library_collection->SAB,it,vectorAux_SAB);
          }
