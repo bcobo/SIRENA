@@ -6,6 +6,7 @@
 
 import os
 from subprocess import run, PIPE
+import glob
 
 # Define environmental variables
 sixte = os.environ["SIXTE"]
@@ -17,10 +18,15 @@ assert sirena != "", "Please set the environmental variable SIRENA and initiate 
 assert sixte != "", "Please set the environmental variable SIXTE and initiate the software using (for sh-like shell): . $SIXTE/bin/sixte-install.sh"
 assert headas != "", "Please set the environmental variable HEADAS and initiate the software using (for sh-like shell): . $SIXTE/headas-init.sh"
 
-outdir = "/data/output"
-indir = "/data/input"
-reference = "/data/reference"
-xmlfile = f"./{indir}/1pix_lpa2.5a_fll_SIRENAintegration.xml"
+outdir = "./data/output"
+indir = "./data/input"
+reference = "./data/reference"
+# read config file date form file config_version.txt
+with open(f"{indir}/config_version.txt", "r") as file:
+    date_config_file = file.read().strip()
+
+# Find name of (unique) xml file in indir directory
+xmlfile = glob.glob(f"{indir}/config*.xml")[0]
 
 def test_recons_mono_covar():
     """
@@ -36,11 +42,13 @@ def test_recons_mono_covar():
     None
     """
    
-    # Define input and output files
-    file_input = f".{indir}/mono6.0keV_1000p.fits"
-    file_output = f".{outdir}/events_6.0keV_covar.fits"
-    library = f".{reference}/library_5keV_7keV_all_reference.fits"
-        
+    # Define input, reference and output files
+    file_input = f"{indir}/mono6keV_1000p_{date_config_file}.fits"
+    file_output = f"{outdir}/events_6keV_covar.fits"
+    library = f"{reference}/library_5keV_7keV_all_reference_{date_config_file}.fits"
+    file_reference = f"{reference}/events_6keV_covar_reference_{date_config_file}.fits"
+    assert os.path.exists(file_reference), f"Reference file {file_reference} does not exist"
+
     # run tesrecons tool with COVAR
     comm = (f"tesrecons Recordfile={file_input}"
             f" TesEventFile={file_output}"
@@ -52,12 +60,9 @@ def test_recons_mono_covar():
             )
     
     output_tesrecons = run(comm, shell=True, capture_output=True, text=True)
-    assert output_message_tesrecons.returncode == 0, f"tesrecons failed to run with command '{comm}' with problem: {output_message_tesrecons.stdout}"
+    assert output_tesrecons.returncode == 0, f"tesrecons failed to run with command: {comm}"
 
     # compare output files
-    file_reference = f".{reference}/events_mono_6.0keV_covar_reference.fits"
-    assert os.path.exists(file_reference), f"Reference file {file_reference} does not exist"
-
     comm = f'fdiff caldsum=yes cmpdata=no exclude="CREADATE, SIRENAV" {file_output} {file_reference}'
     output_fdiff = run(comm, shell=True, capture_output=True)
 

@@ -19,6 +19,8 @@ assert sirena != "", "Please set the environmental variable SIRENA and initiate 
 assert sixte != "", "Please set the environmental variable SIXTE and initiate the software using (for sh-like shell): . $SIXTE/bin/sixte-install.sh"
 assert headas != "", "Please set the environmental variable HEADAS and initiate the software using (for sh-like shell): . $SIXTE/headas-init.sh"
 
+print("Warning: This test takes several hours to run")
+
 outdir = "./data/output"
 indir = "./data/input"
 reference = "./data/reference"
@@ -46,7 +48,7 @@ def test_teslib_covar2E():
     """
    
     # Define input and output files
-    file1_input = f"{indir}/mono5keV_1000p_{date_config_file}.fits", 
+    file1_input = f"{indir}/mono5keV_1000p_{date_config_file}.fits"
     file2_input = f"{indir}/mono7keV_1000p_{date_config_file}.fits"
     energies = [5000., 7000.]
     files_input = [file1_input, file2_input]
@@ -56,6 +58,7 @@ def test_teslib_covar2E():
     # run teslib tool in a loop for each of the input energies
     for ie in range(len(files_input)):
         file_input = files_input[ie]
+        print(file_input)
         template_eV = energies[ie]
         comm = (f"teslib Recordfile={file_input}"
                 f" TesEventFile=myLibEvents.fits"

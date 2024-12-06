@@ -17,6 +17,8 @@ assert sirena != "", "Please set the environmental variable SIRENA and initiate 
 assert sixte != "", "Please set the environmental variable SIXTE and initiate the software using (for sh-like shell): . $SIXTE/bin/sixte-install.sh"
 assert headas != "", "Please set the environmental variable HEADAS and initiate the software using (for sh-like shell): . $SIXTE/headas-init.sh"
 
+print("Warning: This test takes several hours to run")
+
 outdir = "./data/output"
 indir = "./data/input"
 reference = "./data/reference"
