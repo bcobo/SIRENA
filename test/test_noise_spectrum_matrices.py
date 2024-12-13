@@ -45,7 +45,7 @@ def test_gennoisespec_matrices():
         None
     """
     # Define input and output files
-    ns_input = f"{indir}/noise.fits"
+    ns_input = f"{indir}/noise_20240917.fits"
     ns_output = f"{outdir}/noise_spectrum_mat.fits"
     comm = (f" gennoisespec inFile={ns_input}"
             f" outFile={ns_output}"
