@@ -44,7 +44,7 @@ struct Parameters {
     //Number of pulse lengths after the end of the pulse to start the pulse-free interval searching
 	int nplPF;
         
-        //Number of pulse-free intervals to use for the noise average
+	//Number of pulse-free intervals to use for the noise average
 	int nintervals;
         
     //Scale Factor
@@ -95,7 +95,6 @@ struct Parameters {
 // INPUT FILES
 
 	fitsfile *infileObject = NULL;		// Object which contains information of the input FITS file
-	//char infileName[255];			// Name of the input FITS file
 
 	FILE *fileRef;				// Pointer for file which contains errors and warnings
 
@@ -138,8 +137,6 @@ struct Parameters {
         
 //AUXILIARY VARIABLES
 
-	//unique_ptr<boost::progress_display> p_show_progress;
-
 	int hdunum;
 	int real_data = 0;
 
@@ -165,7 +162,6 @@ struct Parameters {
 
 	int NumMeanSamples = 0;
 	gsl_vector *EventSamplesFFTMean;
-	//gsl_matrix *EventSamplesFFT;
 
 	gsl_matrix *library;		// Not used. Necessary only in order to be used as input parameter in findPulses
 	gsl_matrix *models;		// Not used. Necessary only in order to be used as input parameter in findPulses
@@ -181,9 +177,7 @@ struct Parameters {
     int tessimOrxifusim = -999;     // 0: tessim, 1: xifusim
     
     double deltat;
-    double tclock;
-    double dec_fac;
-    
+
 // OUTPUT FILE
 
 	fitsfile *gnoiseObject = NULL;	// Object which contains information of output FITS file
@@ -211,7 +205,6 @@ struct Parameters {
 
 	int findPulsesNoise
 	(
-		gsl_vector *vectorin,
 		gsl_vector *vectorinDER,
 		gsl_vector **tstart,
 		gsl_vector **quality,
@@ -233,7 +226,7 @@ struct Parameters {
 	
 	int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight);
         
-        int medianKappaClipping_noiseSigma (gsl_vector *invector, double kappa, double stopCriteria, double nSigmas, double *mean, double *sigma);
+        int medianKappaClipping_noiseSigma (gsl_vector *invector, double kappa, double stopCriteria, double *mean, double *sigma);
         
         int getpar_noiseSpec(struct Parameters* const par);
 

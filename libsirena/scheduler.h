@@ -94,7 +94,7 @@ struct datax
   PulsesCollection* all_pulses;
   PulsesCollection* record_pulses;
   OptimalFilterSIRENA* optimal_filter;
-  TesEventList* event_list;
+  TesEventListSIRENA* event_list;
 
   datax();
   datax(const datax& other);
@@ -114,7 +114,7 @@ class scheduler
                       PulsesCollection *pulsesAll, 
                       ReconstructInitSIRENA** reconstruct_init, 
                       PulsesCollection** pulsesInRecord,
-                      TesEventList* event_list);
+                      TesEventListSIRENA* event_list);
   void finish_reconstruction(PulsesCollection** pulsesAll);
   void finish_reconstruction_v2(PulsesCollection** pulsesAll);
 
@@ -125,7 +125,7 @@ class scheduler
 
   inline bool has_records(){return(this->num_records > this->current_record);}
 
-  void get_test_event(TesEventList** test_event, TesRecord** record);
+  void get_test_event(TesEventListSIRENA** test_event, TesRecord** record);
 
   virtual ~scheduler();
   inline static scheduler* get()
@@ -135,8 +135,10 @@ class scheduler
  private:
   static scheduler* instance;
   scheduler();
-  scheduler(const scheduler& copy){}
-  scheduler& operator=(const scheduler&){}
+  //scheduler(const scheduler& copy){}
+  scheduler(const scheduler& copy) = delete;
+  //scheduler& operator=(const scheduler&){}
+  scheduler& operator=(const scheduler&) = delete;
 
   void init();
   void init_v2();

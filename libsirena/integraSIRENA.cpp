@@ -21,7 +21,6 @@
   * The purpose of this package is the integration os SIRENA in SIXTE.
   * 
   * MAP OF SECTIONS IN THIS FILE:
-  * 
   * - 1. initializeReconstructionSIRENA
   * - 2. reconstructRecordSIRENA
   * - 3. newReconstructInitSIRENA
@@ -172,10 +171,6 @@
      log_debug("After fillReconstructInitSIRENA (integraSIRENA)");
      if (*status != 0) EP_EXIT_ERROR("Error in fillReconstructInitSIRENA",*status);
 
-
-     // 'pulse_length' variable initialization
-     int pulse_length = reconstruct_init->pulse_length;
-
      //Load LibraryCollection structure if library file exists
      int exists=0;
      if (fits_file_exists(library_file, &exists, status))
@@ -227,7 +222,7 @@
   * Parameters:
   * - record: Instance of TesRecord structure that contains the input record
   * - trig_reclength: Record size (just in case threading and input files with different 'ADC' lengths but the same record size indeed)
-  * - event_list: Instance of TesEventList structure that contains the information of the reconstructed pulses
+  * - event_list: Instance of TesEventListSIRENA structure that contains the information of the reconstructed pulses
   * - reconstruct_init: Member of ReconstructInitSIRENA structure to initialize the reconstruction parameters (pointer and values)
   * - lastRecord: If record being analyzed is the last one, lastRecord = 1. Otherwise it is equal to 0
   * - nRecord: Input record number
@@ -236,11 +231,10 @@
   * - optimalFilter: Optimal filters used in reconstruction
   * - status:Input/output status
   ******************************************************************************/
- extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, TesEventList* event_list, ReconstructInitSIRENA* reconstruct_init,  int lastRecord, int nRecord, PulsesCollection **pulsesAll, int* const status)
+ //extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, TesEventList* event_list, ReconstructInitSIRENA* reconstruct_init,  int lastRecord, int nRecord, PulsesCollection **pulsesAll, int* const status)
+ extern "C" void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, TesEventListSIRENA* event_list, ReconstructInitSIRENA* reconstruct_init,  int lastRecord, int nRecord, PulsesCollection **pulsesAll, int* const status)
  {
      log_trace("reconstructRecordSIRENA: START");
-
-     char extname[20];
 
      // Inititalize PulsesCollection structure
      PulsesCollection* pulsesInRecord = new PulsesCollection;
@@ -314,7 +308,7 @@
      //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
      //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
      
-     // Free & Fill TesEventList structure
+     // Free & Fill TesEventListSIRENA structure
      *status = fillEventList (event_list, *pulsesAll, pulsesInRecord, reconstruct_init, record, lastRecord);*/
 
      if ((pulsesInRecord->ndetpulses != 0) && ((*pulsesAll)->ndetpulses == 0))
@@ -380,7 +374,7 @@
      //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
      //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
 
-     // Free & Fill TesEventList structure
+     // Free & Fill TesEventListSIRENA structure
      event_list->index = pulsesInRecord->ndetpulses;
      event_list->energies = new double[event_list->index];
      event_list->avgs_4samplesDerivative = new double[event_list->index];
@@ -440,8 +434,6 @@
              double numLagsUsed_mean;
              double numLagsUsed_sigma;
              gsl_vector *numLagsUsed_vector = gsl_vector_alloc((*pulsesAll)->ndetpulses);
-             //gsl_vector_set_all(numLagsUsed_vector,-999); // Debugger complains about an initialized variable in a conditional jump
-                                                          // (in findMeanSigma 6 lines forward)
 
              for (int ip=0; ip<(*pulsesAll)->ndetpulses; ip++)
              {
@@ -458,9 +450,8 @@
      {
          if (lastRecord == 1)
          {
-             // Free & Fill TesEventList structure
+             // Free & Fill TesEventListSIRENA structure
              event_list->index = (*pulsesAll)->ndetpulses;
-             //event_list->event_indexes = new double[event_list->index];
              event_list->energies = new double[event_list->index];
              event_list->avgs_4samplesDerivative = new double[event_list->index];
              event_list->Es_lowres = new double[event_list->index];
@@ -469,9 +460,7 @@
              event_list->bsln = new double[event_list->index];
              event_list->rmsbsln = new double[event_list->index];
              event_list->grading  = new int[event_list->index];
-             //event_list->grades1  = new int[event_list->index];
              event_list->grades2  = new int[event_list->index];
-             //event_list->pulse_heights  = new double[event_list->index];
              event_list->ph_ids   = new long[event_list->index];
              event_list->pix_ids   = new long[event_list->index];
              event_list->risetimes   = new double[event_list->index];
@@ -687,9 +676,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
      LibraryCollection* library_collection = new LibraryCollection;
 
      string message = "";
-
-     // Create LibraryCollection structure
-     //LibraryCollection* library_collection = new LibraryCollection;
      
      // Open FITS file in READONLY mode
      fitsfile* fptr = NULL;
@@ -735,14 +721,11 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
      }
      
      library_collection->baseline = -999.0;
-     //if ((strcmp(reconstruct_init->FilterMethod,"B0") == 0) || (strcmp(reconstruct_init->EnergyMethod,"INTCOVAR") == 0))
-     //{
-         if (fits_read_key(fptr,TDOUBLE,"BASELINE", &library_collection->baseline,NULL,status))
-         {
-             EP_PRINT_ERROR("Cannot read BASELINE keyword from HDU LIBRARY in library file => Check the noise file",-999);
-             *status = 0;
-         }
-     //}
+     if (fits_read_key(fptr,TDOUBLE,"BASELINE", &library_collection->baseline,NULL,status))
+     {
+         EP_PRINT_ERROR("Cannot read BASELINE keyword from HDU LIBRARY in library file => Check the noise file",-999);
+         *status = 0;
+     }
      
      // Get number of templates (rows)
      long ntemplates;
@@ -762,14 +745,12 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
      {
          if (ntemplates == 1)
          {
-             //if (strcmp(*ofinterp,"SAB") == 0)  *ofinterp = "MF";
              if (strcmp(reconstruct_init->OFInterp,"SAB") == 0)  strcpy(reconstruct_init->OFInterp ,"MF");
          }
          else
          {
              if (reconstruct_init->filtEev != 0)
              {
-                 //if (strcmp(*ofinterp,"SAB") == 0)  *ofinterp = "MF";
                  if (strcmp(reconstruct_init->OFInterp,"SAB") == 0)  strcpy(reconstruct_init->OFInterp,"MF");
                  
                  EP_PRINT_ERROR("The library has several rows, but only the row related to filtEev is going to be used in reconstruction",-999); // Only a warning
@@ -795,7 +776,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
      library_collection->matched_filters           = new MatchedFilter[ntemplates];
      library_collection->matched_filters_B0        = new MatchedFilter[ntemplates];
      library_collection->optimal_filters           = new OptimalFilterSIRENA[ntemplates];
-     //library_collection->optimal_filtersab         = new OptimalFilterSIRENA[ntemplates];
      library_collection->optimal_filtersFREQ       = new OptimalFilterSIRENA[ntemplates];
      library_collection->optimal_filtersTIME       = new OptimalFilterSIRENA[ntemplates];
      library_collection->optimal_filtersabFREQ     = new OptimalFilterSIRENA[ntemplates];
@@ -883,15 +863,11 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
      {
          library_collection->DAB = gsl_matrix_alloc(ntemplates-1,template_duration);
          library_collection->SAB = gsl_matrix_alloc(ntemplates-1,template_duration);
-         //library_collection->optimal_filtersabTIME = gsl_matrix_alloc(ntemplates-1,template_duration);
-         //library_collection->optimal_filtersabFREQ = gsl_matrix_alloc(ntemplates-1,template_duration);
      }
      else
      {
          library_collection->DAB = gsl_matrix_alloc(1,template_duration);
          library_collection->SAB = gsl_matrix_alloc(1,template_duration);
-         //library_collection->optimal_filtersabTIME = gsl_matrix_alloc(1,template_duration);
-         //library_collection->optimal_filtersabFREQ = gsl_matrix_alloc(1,template_duration);
      }
      
      // Get matched filter duration
@@ -1404,7 +1380,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              }
          }
 
-         //index = index + gsl_vector_get(posti,i)*2;
          index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
 
          gsl_matrix_free(matrixAux_OFFx); matrixAux_OFFx = 0;
@@ -1462,7 +1437,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              }
          }
 
-         //index = index + gsl_vector_get(posti,i);
          index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
 
          gsl_matrix_free(matrixAux_OFTx); matrixAux_OFTx = 0;
@@ -1609,10 +1583,9 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          }
          nCols = nCols-1;		// -1 because the ENERGY column
          gsl_matrix *matrixAux_PRCLOFWNx = NULL;
-         int index = 0;
+         int index2 = 0;
          if (changedNames == 1) strcpy(obj.nameTable,"PRCLOFWN");
          else                   strcpy(obj.nameTable,"PRCLOFWM");
-         char str_length[125];
          for (int i=0;i<nCols;i++)
          {
              snprintf(str_length,125,"%d",(int) (gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)));
@@ -1631,11 +1604,11 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              {
                  for (int k=0;k<(int)(matrixAux_PRCLOFWNx->size2);k++)
                  {
-                     gsl_matrix_set(matrixALL_PRCLOFWNx,j,k+index,gsl_matrix_get(matrixAux_PRCLOFWNx,j,k));
+                     gsl_matrix_set(matrixALL_PRCLOFWNx,j,k+index2,gsl_matrix_get(matrixAux_PRCLOFWNx,j,k));
                   }
              }
 
-             index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
+             index2 = index2 + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
 
              gsl_matrix_free(matrixAux_PRCLOFWNx); matrixAux_PRCLOFWNx = 0;
          }
@@ -1648,17 +1621,20 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              gsl_matrix_set_row(library_collection->PRCLOFWN,it,vectorAux_PRCLOFWNx);
          }
          if (vectorAux_PRCLOFWNx != NULL)
+         {
             gsl_vector_free(vectorAux_PRCLOFWNx); vectorAux_PRCLOFWNx = 0;
+         }
          if (matrixALL_PRCLOFWNx != NULL)
+         {
             gsl_matrix_free(matrixALL_PRCLOFWNx); matrixALL_PRCLOFWNx = 0;
+         }
      }
      
      if (reconstruct_init->opmode == 1)
      { 
-         char str_length[125];
          obj.iniRow = 1;
          obj.endRow = ntemplates;
-         int index = 0;
+         index = 0;
          
          if (strcmp(reconstruct_init->FilterDomain,"F") == 0)
          {
@@ -1671,7 +1647,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              }
              
              // Get number of fixed optimal filters (columnss)
-             int nOFs;
              if (fits_get_num_cols(fptr,&nOFs, status))
              {
                  EP_PRINT_ERROR("Cannot get number of columns in library file",*status);
@@ -1688,8 +1663,8 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              }
              library_collection->nfixedfilters = nOFs;
              
-             int lengthALL_F = 0;
-             int lengthALL_T = 0;
+             lengthALL_F = 0;
+             lengthALL_T = 0;
              if (nOFs != (int)(posti->size))
              {
                  EP_PRINT_ERROR("The number of optimal filters in the library does not match the grading info in the XML file",EPFAIL);
@@ -1706,8 +1681,8 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              
              if (strcmp(reconstruct_init->OFInterp,"MF") == 0)
              {
-                 gsl_matrix *matrixALL_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
-                 gsl_matrix *matrixAux_OFFx = NULL;
+                 matrixALL_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
+                 matrixAux_OFFx = NULL;
                  
                  for (int i=0;i<nOFs;i++)
                  {
@@ -1747,8 +1722,8 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              }
              else if (strcmp(reconstruct_init->OFInterp,"SAB") == 0)
              {
-                 gsl_matrix *matrixALLab_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
-                 gsl_matrix *matrixAuxab_OFFx = NULL;
+                 matrixALLab_OFFx = gsl_matrix_alloc(ntemplates,lengthALL_F);
+                 matrixAuxab_OFFx = NULL;
                  
                  for (int i=0;i<nOFs;i++)
                  {
@@ -1770,7 +1745,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                          }
                      }
 
-                     //index = index + gsl_vector_get(posti,i)*2;
                      index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
 
                      gsl_matrix_free(matrixAuxab_OFFx); matrixAuxab_OFFx = 0;
@@ -1799,7 +1773,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              }
              
              // Get number of fixed optimal filters (columnss)
-             int nOFs;
              if (fits_get_num_cols(fptr,&nOFs, status))
              {
                  EP_PRINT_ERROR("Cannot get number of columns in library file",*status);
@@ -1816,27 +1789,14 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              }
              library_collection->nfixedfilters = nOFs;
              
-             //int lengthALL_T = 0;
-             //if (nOFs != (int)(posti->size))
-             //{
-             //    EP_PRINT_ERROR("The number of optimal filters in the library does not match the grading info in the XML file",EPFAIL);
-             //    *status=EPFAIL; return(library_collection);
-             //}
-             //for (int i=0;i<nOFs;i++)
-             //{
-             //    lengthALL_T = lengthALL_T + gsl_vector_get(posti,i) + gsl_vector_get(pBi,i);
-             //}
-             
              strcpy(obj.nameTable,"FIXFILTT");
              if (strcmp(reconstruct_init->OFInterp,"MF") == 0)
              {
-                 gsl_matrix *matrixALL_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
-                 gsl_matrix *matrixAux_OFTx = NULL;
+                 matrixALL_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
+                 matrixAux_OFTx = NULL;
                  
                  for (int i=0;i<nOFs;i++)
                  {
-                     //snprintf(str_length,125,"%d",(int) gsl_vector_get(posti,i));
-                     //matrixAux_OFTx = gsl_matrix_alloc(ntemplates,gsl_vector_get(posti,i));
                      snprintf(str_length,125,"%d",(int) gsl_matrix_get(reconstruct_init->grading->gradeData,i,1));
                      matrixAux_OFTx = gsl_matrix_alloc(ntemplates,gsl_matrix_get(reconstruct_init->grading->gradeData,i,1));
 
@@ -1856,7 +1816,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                          }
                      }
 
-                     //index = index + gsl_vector_get(posti,i);
                      index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
 
                      gsl_matrix_free(matrixAux_OFTx); matrixAux_OFTx = 0;
@@ -1875,8 +1834,8 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              }
              else if (strcmp(reconstruct_init->OFInterp,"SAB") == 0)
              {
-                 gsl_matrix *matrixALLab_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
-                 gsl_matrix *matrixAuxab_OFTx = NULL;
+                 matrixALLab_OFTx = gsl_matrix_alloc(ntemplates,lengthALL_T);
+                 matrixAuxab_OFTx = NULL;
                  
                  for (int i=0;i<nOFs;i++)
                  {
@@ -1898,7 +1857,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                          }
                      }
 
-                     //index = index + gsl_vector_get(posti,i);
                      index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
 
                      gsl_matrix_free(matrixAuxab_OFTx); matrixAuxab_OFTx = 0;
@@ -1920,12 +1878,11 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
      
      if ((reconstruct_init->opmode == 1) && ((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RFITTED") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RDER") == 0)) && (strcmp(reconstruct_init->OFNoise,"WEIGHTN") == 0) && (reconstruct_init->OFLib == 1))
      {
-         char str_length[125];
          obj.iniRow = 1;
          obj.endRow = ntemplates;
          if (changedNames == 1)  strcpy(obj.nameTable,"PRCLOFWN");
          else                    strcpy(obj.nameTable,"PRCLOFWN");
-         int index = 0;
+         index = 0;
          
          // PRCLOFWN HDU
          if (changedNames == 1)     strcpy(HDUname,"PRCLOFWN");
@@ -1939,7 +1896,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          }
          
          // Get number of columns
-         int nOFs;
          if (fits_get_num_cols(fptr,&nOFs, status))
          {
              EP_PRINT_ERROR("Cannot get number of columns in library file",*status);
@@ -1953,7 +1909,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          }
          library_collection->nfixedfilters = nOFs;
          
-         int lengthALL_PRCLOFWN = 0;
+         lengthALL_PRCLOFWN = 0;
          for (int i=0;i<(int)(posti->size);i++)
          {
              lengthALL_PRCLOFWN = lengthALL_PRCLOFWN + gsl_vector_get(posti,i);
@@ -1995,10 +1951,9 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
      
      if ((reconstruct_init->opmode == 1) && (strcmp(reconstruct_init->EnergyMethod,"COVAR") == 0) && (ntemplates > 1))
      {
-         char str_length[125];
          obj.iniRow = 1;
          obj.endRow = ntemplates;
-         int index = 0;
+         index = 0;
          
          // PRCLCOV HDU
          if (changedNames == 1) strcpy(HDUname,"PRCLCOV");
@@ -2011,7 +1966,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          }
          
          // Get number of columns
-         int nOFs;
          if (fits_get_num_cols(fptr,&nOFs, status))
          {
              EP_PRINT_ERROR("Cannot get number of columns in library file",*status);
@@ -2025,18 +1979,16 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          }
          library_collection->nfixedfilters = nOFs;
          
-        // int lengthALL_PRCLCOV = 0;
          for (int i=0;i<nOFs;i++)
          {
-             //lengthALL_PRCLCOV = lengthALL_PRCLCOV + pow(2,floor(log2(template_duration))-i)*2;
             lengthALL_PRCLCOV = lengthALL_PRCLCOV + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
          }
          
          if (changedNames == 1)     strcpy(obj.nameTable,"PRCLCOV");
          else                       strcpy(obj.nameTable,"PRECALWN");
          
-         gsl_matrix *matrixALL_PRCLCOVx = gsl_matrix_alloc(ntemplates,lengthALL_PRCLCOV);
          gsl_matrix *matrixAux_PRCLCOVx = NULL;
+         matrixALL_PRCLCOVx = gsl_matrix_alloc(ntemplates,lengthALL_PRCLCOV);
          for (int i=0;i<nOFs;i++)
          {
 
@@ -2068,7 +2020,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
                  }
              }
              
-             //index = index + pow(2,floor(log2(template_duration))-i)*2;
              index = index + gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)*2;
              
              gsl_matrix_free(matrixAux_PRCLCOVx); matrixAux_PRCLCOVx = 0;
@@ -2314,7 +2265,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
   * IntegrafreeTesEventListSIRENA: This function frees the structure in the input parameter.
   *
   ******************************************************************************/
- extern "C" void IntegrafreeTesEventListSIRENA(TesEventList* event_list)
+ extern "C" void IntegrafreeTesEventListSIRENA(TesEventListSIRENA* event_list)
  {
     if (event_list->energies != NULL) 	delete [] event_list->energies;
     if (event_list->avgs_4samplesDerivative != NULL) 	delete [] event_list->avgs_4samplesDerivative;
@@ -2404,7 +2355,6 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
 
     if (opmode == 0)	// Calibration
     {
-        //reconstruct_init->pulse_length = pow(2,floor(log2(largeFilter)));
         reconstruct_init->pulse_length = gsl_matrix_get(reconstruct_init->grading->gradeData,0,1);
     }
     else if (opmode == 1)
@@ -2625,7 +2575,6 @@ int fillTstartPulse1_i(ReconstructInitSIRENA* reconstruct_init)
     if (fits_open_file(&tstartPulse1FileObject,reconstruct_init->tstartPulse1,READONLY,&status))
     {
         message = "Cannot open tstartPulse1 file " + string(reconstruct_init->tstartPulse1);
-        //EP_EXIT_ERROR(message,EPFAIL);
         EP_PRINT_ERROR(message,status);
         status=EPFAIL; return(status);
     }
@@ -2634,7 +2583,6 @@ int fillTstartPulse1_i(ReconstructInitSIRENA* reconstruct_init)
     if (fits_movnam_hdu(tstartPulse1FileObject, ANY_HDU,extname, 0, &status))
     {
         message = "Cannot move to HDU " + string(extname) + " in tstartPulse1 file " + string(reconstruct_init->tstartPulse1);
-        //EP_EXIT_ERROR(message,EPFAIL);
         EP_PRINT_ERROR(message,status);
         status=EPFAIL; return(status);
     }
@@ -2642,7 +2590,6 @@ int fillTstartPulse1_i(ReconstructInitSIRENA* reconstruct_init)
     if (fits_get_num_rows(tstartPulse1FileObject,&totalpulses, &status))
     {
         message = "Cannot get number of rows in " + string(reconstruct_init->tstartPulse1);
-        //EP_EXIT_ERROR(message,EPFAIL);
         EP_PRINT_ERROR(message,status);
         status=EPFAIL; return(status);
     }
@@ -2655,7 +2602,6 @@ int fillTstartPulse1_i(ReconstructInitSIRENA* reconstruct_init)
     if (fits_get_colnum(tstartPulse1FileObject, CASEINSEN,column_name, &time_colnum, &status))
     {
         message = "Cannot get column number for TIME in tstartPulse1 file";
-        //EP_EXIT_ERROR(message,EPFAIL);
         EP_PRINT_ERROR(message,status);
         status=EPFAIL; return(status);
     }
@@ -2673,7 +2619,6 @@ int fillTstartPulse1_i(ReconstructInitSIRENA* reconstruct_init)
     if (readFitsSimple (obj,&reconstruct_init->tstartPulse1_i))
     {
         message = "Cannot read TIME column in tstartPulse1 file";
-        //EP_EXIT_ERROR(message,EPFAIL);
         EP_PRINT_ERROR(message,status);
         status=EPFAIL; return(status);
     }
@@ -2685,7 +2630,6 @@ int fillTstartPulse1_i(ReconstructInitSIRENA* reconstruct_init)
     if (fits_close_file(tstartPulse1FileObject, &status))
     {
         message = "Error closing tstartPulse1 file";
-        //EP_EXIT_ERROR(message,EPFAIL);
         EP_PRINT_ERROR(message,status);
         status=EPFAIL; return(status);
     }
@@ -2814,7 +2758,6 @@ int prepareToConvertI2R (ReconstructInitSIRENA* reconstruct_init)
                 {
                     status = 0;
 
-                    int hdunum; // Number of the current HDU (RECORDS or TESRECORDS)
                     int hdutype;
                     fits_get_hdu_num(reconstruct_init->record_file_fptr, &hdunum);
                     fits_get_hdu_type(reconstruct_init->record_file_fptr, &hdutype, &status);
@@ -2900,14 +2843,11 @@ int prepareToConvertI2R (ReconstructInitSIRENA* reconstruct_init)
     {
         status = 0;
 
-        char keyname[10];
-
         int currentHdu_num; // Number of the current HDU (RECORDS or TESRECORDS)
         int currentHdu_type;
         fits_get_hdu_num(reconstruct_init->record_file_fptr, &currentHdu_num);
         fits_get_hdu_type(reconstruct_init->record_file_fptr, &currentHdu_type, &status);
 
-        int hdunum; // How many HDU's are in the file
         fits_get_num_hdus(reconstruct_init->record_file_fptr, &hdunum,&status);
         int keyword_exists = 0;
         double keywordValue;
@@ -3071,7 +3011,7 @@ int fillPulsesAll (PulsesCollection** pulsesAll, PulsesCollection* pulsesInRecor
 }
 
 
-int fillEventList (TesEventList* event_list, PulsesCollection* pulsesInRecord, PulsesCollection* pulsesAll, ReconstructInitSIRENA* reconstruct_init, TesRecord* record, int lastRecord)
+int fillEventList (TesEventListSIRENA* event_list, PulsesCollection* pulsesInRecord, PulsesCollection* pulsesAll, ReconstructInitSIRENA* reconstruct_init, TesRecord* record, int lastRecord)
 {
     int status = 0;
 
@@ -3134,9 +3074,8 @@ int fillEventList (TesEventList* event_list, PulsesCollection* pulsesInRecord, P
     {
         if (lastRecord == 1)
         {
-            // Free & Fill TesEventList structure
+            // Free & Fill TesEventListSIRENA structure
             event_list->index = pulsesAll->ndetpulses;
-            //event_list->event_indexes = new double[event_list->index];
             event_list->energies = new double[event_list->index];
             event_list->avgs_4samplesDerivative = new double[event_list->index];
             event_list->Es_lowres = new double[event_list->index];
@@ -3145,9 +3084,7 @@ int fillEventList (TesEventList* event_list, PulsesCollection* pulsesInRecord, P
             event_list->bsln = new double[event_list->index];
             event_list->rmsbsln = new double[event_list->index];
             event_list->grading  = new int[event_list->index];
-            //event_list->grades1  = new int[event_list->index];
             event_list->grades2  = new int[event_list->index];
-            //event_list->pulse_heights  = new double[event_list->index];
             event_list->ph_ids   = new long[event_list->index];
             event_list->pix_ids   = new long[event_list->index];
             event_list->risetimes   = new double[event_list->index];
@@ -3207,14 +3144,12 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
      {
          if (ntemplates == 1)
          {
-             //if (strcmp(*ofinterp,"SAB") == 0)  *ofinterp = "MF";
              if (strcmp(reconstruct_init->OFInterp,"SAB") == 0)  strcpy(reconstruct_init->OFInterp ,"MF");
          }
          else
          {
              if (reconstruct_init->filtEev != 0)
              {
-                 //if (strcmp(*ofinterp,"SAB") == 0)  *ofinterp = "MF";
                  if (strcmp(reconstruct_init->OFInterp,"SAB") == 0)  strcpy(reconstruct_init->OFInterp,"MF");
 
                  EP_PRINT_ERROR("The library has several rows, but only the row related to filtEev is going to be used in reconstruction",-999); // Only a warning
@@ -3250,7 +3185,7 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  }
  
  // It returns the current 'event_list'
- int th_get_event_list(TesEventList** test_event, TesRecord** record)
+ int th_get_event_list(TesEventListSIRENA** test_event, TesRecord** record)
  {
      //log_trace("Getting event list...");
      if(!scheduler::get()->has_records()) {
@@ -3833,12 +3768,6 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
          gsl_matrix_memcpy(SAB, other.SAB);
      }
      
-     /*if(other.optimal_filtersab){
-         optimal_filtersab = new OptimalFilterSIRENA[ntemplates];
-         for (int i = 0; i < ntemplates; ++i){
-             optimal_filtersab[i] = other.optimal_filtersab[i];
-         }
-     }*/
      if(other.optimal_filtersabTIME){
          optimal_filtersabTIME = new OptimalFilterSIRENA[ntemplates];
          for (int i = 0; i < ntemplates; ++i){
@@ -4071,15 +4000,6 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
              gsl_matrix_memcpy(SAB, other.SAB);
          }
          
-         /*if(ntemplates > 0 && optimal_filtersab) {
-             delete [] optimal_filtersab; optimal_filtersab = 0;
-         }
-         if(other.optimal_filtersab){
-             optimal_filtersab = new OptimalFilterSIRENA[ntemplates];
-             for (int i = 0; i < ntemplates; ++i){
-                 optimal_filtersab[i] = other.optimal_filtersab[i];
-             }
-         }*/
          if(ntemplates > 0 && optimal_filtersabTIME) {
              delete [] optimal_filtersabTIME; optimal_filtersabTIME = 0;
          }
@@ -4204,9 +4124,6 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
          gsl_matrix_free(SAB); SAB = 0;
      }
      
-     /*if(ntemplates > 0 && optimal_filtersab){
-         delete [] optimal_filtersab;
-     }*/
      if(ntemplates > 0 && optimal_filtersabFREQ){
          delete [] optimal_filtersabFREQ;
      }

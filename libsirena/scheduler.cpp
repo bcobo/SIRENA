@@ -131,7 +131,7 @@ void scheduler::push_detection(TesRecord* record, int trig_reclength,
                                PulsesCollection *pulsesAll, 
                                ReconstructInitSIRENA** reconstruct_init, 
                                PulsesCollection** pulsesInRecord,
-                               TesEventList* event_list)
+                               TesEventListSIRENA* event_list)
 {
   //log_trace("pushing detection datax into the queue...");
   sirena_data* input = new sirena_data;
@@ -148,7 +148,7 @@ void scheduler::push_detection(TesRecord* record, int trig_reclength,
   input->record_pulses = *pulsesInRecord;
   input->rec_init = *reconstruct_init;
   input->optimal_filter = new OptimalFilterSIRENA;
-  input->event_list = new TesEventList;
+  input->event_list = new TesEventListSIRENA;
   input->event_list->size = event_list->size;
 
   input->event_list->index = event_list->index;
@@ -266,13 +266,13 @@ void scheduler::finish_reconstruction(PulsesCollection** pulsesAll)
       (*pulsesAll)->ndetpulses = aux.ndetpulses;
       (*pulsesAll)->size = (*pulsesAll)->ndetpulses + in_record->ndetpulses;
       (*pulsesAll)->pulses_detected =  new PulseDetected[(*pulsesAll)->size];
-      for (int i = 0; i < aux.ndetpulses; ++i){
-        (*pulsesAll)->pulses_detected[i] = aux.pulses_detected[i];
+      for (int ii = 0; ii < aux.ndetpulses; ++ii){
+        (*pulsesAll)->pulses_detected[ii] = aux.pulses_detected[ii];
       }
     }
-    for (int i = 0; i < in_record->ndetpulses; ++i){
-      (*pulsesAll)->pulses_detected[i+(*pulsesAll)->ndetpulses] = 
-        in_record->pulses_detected[i];
+    for (int ii = 0; ii < in_record->ndetpulses; ++ii){
+      (*pulsesAll)->pulses_detected[ii+(*pulsesAll)->ndetpulses] =
+        in_record->pulses_detected[ii];
     }
     (*pulsesAll)->ndetpulses += in_record->ndetpulses;
   }// End reconstruction of the pulses array
@@ -280,7 +280,7 @@ void scheduler::finish_reconstruction(PulsesCollection** pulsesAll)
   //log_trace("Filling eventlist...");
   for(unsigned int i = 0; i < this->num_records; ++i){
     
-    TesEventList* event_list = data_array[i]->event_list;
+    TesEventListSIRENA* event_list = data_array[i]->event_list;
     PulsesCollection* record_pulses = data_array[i]->record_pulses;
     TesRecord* rec = data_array[i]->rec;
 
@@ -323,7 +323,7 @@ void scheduler::finish_reconstruction(PulsesCollection** pulsesAll)
       }
     }else{
       if (data_array[i]->last_record == 1) {
-        // Fill TesEventList structure      
+        // Fill TesEventListSIRENA structure
         for (int ip = 0; ip<(*pulsesAll)->ndetpulses; ip++) {
           event_list->event_indexes[ip] = 
             ((*pulsesAll)->pulses_detected[ip].Tstart - rec->time)/rec->delta_t;
@@ -429,13 +429,13 @@ void scheduler::finish_reconstruction_v2(PulsesCollection** pulsesAll)
       (*pulsesAll)->ndetpulses = aux.ndetpulses;
       (*pulsesAll)->size = (*pulsesAll)->ndetpulses + in_record->ndetpulses;
       (*pulsesAll)->pulses_detected =  new PulseDetected[(*pulsesAll)->size];
-      for (int i = 0; i < aux.ndetpulses; ++i){
-        (*pulsesAll)->pulses_detected[i] = aux.pulses_detected[i];
+      for (int ii = 0; ii < aux.ndetpulses; ++ii){
+        (*pulsesAll)->pulses_detected[ii] = aux.pulses_detected[ii];
       }
     }
-    for (int i = 0; i < in_record->ndetpulses; ++i){
-      (*pulsesAll)->pulses_detected[i+(*pulsesAll)->ndetpulses] = 
-        in_record->pulses_detected[i];
+    for (int ii = 0; ii < in_record->ndetpulses; ++ii){
+      (*pulsesAll)->pulses_detected[ii+(*pulsesAll)->ndetpulses] =
+        in_record->pulses_detected[ii];
     }
     (*pulsesAll)->ndetpulses += in_record->ndetpulses;
   }// End reconstruction of the pulses array
@@ -443,7 +443,7 @@ void scheduler::finish_reconstruction_v2(PulsesCollection** pulsesAll)
   //log_trace("Filling eventlist...");
   for(unsigned int i = 0; i < this->num_records; ++i){
     
-    TesEventList* event_list = data_array[i]->event_list;
+    TesEventListSIRENA* event_list = data_array[i]->event_list;
     PulsesCollection* record_pulses = data_array[i]->record_pulses;
     TesRecord* rec = data_array[i]->rec;
 
@@ -486,7 +486,7 @@ void scheduler::finish_reconstruction_v2(PulsesCollection** pulsesAll)
       }
     }else{
       if (data_array[i]->last_record == 1) {
-        // Fill TesEventList structure
+        // Fill TesEventListSIRENA structure
         for (int ip = 0; ip<(*pulsesAll)->ndetpulses; ip++) {
           event_list->event_indexes[ip] = 
             ((*pulsesAll)->pulses_detected[ip].Tstart - rec->time)/rec->delta_t;
@@ -520,7 +520,7 @@ void scheduler::finish_reconstruction_v2(PulsesCollection** pulsesAll)
   log_test("End");
 }
 
-void scheduler::get_test_event(TesEventList** test_event, TesRecord** record)
+void scheduler::get_test_event(TesEventListSIRENA** test_event, TesRecord** record)
 {
   if(this->current_record == this->num_records) return;
   //log_trace("Getting eventlist from record %i", (this->current_record + 1));

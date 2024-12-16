@@ -56,7 +56,6 @@ MAP OF SECTIONS IN THIS FILE::
 ****************************************************************************/
 int polyFit (gsl_vector *x_fit, gsl_vector *y_fit, double *a, double *b, double *c)
 {
-	int status=EPOK;
 	double sxx=0, sxy=0, sxx2=0, sx2y=0, sx2x2=0; 
 	double x=0, x2=0, x3=0, x4=0; 
 	double y=0, xy=0, x2y=0;
@@ -102,8 +101,6 @@ int polyFit (gsl_vector *x_fit, gsl_vector *y_fit, double *a, double *b, double 
 ****************************************************************************/
 int polyFitLinear (gsl_vector *x_fit, gsl_vector *y_fit, double *a, double *b)
 {
-	int status=EPOK;
-	double sxx=0, sxy=0, sxx2=0, sx2y=0, sx2x2=0; 
 	double x=0, x2=0; 
 	double y=0, xy=0;
 	int n = x_fit->size;
@@ -159,10 +156,8 @@ int polyFitLinear (gsl_vector *x_fit, gsl_vector *y_fit, double *a, double *b)
 * - outvector: Output GSL complex vector with the FFT of invector
 * - STD: SelectedTimeDuration=(Size of invector)/samprate
 *****************************************************************************/
-int FFT(gsl_vector *invector,gsl_vector_complex *outvector,double STD)
+int FFT(gsl_vector *invector,gsl_vector_complex *outvector)
 {
-	int status=EPOK;
-
 	//Declare variables
  	gsl_fft_complex_workspace * work;
  	gsl_fft_complex_wavetable * wavetable;
@@ -173,13 +168,13 @@ int FFT(gsl_vector *invector,gsl_vector_complex *outvector,double STD)
  	//FFT calculus
  	work = gsl_fft_complex_workspace_alloc(invector->size);
  	wavetable = gsl_fft_complex_wavetable_alloc(invector->size);
- 		//In order to work with complex numbers
- 	for (int i=0; i< invector->size; i++) {
+	//In order to work with complex numbers
+ 	for (int i=0; i< (int)(invector->size); i++) {
  		REAL(data,i) = gsl_vector_get(invector,i);
  		IMAG(data,i) = 0.0;
  	}
  	gsl_fft_complex_forward(data,1,invector->size,wavetable,work);
- 	for (int i=0; i< invector->size; i++) {
+ 	for (int i=0; i< (int)(invector->size); i++) {
  		gsl_vector_complex_set(outvector,i,gsl_complex_rect(REAL(data,i),IMAG(data,i)));
  	}
  	// To return a correct FFT amplitude, it is necessary to normalize FFTs by the number of sample points to calculate the FFT
@@ -211,21 +206,20 @@ int FFT(gsl_vector *invector,gsl_vector_complex *outvector,double STD)
 * - outvector: Output GSL vector with the inverse FFT of invector
 * - STD: SelectedTimeDuration=(Size of invector)/samprate
 *****************************************************************************/
-int FFTinverse(gsl_vector_complex *invector,gsl_vector *outvector,double STD)
+int FFTinverse(gsl_vector_complex *invector,gsl_vector *outvector)
 {
 	//Declare variables
-	int status=EPOK;
 	gsl_fft_complex_workspace * work (gsl_fft_complex_workspace_alloc(invector->size));
 	gsl_fft_complex_wavetable * wavetable (gsl_fft_complex_wavetable_alloc(invector->size));
 	std::vector<std::complex<double> >cd (invector->size,std::complex<double> (0, 0));
 	gsl_complex_packed_array cpa (reinterpret_cast<double *>(&cd[0]));
 
-	for (int i=0;i<invector->size;i++) cd[i]=std::complex<double> (GSL_REAL(gsl_vector_complex_get(invector,i)),GSL_IMAG(gsl_vector_complex_get(invector,i)));
+	for (int i=0;i<(int)(invector->size);i++) cd[i]=std::complex<double> (GSL_REAL(gsl_vector_complex_get(invector,i)),GSL_IMAG(gsl_vector_complex_get(invector,i)));
 
 	//Inverse FFT calculus
 	gsl_fft_complex_inverse(cpa,1,invector->size,wavetable,work);
 
-	for (int i=0;i<invector->size;i++)
+	for (int i=0;i<(int)(invector->size);i++)
 	{
 		gsl_vector_set(outvector,i,cd[i].real());
 	}
@@ -344,13 +338,12 @@ void gsl_vector_complex_argIFCA(gsl_vector *varg,gsl_vector_complex *vin)
 ****************************************/
 int gsl_vector_Sumsubvector(gsl_vector *invector, long offset, long n, double *sum)
 {
-	int status=EPOK;
 	string message = "";
 	char valERROR[256];
 	
 	*sum = 0.0;
 
-	if ((offset < 0) || (offset+n > invector->size))
+	if ((offset < 0) || (offset+n > (long)(invector->size)))
 	{
 		sprintf(valERROR,"%d",__LINE__+7);
 		string str(valERROR);
@@ -477,7 +470,6 @@ bool fileExists(const std::string& name)
 ****************************************************************************/
 int parabola3Pts (gsl_vector *x, gsl_vector *y, double *a, double *b, double *c)
 {
-	int status=EPOK;
 	double x1,x2,x3,y1,y2,y3;
 	
 	x1 = gsl_vector_get(x,0);
@@ -504,7 +496,7 @@ int parabola3Pts (gsl_vector *x, gsl_vector *y, double *a, double *b, double *c)
 ****************************************************************************/
 bool isNumber(string s) 
 { 
-    for (int i = 0; i < s.length(); i++) 
+    for (string::size_type i = 0; i < s.length(); i++)
         if (isdigit(s[i]) == false) 
             return false; 
   
@@ -525,7 +517,6 @@ bool isNumber(string s)
 int hannWindow(gsl_vector **inoutvector)
 {
 	//Declare variables
-    int status=EPOK;
  	double multiplier;
     int N = (*inoutvector)->size;
     

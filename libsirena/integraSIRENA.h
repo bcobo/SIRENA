@@ -21,12 +21,80 @@
 #include <stdio.h>
 
 #include "tesrecord.h"
-#include "teseventlist.h"
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
 #include <time.h>
+
+typedef struct {
+	/** Current size of the list */
+	int size;
+
+	/** Current size of the energy/grade lists */
+	int size_energy;
+
+	/** Current end index of the list */
+	int index;
+
+	/** Index arrival time of the photons inside a record */
+	//int * event_indexes;
+	double * event_indexes;	//SIRENA
+
+	/** Pulse height of the photons */
+	double * pulse_heights;
+
+	/** Average of the first 4 samples of the derivative of the event (pulse) */
+	double * avgs_4samplesDerivative;  //SIRENA
+
+	/** Low resolution energy estimator (4 samples-long filter) */
+	double * Es_lowres;  //SIRENA
+
+	/** Offset relative to the central point of the parabola */
+	double * phis;  //SIRENA
+
+	/** Number of samples shifted to find the maximum of the parabola */
+	int * lagsShifts;  //SIRENA
+
+	/** Baseline calculated just previously to the pulse (in general)(see 'getB') */
+	double * bsln;  //SIRENA
+
+        /** Rms of the baseline calculated just previously to the pulse (in general)(see 'getB') */
+	double * rmsbsln;  //SIRENA
+
+	/** Pulse grade */
+	int * grading;  //SIRENA
+
+	/** Energy of the photons */
+	double * energies;
+
+	/** Grade 1: length of the filter used during the reconstruction */
+	int * grades1;
+
+	/** Grade 2: distance in samples to the previous pulse */
+	int * grades2;
+
+	/** PH_ID of the reconstructed photons */
+	long * ph_ids;
+    long * ph_ids2;
+    long * ph_ids3;
+
+	/** PIX_ID of the reconstructed photons */
+	long * pix_ids;
+
+	/** Tstart of the reconstructed photons (in time) */
+	double * tstarts;
+
+	/** Tend of the reconstructed photons (in time) */
+	double * tends;
+
+	/** Rise time of the reconstructed photons (in time) */
+	double * risetimes;
+
+	/** Fall time of the reconstructed photons (in time) */
+	double * falltimes;
+
+} TesEventListSIRENA;
 
 typedef struct MatrixStruct
 {
@@ -195,9 +263,6 @@ typedef struct LibraryCollection
 	
 	/** SAB vector */
 	gsl_matrix *SAB;
-	
-	/** Structure containing all the optimal filters AB from the library */
-	//OptimalFilterSIRENA* optimal_filtersab;
 	
 	/** Structure containing all the fixed optimal filters AB in time domain from the library */
 	OptimalFilterSIRENA* optimal_filtersabTIME;
@@ -586,7 +651,8 @@ void th_end(ReconstructInitSIRENA* reconstruct_init,
 #ifdef __cplusplus
 extern "C"
 #endif
-int th_get_event_list(TesEventList** test_event, TesRecord** record);
+//int th_get_event_list(TesEventList** test_event, TesRecord** record);
+int th_get_event_list(TesEventListSIRENA** test_event, TesRecord** record);
 
 #ifdef __cplusplus
 extern "C"
@@ -656,12 +722,12 @@ void freeOptimalFilterSIRENA(OptimalFilterSIRENA* PulsesColl);
 #ifdef __cplusplus
 extern "C"
 #endif
-void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, TesEventList* event_list, ReconstructInitSIRENA* reconstruct_init, int lastRecord, int nRecord, PulsesCollection **pulsesAll, int* const status);
+void reconstructRecordSIRENA(TesRecord* record, int trig_reclength, TesEventListSIRENA* event_list, ReconstructInitSIRENA* reconstruct_init, int lastRecord, int nRecord, PulsesCollection **pulsesAll, int* const status);
 
 #ifdef __cplusplus
 extern "C"
 #endif
-void IntegrafreeTesEventListSIRENA(TesEventList* event_list);
+void IntegrafreeTesEventListSIRENA(TesEventListSIRENA* event_list);
 
 int loadLibrary (ReconstructInitSIRENA* reconstruct_init);
 LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init, gsl_vector *pBi, gsl_vector *posti, int* const status);
@@ -694,7 +760,7 @@ int prepareToConvertI2R (ReconstructInitSIRENA* reconstruct_init);
 
 int fillPulsesAll (PulsesCollection** pulsesAll, PulsesCollection* pulsesInRecord);
 
-int fillEventList (TesEventList* event_list, PulsesCollection* pulsesAll, PulsesCollection* pulsesInRecord, ReconstructInitSIRENA* reconstruct_init, TesRecord* record, int lastRecord);
+int fillEventList (TesEventListSIRENA* event_list, PulsesCollection* pulsesAll, PulsesCollection* pulsesInRecord, ReconstructInitSIRENA* reconstruct_init, TesRecord* record, int lastRecord);
 
 long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_init, int* const status);
 

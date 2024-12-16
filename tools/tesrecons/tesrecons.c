@@ -92,7 +92,6 @@ int tesrecons_main() {
 
   // Register HEATOOL:
   set_toolname("tesrecons");
-  //set_toolversion("0.05");
   
   do { // Beginning of the ERROR handling loop (will at
        // most be run once).
@@ -100,10 +99,8 @@ int tesrecons_main() {
 
     // Get program parameters
     status=getpar_tesrecons(&par);
-    //CHECK_STATUS_BREAK(status);
     if (status != EXIT_SUCCESS)
     {
-    	//printf("getpar_tesrecons error\n");
     	return(status);
     }
     par.opmode = 1; // Reconstructing the energies
@@ -144,7 +141,7 @@ int tesrecons_main() {
     CHECK_STATUS_BREAK(status);
     
     //Open outfile 
-    TesEventFile * outfile = opennewTesEventFileSIRENA(par.TesEventFile,
+    TesEventFileSIRENA* outfile = opennewTesEventFileSIRENA(par.TesEventFile,
                                                  keywords,
                                                  SIRENA_VERSION,
                                                  par.clobber,
@@ -164,8 +161,8 @@ int tesrecons_main() {
     destroyAdvDet(&det);
 
     // Build up TesEventList
-    TesEventList* event_list = newTesEventListSIRENA(&status);
-    allocateTesEventListTrigger(event_list,par.EventListSize,&status);
+    TesEventListSIRENA* event_list = newTesEventListSIRENA(&status);
+    allocateTesEventListTriggerSIRENA(event_list,par.EventListSize,&status);
     CHECK_STATUS_BREAK(status);
             
     // Call SIRENA to reconstruct
@@ -187,7 +184,7 @@ int tesrecons_main() {
     freeReconstructInitSIRENA(reconstruct_init_sirena);
     freePulsesCollection(pulsesAll);
     freeOptimalFilterSIRENA(optimalFilter);
-    freeTesEventFile(outfile,&status);
+    freeTesEventFileSIRENA(outfile,&status);
     freeTesEventListSIRENA(event_list);
     freeSixtStdKeywords(keywords);
     CHECK_STATUS_BREAK(status);
@@ -268,7 +265,6 @@ int getpar_tesrecons(struct Parameters* const par)
   status=ape_trad_query_bool("history", &par->history);
   if (EXIT_SUCCESS!=status) {
     SIXT_ERROR("failed reading the history parameter");
-    //printf("failed reading the history parameter\n");
     return(status);
   }
 
@@ -360,8 +356,6 @@ int getpar_tesrecons(struct Parameters* const par)
   }
   status=ape_trad_query_int("tstartPulse2", &par->tstartPulse2);
   status=ape_trad_query_int("tstartPulse3", &par->tstartPulse3);
-  //status=ape_trad_query_double("energyPCA1", &par->energyPCA1);
-  //status=ape_trad_query_double("energyPCA2", &par->energyPCA2);
   par->energyPCA1 = -999;
   par->energyPCA1 = -999;
       
@@ -422,13 +416,6 @@ int getpar_tesrecons(struct Parameters* const par)
 
   MyAssert((par->OFIter ==0) || (par->OFIter ==1), "OFIter must be 0 or 1");
 
-  // It was in order to not ask for the noise file if OFLib=1
-  /*if ((par->OFLib == 1) && (strcmp(par->FilterMethod,"F0") != 0))
-  {                                                       *
-   SIXT_ERROR("parameter error: If OFLib=yes => FilterMethod must be F0");
-   return(EXIT_FAILURE);
-  }*/
-
   if ((strcmp(par->EnergyMethod,"0PAD") == 0) && (strcmp(par->FilterDomain,"F") == 0))
   {
       SIXT_ERROR("parameter error: Code is not prepared to run 0-padding in Frequency domain");
@@ -467,9 +454,6 @@ int getpar_tesrecons(struct Parameters* const par)
            "OFStrategy must be FREE, BYGRADE or FIXED");
 
   MyAssert(par->OFLength > 0, "OFLength must be greater than 0");
-
-  //MyAssert(par->energyPCA1 > 0, "energyPCA1 must be greater than 0");
-  //MyAssert(par->energyPCA2 > 0, "energyPCA2 must be greater than 0");
 
   return(status);
 }

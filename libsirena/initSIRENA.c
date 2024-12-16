@@ -107,7 +107,7 @@ int checkXmls(struct Parameters* const par)
             if(wholelibXMLfile[k]==' ')
             {
                 if (HISTORYnum % 2 == 0)
-                {  // Par
+                {  // Even
                     spaces[HISTORYnum] = k-7;
                 }
                 else
@@ -319,12 +319,6 @@ int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par,
     // Pointer to where the text "sample_rate=" is in HISTORY block
     char *sample_rate_pointer = NULL;
     sample_rate_pointer = strstr (headerPrimary,"sample_rate=");
-    /*if(!sample_rate_pointer)
-    {
-        // Read it from XML file
-        *sampling_rate = *samplingrate; // Input parameter 'samplingrate' is sampling frequency read from XML file
-    }
-    else*/
     // If no 'sample_rate' in HISTORY => sampling frequency from XML is used
     if (sample_rate_pointer)
     {
@@ -341,7 +335,6 @@ int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par,
             strcat(characters_after_srate,each_character_after_srate);
         }
         double samplingrate_HISTORY = atof(characters_after_srate);
-        //if (((*samplingrate != -999.0) && (samplingrate_HISTORY != -999.0)) && (*samplingrate != samplingrate_HISTORY))
         if (((samplingrate_XML != -999.0) && (samplingrate_HISTORY != -999.0)) && (samplingrate_XML != samplingrate_HISTORY))
         {
             SIXT_ERROR("Sampling rate from input FITS file and from XML file do not match");
@@ -454,7 +447,10 @@ int getSamplingrate_trigreclength (char* inputFile, struct Parameters par, doubl
 
         for (int j=0;j<(*numfits);j++)   // For every FITS file
         {
-            fgets(filefits, 256, filetxt);
+            if (fgets(filefits, 256, filetxt) == NULL)
+            {
+                fprintf(stderr, "Error reading file line in TXT file with file names\n");
+            }
             strtok(filefits, "\n");     // To delete '/n' from filefits (if not, 'fits_open_file' can not open the file)
 
             status = getSamplingrate_trigreclength_Filei(inputFile, par, samplingrate, trigreclength);
@@ -621,7 +617,7 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
 * - pulsesAll: Structure containing the detected pulses
 * - outfile: Output events FITS file
 ******************************************************************************/
-int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFile * outfile)
+int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile)
 {
     // Error status.
     int status = EXIT_SUCCESS;
@@ -682,8 +678,8 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
 
     int lastRecord = 0, nrecord = 0, startRecordGroup = 0;    //last record required for SIRENA library creation
     // Build up TesEventList to recover the results of SIRENA
-    TesEventList* event_list = newTesEventListSIRENA(&status);
-    allocateTesEventListTrigger(event_list,par.EventListSize,&status);
+    TesEventListSIRENA* event_list = newTesEventListSIRENA(&status);
+    allocateTesEventListTriggerSIRENA(event_list,par.EventListSize,&status);
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
     while(getNextRecord(record_file,record,&lastRecord,&startRecordGroup,&status))
     {
@@ -743,7 +739,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
             // In THREADING mode, saveEventListToFileSIRENA is not called until finishing with calculus
             // (ordering is necessary previously)
             if(!is_threading()){
-                saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
+                saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,&status);
                 CHECK_STATUS_BREAK(status);
                 //Reinitialize event list
                 event_list->index=0;
@@ -756,13 +752,12 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     if(is_threading())
     {
         //printf("%s","**Threading...waiting \n");
-        //th_end(&reconstruct_init_sirena, &pulsesAll);
         th_end(reconstruct_init_sirena, &pulsesAll);
         int i = 1;
         int aux = 1;
         while((aux = th_get_event_list(&event_list, &record)) == 1)
         {
-            saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,record->pixid,&status);
+            saveEventListToFileSIRENA(outfile,event_list,record->time,record_file->delta_t,&status);
             if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
             ++i;
         }
@@ -825,7 +820,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
 * - pulsesAll: Structure containing the detected pulses
 * - outfile: Output events FITS file
 ******************************************************************************/
-int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFile * outfile)
+int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile)
 {
     // Error status.
     int status=EXIT_SUCCESS;
@@ -860,7 +855,10 @@ int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA
 
         for (int j=0;j<numfits;j++)   // For every FITS file
         {
-            fgets(filefits, 256, filetxt);
+            if (fgets(filefits, 256, filetxt) == NULL)
+            {
+                fprintf(stderr, "Error reading file line in TXT file with file names\n");
+            }
             strtok(filefits, "\n");     // To delete '/n' from filefits (if not, 'fits_open_file' can not open the file)
 
             status = callSIRENA_Filei(inputFile, keywords, reconstruct_init_sirena, par, sampling_rate, trig_reclength, pulsesAll, outfile);
@@ -1006,6 +1004,18 @@ TesEventFileSIRENA* newTesEventFileSIRENA(int* const status){
 	return(file);
 }
 
+/** TesEventFileSIRENA Destructor. */
+void freeTesEventFileSIRENA(TesEventFileSIRENA* file, int* const status){
+	if (NULL!=file) {
+		if (NULL!=file->fptr) {
+			fits_close_file(file->fptr, status);
+			CHECK_STATUS_VOID(*status);
+			headas_chat(5, "closed TesEventFile list file\n");
+		}
+		free(file);
+		file=NULL;
+	}
+}
 
 TesEventFileSIRENA* opennewTesEventFileSIRENA(const char* const filename,
 				  SixtStdKeywords* keywords,
@@ -1027,7 +1037,8 @@ TesEventFileSIRENA* opennewTesEventFileSIRENA(const char* const filename,
 		} else {
 			// Throw an error.
 			char msg[MAXMSG];
-			sprintf(msg, "file '%s' already exists", buffer);
+            snprintf(msg, sizeof(msg), "file '%.*s' already exists",
+                (int)(sizeof(msg) - strlen("file '' already exists") - 1), buffer);
 			SIXT_ERROR(msg);
 			*status=EXIT_FAILURE;
 			CHECK_STATUS_RET(*status,file);
@@ -1054,12 +1065,10 @@ TesEventFileSIRENA* opennewTesEventFileSIRENA(const char* const filename,
     fits_write_key(file->fptr,TSTRING,"CREADATE",keyvalstr,NULL,status);
     CHECK_STATUS_RET(*status,file);
 
-	fits_write_key(file->fptr,TSTRING,"SIRENAV",sirenaVersion,NULL,status);
+	fits_write_key(file->fptr,TSTRING,"SIRENAV",(char *)sirenaVersion,NULL,status);
 	CHECK_STATUS_RET(*status,file);
 
 	// Create table
-
-	//first column TIME
 	char   *ttype[]={"TIME","SIGNAL","AVG4SD","ELOWRES","GRADE1","GRADE2","PHI","LAGS","BSLN","RMSBSLN","PIXID","PH_ID","RISETIME","FALLTIME","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"};
 	char *tform[]={"1D", "1D", "1D", "1D", "1J", "1J", "1D", "1J", "1D", "1D", "1J", "3J", "1D", "1D", "1D", "1D", "1E", "1E", "1I", "1J", "1I", "1D"};
 	char *tunit[]={"s", "keV", "", "keV", "", "", "", "", "", "", "", "", "s", "s", "deg", "deg", "m", "m", "", "", "", "keV"};
@@ -1085,7 +1094,7 @@ TesEventFileSIRENA* opennewTesEventFileSIRENA(const char* const filename,
 
 
 void saveEventListToFileSIRENA(TesEventFileSIRENA* file,TesEventListSIRENA * event_list,
-		double start_time,double delta_t,long pixID,int* const status){
+double start_time,double delta_t,int* const status){
 	//Save time, PIXID and dummy grading column
 	double time;
 	int dummy_grading = 0;
@@ -1093,8 +1102,6 @@ void saveEventListToFileSIRENA(TesEventFileSIRENA* file,TesEventListSIRENA * eve
 		time = start_time + delta_t*event_list->event_indexes[i];
 		fits_write_col(file->fptr, TDOUBLE, file->timeCol,
 					   file->row, 1, 1, &time, status);
-		//fits_write_col(file->fptr, TLONG, file->pixIDCol,
-		//			   file->row, 1, 1, &pixID, status);
 		fits_write_col(file->fptr, TINT, file->pixIDCol,
 					file->row, 1, 1, &event_list->pix_ids[i], status);
 		fits_write_col(file->fptr, TINT, file->gradingCol,
@@ -1115,7 +1122,7 @@ void saveEventListToFileSIRENA(TesEventFileSIRENA* file,TesEventListSIRENA * eve
 					file->row, 1, event_list->index, event_list->avgs_4samplesDerivative, status);
 	CHECK_STATUS_VOID(*status);
 
-        //Save Es_lowres (ELOWRES) column
+    //Save Es_lowres (ELOWRES) column
  	fits_write_col(file->fptr, TDOUBLE, file->E_lowresCol,
 					file->row, 1, event_list->index, event_list->Es_lowres, status);
 	CHECK_STATUS_VOID(*status);
@@ -1194,4 +1201,31 @@ void saveEventListToFileSIRENA(TesEventFileSIRENA* file,TesEventListSIRENA * eve
 
 	file->row = file->row + event_list->index;
 	file->nrows+= event_list->index;
+}
+
+/** Allocates memory for a TesEventList structure for the triggering stage:
+ *  only event_index, pulse_height */
+void allocateTesEventListTriggerSIRENA(TesEventListSIRENA* event_list,int size,int* const status){
+	event_list->event_indexes = malloc(size*sizeof*(event_list->event_indexes));
+	if (NULL == event_list->event_indexes){
+		*status=EXIT_FAILURE;
+		SIXT_ERROR("memory allocation for event_index array in TesEventList failed");
+		CHECK_STATUS_VOID(*status);
+	}
+
+	event_list->pulse_heights = malloc(size*sizeof*(event_list->pulse_heights));
+	if (NULL == event_list->pulse_heights){
+		*status=EXIT_FAILURE;
+		SIXT_ERROR("memory allocation for pulse_height array in TesEventList failed");
+		CHECK_STATUS_VOID(*status);
+	}
+
+	event_list->grades1 = malloc(size*sizeof*(event_list->grades1));
+	if (NULL == event_list->grades1){
+		*status=EXIT_FAILURE;
+		SIXT_ERROR("memory allocation for grade1 array in TesEventList failed");
+		CHECK_STATUS_VOID(*status);
+	}
+
+	event_list->size = size;
 }

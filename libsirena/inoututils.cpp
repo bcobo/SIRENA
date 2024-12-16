@@ -219,11 +219,10 @@ int writeFitsSimple(IOData obj, gsl_vector *vector)
 
 	int blocksize = obj.endRow - obj.iniRow + 1;
 	int extver = 0, trgNcols=0, status=EPOK;
-	int  colnum=0, felem=0,hdunum=0,hdunums=0;
+	int  colnum=0;
 	char *comment=NULL;
-	char extname[20],nameCol[20],charcol[20];
+	char charcol[20];
 	char keyname[10];
-	char keyvalstr[500];
 	char *tform[1];
 	char *ttype[1];
 	char *tunit[1];
@@ -347,11 +346,10 @@ int writeFitsComplex(IOData obj, gsl_matrix *matrix)
 	double *bufferD = NULL;
 	int blocksize = obj.endRow - obj.iniRow + 1;
 	int extver=0,trgNcols=0,dim=0,status=EPOK;
-	int  colnum=0, felem=0;
+	int  colnum=0;
 	char *comment=NULL;
-	char extname[20],charcol[20];
+	char charcol[20];
 	char keyname[10];
-	char keyvalstr[100];
 	char chardim[100];
 	char *tform[1];
 	char *ttype[1];
@@ -504,7 +502,7 @@ int writeFitsComplex(IOData obj, gsl_matrix *matrix)
 ****************************************************/
 int toGslMatrix(void **buffer, gsl_matrix **matrix, long numCol, int numRow, int type, int eventini)
 {
-	int t=0,k=0,status=EPOK;
+	int t=0,k=0;
 	string message="";
   
 	while (t<numRow*numCol)
@@ -546,8 +544,6 @@ int toGslMatrix(void **buffer, gsl_matrix **matrix, long numCol, int numRow, int
 ****************************************************/
 int toGslVector(void **buffer, gsl_vector **array, long nevent, int eventini, int type)
 { 
-	int status = EPOK;
-	
 	for (int i=0; i<nevent-eventini;i++)
 	{
 		switch (type)
@@ -573,9 +569,7 @@ int toGslVector(void **buffer, gsl_vector **array, long nevent, int eventini, in
 ****************************************************/
 int fromGslVector(void **buffer, gsl_vector **array, int type)
 {
-	int status = EPOK;
-	
-	for(int i=0; i<(*array)->size; i++)
+	for(int i=0; i<(int)((*array)->size); i++)
 	{
 		switch (type)
 		{
@@ -600,8 +594,6 @@ int fromGslVector(void **buffer, gsl_vector **array, int type)
 ****************************************************/
 int fromGslMatrix(void **buffer, gsl_matrix **matrix, int type)
 {
-	int status = EPOK;
-	
 	int n1 = (*matrix)->size1;
 	int n2 = (*matrix)->size2;
 	for(int i=0; i<n1; i++)
@@ -661,14 +653,16 @@ int interactivePars(inparam *taskPars, int np, string task)
 		if (taskPars[i].type == "char")
 		{
 			cout << taskPars[i].description << " [" << taskPars[i].defValStr << "]:";
-			fgets(buf, sizeof(buf), stdin);
+			if (fgets(buf, sizeof(buf), stdin)==NULL)
+				cout<<"Error reading...fgets"<<endl;
 			*strchr(buf, '\n') = '\0';
 			if (strlen(buf) != 0) taskPars[i].ValStr = buf;
 		}
 		else if (taskPars[i].type == "int")
 		{
 			cout << taskPars[i].description << " [" << taskPars[i].defValInt << "]:";
-			fgets(buf, sizeof buf, stdin);
+			if (fgets(buf, sizeof buf, stdin))
+				cout<<"Error reading...fgets"<<endl;
 			*strchr(buf, '\n') = '\0';
 			if (strlen(buf) != 0)
 			{
@@ -684,7 +678,8 @@ int interactivePars(inparam *taskPars, int np, string task)
 		else
 		{
 			cout << taskPars[i].description << " [" << taskPars[i].defValReal << "]:";
-			fgets(buf, sizeof buf, stdin);
+			if (fgets(buf, sizeof buf, stdin)==NULL)
+				cout<<"Error reading...fgets"<<endl;
 			*strchr(buf, '\n') = '\0';
 			if (strlen(buf) != 0)
 			{

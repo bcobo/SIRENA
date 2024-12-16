@@ -115,10 +115,9 @@
      message="Running GENNOISESPEC v" + string(SIRENA_VERSION);
      cout<<message<<endl;
 
-     //////// Setup
+     // Setup
      message="=== Setup ===";
      cout<<message<<endl;
-     int row_probressbar;
 
      time_t t_start = time(NULL);
      
@@ -139,18 +138,12 @@
          EP_EXIT_ERROR(message,status); 
      }
      
-     char str_stat[8];
-     char str_stat1[8];
+     char str_stat[12];
+     char str_stat1[12];
      double cutFreq = 0.;
      int boxLength = 0;
      
      int intervalMinSamples_base2 = pow(2,floor(log2(par.intervalMinSamples)));
-     /*if ((log2(par.intervalMinSamples)-floor(log2(par.intervalMinSamples))) > 0)	
-     {	
-         par.intervalMinSamples = pow(2,floor(log2(par.intervalMinSamples)));
-         message = "intervalMinSamples' has been redefined as a base-2 system value.";
-         EP_PRINT_ERROR(message,-999);	// Only a warning
-     }*/
      
      // Open input FITS file
      if (fits_open_file(&infileObject, par.inFile,0,&status))
@@ -158,7 +151,6 @@
          message = "Cannot open file " + string(par.inFile);
          EP_EXIT_ERROR(message,status);
      }
-     //int hdunum; // Number of HDUs in the input FITS file
      fits_get_num_hdus(infileObject, &hdunum,&status);
      
      // Check if input FITS file have been simulated with TESSIM or XIFUSIM
@@ -196,15 +188,11 @@
          strcpy(keyname,"IMIN");
          if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
          {
-             //message = "Cannot read keyword " + string(keyname) + " in input file (ADCPARAM HDU)";
-             //EP_PRINT_ERROR(message,status); return(EPFAIL);
              status = 0;
          }
          strcpy(keyname,"IMAX");
          if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
          {
-             //message = "Cannot read keyword " + string(keyname) + " in input file (ADCPARAM HDU)";
-             //EP_PRINT_ERROR(message,status); return(EPFAIL);
              status = 0;
          }
      }
@@ -218,15 +206,11 @@
              strcpy(keyname,"IMIN");
              if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
              {
-                 //message = "Cannot read keyword " + string(keyname) + " in input file (TESRECORDS HDU)";
-                 //EP_PRINT_ERROR(message,status); return(EPFAIL);
                  status = 0;
              }
              strcpy(keyname,"IMAX");
              if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
              {
-                 //message = "Cannot read keyword " + string(keyname) + " in input file (TESRECORDS HDU)";
-                 //EP_PRINT_ERROR(message,status); return(EPFAIL);
                  status = 0;
              }
          }
@@ -238,15 +222,11 @@
              strcpy(keyname,"IMIN");
              if (fits_read_key(infileObject,TDOUBLE,keyname, &Imin,comment,&status))
              {
-                 //message = "Cannot read keyword " + string(keyname) + " in input file (RECORDS HDU)";
-                 //EP_PRINT_ERROR(message,status); return(EPFAIL);
                  status = 0;
              }
              strcpy(keyname,"IMAX");
              if (fits_read_key(infileObject,TDOUBLE,keyname, &Imax,comment,&status))
              {
-                 //message = "Cannot read keyword " + string(keyname) + " in input file (RECORDS HDU)";
-                 //EP_PRINT_ERROR(message,status); return(EPFAIL);
                  status = 0;
              }
          }
@@ -254,9 +234,6 @@
 
     //...or read ADU_CNV, I_BIAS and ADU_BIAS
     // ADU_CNV(A/ADU)
-    //int adu_cnv_exists = 0;
-    int i_bias_exists = 0;
-    int adu_bias_exists = 0;
     strcpy(keyname,"ADU_CNV");
     for (int i=0;i<hdunum;i++)
     {
@@ -280,7 +257,6 @@
         fits_read_key(infileObject,TDOUBLE,keyname, &i_bias,comment,&status);
         if (status == 0)
         {
-            i_bias_exists = 1;
             break;
         }
         else if ((status != 0) && (i <= hdunum-1))
@@ -296,7 +272,6 @@
         fits_read_key(infileObject,TDOUBLE,keyname, &adu_bias,comment,&status);
         if (status == 0)
         {
-            adu_bias_exists = 1;
             break;
         }
         else if ((status != 0) && (i <= hdunum-1))
@@ -336,8 +311,6 @@
                 fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
                 if (status == 0)
                 {
-                    //V0 = 0;
-                    //R0 = 0;
                     IOData objI2RDER;
                     objI2RDER.inObject = infileObject;
                     objI2RDER.nameTable = new char [255];
@@ -393,14 +366,6 @@
                 }
             }
         }
-
-        /*if (keyword_exists == 0)
-        {
-            message = "Cannot read keyword " + string(keyname) + " in input file (to be used in I2RDER)";
-            EP_EXIT_ERROR(message,status);
-        }
-        keyword_exists = 0;*/
-
         else // keyword_exists(V0) = 1
         {
             keyword_exists = 0;
@@ -496,8 +461,6 @@
              fits_movnam_hdu(infileObject, ANY_HDU,extname, 0, &status);
              if (status == 0)
              {                 
-                 //V0 = 0;
-                 //R0 = 0;
                  IOData objI2R;
                  objI2R.inObject = infileObject;
                  objI2R.nameTable = new char [255];
@@ -578,7 +541,7 @@
      
      // Read other necessary keywords from ANY HDU
      // Instead of reading TRIGGSZ (xifusim) or RECLEN (tessim), TFORM is used
-     sprintf(str_stat,"%d",colnum);
+     snprintf(str_stat,sizeof(str_stat),"%d",colnum);
      message = "TFORM" + string(str_stat);
      strcpy(keyname,message.c_str());
      char readTFORMADC [10];
@@ -679,7 +642,6 @@
          }
          if ((dec_fac_exists == 1) && (tclock_exists == 1)) 
          {
-             //cout<<"tclock: "<<tclock<<endl;
              samprate = 1/(tclock*dec_fac);
          }
      }
@@ -752,7 +714,6 @@
      //...provide an error message to include DELTAT (inverse of sampling rate) in the input FITS file before running again
      if (samprate == -999.0)
      {
-         //message =  "Cannot read neither DELTAT nor TCLOCK+DEC_FAC nor NUMROW+P_ROW keywords in any HDU from the input file in order to calculate the sampling rate AND cannot read the sampling rate from the HISTORY in the Primary HDU from the input file. Please, include the DELTAT keyword (inverse of sampling rate) in the input FITS file before running GENNOISESPEC again.";
          message =  "Cannot read or get the sampling rate from the input file. Please, include the DELTAT keyword (inverse of sampling rate) in the input FITS file before running GENNOISESPEC again";
          
          EP_EXIT_ERROR(message,EPFAIL);
@@ -877,35 +838,12 @@
      }
      infileObject = 0;
      
-     /*// Generate CSD representation
-     if (NumMeanSamples == 0)
-     {
-        message = "0Pulse-free intervals not found";
-        EP_EXIT_ERROR(message,EPFAIL);
-     }
-     else if	(NumMeanSamples < par.nintervals)
-     {
-        sprintf(str_stat,"%d",NumMeanSamples);
-        sprintf(str_stat1,"%d",intervalMinBins);
-        message = "0Not enough pulse-free intervals for calculus. CSD and W" + string(str_stat1) + " matrix calculated with " + string(str_stat);
-        cout<<message<<endl;
-     }
-     else if	(NumMeanSamples >= par.nintervals)
-     {
-        sprintf(str_stat,"%d",par.nintervals);
-        message = "0CSD and all Wx matrices calculated with " + string(str_stat);
-        cout<<message<<endl;
-     }*/
-     
      // Applying medianKappaClipping in order to remove the noise intervals with a high sigma
      gsl_vector *interval = gsl_vector_alloc(noiseIntervals->size2);
      double bsln, sgm;
      gsl_vector *sigmaInterval = gsl_vector_alloc(NumMeanSamples);
      int cnt = NumMeanSamples;   // After removing the noise intervals with a too high sigma, it is going to be the number of noise intervals with a proper sigma
      
-     double stopCriteriaMKC = 1.0;	// Used in medianKappaClipping
-     // Given in %
-     double kappaMKC = 3;		// Used in medianKappaClipping
      double meanThreshold;
      double sgmThreshold;
      for (int i=0;i<NumMeanSamples;i++)
@@ -917,27 +855,24 @@
      
      if ((NumMeanSamples > 1) && (par.rmNoiseIntervals == 1))
      {
-        if (medianKappaClipping_noiseSigma (sigmaInterval, kappaMKC, stopCriteriaMKC, par.nSgms, &meanThreshold, &sgmThreshold))
+        if (medianKappaClipping_noiseSigma (sigmaInterval, kappaMKC, stopCriteriaMKC, &meanThreshold, &sgmThreshold))
         {
             message = "Cannot run medianKappaClipping_noiseSigma looking for mean and sigma of the noise sigmas";
             EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
         }
      }
-     
+
      gsl_vector *intervalsgmOK = gsl_vector_alloc(NumMeanSamples);
      gsl_vector_set_all(intervalsgmOK,1);
      gsl_vector *vector_aux;
      gsl_vector_complex *vector_aux1;
      vector_aux = gsl_vector_alloc(intervalMinBins);
      vector_aux1 = gsl_vector_complex_alloc(intervalMinBins);
-     double SelectedTimeDuration = SelectedTimeDuration = intervalMinBins/((double)samprate);
      double nSgms_sigmaInterval = 1;
      int NumMeanSamples_afterRm = 0;
      printf("\n"); // New line after ending "Reading the noise file...." (progressbar READING NOISE FILE)
      for (int i=0;i<NumMeanSamples;i++)
      {
-         //if (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold)
-         //if ((par.rmNoiseIntervals == 1) && (gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold))
          if ((par.rmNoiseIntervals == 1) && (NumMeanSamples > 1) && ((gsl_vector_get(sigmaInterval,i) > meanThreshold+nSgms_sigmaInterval*sgmThreshold)||(gsl_vector_get(sigmaInterval,i) < meanThreshold-nSgms_sigmaInterval*sgmThreshold)))
          {
              // Interval not to be taken account
@@ -960,7 +895,7 @@
                 }*/
     
                 // FFT calculus (EventSamplesFFT)
-                if(FFT(interval,vector_aux1,SelectedTimeDuration))
+                if(FFT(interval,vector_aux1))
                 {
                     message = "Cannot run FFT routine for vector1";
                     EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
@@ -999,10 +934,8 @@
      
      // Current noise spectral density
      // sqrt(sum(FFT^2)/NumMeanSamplesCSD) => sqrt(A^2) = A and sqrt(1/NumMeanSamplesCSD)=1/sqrt(Hz)
-     //gsl_vector_scale(EventSamplesFFTMean,(1.0/(double)NumMeanSamples));
-     //gsl_vector_scale(EventSamplesFFTMean,(1.0/(double)cnt));
      gsl_vector_scale(EventSamplesFFTMean,(1.0/(double)NumMeanSamples_afterRm));
-     for (int i=0;i<EventSamplesFFTMean->size;i++)
+     for (int i=0;i<(int)(EventSamplesFFTMean->size);i++)
      {
          if (gsl_vector_get(EventSamplesFFTMean,i)<0)
          {
@@ -1014,10 +947,6 @@
      
      // Extra normalization (further than the FFT normalization factor,1/n) in order 
      // to get the apropriate noise level provided by Peille (54 pA/rHz)
-     /*if (strcmp(par.EnergyMethod,"OPTFILT") == 0)
-     {
-        gsl_vector_scale(EventSamplesFFTMean,sqrt(2*intervalMinBins/samprate));
-     }*/
      gsl_vector_scale(EventSamplesFFTMean,sqrt(2*intervalMinBins/samprate));
      
      // Load in noiseIntervals only those intervals with a proper sigma and NumMeanSamples = cnt
@@ -1028,7 +957,7 @@
      gsl_matrix_free(noiseIntervals); 
      noiseIntervals = gsl_matrix_alloc(cnt,matrixaux->size2);
      int ind = 0;
-     for (int i=0;i<intervalsgmOK->size;i++)
+     for (int i=0;i<(int)(intervalsgmOK->size);i++)
      {
          if (gsl_vector_get(intervalsgmOK,i) == 1)
          {
@@ -1044,11 +973,8 @@
      // Generate WEIGHT representation
      if ((par.weightMS == 1) && (NumMeanSamples != 0))
      {
-         /*weightpoints = gsl_vector_alloc(floor(log2(par.intervalMinSamples)));
-         for (int i=0;i<weightpoints->size;i++) 		gsl_vector_set(weightpoints,i,pow(2,floor(log2(par.intervalMinSamples))-i));
-         weightMatrixes = gsl_matrix_alloc(weightpoints->size,par.intervalMinSamples*par.intervalMinSamples);*/
          weightpoints = gsl_vector_alloc(floor(log2(intervalMinSamples_base2)));
-         for (int i=0;i<weightpoints->size;i++) 		gsl_vector_set(weightpoints,i,pow(2,floor(log2(intervalMinSamples_base2))-i));
+         for (int i=0;i<(int)(weightpoints->size);i++) 		gsl_vector_set(weightpoints,i,pow(2,floor(log2(intervalMinSamples_base2))-i));
          weightMatrixes = gsl_matrix_alloc(weightpoints->size,intervalMinSamples_base2*intervalMinSamples_base2);
          gsl_matrix_set_all(weightMatrixes,-999.0);
          gsl_matrix_view tempm;
@@ -1058,9 +984,9 @@
          if (NumMeanSamples >= par.nintervals)
          {
              cout<<"Calculating the weight noise matrixes [0"<<"/"<<weightpoints->size<<"][";
-             for (int i=0;i<weightpoints->size;i++) cout<<".";
+             for (int i=0;i<(int)(weightpoints->size);i++) cout<<".";
              cout<<"]"<<flush;
-             for (int i=0;i<weightpoints->size;i++)
+             for (int i=0;i<(int)(weightpoints->size);i++)
              {	
                  weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,i),gsl_vector_get(weightpoints,i));
                  noiseIntervals_weightPoints = gsl_matrix_alloc(cnt,gsl_vector_get(weightpoints,i));
@@ -1085,7 +1011,7 @@
                  cout<<"/";
                  cout<<weightpoints->size;
                  cout<<"][";
-                 for (int j = 0; j < weightpoints->size; j++)
+                 for (int j = 0; j < (int)(weightpoints->size); j++)
                  {
                      if (j <= i) {
                          cout << "#";  // Write '#' for each completed matrix
@@ -1094,7 +1020,7 @@
                      }
                  }
                  cout << "]" << flush;
-                 if (i == weightpoints->size-1)
+                 if (i == (int)(weightpoints->size)-1)
                  {
                      printf("\n"); // New line after ending "Calculating the weight noise matrixes...."
                  }
@@ -1103,9 +1029,9 @@
          else
          {
              cout<<"Calculating the weight noise matrixes [0"<<"/"<<weightpoints->size<<"][";
-             for (int i=0;i<weightpoints->size;i++) cout<<".";
+             for (int i=0;i<(int)(weightpoints->size);i++) cout<<".";
              cout<<"]"<<flush;
-             for (int i=0;i<weightpoints->size;i++)
+             for (int i=0;i<(int)(weightpoints->size);i++)
              {	
                  weightMatrix = gsl_matrix_alloc(gsl_vector_get(weightpoints,i),gsl_vector_get(weightpoints,i));
                  noiseIntervals_weightPoints = gsl_matrix_alloc(NumMeanSamples,gsl_vector_get(weightpoints,i));
@@ -1130,7 +1056,7 @@
                  cout<<"/";
                  cout<<weightpoints->size;
                  cout<<"][";
-                 for (int j = 0; j < weightpoints->size; j++)
+                 for (int j = 0; j < (int)(weightpoints->size); j++)
                  {
                      if (j <= i) {
                          cout << "#";  // Write '#' for each completed matrix
@@ -1139,7 +1065,7 @@
                      }
                  }
                  cout << "]" << flush;
-                 if (i == weightpoints->size-1)
+                 if (i == (int)(weightpoints->size)-1)
                  {
                      printf("\n"); // New line after ending "Calculating the weight noise matrixes...."
                  }
@@ -1155,8 +1081,8 @@
      }
      else if	(cnt < par.nintervals)
      {
-         sprintf(str_stat,"%d",cnt);
-         sprintf(str_stat1,"%d",intervalMinBins);
+         snprintf(str_stat,sizeof(str_stat),"%d",cnt);
+         snprintf(str_stat1,sizeof(str_stat1),"%d",intervalMinBins);
          if (par.weightMS == 1)
             message = "Not enough pulse-free intervals for calculus. CSD and W" + string(str_stat1) + " matrix calculated with " + string(str_stat);
          else
@@ -1165,7 +1091,7 @@
      }
      else if	(cnt >= par.nintervals)
      {
-         sprintf(str_stat,"%d",par.nintervals);
+         snprintf(str_stat,sizeof(str_stat),"%d",par.nintervals);
          if (par.weightMS == 1)
             message = "CSD and all Wx matrices calculated with " + string(str_stat) + " intervals";
          else
@@ -1196,7 +1122,6 @@
      }
      
      // Free allocated GSL vectors
-     //gsl_matrix_free(EventSamplesFFT);
      gsl_vector_free(EventSamplesFFTMean); EventSamplesFFTMean = 0;
      gsl_vector_free(mean); mean = 0;
      gsl_vector_free(sigmacsdgsl); sigmacsdgsl = 0;
@@ -1265,11 +1190,7 @@
   ****************************************************************************/
  int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int ncols, iteratorCol *cols, void *user_strct)
  {
-     char val[256];
-     
-     //string message = "";
      int status = EPOK;
-     int extver=0;
      
      // Declare variables
      // To read from the input FITS file
@@ -1285,12 +1206,10 @@
      gsl_vector *qualitygsl = gsl_vector_alloc(eventsz);
      int nPulses;
      double threshold;
-     double cutFreq;
-     int boxLength;
+
      gsl_vector *tstartDERgsl = gsl_vector_alloc(eventsz);
      gsl_vector *tmaxDERgsl = gsl_vector_alloc(eventsz);
      gsl_vector *maxDERgsl = gsl_vector_alloc(eventsz);
-     gsl_vector *index_maxDERgsl = gsl_vector_alloc(eventsz);
      gsl_vector *tendDERgsl = gsl_vector_alloc(eventsz);
      
      int pulseFound = 0;	// 0->The function findTstart has not found any pulse
@@ -1337,12 +1256,6 @@
      // Processing each record
      for (int i=0; i< nrows; i++)
      {      
-         /*sprintf(straux,"%d",ntotalrows);
-         message = "-------------> Record: " + string(straux);
-         sprintf(straux,"%ld",eventcnt);
-         message += " of " + string(straux) + " <------------------ ";
-         cout<<message<<endl;*/
-         
          // Information has been read by blocks (with nrows per block)
          // Now, information is going to be used by rows
          gsl_vector_memcpy(timegsl,timegsl_block);
@@ -1405,7 +1318,7 @@
          }
          
          //Finding the pulses: Pulses tstarts are found
-         if (findPulsesNoise (ioutgslNOTFIL, ioutgsl_aux, &tstartgsl, &qualitygsl, 
+         if (findPulsesNoise (ioutgsl_aux, &tstartgsl, &qualitygsl,
              &nPulses, &threshold,
              par.scaleFactor, samprate,
              par.samplesUp, par.nSgms,
@@ -1539,7 +1452,7 @@
   * - Processing if there are no more pulses in the input vector
   * 	-It looks for pulse-free intervals at the end of the event and the search for more pulse-free intervals is finished
   *****************************************************************************/
- int findInterval(int tail_duration, gsl_vector *invector, gsl_vector *startpulse, int npin, int pulse_length, int nPF, int interval,
+ int findInterval(int tail_duration, gsl_vector *invector, gsl_vector *startpulse, int npin, int local_pulse_length, int nPF, int interval,
                   int *ni, gsl_vector **startinterval)
  {
      // Declare variables
@@ -1565,7 +1478,7 @@
              {
                  gsl_vector_set(*startinterval,j,start+(j-*ni)*interval);
              }
-             start = gsl_vector_get(startpulse,i)+pulse_length+nPF*pulse_length;
+             start = gsl_vector_get(startpulse,i)+local_pulse_length+nPF*local_pulse_length;
              *ni = *ni+niinc;
          }
          else
@@ -1573,11 +1486,11 @@
          {
              if (gsl_vector_get(startpulse,i)-gsl_vector_get(startpulse,i-1)<0)
              {
-                 start = gsl_vector_get(startpulse,i-1)+pulse_length+nPF*pulse_length;
+                 start = gsl_vector_get(startpulse,i-1)+local_pulse_length+nPF*local_pulse_length;
              }
              else
              {
-                 start = gsl_vector_get(startpulse,i)+pulse_length+nPF*pulse_length;
+                 start = gsl_vector_get(startpulse,i)+local_pulse_length+nPF*local_pulse_length;
              }
          }
      }
@@ -1638,7 +1551,6 @@
   ****************************************/
  int createTPSreprFile ()
  {
-     //string message = "";
      int status = EPOK, extver=0;
      
      // Create output FITS files: If it does not exist already
@@ -1727,14 +1639,14 @@
      
      // Primary HDU
      strcpy(extname,"Primary");
-     int *hdutype;
+     int *hdutype = nullptr;
      if (fits_movabs_hdu(gnoiseObject, 1, hdutype, &status))
      {
          message = "Cannot move to HDU " + string(extname) + " in noise file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
      
-     char *history_text = " ";
+     const char *history_text = " ";
      if (fits_write_history(gnoiseObject, history_text, &status)) {
         message = "Cannot write HISTORY in noise file " + string(par.outFile);
         EP_PRINT_ERROR(message,status); return(EPFAIL);
@@ -1917,9 +1829,6 @@
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
      
-     //strhistory.clear();
-     //piece_i.clear();
-     
      return EPOK;
  }
  /*xxxx end of SECTION 5 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
@@ -1936,14 +1845,12 @@
   *****************************************************************************/
  int writeTPSreprExten ()
  {	
-     //string message = "";
      int status = EPOK;
-     int extver=0;
      double SelectedTimeDuration;
      
      // Allocate GSL vectors
-     gsl_vector *freqgsl = gsl_vector_alloc(intervalMinBins/2);
-     gsl_vector *csdgsl = gsl_vector_alloc(intervalMinBins/2);
+     gsl_vector *local_freqgsl = gsl_vector_alloc(intervalMinBins/2);
+     gsl_vector *local_csdgsl = gsl_vector_alloc(intervalMinBins/2);
      gsl_vector *sigmacsdgslnew = gsl_vector_alloc(intervalMinBins/2);
      gsl_vector *freqALLgsl = gsl_vector_alloc(intervalMinBins);
      gsl_vector *csdALLgsl = gsl_vector_alloc(intervalMinBins);
@@ -1953,8 +1860,8 @@
      // Print only half of FFT to prevent aliasing
      for (int i=0; i< (intervalMinBins/2); i++)
      {
-         gsl_vector_set(freqgsl,i,i/SelectedTimeDuration);
-         gsl_vector_set(csdgsl,i,2*gsl_vector_get(EventSamplesFFTMean,i)); // *2 if only positive frequencies
+         gsl_vector_set(local_freqgsl,i,i/SelectedTimeDuration);
+         gsl_vector_set(local_csdgsl,i,2*gsl_vector_get(EventSamplesFFTMean,i)); // *2 if only positive frequencies
          gsl_vector_set(sigmacsdgslnew,i,gsl_vector_get(sigmacsdgsl,i));
          gsl_vector_set(freqALLgsl,i,i/SelectedTimeDuration);
          gsl_vector_set(csdALLgsl,i,gsl_vector_get(EventSamplesFFTMean,i));
@@ -1978,12 +1885,12 @@
      obj.type = TDOUBLE;
      obj.unit = new char [255];
      strcpy(obj.unit,"Hz");
-     if (writeFitsSimple(obj, freqgsl))
+     if (writeFitsSimple(obj, local_freqgsl))
      {
          message = "Cannot run routine writeFitsSimple for freqgsl";
          EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
      }
-     gsl_vector_free(freqgsl); freqgsl = 0;
+     gsl_vector_free(local_freqgsl); local_freqgsl = 0;
      
      obj.inObject = gnoiseObject;
      obj.nameTable = new char [255];
@@ -2004,12 +1911,12 @@
          strcpy(obj.unit,"adu/sqrt(Hz)");
      }
      //strcpy(obj.unit,"A/sqrt(Hz)");
-     if (writeFitsSimple(obj, csdgsl))
+     if (writeFitsSimple(obj, local_csdgsl))
      {	
          message = "Cannot run routine writeFitsSimple for csdgsl";
          EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
      }
-     gsl_vector_free(csdgsl); csdgsl = 0;
+     gsl_vector_free(local_csdgsl); local_csdgsl = 0;
      
      obj.inObject = gnoiseObject;	
      obj.nameTable = new char [255];
@@ -2064,7 +1971,6 @@
      strcpy(keyname,"NOISESTD");
      double sumSigma;
      gsl_vector_Sumsubvector(sigma, 0, indexBaseline, &sumSigma);
-     //keyvaldouble = sumSigma/indexBaseline;
      keyvaldouble = (sumSigma/indexBaseline)/aducnv;
      if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
      {
@@ -2099,7 +2005,6 @@
      {
          strcpy(obj.unit,"adu/sqrt(Hz)");
      }
-     //strcpy(obj.unit,"A/sqrt(Hz)");
      if(writeFitsSimple(obj, csdALLgsl))
      {
          message = "Cannot run routine writeFitsSimple for csdALLgsl";
@@ -2118,10 +2023,10 @@
          obj.nameCol = new char [255];
          char str_length[125];
          gsl_vector *weightMatrixesrow= gsl_vector_alloc(weightMatrixes->size2);
-         gsl_vector_view(temp);
+         gsl_vector_view temp;
          
          // All the Wx (being x 'intervalMinSamples') columns appear in the WEIGHTMS HDU.
-         for (int i=0; i<weightpoints->size;i++)
+         for (int i=0; i<(int)(weightpoints->size);i++)
          {
              snprintf(str_length,125,"%d",(int) gsl_vector_get(weightpoints,i));
              strcpy(obj.nameCol,(string("W")+string(str_length)).c_str());
@@ -2156,7 +2061,6 @@
   * - Free allocated GSL vectors
   *
   * Parameters:
-  * - vectorin: Not filtered record
   * - vectorinDER: Derivative of the low-pass filtered 'vectorin'
   * - tstart: Starting time of the found pulses into the record (in samples)
   * - quality: Quality of the found pulses into the record
@@ -2172,7 +2076,6 @@
   ****************************************************************************/
  int findPulsesNoise
  (
-     gsl_vector *vectorin,
   gsl_vector *vectorinDER,
   gsl_vector **tstart,
   gsl_vector **quality,
@@ -2186,13 +2089,9 @@
   int samplesup,
   double nsgms,
   
-  double stopcriteriamkc,
+  double local_stopcriteriamkc,
   double kappamkc)
  {
-     //string message = "";
-     
-     const double pi = 4.0 * atan(1.0);
-     
      // Declare variables
      double thresholdmediankappa;	// Threshold to look for pulses in the first derivative
      
@@ -2201,7 +2100,7 @@
      gsl_vector_set_zero(*quality);
      
      // First step to look for single pulses: Establish the threshold (call medianKappaClipping)
-     if (medianKappaClipping (vectorinDER, kappamkc, stopcriteriamkc, nsgms, (int)(pi*samplingRate*scalefactor), &thresholdmediankappa))
+     if (medianKappaClipping (vectorinDER, kappamkc, local_stopcriteriamkc, nsgms, (int)(pi*samplingRate*scalefactor), &thresholdmediankappa))
      {
          message = "Cannot run medianKappaClipping looking for single pulses";
          EP_PRINT_ERROR(message,EPFAIL);
@@ -2251,19 +2150,18 @@
   ******************************************************************************/
  int findTstartNoise
  (
-     int maxPulsesPerRecord,
+    int maxPulsesPerRecord,
   
-  gsl_vector *der,
-  double adaptativethreshold,
-  int nSamplesUp,
-  
-  int *numberPulses,
-  
-  gsl_vector **tstartgsl,
-  gsl_vector **flagTruncated,
-  gsl_vector **maxDERgsl)
+    gsl_vector *der,
+    double adaptativethreshold,
+    int nSamplesUp,
+
+    int *numberPulses,
+
+    gsl_vector **tstartgsl,
+    gsl_vector **flagTruncated,
+    gsl_vector **maxDERgsl)
  {
-     //string message="";
      char valERROR[256];
      
      // Declare variables
@@ -2271,8 +2169,6 @@
      *numberPulses = 0;
      bool foundPulse = false;
      int i = 0;		// To go through the elements of a vector
-     
-     gsl_vector_view temp;	// In order to handle with gsl_vector_view (subvectors)
      
      // Allocate GSL vectors
      // It is not necessary to check the allocation because 'maxPulsesPerRecord'='EventListSize'(input parameter) must already be > 0
@@ -2284,8 +2180,8 @@
      
      int cntUp = 0;
      int cntDown = 0;
-     double possibleTstart;
-     double possiblemaxDER;
+     double possibleTstart = 0.0;
+     double possiblemaxDER = 0.0;
      
      
      // It looks for a pulse
@@ -2395,7 +2291,6 @@
   ******************************************************************************/
  int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
  {
-     //string message = "";
      char valERROR[256];
      
      double elementValue;
@@ -2410,9 +2305,9 @@
      clock_t t;
      t=clock();
      // Elements of the diagonal of the covariance matrix
-     for (int i=0;i<intervalMatrix->size2;i++)
+     for (int i=0;i<(int)(intervalMatrix->size2);i++)
      {
-         for (int p=0;p<intervalMatrix->size1;p++)
+         for (int p=0;p<(int)(intervalMatrix->size1);p++)
          {
              elementValue1 = elementValue1 + pow(gsl_matrix_get(intervalMatrix,p,i),2.0);
              elementValue2 = elementValue2 + gsl_matrix_get(intervalMatrix,p,i);
@@ -2434,11 +2329,11 @@
      
      t = clock();
      // Other elements
-     for (int i=0;i<intervalMatrix->size2;i++)
+     for (int i=0;i<(int)(intervalMatrix->size2);i++)
      {
-         for (int j=i+1;j<intervalMatrix->size2;j++)
+         for (int j=i+1;j<(int)(intervalMatrix->size2);j++)
          {
-             for (int p=0;p<intervalMatrix->size1;p++)
+             for (int p=0;p<(int)(intervalMatrix->size1);p++)
              {
                  elementValue1 = elementValue1 + (gsl_matrix_get(intervalMatrix,p,i)*gsl_matrix_get(intervalMatrix,p,j));		
                  elementValue2 = elementValue2 + gsl_matrix_get(intervalMatrix,p,i);
@@ -2510,13 +2405,11 @@
   * - invector: First derivative of the (filtered) record
   * - kappa: To establish the range around of the mean
   * - stopCriteria: It is given in %
-  * - nSigmas: Times sigma to calculate threshold (mean+nSigmas*sigma)
   * - mean: Mean value of the invector (no points beyond mean+-Kappa *sigma)
-  * - sigma: Sigma value of the invector (no points beyond mean+-Kappa *sigma)
+  * - local_sigma: Sigma value of the invector (no points beyond mean+-Kappa *sigma)
   ******************************************************************************/
- int medianKappaClipping_noiseSigma (gsl_vector *invector, double kappa, double stopCriteria, double nSigmas, double *mean, double *sigma)
+ int medianKappaClipping_noiseSigma (gsl_vector *invector, double kappa, double stopCriteria, double *mean, double *local_sigma)
  {
-     //string message = "";
      char valERROR[256];
      
      // Declare variables
@@ -2549,7 +2442,7 @@
      // Iterate until no points out of the maximum excursion (kappa*sigma)
      do
      {
-         if ((size-boxLPF-1 < 1) || (size-boxLPF-1 >invectorNew->size))
+         if ((size-boxLPF-1 < 1) || (size-boxLPF-1 >(int) invectorNew->size))
          {
              sprintf(valERROR,"%d",__LINE__+5);
              string str(valERROR);
@@ -2565,12 +2458,12 @@
          i = 0;
          cnt = 0;
          
-         while (i<invectorNew->size)
+         while (i<((int)invectorNew->size))
          {
              if ((gsl_vector_get(invectorNew,i) >= mean1 + kappa*sg1) || (gsl_vector_get(invectorNew,i) <= mean1 - kappa*sg1))
                  // HARDPOINT!!!!!!!!!!!!!!!!!!! (kappa)
              {
-                 if ((i < 0) || (i >(invectorNew)->size-1))
+                 if ((i < 0) || (i >((int)(invectorNew)->size)-1))
                  {
                      sprintf(valERROR,"%d",__LINE__+5);
                      string str(valERROR);
@@ -2603,7 +2496,7 @@
      } while (fabs((mean2-mean1)/mean1)>(stopCriteria/100.0));	// HARDPOINT!!!!!!!!!!!!!!!!!!! (stopCriteria)
      
      *mean = mean2;
-     *sigma =sg2;
+     *local_sigma =sg2;
      
      gsl_vector_free(invectorNew); invectorNew= 0;
      
@@ -2616,14 +2509,12 @@
   * getpar_noiseSpec function: This function gets the input parameter from the command line or their default values from the gennoisespec.par file
   *
   * Parameters:
-  * - par: Structure containing the input parameters
+  * - local_par: Structure containing the input parameters
   ******************************************************************************/
- int getpar_noiseSpec(struct Parameters* const par)
+ int getpar_noiseSpec(struct Parameters* const local_par)
  {
      // String input buffer.
      char* sbuffer=NULL;
-     
-     //string message = "";
      
      // Error status.
      int status=EXIT_SUCCESS;
@@ -2633,7 +2524,7 @@
          message = "failed reading the input FITS file name";
          EP_EXIT_ERROR(message,EPFAIL);
      }
-     strcpy(par->inFile, sbuffer);
+     strcpy(local_par->inFile, sbuffer);
      free(sbuffer);
      
      status=ape_trad_query_string("outFile", &sbuffer);
@@ -2641,80 +2532,80 @@
          message = "failed reading the output FITS file name";
          EP_EXIT_ERROR(message,EPFAIL);
      }
-     strcpy(par->outFile, sbuffer);
+     strcpy(local_par->outFile, sbuffer);
      free(sbuffer);
      
-     status=ape_trad_query_int("intervalMinSamples", &par->intervalMinSamples);
+     status=ape_trad_query_int("intervalMinSamples", &local_par->intervalMinSamples);
      if (EXIT_SUCCESS!=status) {
          message = "failed reading the intervalMinSamples parameter";
          EP_EXIT_ERROR(message,EPFAIL);
      }
-     if ((par->intervalMinSamples < 2) || ((par->intervalMinSamples)%2 != 0))
+     if ((local_par->intervalMinSamples < 2) || ((local_par->intervalMinSamples)%2 != 0))
      {
          message = "intervalMinSamples must be even and greater than 0";
          return(EXIT_FAILURE);
      }
      
-     status=ape_trad_query_int("nplPF", &par->nplPF);
+     status=ape_trad_query_int("nplPF", &local_par->nplPF);
      if (EXIT_SUCCESS!=status) {
          message = "failed reading the nplPF parameter";
          EP_EXIT_ERROR(message,EPFAIL);
      }
      
-     status=ape_trad_query_int("nintervals", &par->nintervals);
+     status=ape_trad_query_int("nintervals", &local_par->nintervals);
      if (EXIT_SUCCESS!=status) {
          message = "failed reading the nintervals parameter";
          EP_EXIT_ERROR(message,EPFAIL);
      }
-     if (par->nintervals == 0) MyAssert(par->nintervals > 0, (char *)("nintervals must be greater than 0"));
+     if (local_par->nintervals == 0) MyAssert(local_par->nintervals > 0, (char *)("nintervals must be greater than 0"));
      
-     status=ape_trad_query_double("scaleFactor", &par->scaleFactor);
+     status=ape_trad_query_double("scaleFactor", &local_par->scaleFactor);
      if (EXIT_SUCCESS!=status) {
          message = "failed reading the scaleFactor parameter";
          EP_EXIT_ERROR(message,EPFAIL);
      }
      
-     status=ape_trad_query_int("samplesUp", &par->samplesUp);
+     status=ape_trad_query_int("samplesUp", &local_par->samplesUp);
      if (EXIT_SUCCESS!=status) {
          message = "failed reading the samplesUp parameter";
          EP_EXIT_ERROR(message,EPFAIL);
      }
-     if (par->samplesUp == 0) MyAssert(par->samplesUp > 0, (char *)("samplesUp must be greater than 0"));
+     if (local_par->samplesUp == 0) MyAssert(local_par->samplesUp > 0, (char *)("samplesUp must be greater than 0"));
      
-     status=ape_trad_query_double("nSgms", &par->nSgms);
+     status=ape_trad_query_double("nSgms", &local_par->nSgms);
      if (EXIT_SUCCESS!=status) {
          message = "failed reading the nSgms parameter";
          EP_EXIT_ERROR(message,EPFAIL);
      }
-     if (par->nSgms == 0) MyAssert(par->nSgms >= 1, (char *)("nSgms must be greater than 1"));
+     if (local_par->nSgms == 0) MyAssert(local_par->nSgms >= 1, (char *)("nSgms must be greater than 1"));
      
-     status=ape_trad_query_bool("weightMS", &par->weightMS);
-     if (par->weightMS == 1)    weightMS = 1;
+     status=ape_trad_query_bool("weightMS", &local_par->weightMS);
+     if (local_par->weightMS == 1)    weightMS = 1;
      
      status=ape_trad_query_string("EnergyMethod", &sbuffer);
      if (EXIT_SUCCESS!=status) {
          message = "failed reading the EnergyMethod parameter";
          EP_EXIT_ERROR(message,EPFAIL);
      }
-     strcpy(par->EnergyMethod, sbuffer);
+     strcpy(local_par->EnergyMethod, sbuffer);
      free(sbuffer);
      
-     MyAssert((strcmp(par->EnergyMethod,"OPTFILT") == 0) || (strcmp(par->EnergyMethod,"I2R") == 0) ||	(strcmp(par->EnergyMethod,"I2RFITTED") == 0) || (strcmp(par->EnergyMethod,"I2RDER") == 0),
+     MyAssert((strcmp(local_par->EnergyMethod,"OPTFILT") == 0) || (strcmp(local_par->EnergyMethod,"I2R") == 0) ||	(strcmp(local_par->EnergyMethod,"I2RFITTED") == 0) || (strcmp(local_par->EnergyMethod,"I2RDER") == 0),
               (char *)("EnergyMethod must be OPTFILT, I2R, I2RFITTED, I2RDER or PCA"));
      
-     status=ape_trad_query_double("Ifit", &par->Ifit);
+     status=ape_trad_query_double("Ifit", &local_par->Ifit);
      if (EXIT_SUCCESS!=status) {
          message = "failed reading the Ifit parameter";
          EP_EXIT_ERROR(message,EPFAIL);
      }
      
-     status=ape_trad_query_bool("clobber", &par->clobber);
+     status=ape_trad_query_bool("clobber", &local_par->clobber);
      if (EXIT_SUCCESS!=status) {
          message = "failed reading the clobber parameter";
          EP_EXIT_ERROR(message,EPFAIL);
      }
      
-    status=ape_trad_query_bool("rmNoiseIntervals", &par->rmNoiseIntervals);
+    status=ape_trad_query_bool("rmNoiseIntervals", &local_par->rmNoiseIntervals);
      if (EXIT_SUCCESS!=status) {
          message = "failed reading the rmNoiseIntervals parameter";
          EP_EXIT_ERROR(message,EPFAIL);

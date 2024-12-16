@@ -190,91 +190,6 @@ struct Parameters {
 	char XMLFile[MAXFILENAME];
 };
 
-void MyAssert(int expr, char* msg);
-
-int checkXmls(struct Parameters* const par);
-
-char* subString (const char* input, int offset, int len, char* dest);
-
-int getSamplingrate_trigreclength (char* inputFile, struct Parameters par, double* samplingrate, int* trigreclength, int* numfits);
-int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par, double* samplingrate, int* trigreclength);
-
-int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, ReconstructInitSIRENA** reconstruct_init_sirena);
-
-int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFile * outfile);
-int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFile * outfile);
-
-int checkpreBuffer(struct Parameters* const par);
-
-typedef struct {
-	/** Current size of the list */
-	int size;
-
-	/** Current size of the energy/grade lists */
-	int size_energy;
-
-	/** Current end index of the list */
-	int index;
-
-	/** Index arrival time of the photons inside a record */
-	//int * event_indexes;
-	double * event_indexes;	//SIRENA
-
-	/** Pulse height of the photons */
-	double * pulse_heights;
-
-	/** Average of the first 4 samples of the derivative of the event (pulse) */
-	double * avgs_4samplesDerivative;  //SIRENA
-
-	/** Low resolution energy estimator (4 samples-long filter) */
-	double * Es_lowres;  //SIRENA
-
-	/** Offset relative to the central point of the parabola */
-	double * phis;  //SIRENA
-
-	/** Number of samples shifted to find the maximum of the parabola */
-	int * lagsShifts;  //SIRENA
-
-	/** Baseline calculated just previously to the pulse (in general)(see 'getB') */
-	double * bsln;  //SIRENA
-
-        /** Rms of the baseline calculated just previously to the pulse (in general)(see 'getB') */
-	double * rmsbsln;  //SIRENA
-
-	/** Pulse grade */
-	int * grading;  //SIRENA
-
-	/** Energy of the photons */
-	double * energies;
-
-	/** Grade 1: length of the filter used during the reconstruction */
-	int * grades1;
-
-	/** Grade 2: distance in samples to the previous pulse */
-	int * grades2;
-
-	/** PH_ID of the reconstructed photons */
-	long * ph_ids;
-    long * ph_ids2;
-    long * ph_ids3;
-
-	/** PIX_ID of the reconstructed photons */
-	long * pix_ids;
-
-	/** Tstart of the reconstructed photons (in time) */
-	double * tstarts;
-
-	/** Tend of the reconstructed photons (in time) */
-	double * tends;
-
-	/** Rise time of the reconstructed photons (in time) */
-	double * risetimes;
-
-	/** Fall time of the reconstructed photons (in time) */
-	double * falltimes;
-
-} TesEventListSIRENA;
-
 typedef struct {
 	/** Pointer to the FITS file. */
 	fitsfile* fptr;
@@ -305,6 +220,28 @@ TesEventFileSIRENA* opennewTesEventFileSIRENA(const char* const filename,
 				  int* const status);
 
 void saveEventListToFileSIRENA(TesEventFileSIRENA* file,TesEventListSIRENA * event_list,
-		double start_time,double delta_t,long pixID,int* const status);
+	double start_time,double delta_t,int* const status);
+
+/** Allocates memory for a TesEventList structure for the triggering stage:
+ *  only event_index, pulse_height and grades1 */
+void allocateTesEventListTriggerSIRENA(TesEventListSIRENA* event_list,int size,int* const status);
+
+void freeTesEventFileSIRENA(TesEventFileSIRENA* file, int* const status);
+
+void MyAssert(int expr, char* msg);
+
+int checkXmls(struct Parameters* const par);
+
+char* subString (const char* input, int offset, int len, char* dest);
+
+int getSamplingrate_trigreclength (char* inputFile, struct Parameters par, double* samplingrate, int* trigreclength, int* numfits);
+int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par, double* samplingrate, int* trigreclength);
+
+int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, ReconstructInitSIRENA** reconstruct_init_sirena);
+
+int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile);
+int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile);
+
+int checkpreBuffer(struct Parameters* const par);
 
 #endif /* INITSIRENA_H */

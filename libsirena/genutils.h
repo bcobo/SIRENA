@@ -73,8 +73,8 @@ const double pi = 4.0 * atan(1.0);
 
 int polyFit (gsl_vector *x_fit, gsl_vector *y_fit, double *a, double *b, double *c);
 int polyFitLinear (gsl_vector *x_fit, gsl_vector *y_fit, double *a, double *b);
-int FFT(gsl_vector *invector,gsl_vector_complex *outvector,double STD);
-int FFTinverse(gsl_vector_complex *invector,gsl_vector *outvector,double STD);
+int FFT(gsl_vector *invector,gsl_vector_complex *outvector);
+int FFTinverse(gsl_vector_complex *invector,gsl_vector *outvector);
 
 //GSL vectors
 void gsl_vector_sqrtIFCA(gsl_vector *cvnew,gsl_vector *cv);
