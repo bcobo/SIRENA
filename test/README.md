@@ -5,7 +5,7 @@ These tests are designed to be run with `pytest` after new code upload.
 ### Initial steps   
 Before running the tests:
   - initialize SIMPUT, SIXTE and SIRENA
-  - download [*input*](https://nextcloud.ifca.es/index.php/s/F5PcswWKRMrjDH6) and [*reference*](https://nextcloud.ifca.es/index.php/s/CnYXqYjdK6RkLdQ) data and untar under *test* folder.
+  - download [*input*](https://nextcloud.ifca.es/index.php/s/742eePYbDPatrso) and *reference*  [1](https://nextcloud.ifca.es/index.php/s/2Ssi9rDTZtKHooy) and [2](https://nextcloud.ifca.es/index.php/s/L6ZwppncyPKHCg5) data and untar them under *test* folder.
 
 ### Tests description
 * `test_noise_spectrum.py`: test the creation of the noise spectrum (used by optimal filter)
