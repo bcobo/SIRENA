@@ -48,7 +48,7 @@ namespace tlog
   static void test_log(const char* fmt, va_list args)
   {
     std::lock_guard<std::mutex> guard(test_mutex);
-    printf(test_header.c_str(),
+    printf("%s%lld%s",test_header.c_str(),
             test_get_timestamp(),test_get_thread_id().c_str());
     std::string format(fmt);
     format.append("\n");
@@ -114,7 +114,7 @@ namespace slog
   {
     std::lock_guard<std::mutex> guard(write_mutex);
     if (lvl >= get_default_level()){
-      printf(header.c_str(),
+      printf("%s%lld%s%s",header.c_str(),
              get_timestamp(),get_thread_id().c_str(),level_to_string(lvl));
       std::string format(fmt);
       format.append("\n");

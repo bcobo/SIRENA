@@ -15,10 +15,11 @@ release = '10.0.0'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = ['sphinx.ext.duration',]
+#extensions = ['sphinx.ext.duration','sphinxcontrib.bibtex']
 
 templates_path = ['_templates']
 exclude_patterns = []
-
+#bibtex_bibfiles = ['references.bib']
 
 
 # -- Options for HTML output -------------------------------------------------

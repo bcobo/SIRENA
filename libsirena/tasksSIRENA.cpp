@@ -438,7 +438,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
                 {	
                     if (m == (int)(pulsesAll->pulses_detected[p].pulse_adc->size))
                     {
-                        sprintf(valERROR,"%d",__LINE__+5);
+                        sprintf(valERROR,"%d",__LINE__+6);
                         string str(valERROR);
                         message = "PCA should be used with pulses farther than 'PulseLength' => Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
                         str.clear();
@@ -453,7 +453,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
                 {
                     if (m == (int)((*pulsesInRecord)->pulses_detected[p].pulse_adc->size))
                     {
-                        sprintf(valERROR,"%d",__LINE__+5);
+                        sprintf(valERROR,"%d",__LINE__+6);
                         string str(valERROR);
                         message = "PCA should be used with pulses farther than 'PulseLength' => Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
                         str.clear();
@@ -469,7 +469,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
         gsl_matrix *RSrxN = gsl_matrix_alloc(RowFeatureVectors->size1,(pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));
         if (RowFeatureVectors->size2 != RowDataAdjust->size1)
         {
-            sprintf(valERROR,"%d",__LINE__+5);
+            sprintf(valERROR,"%d",__LINE__+6);
             string str(valERROR);
             message = "Wrong dimensions to compute matrix-matrix product in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -566,7 +566,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
             {
                 if (num1 >= (int)(pointsTranslatedRotated1aux->size))
                 {
-                    sprintf(valERROR,"%d",__LINE__+5);
+                    sprintf(valERROR,"%d",__LINE__+6);
                     string str(valERROR);
                     message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
                     str.clear();
@@ -579,7 +579,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
             {
                 if (num2 >= (int)(pointsTranslatedRotated2aux->size))
                 {
-                    sprintf(valERROR,"%d",__LINE__+5);
+                    sprintf(valERROR,"%d",__LINE__+6);
                     string str(valERROR);
                     message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
                     str.clear();
@@ -611,7 +611,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
         
         if ((num1 < 1) || (num1 > (int)(pointsTranslatedRotated1aux->size)))
         {
-            sprintf(valERROR,"%d",__LINE__+5);
+            sprintf(valERROR,"%d",__LINE__+6);
             string str(valERROR);
             message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -628,7 +628,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
         }
         if ((num2 < 1) || (num1 > (int)(pointsTranslatedRotated2aux->size)))
         {
-            sprintf(valERROR,"%d",__LINE__+5);
+            sprintf(valERROR,"%d",__LINE__+6);
             string str(valERROR);
             message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -712,7 +712,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
         double data2[num2];
         if (num1 > (int)(pointsTranslatedRotated1->size))
         {
-            sprintf(valERROR,"%d",__LINE__+7);
+            sprintf(valERROR,"%d",__LINE__+8);
             string str(valERROR);
             message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -724,7 +724,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
         }
         if (num2 > (int)(pointsTranslatedRotated2->size))
         {
-            sprintf(valERROR,"%d",__LINE__+7);
+            sprintf(valERROR,"%d",__LINE__+8);
             string str(valERROR);
             message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -1090,7 +1090,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
                 {
                     if (m == (int)(pulsesAll->pulses_detected[p].pulse_adc->size))
                     {
-                        sprintf(valERROR,"%d",__LINE__+5);
+                        sprintf(valERROR,"%d",__LINE__+6);
                         string str(valERROR);
                         message = "PCA should be used with pulses farther than "
                         + string("'PulseLength' => Getting i-th element of vector ")
@@ -1108,7 +1108,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
                 {
                     if (m == (int)((*pulsesInRecord)->pulses_detected[p].pulse_adc->size))
                     {
-                        sprintf(valERROR,"%d",__LINE__+5);
+                        sprintf(valERROR,"%d",__LINE__+6);
                         string str(valERROR);
                         message = "PCA should be used with pulses farther than "
                         + string("'PulseLength' => Getting i-th element of vector ")
@@ -1132,7 +1132,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
                          (pulsesAll->ndetpulses)+((*pulsesInRecord)->ndetpulses));
         if (RowFeatureVectors->size2 != RowDataAdjust->size1)
         {
-            sprintf(valERROR,"%d",__LINE__+5);
+            sprintf(valERROR,"%d",__LINE__+6);
             string str(valERROR);
             message = "Wrong dimensions to compute matrix-matrix product in line "
             + str + " (" + __FILE__ + ")";
@@ -1231,7 +1231,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
             {
                 if (num1 >= (int)(pointsTranslatedRotated1aux->size))
                 {
-                    sprintf(valERROR,"%d",__LINE__+5);
+                    sprintf(valERROR,"%d",__LINE__+6);
                     string str(valERROR);
                     message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
                     str.clear();
@@ -1244,7 +1244,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
             {
                 if (num2 >= (int)(pointsTranslatedRotated2aux->size))
                 {
-                    sprintf(valERROR,"%d",__LINE__+5);
+                    sprintf(valERROR,"%d",__LINE__+6);
                     string str(valERROR);
                     message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
                     str.clear();
@@ -1276,7 +1276,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
         
         if ((num1 < 1) || (num1 > (int)(pointsTranslatedRotated1aux->size)))
         {
-            sprintf(valERROR,"%d",__LINE__+5);
+            sprintf(valERROR,"%d",__LINE__+6);
             string str(valERROR);
             message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -1293,7 +1293,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
         }
         if ((num2 < 1) || (num1 > (int)(pointsTranslatedRotated2aux->size)))
         {
-            sprintf(valERROR,"%d",__LINE__+5);
+            sprintf(valERROR,"%d",__LINE__+6);
             string str(valERROR);
             message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -1377,7 +1377,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
         double data2[num2];
         if (num1 > (int)(pointsTranslatedRotated1->size))
         {
-            sprintf(valERROR,"%d",__LINE__+7);
+            sprintf(valERROR,"%d",__LINE__+8);
             string str(valERROR);
             message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -1389,7 +1389,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
         }
         if (num2 > (int)(pointsTranslatedRotated2->size))
         {
-            sprintf(valERROR,"%d",__LINE__+7);
+            sprintf(valERROR,"%d",__LINE__+8);
             string str(valERROR);
             message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -1984,7 +1984,7 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
         gsl_vector_view temp;
         if ((eventszLastRecord < 1) || (eventszLastRecord > (int)((*adc_double)->size)))
         {
-            sprintf(valERROR,"%d",__LINE__+5);
+            sprintf(valERROR,"%d",__LINE__+6);
             string str(valERROR);
             message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -2660,7 +2660,7 @@ int writePulses(ReconstructInitSIRENA** reconstruct_init, double samprate, doubl
                 if ((t0 < 0) || (t0 > ((int)(invectorNOTFIL->size)-2))
                     || ((*reconstruct_init)->pulse_length < 1) || ((*reconstruct_init)->pulse_length > ((int)(invectorNOTFIL->size)-t0)))
                 {
-                    sprintf(valERROR,"%d",__LINE__+5);
+                    sprintf(valERROR,"%d",__LINE__+6);
                     string str(valERROR);
                     message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
                     str.clear();
@@ -2972,7 +2972,7 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
     }
     if (cnt > (int)(pulseheightAUX->size))
     {
-        sprintf(valERROR,"%d",__LINE__+5);
+        sprintf(valERROR,"%d",__LINE__+6);
         string str(valERROR);
         message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
         str.clear();
@@ -3234,7 +3234,7 @@ int createHisto (gsl_vector *invector, int nbins, gsl_vector **xhistogsl, gsl_ve
                 if (ind == nbins) ind--;
                 if ((ind < 0) || (ind > ((int)((*yhistogsl)->size)-1)))
                 {
-                    sprintf(valERROR,"%d",__LINE__+5);
+                    sprintf(valERROR,"%d",__LINE__+6);
                     string str(valERROR);
                     message = "Setting/Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
                     str.clear();
@@ -3371,7 +3371,7 @@ int shiftm(gsl_vector *vectorin, gsl_vector *vectorout, int m)
     
     if (size-m > (int)(vectorin->size))
     {
-        sprintf(valERROR,"%d",__LINE__+14);
+        sprintf(valERROR,"%d",__LINE__+16);
         string str(valERROR);
         message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
         str.clear();
@@ -3379,7 +3379,7 @@ int shiftm(gsl_vector *vectorin, gsl_vector *vectorout, int m)
     }
     if (size-m-1+m > (int)(vectorout->size-1))
     {
-        sprintf(valERROR,"%d",__LINE__+7);
+        sprintf(valERROR,"%d",__LINE__+8);
         string str(valERROR);
         message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
         str.clear();
@@ -3392,7 +3392,7 @@ int shiftm(gsl_vector *vectorin, gsl_vector *vectorout, int m)
     
     if (m-1 > (int)(vectorout->size-1))
     {
-        sprintf(valERROR,"%d",__LINE__+7);
+        sprintf(valERROR,"%d",__LINE__+8);
         string str(valERROR);
         message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
         str.clear();
@@ -3427,7 +3427,7 @@ int shift_m(gsl_vector *vectorin, gsl_vector *vectorout, int m)
     
     if (m < 0)
     {
-        sprintf(valERROR,"%d",__LINE__+14);
+        sprintf(valERROR,"%d",__LINE__+16);
         string str(valERROR);
         message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
         str.clear();
@@ -3435,7 +3435,7 @@ int shift_m(gsl_vector *vectorin, gsl_vector *vectorout, int m)
     }
     if (size-1-m > (int)(vectorout->size-1))
     {
-        sprintf(valERROR,"%d",__LINE__+7);
+        sprintf(valERROR,"%d",__LINE__+8);
         string str(valERROR);
         message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
         str.clear();
@@ -3448,7 +3448,7 @@ int shift_m(gsl_vector *vectorin, gsl_vector *vectorout, int m)
     
     if ((size-m < 0) || (m-1 > (int)(vectorout->size-1)))
     {
-        sprintf(valERROR,"%d",__LINE__+7);
+        sprintf(valERROR,"%d",__LINE__+8);
         string str(valERROR);
         message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
         str.clear();
@@ -3839,7 +3839,7 @@ int eigenVV (gsl_matrix *matrixin, gsl_matrix **eigenvectors, gsl_vector **eigen
     
     if ((indexToEndToTakeAccount < 1) || (indexToEndToTakeAccount > (int)(eigenvaluesAll->size)))
     {
-        sprintf(valERROR,"%d",__LINE__+5);
+        sprintf(valERROR,"%d",__LINE__+6);
         string str(valERROR);
         message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
         str.clear();
@@ -3849,7 +3849,7 @@ int eigenVV (gsl_matrix *matrixin, gsl_matrix **eigenvectors, gsl_vector **eigen
     gsl_vector_memcpy(*eigenvalues,&temp.vector);
     if ((indexToEndToTakeAccount < 1) || (indexToEndToTakeAccount > (int)(eigenvectorsAll->size2)))
     {
-        sprintf(valERROR,"%d",__LINE__+5);
+        sprintf(valERROR,"%d",__LINE__+6);
         string str(valERROR);
         message = "View goes out of scope the original matrix in line " + str + " (" + __FILE__ + ")";
         str.clear();
@@ -4001,199 +4001,6 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
         set_toolname("teslib");
         set_toolversion(SIRENA_VERSION);
         HDpar_stamp(*inLibObject, 0, &status);  // Write the whole list of input parameters in HISTORY
-        
-        /*char str_procnumber[125];               snprintf(str_procnumber,125,"%ld",eventcntLib);
-        string strprocname (string("PROC") + string(str_procnumber));
-        strcpy(keyname,strprocname.c_str());
-        string strprocval (string("PROC") + string(str_procnumber) + string(" Starting parameter list"));
-        strcpy(keyvalstr,strprocval.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        string strproc;
-        char comment[MAXMSG];
-        
-        sprintf(comment, "RecordFile = %s", (*reconstruct_init)->record_file);
-        fits_write_comment(*inLibObject, comment, &status);
-        
-        sprintf(comment, "TesEventFile = %s", (*reconstruct_init)->event_file);
-        fits_write_comment(*inLibObject, comment, &status);
-        
-        sprintf(comment, "LibraryFile = %s", (*reconstruct_init)->library_file);
-        fits_write_comment(*inLibObject, comment, &status);
-        
-        sprintf(comment, "NoiseFile = %s", (*reconstruct_init)->noise_file);
-        fits_write_comment(*inLibObject, comment, &status);
-        
-        char str_opmode[125];		snprintf(str_opmode,125,"%d",(*reconstruct_init)->opmode);
-        strproc = string("opmode = ") + string(str_opmode);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        strproc=string("FilterDomain = ") + (*reconstruct_init)->FilterDomain;
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        strproc=string("FilterMethod = ") + (*reconstruct_init)->FilterMethod;
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        strproc=string("EnergyMethod = ") + (*reconstruct_init)->EnergyMethod;
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_LagsOrNot[125];                snprintf(str_LagsOrNot,125,"%d",(*reconstruct_init)->LagsOrNot);
-        strproc=string("LagsOrNot = ") + string(str_LagsOrNot);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_nLags[125];                snprintf(str_nLags,125,"%d",(*reconstruct_init)->nLags);
-        strproc=string("nLags = ") + string(str_nLags);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_Parabola3OrFitting5[125];                snprintf(str_Parabola3OrFitting5,125,"%d",(*reconstruct_init)->Fitting35);
-        strproc=string("Fitting35 = ") + string(str_Parabola3OrFitting5);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_OFIter[125];                   snprintf(str_OFIter,125,"%d",(*reconstruct_init)->OFIter);
-        strproc=string("OFIter = ") + string(str_OFIter);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_OFLib[125];                    snprintf(str_OFLib,125,"%d",(*reconstruct_init)->OFLib);
-        strproc=string("OFLib = ") + string(str_OFLib);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        strproc=string("OFInterp = ") + (*reconstruct_init)->OFInterp;
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        strproc=string("OFStrategy = ") + (*reconstruct_init)->OFStrategy;
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_OFLength[125];                 snprintf(str_OFLength,125,"%d",(*reconstruct_init)->OFLength);
-        strproc=string("OFLength = ") + string(str_OFLength);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_maxPulsesPerRecord[125];       snprintf(str_maxPulsesPerRecord,125,"%d",(*reconstruct_init)->maxPulsesPerRecord);
-        strproc=string("maxPulsesPerRecord = ") + string(str_maxPulsesPerRecord);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_pulse_length[125];             snprintf(str_pulse_length,125,"%d",(*reconstruct_init)->pulse_length);
-        strproc=string("PulseLength = ") + string(str_pulse_length);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_scaleFactor[125];              snprintf(str_scaleFactor,125,"%f",(*reconstruct_init)->scaleFactor);
-        strproc=string("scaleFactor = ") + string(str_scaleFactor);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_samplesUp[125];                snprintf(str_samplesUp,125,"%d",(*reconstruct_init)->samplesUp);
-        strproc=string("samplesUp = ") + string(str_samplesUp);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_samplesDown[125];              snprintf(str_samplesDown,125,"%d",(*reconstruct_init)->samplesDown);
-        strproc=string("samplesDown = ") + string(str_samplesDown);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_nSgms[125];                    snprintf(str_nSgms,125,"%f",(*reconstruct_init)->nSgms);
-        strproc=string("nSgms = ") + string(str_nSgms);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_LrsT[125];                     snprintf(str_LrsT,125,"%e",(*reconstruct_init)->LrsT);
-        strproc=string("LrsT = ") + string(str_LrsT);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_LbT[125];                      snprintf(str_LbT,125,"%e",(*reconstruct_init)->LbT);
-        strproc=string("LbT = ") + string(str_LbT);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_monoenergy[125];               snprintf(str_monoenergy,125,"%f",(*reconstruct_init)->monoenergy);
-        strproc=string("monoenergy = ") + string(str_monoenergy);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_addCOVAR[125];      	snprintf(str_addCOVAR,125,"%d",(*reconstruct_init)->addCOVAR);
-        strproc=string("addCOVAR = ") + string(str_addCOVAR);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-
-        char str_addINTCOVAR[125];      	snprintf(str_addINTCOVAR,125,"%d",(*reconstruct_init)->addINTCOVAR);
-        strproc=string("addINTCOVAR = ") + string(str_addINTCOVAR);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_addOFWN[125];      	snprintf(str_addOFWN,125,"%d",(*reconstruct_init)->addOFWN);
-        strproc=string("addOFWN = ") + string(str_addOFWN);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-       char str_intermediate[125];             snprintf(str_intermediate,125,"%d",(*reconstruct_init)->intermediate);
-        strproc=string("intermediate = ") + string(str_intermediate);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        sprintf(comment, "detectFile = %s", (*reconstruct_init)->detectFile);
-        fits_write_comment(*inLibObject, comment, &status);
-        
-        char str_clobber[125];                  snprintf(str_clobber,125,"%d",(*reconstruct_init)->clobber);
-        strproc=string("clobber = ") + string(str_clobber);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        //char str_SaturationValue[125];          snprintf(str_SaturationValue,125,"%e",(*reconstruct_init)->SaturationValue);
-        //strproc=string("SaturationValue = ") + string(str_SaturationValue);
-        //strcpy(keyvalstr,strproc.c_str());
-        //fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_tstartPulse1[125]; 
-        if (!isNumber((*reconstruct_init)->tstartPulse1))
-        {
-            sprintf(comment, "tstartPulse1 = %s", (*reconstruct_init)->tstartPulse1);
-            fits_write_comment(*inLibObject, comment, &status);
-        }
-        else
-        {
-            if (atoi((*reconstruct_init)->tstartPulse1) == 0)   snprintf(str_tstartPulse1,125,"%d",atoi((*reconstruct_init)->tstartPulse1));
-            else                                            	snprintf(str_tstartPulse1,125,"%d",atoi((*reconstruct_init)->tstartPulse1)+1);
-            strproc=string("tstartPulse1 = ") + string(str_tstartPulse1);
-            strcpy(keyvalstr,strproc.c_str());
-            fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        }
-        
-        char str_tstartPulse2[125];             
-        if ((*reconstruct_init)->tstartPulse2 == 0)	  	snprintf(str_tstartPulse2,125,"%d",(*reconstruct_init)->tstartPulse2);
-        else                                        	snprintf(str_tstartPulse2,125,"%d",(*reconstruct_init)->tstartPulse2+1);
-        strproc=string("tstartPulse2 = ") + string(str_tstartPulse2);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        char str_tstartPulse3[125];             
-        if ((*reconstruct_init)->tstartPulse3 == 0)		snprintf(str_tstartPulse3,125,"%d",(*reconstruct_init)->tstartPulse3);
-        else                                            snprintf(str_tstartPulse3,125,"%d",(*reconstruct_init)->tstartPulse3+1);
-        strproc=string("tstartPulse3 = ") + string(str_tstartPulse3);
-        strcpy(keyvalstr,strproc.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        strproc.clear();
-        
-        strcpy(keyname,strprocname.c_str());
-        strprocval = string("PROC") + string(str_procnumber) + string(" Ending parameter list");
-        strcpy(keyvalstr,strprocval.c_str());
-        fits_write_key(*inLibObject,TSTRING,keyname,keyvalstr,NULL,&status);
-        
-        strprocval.clear();*/
         
         strcpy(keyname,"CREADATE");
         time_t rawtime;
@@ -4631,7 +4438,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
             gsl_vector_set(optimalfilter_FFT_RI,i,GSL_REAL(gsl_vector_complex_get(optimalfilter_FFT_complex_x,i)));
             if ((i+(int)(optimalfilter_FFT_complex_x->size) < 0) || (i+(int)(optimalfilter_FFT_complex_x->size) > (int)(optimalfilter_FFT_RI->size)-1))
             {
-                sprintf(valERROR,"%d",__LINE__+5);
+                sprintf(valERROR,"%d",__LINE__+6);
                 string str(valERROR);
                 message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
                 str.clear();
@@ -4694,7 +4501,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
             message = "Cannot move to HDU  " + string(extname) + " in library";
             EP_PRINT_ERROR(message,status);return(EPFAIL);
         }
-        
+
         // Creating ENERGY Column
         strcpy(objPRCLOFWN.nameTable,"PRCLOFWN");
         strcpy(objPRCLOFWN.nameCol,"ENERGY");
@@ -4706,7 +4513,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
             message = "Cannot run writeFitsSimple routine for column " + string(objPRCLOFWN.nameCol);
             EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
         }
-        
+
         // Creating ...
         gsl_matrix *R;
         gsl_matrix *R_transW;
@@ -4718,22 +4525,16 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
         gsl_matrix *inv = gsl_matrix_alloc(2,2);
         gsl_vector *vectoraux1_2 = NULL;
         int indexPRCLOFWN;
-        gsl_vector *fixedlengthsOFWM;
-        fixedlengthsOFWM = gsl_vector_alloc(reconstruct_init->grading->ngrades);
-        for (int j=0;j<(int)(fixedlengthsOFWM->size);j++)
-        {
-            gsl_vector_set(fixedlengthsOFWM,j,gsl_matrix_get(reconstruct_init->grading->gradeData,j,1));
-        }
 
         int s=0;
-        
-        for (int j=0;j<(int)(fixedlengths->size);j++)
+
+        for (int j=0;j<(int)(reconstruct_init->grading->gradeData->size1);j++)
         {
             //    | r0 1 | |  .   1|
             // R =| r1 1 |=|PULSE 1|          R=(PulseLengthx2)
             //    | .    | |  .   1|
-            //    | rm 1 | |  .   1|			
-            if ((R = gsl_matrix_alloc(gsl_vector_get(fixedlengths,j),2)) == 0)
+            //    | rm 1 | |  .   1|
+            if ((R = gsl_matrix_alloc(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1),2)) == 0)
             {
                 sprintf(valERROR,"%d",__LINE__-2);
                 string str(valERROR);
@@ -4742,18 +4543,18 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
                 EP_PRINT_ERROR(message,EPFAIL);
             }
             gsl_matrix_set_all(R,1.0);
-            PULSENORMshort = gsl_vector_alloc(gsl_vector_get(fixedlengths,j));
+            PULSENORMshort = gsl_vector_alloc(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1));
             PULSENORM_row = gsl_vector_alloc(PULSE->size2);
             gsl_matrix_get_row(PULSENORM_row,PULSE,0);
-            if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j) > PULSENORM_row->size))
+            if ((gsl_matrix_get(reconstruct_init->grading->gradeData,j,1) < 0) || (gsl_matrix_get(reconstruct_init->grading->gradeData,j,1) > PULSENORM_row->size))
             {
-                sprintf(valERROR,"%d",__LINE__+5);
+                sprintf(valERROR,"%d",__LINE__+6);
                 string str(valERROR);
                 message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
                 str.clear();
                 EP_EXIT_ERROR(message,EPFAIL);
             }
-            temp = gsl_vector_subvector(PULSENORM_row,0,gsl_vector_get(fixedlengths,j));
+            temp = gsl_vector_subvector(PULSENORM_row,reconstruct_init->preBuffer_max_value-gsl_matrix_get(reconstruct_init->grading->gradeData,j,2),gsl_matrix_get(reconstruct_init->grading->gradeData,j,1));
             if (gsl_vector_memcpy(PULSENORMshort,&temp.vector) != 0)
             {
                 sprintf(valERROR,"%d",__LINE__-2);
@@ -4775,127 +4576,120 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
             gsl_vector *weightMatrixes_row = gsl_vector_alloc(reconstruct_init->noise_spectrum->weightMatrixes->size2);
             gsl_matrix *PrecalOFWMaux;
             indexPRCLOFWN = 0;
-            for (int i=0;i<(int)(fixedlengthsOFWM->size);i++)
+
+            Wi_vector = gsl_vector_alloc(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)*gsl_matrix_get(reconstruct_init->grading->gradeData,j,1));
+            Wi_matrix = gsl_matrix_alloc(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1),gsl_matrix_get(reconstruct_init->grading->gradeData,j,1));
+            gsl_matrix_get_row(weightMatrixes_row,reconstruct_init->noise_spectrum->weightMatrixes,j);
+            if ((gsl_matrix_get(reconstruct_init->grading->gradeData,j,1) < 0) || (gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)*gsl_matrix_get(reconstruct_init->grading->gradeData,j,1) > weightMatrixes_row->size))
             {
-                if (gsl_vector_get(fixedlengths,j) == gsl_vector_get(fixedlengthsOFWM,i))
+                sprintf(valERROR,"%d",__LINE__+6);
+                string str(valERROR);
+                message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
+                str.clear();
+                EP_EXIT_ERROR(message,EPFAIL);
+            }
+            temp = gsl_vector_subvector(weightMatrixes_row,0,gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)*gsl_matrix_get(reconstruct_init->grading->gradeData,j,1));
+            if (gsl_vector_memcpy(Wi_vector,&temp.vector) != 0)
+            {
+                sprintf(valERROR,"%d",__LINE__-2);
+                string str(valERROR);
+                message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
+                str.clear();
+                EP_EXIT_ERROR(message,EPFAIL);
+            }
+            gsl_vector_memcpy(Wi_vector,&temp.vector);
+            vector2matrix(Wi_vector,&Wi_matrix);
+
+            PrecalOFWMaux = gsl_matrix_alloc(1,gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)*2);
+            if (gsl_matrix_get(Wi_matrix,0,0) != -999.0)
+            {
+                R_transW = gsl_matrix_alloc(2,gsl_matrix_get(reconstruct_init->grading->gradeData,j,1));      		// R_transW = R'W               R_transW=(2xfixedlengths_j)
+                if (R->size1 != Wi_matrix->size1)
                 {
-                    Wi_vector = gsl_vector_alloc(gsl_vector_get(fixedlengthsOFWM,i)*gsl_vector_get(fixedlengthsOFWM,i));
-                    Wi_matrix = gsl_matrix_alloc(gsl_vector_get(fixedlengthsOFWM,i),gsl_vector_get(fixedlengthsOFWM,i));
-                    gsl_matrix_get_row(weightMatrixes_row,reconstruct_init->noise_spectrum->weightMatrixes,i);
-                    if ((gsl_vector_get(fixedlengthsOFWM,i) < 0) || (gsl_vector_get(fixedlengthsOFWM,i)*gsl_vector_get(fixedlengthsOFWM,i) > weightMatrixes_row->size))
-                    {
-                        sprintf(valERROR,"%d",__LINE__+5);
-                        string str(valERROR);
-                        message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
-                        str.clear();
-                        EP_EXIT_ERROR(message,EPFAIL);
-                    }
-                    temp = gsl_vector_subvector(weightMatrixes_row,0,gsl_vector_get(fixedlengthsOFWM,i)*gsl_vector_get(fixedlengthsOFWM,i));
-                    if (gsl_vector_memcpy(Wi_vector,&temp.vector) != 0)
-                    {
-                        sprintf(valERROR,"%d",__LINE__-2);
-                        string str(valERROR);
-                        message = "Copying vectors of different length in line " + str + " (" + __FILE__ + ")";
-                        str.clear();
-                        EP_EXIT_ERROR(message,EPFAIL);
-                    }  
-                    gsl_vector_memcpy(Wi_vector,&temp.vector);
-                    vector2matrix(Wi_vector,&Wi_matrix);
+                    sprintf(valERROR,"%d",__LINE__+6);
+                    string str(valERROR);
+                    message = "Wrong dimensions to compute matrix-matrix product in line " + str + " (" + __FILE__ + ")";
+                    str.clear();
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }
+                gsl_blas_dgemm(CblasTrans,CblasNoTrans,1.0,R,Wi_matrix,0.0,R_transW);
+                R_transWR = gsl_matrix_alloc(2,2);                                  		// R_transWR = R'WR             R_transWR=(2x2)
+                gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,R_transW,R,0.0,R_transWR);
+                matrixaux1 = gsl_matrix_alloc(2,gsl_matrix_get(reconstruct_init->grading->gradeData,j,1));
+                gsl_permutation *perm1 = gsl_permutation_alloc(2);
+                s=0;
+                gsl_matrix_memcpy(aux,R_transWR);
+                gsl_linalg_LU_decomp(aux, perm1, &s);
+                if (gsl_linalg_LU_invert(aux, perm1, inv) != 0)
+                {
+                    sprintf(valERROR,"%d",__LINE__-2);
+                    string str(valERROR);
+                    message = "Singular matrix in line " + str + " (" + __FILE__ + ")";
+                    str.clear();
+                    EP_PRINT_ERROR(message,EPFAIL);	return(EPFAIL);
+                }
 
-                    PrecalOFWMaux = gsl_matrix_alloc(1,gsl_vector_get(fixedlengths,j)*2);
-                    if (gsl_matrix_get(Wi_matrix,0,0) != -999.0)
+                gsl_permutation_free(perm1); perm1 = 0;
+                gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,inv,R_transW,0.0,matrixaux1);      // matrixaux1 = [(R'WR)^(-1)]R'W       matrixaux1=(2xfixedlengths_j)
+                vectoraux1_2 = gsl_vector_alloc(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)*2);
+                for (int ii=0;ii<2;ii++)
+                {
+                    for (int k=0;k<gsl_matrix_get(reconstruct_init->grading->gradeData,j,1);k++)
                     {
-                        R_transW = gsl_matrix_alloc(2,gsl_vector_get(fixedlengths,j));      		// R_transW = R'W               R_transW=(2xfixedlengths_j)
-                        if (R->size1 != Wi_matrix->size1)
+                        if ((k+ii*gsl_matrix_get(reconstruct_init->grading->gradeData,j,1) < 0) || (k+ii*gsl_matrix_get(reconstruct_init->grading->gradeData,j,1) > vectoraux1_2->size-1))
                         {
-                            sprintf(valERROR,"%d",__LINE__+5);
+                            sprintf(valERROR,"%d",__LINE__+6);
                             string str(valERROR);
-                            message = "Wrong dimensions to compute matrix-matrix product in line " + str + " (" + __FILE__ + ")";
+                            message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
                             str.clear();
-                            EP_EXIT_ERROR(message,EPFAIL);
+                            EP_PRINT_ERROR(message,EPFAIL);
                         }
-                        gsl_blas_dgemm(CblasTrans,CblasNoTrans,1.0,R,Wi_matrix,0.0,R_transW);
-                        R_transWR = gsl_matrix_alloc(2,2);                                  		// R_transWR = R'WR             R_transWR=(2x2)
-                        gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,R_transW,R,0.0,R_transWR);
-                        matrixaux1 = gsl_matrix_alloc(2,gsl_vector_get(fixedlengths,j));
-                        gsl_permutation *perm1 = gsl_permutation_alloc(2);
-                        s=0;
-                        gsl_matrix_memcpy(aux,R_transWR);
-                        gsl_linalg_LU_decomp(aux, perm1, &s);
-                        if (gsl_linalg_LU_invert(aux, perm1, inv) != 0)
-                        {
-                            sprintf(valERROR,"%d",__LINE__-2);
-                            string str(valERROR);
-                            message = "Singular matrix in line " + str + " (" + __FILE__ + ")";
-                            str.clear();
-                            EP_PRINT_ERROR(message,EPFAIL);	return(EPFAIL);
-                        }
-
-                        gsl_permutation_free(perm1); perm1 = 0;
-                        gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,inv,R_transW,0.0,matrixaux1);      // matrixaux1 = [(R'WR)^(-1)]R'W       matrixaux1=(2xfixedlengths_j)
-                        vectoraux1_2 = gsl_vector_alloc(gsl_vector_get(fixedlengths,j)*2);
-                        for (int ii=0;ii<2;ii++)
-                        {
-                            for (int k=0;k<gsl_vector_get(fixedlengths,j);k++)
-                            {
-                                if ((k+ii*gsl_vector_get(fixedlengths,j) < 0) || (k+ii*gsl_vector_get(fixedlengths,j) > vectoraux1_2->size-1))
-                                {
-                                    sprintf(valERROR,"%d",__LINE__+5);
-                                    string str(valERROR);
-                                    message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
-                                    str.clear();
-                                    EP_PRINT_ERROR(message,EPFAIL);
-                                }
-                                gsl_vector_set(vectoraux1_2,k+ii*gsl_vector_get(fixedlengths,j),gsl_matrix_get(matrixaux1,ii,k));
-                            }
-                        }
-
-                        for (int ii=0;ii<(int)(vectoraux1_2->size);ii++)
-                        {
-                            if ((ii+indexPRCLOFWN < 0) || (ii+indexPRCLOFWN > (int)(PrecalOFWMaux->size2)-1))
-                            {
-                                sprintf(valERROR,"%d",__LINE__+5);
-                                string str(valERROR);
-                                message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
-                                str.clear();
-                                EP_PRINT_ERROR(message,EPFAIL);
-                            }
-                            gsl_matrix_set(PrecalOFWMaux,0,ii+indexPRCLOFWN,gsl_vector_get(vectoraux1_2,ii));
-
-                        }
+                        gsl_vector_set(vectoraux1_2,k+ii*gsl_matrix_get(reconstruct_init->grading->gradeData,j,1),gsl_matrix_get(matrixaux1,ii,k));
                     }
-                    else
+                }
+
+                for (int ii=0;ii<(int)(vectoraux1_2->size);ii++)
+                {
+                    if ((ii+indexPRCLOFWN < 0) || (ii+indexPRCLOFWN > (int)(PrecalOFWMaux->size2)-1))
                     {
-                        gsl_matrix_set_all(PrecalOFWMaux,-999.0);
+                        sprintf(valERROR,"%d",__LINE__+6);
+                        string str(valERROR);
+                        message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
+                        str.clear();
+                        EP_PRINT_ERROR(message,EPFAIL);
                     }
-                    snprintf(str_length,125,"%d",(int) (gsl_vector_get(fixedlengths,j)));
-                    strcpy(objPRCLOFWN.nameCol,(string("OFWN")+string(str_length)).c_str());
-                    strcpy(objPRCLOFWN.unit," ");
-                    if (writeFitsComplex(objPRCLOFWN,PrecalOFWMaux))
-                    {
-                        message = "Cannot run writeFitsComplex routine for column " + string(objPRCLOFWN.nameCol);
-                        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-                    }
-                    gsl_matrix_free(PrecalOFWMaux); PrecalOFWMaux = 0;
-                    
-                    indexPRCLOFWN = indexPRCLOFWN + gsl_vector_get(fixedlengths,j)*2;
-                    
-                    gsl_vector_free(Wi_vector); Wi_vector = 0;
-                    gsl_matrix_free(Wi_matrix); Wi_matrix = 0;
-                    
-                    gsl_matrix_free(R_transW); R_transW = 0;
-                    gsl_matrix_free(R_transWR); R_transWR = 0;
-                    gsl_matrix_free(matrixaux1); matrixaux1 = 0;
-                    gsl_vector_free(vectoraux1_2); vectoraux1_2 = 0;
-                    
-                    break;
+                    gsl_matrix_set(PrecalOFWMaux,0,ii+indexPRCLOFWN,gsl_vector_get(vectoraux1_2,ii));
+
                 }
             }
+            else
+            {
+                gsl_matrix_set_all(PrecalOFWMaux,-999.0);
+            }
+            snprintf(str_length,125,"%d",(int) (gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)));
+            strcpy(objPRCLOFWN.nameCol,(string("OFWN")+string(str_length)).c_str());
+            strcpy(objPRCLOFWN.unit," ");
+            if (writeFitsComplex(objPRCLOFWN,PrecalOFWMaux))
+            {
+                message = "Cannot run writeFitsComplex routine for column " + string(objPRCLOFWN.nameCol);
+                EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+            }
+            gsl_matrix_free(PrecalOFWMaux); PrecalOFWMaux = 0;
+
+            indexPRCLOFWN = indexPRCLOFWN + gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)*2;
+
+            gsl_vector_free(Wi_vector); Wi_vector = 0;
+            gsl_matrix_free(Wi_matrix); Wi_matrix = 0;
+
+            gsl_matrix_free(R_transW); R_transW = 0;
+            gsl_matrix_free(R_transWR); R_transWR = 0;
+            gsl_matrix_free(matrixaux1); matrixaux1 = 0;
+            gsl_vector_free(vectoraux1_2); vectoraux1_2 = 0;
+
             gsl_vector_free(weightMatrixes_row); weightMatrixes_row = 0;
             gsl_matrix_free(R); R = 0;
         }
         delete [] objPRCLOFWN.unit; objPRCLOFWN.unit = 0;
-        gsl_vector_free(fixedlengthsOFWM); fixedlengthsOFWM = 0;
         gsl_matrix_free(aux); aux = 0;
         gsl_matrix_free(inv); inv = 0;
     }
@@ -5260,7 +5054,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
             gsl_vector_set(optimalfilter_FFT_RI,i,GSL_REAL(gsl_vector_complex_get(optimalfilter_FFT_complex_x,i)));
             if ((i+(int)(optimalfilter_FFT_complex_x->size) < 0) || (i+(int)(optimalfilter_FFT_complex_x->size) > (int)(optimalfilter_FFT_RI->size)-1))
             {
-                sprintf(valERROR,"%d",__LINE__+5);
+                sprintf(valERROR,"%d",__LINE__+6);
                 string str(valERROR);
                 message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
                 str.clear();
@@ -5274,7 +5068,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
         {
             if ((i+indexF < 0) || (i+indexF > (int)(optimalfiltersFREQaux->size2)-1))
             {
-                sprintf(valERROR,"%d",__LINE__+5);
+                sprintf(valERROR,"%d",__LINE__+6);
                 string str(valERROR);
                 message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
                 str.clear();
@@ -5288,7 +5082,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
         {
             if ((i+indexT < 0) || (i+indexT > (int)(optimalfiltersTIMEaux->size2)-1))
             {
-                sprintf(valERROR,"%d",__LINE__+5);
+                sprintf(valERROR,"%d",__LINE__+6);
                 string str(valERROR);
                 message = "Setting with <= 0 size in line " + str + " (" + __FILE__ + ")";
                 str.clear();
@@ -5359,7 +5153,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
             gsl_matrix_get_row(PULSENORM_row,modelsaux,eventcntLib);
             if ((gsl_vector_get(fixedlengths,j) < 0) || (gsl_vector_get(fixedlengths,j) > PULSENORM_row->size))
             {
-                sprintf(valERROR,"%d",__LINE__+5);
+                sprintf(valERROR,"%d",__LINE__+6);
                 string str(valERROR);
                 message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
                 str.clear();
@@ -5399,7 +5193,7 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
                         R_transW = gsl_matrix_alloc(2,gsl_vector_get(fixedlengths,j));      		// R_transW = R'W               R_transW=(2xfixedlengths_j)
                         if (R->size1 != Wi_matrix->size1)
                         {
-                            sprintf(valERROR,"%d",__LINE__+5);
+                            sprintf(valERROR,"%d",__LINE__+6);
                             string str(valERROR);
                             message = "Wrong dimensions to compute matrix-matrix product in line " + str + " (" + __FILE__ + ")";
                             str.clear();
@@ -6341,7 +6135,7 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
         
         if ((indexa < 0) || (indexa > ((int)(weightaux->size1)-1)))
         {
-            sprintf(valERROR,"%d",__LINE__+5);
+            sprintf(valERROR,"%d",__LINE__+6);
             string str(valERROR);
             message = "Getting i-th row of matrix out of range in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -6351,7 +6145,7 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
         gsl_vector_memcpy(Wabvector,Walphavector);
         if ((indexb < 0) || (indexb > ((int)(weightaux->size1)-1)))
         {
-            sprintf(valERROR,"%d",__LINE__+5);
+            sprintf(valERROR,"%d",__LINE__+6);
             string str(valERROR);
             message = "Getting i-th row of matrix out of range in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -6362,7 +6156,7 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
         gsl_vector_scale(Wabvector,1.0/2);
         if ((indexa < 0) || (indexa > ((int)((*Wabaux)->size1)-1)))
         {
-            sprintf(valERROR,"%d",__LINE__+5);
+            sprintf(valERROR,"%d",__LINE__+6);
             string str(valERROR);
             message = "Setting i-th row of matrix out of range in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -6381,7 +6175,7 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
         gsl_blas_ddot(T,vectoraux1,&t);
         if ((indexa < 0) || (indexa > ((int)((*tEcolumn)->size)-1)))
         {
-            sprintf(valERROR,"%d",__LINE__+5);
+            sprintf(valERROR,"%d",__LINE__+6);
             string str(valERROR);
             message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -6408,7 +6202,7 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
         r=1/r;
         if ((indexa < 0) || (indexa > ((int)((*rEcolumn)->size)-1)))
         {
-            sprintf(valERROR,"%d",__LINE__+5);
+            sprintf(valERROR,"%d",__LINE__+6);
             string str(valERROR);
             message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -6426,7 +6220,7 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
     
     if ((indexa < 0) || (indexa > (int)(energycolumn->size)-1))
     {
-        sprintf(valERROR,"%d",__LINE__+5);
+        sprintf(valERROR,"%d",__LINE__+6);
         string str(valERROR);
         message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
         str.clear();
@@ -6435,7 +6229,7 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
     Ea = gsl_vector_get(energycolumn,indexa);
     if ((indexb < 0) || (indexb > (int)(energycolumn->size)-1))
     {
-        sprintf(valERROR,"%d",__LINE__+5);
+        sprintf(valERROR,"%d",__LINE__+6);
         string str(valERROR);
         message = "Getting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
         str.clear();
@@ -6700,7 +6494,7 @@ int matrix2vector (gsl_matrix *matrixin, gsl_vector **vectorout)
         gsl_matrix_get_row(vectoraux,matrixin,i);
         if (i*dim+dim-1 > (int)((*vectorout)->size)-1)
         {
-            sprintf(valERROR,"%d",__LINE__+7);
+            sprintf(valERROR,"%d",__LINE__+8);
             string str(valERROR);
             message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
             str.clear();
@@ -7534,7 +7328,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
 
                 log_trace("Calculating the energy...");
 
-                if ((*reconstruct_init)->LagsOrNot == 0)
+                if (((*reconstruct_init)->LagsOrNot == 0) || ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && ((strcmp((*reconstruct_init)->OFNoise,"WEIGHTN") == 0))))
                 {
                     pulseToCalculateEnergy = gsl_vector_alloc(pulse->size);
                     gsl_vector_memcpy(pulseToCalculateEnergy,pulse);
@@ -7564,7 +7358,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                     if ((tstartSamplesRecordStartDOUBLE-preBuffer_value < 0) || (tstartSamplesRecordStartDOUBLE-preBuffer_value > recordAux->size-2)
                         || (resize_mfNEW < 1))
                     {
-                        sprintf(valERROR,"%d",__LINE__+5);
+                        sprintf(valERROR,"%d",__LINE__+6);
                         string str(valERROR);
                         message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
                         str.clear();
@@ -7822,7 +7616,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                             if ((tstartSamplesRecordStartDOUBLE-preBuffer_value < 0) || (tstartSamplesRecordStartDOUBLE-preBuffer_value > recordAux->size-2)
                                 || (resize_mfNEW < 1))
                             {
-                                sprintf(valERROR,"%d",__LINE__+5);
+                                sprintf(valERROR,"%d",__LINE__+6);
                                 string str(valERROR);
                                 message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
                                 str.clear();
@@ -8584,7 +8378,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
 
                 //log_trace("Calculating the energy...");
 
-                if ((*reconstruct_init)->LagsOrNot == 0)
+                if (((*reconstruct_init)->LagsOrNot == 0) || ((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) && ((strcmp((*reconstruct_init)->OFNoise,"WEIGHTN") == 0))))
                 {
                     pulseToCalculateEnergy = gsl_vector_alloc(pulse->size);
                     gsl_vector_memcpy(pulseToCalculateEnergy,pulse);
@@ -8614,7 +8408,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
                     if ((tstartSamplesRecordStartDOUBLE-preBuffer_value < 0) || (tstartSamplesRecordStartDOUBLE-preBuffer_value > recordAux->size-2)
                         || (resize_mfNEW < 1))
                     {
-                        sprintf(valERROR,"%d",__LINE__+5);
+                        sprintf(valERROR,"%d",__LINE__+6);
                         string str(valERROR);
                         message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
                         str.clear();
@@ -8872,7 +8666,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
                             if ((tstartSamplesRecordStartDOUBLE-preBuffer_value < 0) || (tstartSamplesRecordStartDOUBLE-preBuffer_value > recordAux->size-2)
                                 || (resize_mfNEW < 1))
                             {
-                                sprintf(valERROR,"%d",__LINE__+5);
+                                sprintf(valERROR,"%d",__LINE__+6);
                                 string str(valERROR);
                                 message = "View goes out of scope the original vector in line " + str + " (" + __FILE__ + ")";
                                 str.clear();
@@ -9427,7 +9221,7 @@ int calculus_optimalFilter(int TorF, int intermediate, int opmode, gsl_vector *m
             {
                 if (n_f->size-n_f_interp->size+1 > n_f->size-1)
                 {
-                    sprintf(valERROR,"%d",__LINE__+7);
+                    sprintf(valERROR,"%d",__LINE__+8);
                     string str(valERROR);
                     message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
                     str.clear();
@@ -9443,7 +9237,7 @@ int calculus_optimalFilter(int TorF, int intermediate, int opmode, gsl_vector *m
             {
                 if (n_f->size-n_f_interp->size-1-1 > n_f->size-1)
                 {
-                    sprintf(valERROR,"%d",__LINE__+7);
+                    sprintf(valERROR,"%d",__LINE__+8);
                     string str(valERROR);
                     message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
                     str.clear();
@@ -10688,7 +10482,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
     }
     /*if (gradelim->size < 4)
     {
-        sprintf(valERROR,"%d",__LINE__+7);
+        sprintf(valERROR,"%d",__LINE__+8);
         string str(valERROR);
         message = "Setting i-th element of vector out of range in line " + str + " (" + __FILE__ + ")";
         str.clear();
@@ -11849,7 +11643,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                 gsl_matrix *X_transW = gsl_matrix_alloc(2,pulse->size);
                 if (X->size1 != Wm_short->size1)        // Because the next operation is X'W
                 {
-                    sprintf(valERROR,"%d",__LINE__+5);
+                    sprintf(valERROR,"%d",__LINE__+6);
                     string str(valERROR);
                     message = "Wrong dimensions to compute matrix-matrix product in line " + str + " (" + __FILE__ + ")";
                     str.clear();

@@ -13,11 +13,11 @@ SIRENA description
 Purpose
 ********
 
-SIRENA (*Software Ifca for Reconstruction of EveNts for Athena X-IFU*) is a software package initially developed to reconstruct the energy of the incoming X-ray photons after their detection in the `X-IFU <http://x-ifu.irap.omp.eu/>`_ TES detector (but it is equally valuable for other TES detectors). This is done by means of two tools called :ref:`teslib` and :ref:`tesrecons`, which are mainly two wrappers to pass a data file to the SIRENA tasks; :ref:`teslib` builds the library with the optimal filters to reconstruct the energies with :ref:`tesrecons`.
+SIRENA (*Software Ifca for Reconstruction of EveNts for Athena X-IFU*) is a software package developed to reconstruct the energy of the incoming X-ray photons after their detection in the `X-IFU <http://x-ifu.irap.omp.eu/>`_ TES detector of the future ESA `Athena <https://www.the-athena-x-ray-observatory.eu/en>`_ mission (but it is equally valuable for other TES detectors). This is done by means of two tools called :ref:`teslib` and :ref:`tesrecons`, which are mainly two wrappers to pass a data file to the SIRENA tasks; :ref:`teslib` builds the library with the optimal filters to reconstruct the energies with :ref:`tesrecons`.
 
-SIRENA is integrated in the `SIXTE <http://www.sternwarte.uni-erlangen.de/research/sixte>`_ end-to-end simulations environment where it currently runs over SIXTE or XIFUSIM (available for the XIFU consortium members upon request at `sixte-xifusim@lists.fau.de <sixte-xifusim@lists.fau.de>`_) simulated data. In the :math:`\mathit{sixte/scripts/SIRENA}` folder of the SIXTE environment, a straightforward SIRENA tutorial and a set of scripts can be found with the aim of providing the user with a first approach running SIRENA. Regarding XIFUSIM, the functionalities of SIRENA that are closest to forming the baseline of the X-IFU instrument are already integrated into this official simulator. Similarly, SIRENA is capable of working with real data from laboratory measurements as long as such data are stored in FITS files in a format understandable by SIRENA.
+Initially, SIRENA was integrated in the `SIXTE <http://www.sternwarte.uni-erlangen.de/research/sixte>`_ end-to-end simulations environment, running on simulated data from SIXTE or XIFUSIM (available for the XIFU consortium members upon request at `sixte-xifusim@lists.fau.de <sixte-xifusim@lists.fau.de>`_). Currently, SIRENA is no longer integrated into either SIXTE or XIFUSIM but it continues to process their simulated data and requires the `SIXTE software <https://www.sternwarte.uni-erlangen.de/sixte/sixte-beta/>`_ as well as the `XIFU instrument files <https://www.sternwarte.uni-erlangen.de/sixte/sixte-beta/>`_. Similarly, SIRENA can handle real data from laboratory measurements, provided that the data are stored in FITS files in a format compatible with SIRENA.
 
-The SIRENA software is regularly updated in the SIXTE and XIFUSIM environments and beta versions are often uploaded to a (`SIRENA GitHub repository <https://github.com/bcobo/SIRENA>`_).
+The SIRENA software is regularly updated and beta versions are often uploaded to a `SIRENA GitHub repository <https://github.com/bcobo/SIRENA>`_.
  
 ******
 Files
@@ -40,14 +40,11 @@ The detector **noise file** is built by the tool :ref:`gennoisespec` from a a lo
 
 **1) Calibration Stream Simulation**
 
-When working with simulated data, the first step is creating a photon list:
+When working with simulated data, the first step is to create a photon list by for example using the SIXTE tool ``tesgenimpacts`` which create a :ref:`piximpact file <pixImpactFig>` of zero-energy photons:
 
-* ``tesconstpileup`` (SIXTE): which creates a :ref:`piximpact file <pixImpactFig>` of zero-energy events.
-  
 ::
 
-    > tesconstpileup PixImpList=noise.piximpact XMLFile=tes.XML tstop=simulationTime energy=0 \
-    pulseDistance=1 triggersize=10000 sample_freq=samplingFreq
+    > tesgenimpacts PixImpList=noise.piximpact opmode=const tstop=1.0 EConst=0. dtau=1
     
 .. _pixImpactFig:
 
@@ -59,20 +56,9 @@ When working with simulated data, the first step is creating a photon list:
    :align: center
    :width: 50%
 
-   Piximpact file of no events.
+   Piximpact file of zero-energy photons.
   
-The second step involves simulating the noise stream. This can be achieved by employing either a SIXTE tool (``tessim``) or a XIFUSIM tool (``xifusim``), both of which simulate fake impacts on the detector based on its physics and generate a data stream split into records:
-
-* ``tessim`` (:cite:`Wilms2016`)(SIXTE): use option `triggertype=noise`.
-
-::
-  
-    > tessim PixID=pixelNumber PixImpList=noise.piximpact Streamfile=noise.fits tstart=0. \
-    tstop=simulationTime triggertype=noise triggersize=10000 prebuffer=0 \
-    PixType=file:mypixel_configuration.fits acbias=yes
-
-  
-* ``xifusim`` (:cite:`Kirsch2022`)(XIFUSIM): use option `simnoise=y`.
+The second step involves simulating the noise stream, which can be achieved by using the XIFUSIM tool ``xifusim`` (:cite:`Kirsch2022`) with the option `simnoise=y`, simulating fake impacts on the detector based on its physics and generating a noise data stream divided into records:
   
 ::
 
@@ -85,11 +71,8 @@ The second step involves simulating the noise stream. This can be achieved by em
    :align: center
    :scale: 50%
    
-   Noise file triggered into records of 10000 samples by using ``tessim`` [#]_ .
-   
-.. [#] If ``xifusim`` (XIFUSIM) is used, the noise records are in the *TESRECORDS* HDU (Header Data Unit) among others HDUs such as *GEOCHANNELPARAM*, *TESPARAM*, *SQUIDPARAM*,...
-   
-   
+   Noise file triggered into records of 10000 samples by using ``xifusim``.
+
 **2) Noise spectrum and weight matrices generation**
 
 In :ref:`gennoisespec`, data analysis is performed on a per-record basis. When pulses are detected within a record, this tool :ref:`finds <detect>` and filters them out, retaining only the pulse-free intervals whose size is determined by the input parameter :option:`intervalMinSamples` (the hidden input parameter :option:`pulse_length` further specifies the portion of the record rejected due to a detected pulse). In cases where no pulses are present, the record is divided into pulse-free intervals, the size of which is also controlled by this parameter :option:`intervalMinSamples`.
