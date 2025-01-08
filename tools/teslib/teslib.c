@@ -127,7 +127,7 @@ int teslib_main() {
     CHECK_STATUS_BREAK(status);
     
     //Open outfile 
-    TesEventFile * outfile = opennewTesEventFileSIRENA(par.TesEventFile,
+    TesEventFileSIRENA * outfile = opennewTesEventFileSIRENA(par.TesEventFile,
                                                  keywords,
                                                  SIRENA_VERSION,
                                                  par.clobber,
@@ -147,8 +147,8 @@ int teslib_main() {
     destroyAdvDet(&det);
 
     // Build up TesEventList
-    TesEventList* event_list = newTesEventListSIRENA(&status);
-    allocateTesEventListTrigger(event_list,par.EventListSize,&status);
+    TesEventListSIRENA* event_list = newTesEventListSIRENA(&status);
+    allocateTesEventListTriggerSIRENA(event_list,par.EventListSize,&status);
     CHECK_STATUS_BREAK(status);
             
     // Call SIRENA to build the library
@@ -171,7 +171,7 @@ int teslib_main() {
     freeReconstructInitSIRENA(reconstruct_init_sirena);
     freePulsesCollection(pulsesAll);
     freeOptimalFilterSIRENA(optimalFilter);
-    freeTesEventFile(outfile,&status);
+    freeTesEventFileSIRENA(outfile,&status);
     freeTesEventListSIRENA(event_list);
     freeSixtStdKeywords(keywords);
     CHECK_STATUS_BREAK(status);

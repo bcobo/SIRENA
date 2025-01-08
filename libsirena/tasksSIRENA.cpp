@@ -2275,7 +2275,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
         if (gsl_vector_get(tendgsl,i) > recordDERIVATIVE->size)		// Truncated pulses at the end of the record
         {
             gsl_vector_set(tendgsl,i,(recordDERIVATIVE->size)-1);
-            gsl_vector_set (qualitygsl,i,2);
+            //gsl_vector_set (qualitygsl,i,2);
         }
         
         if ((numPulses != 1) && (i != numPulses-1)) 				// More than one pulse in the record and not the last one
@@ -10627,8 +10627,8 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
     
     if ((strcmp(reconstruct_init->OFStrategy,"FIXED") != 0) && (nopower2 == 0))  // FREE or BYGRADE
     {
-        // message = "No grade being a power of 2 in the XML file";
-        //EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+        message = "No grade being a power of 2 in the XML file";
+        EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
     //if ((*pulseGrade == 0) && (OFlength_strategy != 2))     *pulseGrade = -2;
     /*if (*pulseGrade == 0)

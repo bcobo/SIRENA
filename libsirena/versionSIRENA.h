@@ -9,6 +9,6 @@
 #ifndef SIRENA_VERSION_H
 #define SIRENA_VERSION_H
 
-#define SIRENA_VERSION "12.2.0"
+#define SIRENA_VERSION "12.3.0"
 
 #endif
