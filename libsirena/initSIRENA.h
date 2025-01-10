@@ -244,4 +244,6 @@ int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA
 
 int checkpreBuffer(struct Parameters* const par);
 
+int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRecord,int *startRecordGroup,int* const status);
+
 #endif /* INITSIRENA_H */

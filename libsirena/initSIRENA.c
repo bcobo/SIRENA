@@ -681,7 +681,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     TesEventListSIRENA* event_list = newTesEventListSIRENA(&status);
     allocateTesEventListTriggerSIRENA(event_list,par.EventListSize,&status);
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
-    while(getNextRecord(record_file,record,&lastRecord,&startRecordGroup,&status))
+    while(getNextRecordSIRENA(record_file,record,&lastRecord,&startRecordGroup,&status))
     {
         // Progress bar
         float progress;
@@ -1228,4 +1228,160 @@ void allocateTesEventListTriggerSIRENA(TesEventListSIRENA* event_list,int size,i
 	}
 
 	event_list->size = size;
+}
+
+
+/** Populates a TesRecord structure with the next record */
+int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRecord,int *startRecordGroup,int* const status){
+  int anynul=0;
+  char tform2ADC[20];
+  LONGLONG rec_trigsize;
+
+  (*lastRecord) = 0;
+  (*startRecordGroup) = 0;
+
+  if (NULL==file || NULL==file->fptr) {
+    *status=EXIT_FAILURE;
+    SIXT_ERROR("No opened trigger file to read from");
+    CHECK_STATUS_RET(*status,0);
+  }
+
+  if (file->row<=file->nrows) {
+    // get length of this record
+    // (although unlikely, we might have a very large file, so we best
+    // use the LONGLONG interface to the descriptor
+
+    // read TFORM for ADC to know if it is FIXED or VARIABLE length
+    fits_read_key(file->fptr,TSTRING, "TFORM2", &tform2ADC, NULL, status);
+    if(strstr(tform2ADC, "(") != NULL){
+      LONGLONG offset;
+      fits_read_descriptll(file->fptr,file->trigCol,file->row,&rec_trigsize,&offset,status);
+      CHECK_STATUS_RET(*status,0);
+
+    }else{
+      LONGLONG col_width;
+      int adc_col_typecode;
+      fits_get_coltypell(file->fptr,file->trigCol,&adc_col_typecode,
+			 &rec_trigsize,&col_width,status);
+      CHECK_STATUS_RET(*status,0);
+    }
+
+    fits_read_col(file->fptr, TLONG, file->pixIDCol,
+                  file->row,1,1,0,&(record->pixid), &anynul,status);
+    CHECK_STATUS_RET(*status,0);
+    fits_read_col(file->fptr, TDOUBLE, file->timeCol,
+                  file->row,1,1,0,&(record->time), &anynul,status);
+    CHECK_STATUS_RET(*status,0);
+
+    fits_read_col(file->fptr, TLONG, file->extendCol,
+		  file->row,1,1,0,&(record->extend), &anynul,status);
+    if (*status != 0) // No EXTEND column
+    {
+        *status = 0;
+        //// when ADC is integer
+        ////fits_read_col(file->fptr, TUSHORT, file->trigCol,
+        ////		  file->row,1,record->trigger_size,0,record->adc_array, &anynul,status);
+        //// when ADC is DOUBLE
+        fits_read_col(file->fptr, TDOUBLE, file->trigCol,
+                      file->row,1,record->trigger_size,0,record->adc_double, &anynul,status);
+        CHECK_STATUS_RET(*status,0);
+
+        fits_read_col(file->fptr, TLONG, file->ph_idCol,
+                      file->row,1,1,0,&(record->phid_list->phid_array[0]), &anynul,status);
+        if (*status != 0)	// Simulated files have the PH_ID column but empty
+        {
+            record->phid_list->phid_array[0] = 0;
+            *status = 0;
+        }
+
+        (*startRecordGroup) = file->row;
+
+        file->row++;
+    }
+    else // EXTEND column
+    {
+        // Starting a new record => record->trigger_size must begin in the ADC column size
+        if (record->trigger_size!=(unsigned long) rec_trigsize) {
+            resizeTesRecord(record,(unsigned long) rec_trigsize,status);
+            CHECK_STATUS_RET(*status,0);
+        }
+
+        // It is not necessary to resize the record
+        int nrowsTogether = 0;
+        if (record->extend == 0)
+        {
+            // when ADC is integer
+            //fits_read_col(file->fptr, TUSHORT, file->trigCol,
+            //	 	  file->row,1,record->trigger_size,0,record->adc_array, &anynul,status);
+            // when ADC is DOUBLE
+            fits_read_col(file->fptr, TDOUBLE, file->trigCol,
+                          file->row,1,record->trigger_size,0,record->adc_double, &anynul,status);
+            CHECK_STATUS_RET(*status,0);
+            (*startRecordGroup) = file->row;
+        }
+        else // It is necessary to resize the record
+        {
+            int sizeADC = record->trigger_size;
+            int sizeToWrite;
+
+            int sizeLastRow = 0;
+            div_t nrowsTogether_div_t = div(record->trigger_size+record->extend,record->trigger_size);
+            nrowsTogether = nrowsTogether_div_t.quot +1;
+            sizeLastRow = nrowsTogether_div_t.rem;
+            resizeTesRecord(record,(unsigned long) record->extend + record->trigger_size,status);
+            double *singleRecord = NULL;
+            int rowToRead = file->row;
+            int index = 0;
+            (*startRecordGroup) = file->row;
+            for (int i=0;i<nrowsTogether;i++)
+            {
+                singleRecord = malloc(sizeADC*sizeof(singleRecord));
+                // when ADC is integer
+                //fits_read_col(file->fptr, TUSHORT, file->trigCol,
+                //	 	  file->row,1,record->trigger_size,0,record->adc_array, &anynul,status);
+                // when ADC is DOUBLE
+                fits_read_col(file->fptr, TDOUBLE, file->trigCol,
+                              rowToRead,1,sizeADC,0,singleRecord, &anynul,status);
+                CHECK_STATUS_RET(*status,0);
+
+                if (i != nrowsTogether-1)
+                {
+                    sizeToWrite = sizeADC;
+                }
+                else
+                {
+                    sizeToWrite = sizeLastRow;
+                }
+                for (int j=0;j<sizeToWrite;j++)
+                {
+                    record->adc_double[j+index] = singleRecord[j];
+                }
+                free(singleRecord);
+                index = index + sizeADC;
+                rowToRead++;
+            }
+        }
+
+        free(record->phid_list->phid_array);
+        record->phid_list->phid_array = malloc(3*sizeof(*(record->phid_list->phid_array)));
+        fits_read_col(file->fptr, TLONG, file->ph_idCol,
+                      file->row,1,3,0,record->phid_list->phid_array, &anynul,status);
+        CHECK_STATUS_RET(*status,0);
+
+        if (record->extend == 0)
+        {
+            file->row++;
+        }
+        else
+        {
+            file->row = file->row + nrowsTogether;
+        }
+    }
+
+    if (file->row>file->nrows)  (*lastRecord) = 1;
+
+    return(1);
+  } else {
+    return(0);
+  }
 }
