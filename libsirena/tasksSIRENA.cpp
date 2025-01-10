@@ -10627,8 +10627,8 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
     
     if ((strcmp(reconstruct_init->OFStrategy,"FIXED") != 0) && (nopower2 == 0))  // FREE or BYGRADE
     {
-        message = "No grade being a power of 2 in the XML file";
-        EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+        //message = "No grade being a power of 2 in the XML file";
+        //EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
     //if ((*pulseGrade == 0) && (OFlength_strategy != 2))     *pulseGrade = -2;
     /*if (*pulseGrade == 0)
