@@ -768,8 +768,8 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
         printf("%s","WARNING: no pulses have been detected\n");
 
     // Copy trigger keywords to event file
-    copyTriggerKeywords(record_file->fptr,outfile->fptr,&status);
-    if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
+    //copyTriggerKeywords(record_file->fptr,outfile->fptr,&status);
+    //if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
 
     // Messages providing info of some columns
     char keywordvalue[9];

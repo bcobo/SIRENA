@@ -2275,7 +2275,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
         if (gsl_vector_get(tendgsl,i) > recordDERIVATIVE->size)		// Truncated pulses at the end of the record
         {
             gsl_vector_set(tendgsl,i,(recordDERIVATIVE->size)-1);
-            //gsl_vector_set (qualitygsl,i,2);
+            gsl_vector_set (qualitygsl,i,2);
         }
         
         if ((numPulses != 1) && (i != numPulses-1)) 				// More than one pulse in the record and not the last one
@@ -7149,7 +7149,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
         tstartSamplesRecordStartDOUBLE = tstartSamplesRecord-numlags2;   //Si no pongo numlags2, los LAGS no salen bien (empieza desde muy atras a calcular energias)*/
         if (tstartSamplesRecordStartDOUBLE < 0)   (*pulsesInRecord)->pulses_detected[i].quality = 1;
 
-        if ((*pulsesInRecord)->pulses_detected[i].quality == 0)
+        //if ((*pulsesInRecord)->pulses_detected[i].quality == 0)
+        if (((*pulsesInRecord)->pulses_detected[i].quality == 0) || ((*pulsesInRecord)->pulses_detected[i].quality == 2)) //Truncated at the end (2) will be calculated by using shorter filters
         {
             // Establish the pulse grade and the optimal filter length
             pulseGrade = 0;
@@ -7211,7 +7212,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 EP_PRINT_ERROR(message,-999);
             }
 
-            if ((*pulsesInRecord)->pulses_detected[i].quality == 0)
+            //if ((*pulsesInRecord)->pulses_detected[i].quality == 0)
+            if (((*pulsesInRecord)->pulses_detected[i].quality == 0) || ((*pulsesInRecord)->pulses_detected[i].quality == 2)) //Truncated at the end (2) will be calculated by using shorter filters
             {
                 tooshortPulse_NoLags = 0;
 
@@ -7927,7 +7929,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 }
                 log_debug("After storing data in (*pulsesInRecord)->pulses_detected[i]");
             }
-            else if  ((*pulsesInRecord)->pulses_detected[i].quality != 0)
+            //else if  ((*pulsesInRecord)->pulses_detected[i].quality != 0)
+            else if  (((*pulsesInRecord)->pulses_detected[i].quality != 0) && ((*pulsesInRecord)->pulses_detected[i].quality != 2))
             {
                 (*pulsesInRecord)->pulses_detected[i].energy = -999.0;
                 (*pulsesInRecord)->pulses_detected[i].E_lowres = -999.0;
@@ -8199,7 +8202,8 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
         tstartSamplesRecordStartDOUBLE = tstartSamplesRecord-numlags2;
         if (tstartSamplesRecordStartDOUBLE < 0)   (*pulsesInRecord)->pulses_detected[i].quality = 1;
 
-        if ((*pulsesInRecord)->pulses_detected[i].quality == 0)
+        //if ((*pulsesInRecord)->pulses_detected[i].quality == 0)
+        if (((*pulsesInRecord)->pulses_detected[i].quality == 0) || ((*pulsesInRecord)->pulses_detected[i].quality == 2)) //Truncated at the end (2) will be calculated by using shorter filters
         {
             // Establish the pulse grade and the optimal filter length
             pulseGrade = 0;
@@ -8261,7 +8265,8 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
                 EP_PRINT_ERROR(message,-999);
             }
 
-            if ((*pulsesInRecord)->pulses_detected[i].quality == 0)
+            //if ((*pulsesInRecord)->pulses_detected[i].quality == 0)
+            if (((*pulsesInRecord)->pulses_detected[i].quality == 0) || ((*pulsesInRecord)->pulses_detected[i].quality == 2)) //Truncated at the end (2) will be calculated by using shorter filters
             {
                 tooshortPulse_NoLags = 0;
 
@@ -8974,7 +8979,8 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
                 }
             }
             // Truncated pulse at the beginning
-            else if ((*pulsesInRecord)->pulses_detected[i].quality != 0)
+            //else if ((*pulsesInRecord)->pulses_detected[i].quality != 0)
+            else if (((*pulsesInRecord)->pulses_detected[i].quality == 0) || ((*pulsesInRecord)->pulses_detected[i].quality == 2)) //Truncated at the end (2) will be calculated by using shorter filters
             {
                 (*pulsesInRecord)->pulses_detected[i].energy = -999.0;
                 (*pulsesInRecord)->pulses_detected[i].E_lowres = -999.0;
