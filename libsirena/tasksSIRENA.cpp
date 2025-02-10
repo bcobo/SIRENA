@@ -7910,9 +7910,9 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 double intpart;
                 (*pulsesInRecord)->pulses_detected[i].phi = modf(tstartNewDev,&intpart);    // fractpart=modf(param,&intpart) Se obtiene la parte entera y decimal
                 (*pulsesInRecord)->pulses_detected[i].lagsShift = lagsShift+intpart;
-                /*if (((*pulsesInRecord)->pulses_detected[i].phi) == 0)
-                    (*pulsesInRecord)->pulses_detected[i].grading = -2; // Pile-up
-                else*/
+                //if (((*pulsesInRecord)->pulses_detected[i].phi) == 0)
+                //    (*pulsesInRecord)->pulses_detected[i].grading = -2; // Pile-up
+                //else
                     (*pulsesInRecord)->pulses_detected[i].grading = pulseGrade;
                 if (((*pulsesInRecord)->pulses_detected[i].lagsShift) != 0)
                 {
