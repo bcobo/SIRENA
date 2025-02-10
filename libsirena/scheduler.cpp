@@ -160,9 +160,7 @@ void scheduler::push_detection(TesRecord* record, int trig_reclength,
   input->event_list->grades1 = new int[event_list->size];
   input->event_list->grades2 = new int[event_list->size];
   input->event_list->pulse_heights = new double[event_list->size];
-  input->event_list->ph_ids = new long[event_list->size];
-  input->event_list->ph_ids2 = new long[event_list->size];
-  input->event_list->ph_ids3 = new long[event_list->size];
+  //ph_ids_array
   input->event_list->grading = new int[event_list->size];
   input->event_list->phis = new double[event_list->size];
   input->event_list->lagsShifts = new int[event_list->size];
@@ -304,9 +302,7 @@ void scheduler::finish_reconstruction(PulsesCollection** pulsesAll)
         event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
         event_list->bsln[ip] = record_pulses->pulses_detected[ip].bsln;
         event_list->pix_ids[ip] = record_pulses->pulses_detected[ip].pixid;
-        event_list->ph_ids[ip] = record_pulses->pulses_detected[ip].phid;
-        event_list->ph_ids2[ip] = record_pulses->pulses_detected[ip].phid2;
-        event_list->ph_ids3[ip] = record_pulses->pulses_detected[ip].phid3;
+        //ph_ids_array
       }
       if (data_array[i]->last_record == 1) {
         double numLagsUsed_mean;
@@ -340,9 +336,7 @@ void scheduler::finish_reconstruction(PulsesCollection** pulsesAll)
           event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
           event_list->bsln[ip] = record_pulses->pulses_detected[ip].bsln;
           event_list->pix_ids[ip] = record_pulses->pulses_detected[ip].pixid;
-          event_list->ph_ids[ip] = record_pulses->pulses_detected[ip].phid;
-          event_list->ph_ids2[ip] = record_pulses->pulses_detected[ip].phid2;
-          event_list->ph_ids3[ip] = record_pulses->pulses_detected[ip].phid3;
+          //ph_ids_array
         }
       }
     }
@@ -467,9 +461,7 @@ void scheduler::finish_reconstruction_v2(PulsesCollection** pulsesAll)
         event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
         event_list->bsln[ip] = record_pulses->pulses_detected[ip].bsln;
         event_list->pix_ids[ip] = record_pulses->pulses_detected[ip].pixid;
-        event_list->ph_ids[ip] = record_pulses->pulses_detected[ip].phid;
-        event_list->ph_ids2[ip] = record_pulses->pulses_detected[ip].phid2;
-        event_list->ph_ids3[ip] = record_pulses->pulses_detected[ip].phid3;
+        //ph_ids_array
       }
       if (data_array[i]->last_record == 1) {
         double numLagsUsed_mean;
@@ -503,9 +495,7 @@ void scheduler::finish_reconstruction_v2(PulsesCollection** pulsesAll)
           event_list->lagsShifts[ip] = record_pulses->pulses_detected[ip].lagsShift;
           event_list->bsln[ip] = record_pulses->pulses_detected[ip].bsln;
           event_list->pix_ids[ip] = record_pulses->pulses_detected[ip].pixid;
-          event_list->ph_ids[ip] = record_pulses->pulses_detected[ip].phid;
-          event_list->ph_ids2[ip] = record_pulses->pulses_detected[ip].phid2;
-          event_list->ph_ids3[ip] = record_pulses->pulses_detected[ip].phid3;
+          //ph_ids_array
         }
       }
     }

@@ -616,8 +616,9 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
 * - trig_reclength: Necessary if SIRENA is going to run in THREADING mode
 * - pulsesAll: Structure containing the detected pulses
 * - outfile: Output events FITS file
+* - ph_id_column_dim: Dimension of PH_ID column
 ******************************************************************************/
-int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile)
+int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim)
 {
     // Error status.
     int status = EXIT_SUCCESS;
@@ -679,9 +680,9 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     int lastRecord = 0, nrecord = 0, startRecordGroup = 0;    //last record required for SIRENA library creation
     // Build up TesEventList to recover the results of SIRENA
     TesEventListSIRENA* event_list = newTesEventListSIRENA(&status);
-    allocateTesEventListTriggerSIRENA(event_list,par.EventListSize,&status);
+    allocateTesEventListTriggerSIRENA(event_list,par.EventListSize, ph_id_column_dim, &status);
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
-    while(getNextRecordSIRENA(record_file,record,&lastRecord,&startRecordGroup,&status))
+    while(getNextRecordSIRENA(record_file,record,&lastRecord,&startRecordGroup,ph_id_column_dim,&status))
     {
         // Progress bar
         float progress;
@@ -819,8 +820,9 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
 * - trig_reclength: Necessary if SIRENA is going to run in THREADING mode
 * - pulsesAll: Structure containing the detected pulses
 * - outfile: Output events FITS file
+* - ph_id_column_dim: Dimension of PH_ID column
 ******************************************************************************/
-int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile)
+int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim)
 {
     // Error status.
     int status=EXIT_SUCCESS;
@@ -830,7 +832,7 @@ int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA
 
     if (strcmp(firstchar,"@") != 0) // Only A input FITS file
     {
-        status = callSIRENA_Filei(inputFile, keywords, reconstruct_init_sirena, par, sampling_rate, trig_reclength, pulsesAll, outfile);
+        status = callSIRENA_Filei(inputFile, keywords, reconstruct_init_sirena, par, sampling_rate, trig_reclength, pulsesAll, outfile, ph_id_column_dim);
         if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
     }
     else // More than A input FITS file
@@ -861,7 +863,7 @@ int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA
             }
             strtok(filefits, "\n");     // To delete '/n' from filefits (if not, 'fits_open_file' can not open the file)
 
-            status = callSIRENA_Filei(inputFile, keywords, reconstruct_init_sirena, par, sampling_rate, trig_reclength, pulsesAll, outfile);
+            status = callSIRENA_Filei(inputFile, keywords, reconstruct_init_sirena, par, sampling_rate, trig_reclength, pulsesAll, outfile, ph_id_column_dim);
             if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
         }
 
@@ -935,9 +937,9 @@ TesEventListSIRENA* newTesEventListSIRENA(int* const status){
 	event_list->energies=NULL;
 	event_list->grades1=NULL;
 	event_list->grades2=NULL;
-	event_list->ph_ids=NULL;
-    event_list->ph_ids2=NULL;
-    event_list->ph_ids3=NULL;
+	event_list->ph_ids_array = NULL;
+    event_list->ph_ids_array_size1 = 0;
+    event_list->ph_ids_array_size2 = 0;
     event_list->pix_ids=NULL;
 	event_list->risetimes=NULL;
 	event_list->falltimes=NULL;
@@ -951,17 +953,44 @@ TesEventListSIRENA* newTesEventListSIRENA(int* const status){
 }
 
 
-void freeTesEventListSIRENA(TesEventListSIRENA* event_list){
+void freeTesEventListSIRENA(TesEventListSIRENA* event_list)
+{
+    if (event_list == NULL) return; // Avoid dereferencing a NULL pointer
 
-	if (NULL!=event_list->event_indexes) free(event_list->event_indexes);
-	if (NULL!=event_list->grades1) free(event_list->grades1);
-	if (NULL!=event_list->pulse_heights) free(event_list->pulse_heights);
+    // Free dynamically allocated arrays
+    if (event_list->event_indexes) { free(event_list->event_indexes); event_list->event_indexes = NULL; }
+    if (event_list->grades1) { free(event_list->grades1); event_list->grades1 = NULL; }
+    if (event_list->pulse_heights) { free(event_list->pulse_heights); event_list->pulse_heights = NULL; }
+    if (event_list->energies) { free(event_list->energies); event_list->energies = NULL; }
+    if (event_list->avgs_4samplesDerivative) { free(event_list->avgs_4samplesDerivative); event_list->avgs_4samplesDerivative = NULL; }
+    if (event_list->Es_lowres) { free(event_list->Es_lowres); event_list->Es_lowres = NULL; }
+    if (event_list->phis) { free(event_list->phis); event_list->phis = NULL; }
+    if (event_list->lagsShifts) { free(event_list->lagsShifts); event_list->lagsShifts = NULL; }
+    if (event_list->bsln) { free(event_list->bsln); event_list->bsln = NULL; }
+    if (event_list->rmsbsln) { free(event_list->rmsbsln); event_list->rmsbsln = NULL; }
+    if (event_list->grading) { free(event_list->grading); event_list->grading = NULL; }
+    if (event_list->grades2) { free(event_list->grades2); event_list->grades2 = NULL; }
+    if (event_list->pix_ids) { free(event_list->pix_ids); event_list->pix_ids = NULL; }
+    if (event_list->tstarts) { free(event_list->tstarts); event_list->tstarts = NULL; }
+    if (event_list->tends) { free(event_list->tends); event_list->tends = NULL; }
+    if (event_list->risetimes) { free(event_list->risetimes); event_list->risetimes = NULL; }
+    if (event_list->falltimes) { free(event_list->falltimes); event_list->falltimes = NULL; }
 
-	if (NULL!=event_list)
-	{
-		free(event_list);
-		event_list=NULL;
-	}
+    // Free the 2D array ph_ids_array
+    if (event_list->ph_ids_array) {
+        for (int i = 0; i < event_list->ph_ids_array_size2; i++) {
+            if (event_list->ph_ids_array[i]) {
+                free(event_list->ph_ids_array[i]);
+                event_list->ph_ids_array[i] = NULL;
+            }
+        }
+        free(event_list->ph_ids_array);
+        event_list->ph_ids_array = NULL;
+    }
+
+    // Free the struct itself
+    free(event_list);
+    event_list = NULL;
 }
 
 TesEventFileSIRENA* newTesEventFileSIRENA(int* const status){
@@ -1020,6 +1049,7 @@ void freeTesEventFileSIRENA(TesEventFileSIRENA* file, int* const status){
 TesEventFileSIRENA* opennewTesEventFileSIRENA(const char* const filename,
 				  SixtStdKeywords* keywords,
 				  const char* const sirenaVersion,
+                  int ph_id_size,
 				  const char clobber,
 				  int* const status){
 	TesEventFileSIRENA* file = newTesEventFileSIRENA(status);
@@ -1069,8 +1099,10 @@ TesEventFileSIRENA* opennewTesEventFileSIRENA(const char* const filename,
 	CHECK_STATUS_RET(*status,file);
 
 	// Create table
+    char temp[10];
+    sprintf(temp, "%dJ", ph_id_size);
 	char   *ttype[]={"TIME","SIGNAL","AVG4SD","ELOWRES","GRADE1","GRADE2","PHI","LAGS","BSLN","RMSBSLN","PIXID","PH_ID","RISETIME","FALLTIME","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"};
-	char *tform[]={"1D", "1D", "1D", "1D", "1J", "1J", "1D", "1J", "1D", "1D", "1J", "3J", "1D", "1D", "1D", "1D", "1E", "1E", "1I", "1J", "1I", "1D"};
+	char *tform[]={"1D", "1D", "1D", "1D", "1J", "1J", "1D", "1J", "1D", "1D", "1J", temp, "1D", "1D", "1D", "1D", "1E", "1E", "1I", "1J", "1I", "1D"};
 	char *tunit[]={"s", "keV", "", "keV", "", "", "", "", "", "", "", "", "s", "s", "deg", "deg", "m", "m", "", "", "", "keV"};
 
 	fits_create_tbl(file->fptr, BINARY_TBL, 0, 22, ttype, tform, tunit,"EVENTS", status);
@@ -1172,31 +1204,21 @@ double start_time,double delta_t,int* const status){
 					file->row, 1, event_list->index, event_list->falltimes, status);
 	CHECK_STATUS_VOID(*status);
 
-	//If PH_ID was computed, save it
-	//if(NULL!=event_list->ph_ids){
-	//	fits_write_col(file->fptr, TLONG, file->phIDCol,
-	//					file->row, 1, event_list->index, event_list->ph_ids, status);
-	//	CHECK_STATUS_VOID(*status);
-	//}
-    //If PH_ID was computed, save it
-	if((NULL!=event_list->ph_ids) && (event_list->ph_ids == 0)){
-		fits_write_col(file->fptr, TLONG, file->phIDCol,
-						file->row, 1, event_list->index, event_list->ph_ids, status);
-		CHECK_STATUS_VOID(*status);
-	}
-	else if ((NULL!=event_list->ph_ids) && (event_list->ph_ids != 0)){
-        int dimPH_ID = 3; // Length of the PH_ID column
-        int *buffer = (int *) malloc(event_list->index*dimPH_ID*sizeof(int));
-        for (int i=0;i<event_list->index;i++)
-        {
-            buffer[0+i*dimPH_ID] = event_list->ph_ids[i];
-            buffer[1+i*dimPH_ID] = event_list->ph_ids2[i];
-            buffer[2+i*dimPH_ID] = event_list->ph_ids3[i];
+    //Save PH_ID column
+	if (event_list->ph_ids_array_size1 != 0)
+    {
+        // Bidimensional matrix => Unidimensional matrix
+        long *flat_ph_ids_array = malloc(event_list->ph_ids_array_size1 * event_list->ph_ids_array_size2 * sizeof(long));
+        int idx = 0;
+        for (int kkk = 0; kkk < event_list->ph_ids_array_size1; kkk++) {
+            for (int kkk1 = 0; kkk1 < event_list->ph_ids_array_size2; kkk1++) {
+                flat_ph_ids_array[idx] = event_list->ph_ids_array[kkk][kkk1];
+                idx++;
+            }
         }
-
-        fits_write_col(file->fptr, TINT, file->phIDCol,
-                            file->row, 1,event_list->index*3, buffer, status);  // Be careful TINT or TLONG!!!
-        free(buffer);
+        fits_write_col(file->fptr, TLONG, file->phIDCol,
+                       file->row, 1, event_list->ph_ids_array_size1 * event_list->ph_ids_array_size2, flat_ph_ids_array, status);
+        free(flat_ph_ids_array);
     }
 
 	file->row = file->row + event_list->index;
@@ -1205,7 +1227,7 @@ double start_time,double delta_t,int* const status){
 
 /** Allocates memory for a TesEventList structure for the triggering stage:
  *  only event_index, pulse_height */
-void allocateTesEventListTriggerSIRENA(TesEventListSIRENA* event_list,int size,int* const status){
+void allocateTesEventListTriggerSIRENA(TesEventListSIRENA* event_list,int size, int size_phid, int* const status){
 	event_list->event_indexes = malloc(size*sizeof*(event_list->event_indexes));
 	if (NULL == event_list->event_indexes){
 		*status=EXIT_FAILURE;
@@ -1227,12 +1249,25 @@ void allocateTesEventListTriggerSIRENA(TesEventListSIRENA* event_list,int size,i
 		CHECK_STATUS_VOID(*status);
 	}
 
+	event_list->ph_ids_array = malloc(size*sizeof*(event_list->ph_ids_array));
+	if (NULL == event_list->ph_ids_array){
+		*status=EXIT_FAILURE;
+		SIXT_ERROR("memory allocation for ph_ids_array in TesEventList failed");
+		CHECK_STATUS_VOID(*status);
+	}
+	// Rows in the matrix
+    for (int i = 0; i < size_phid; i++) {
+        event_list->ph_ids_array[i] = NULL;
+    }
+    event_list->ph_ids_array_size1 = 0;
+    event_list->ph_ids_array_size2 = size_phid;
+
 	event_list->size = size;
 }
 
 
 /** Populates a TesRecord structure with the next record */
-int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRecord,int *startRecordGroup,int* const status){
+int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRecord,int *startRecordGroup,long ph_id_column_dim,int* const status){
   int anynul=0;
   char tform2ADC[20];
   LONGLONG rec_trigsize;
@@ -1363,9 +1398,10 @@ int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRe
         }
 
         free(record->phid_list->phid_array);
-        record->phid_list->phid_array = malloc(3*sizeof(*(record->phid_list->phid_array)));
+        record->phid_list->phid_array = malloc(ph_id_column_dim*sizeof(*(record->phid_list->phid_array)));
+        record->phid_list->size = ph_id_column_dim;
         fits_read_col(file->fptr, TLONG, file->ph_idCol,
-                      file->row,1,3,0,record->phid_list->phid_array, &anynul,status);
+                      file->row,1,ph_id_column_dim,0,record->phid_list->phid_array, &anynul,status);
         CHECK_STATUS_RET(*status,0);
 
         if (record->extend == 0)

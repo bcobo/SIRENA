@@ -41,12 +41,12 @@
   *******************************************************************************/ 
  
  #include "integraSIRENA.h"
-#include "log.h"
+ #include "log.h"
  #include "scheduler.h"
  
  #include "genutils.h"
  #include "tasksSIRENA.h"
-#include <asm-generic/errno.h>
+ #include <asm-generic/errno.h>
 
  #define POOLS
  const unsigned int POOL_SIZE = 200;
@@ -385,9 +385,16 @@
      event_list->rmsbsln = new double[event_list->index];
      event_list->grading = new int[event_list->index];
      event_list->grades2 = new int[event_list->index];
-     event_list->ph_ids = new long[event_list->index];
-     event_list->ph_ids2 = new long[event_list->index];
-     event_list->ph_ids3 = new long[event_list->index];
+     event_list->ph_ids_array_size1 = pulsesInRecord->ndetpulses;
+     if (pulsesInRecord->ndetpulses != 0)
+     {
+        event_list->ph_ids_array_size2 = pulsesInRecord->pulses_detected->phid_vector->size;
+        event_list->ph_ids_array = new long*[event_list->ph_ids_array_size2];
+        for (int i = 0; i < event_list->ph_ids_array_size2; i++)
+        {
+            event_list->ph_ids_array[i] = new long[pulsesInRecord->pulses_detected->phid_vector->size];  // Allocate memory for each row
+        }
+     }
      event_list->pix_ids = new long[event_list->index];
      event_list->tends = new double[event_list->index];
      event_list->tstarts = new double[event_list->index];
@@ -420,9 +427,10 @@
              event_list->grades2[ip]  = pulsesInRecord->pulses_detected[ip].grade2;
              event_list->pulse_heights[ip]  = pulsesInRecord->pulses_detected[ip].pulse_height;
              event_list->pix_ids[ip]  = pulsesInRecord->pulses_detected[ip].pixid;
-             event_list->ph_ids[ip]  = pulsesInRecord->pulses_detected[ip].phid;
-             event_list->ph_ids2[ip]  = pulsesInRecord->pulses_detected[ip].phid2;
-             event_list->ph_ids3[ip]  = pulsesInRecord->pulses_detected[ip].phid3;
+             for (int i = 0; i < event_list->ph_ids_array_size2; i++)
+             {
+                event_list->ph_ids_array[ip][i] = gsl_vector_get(pulsesInRecord->pulses_detected[ip].phid_vector,i);
+             }
              event_list->tstarts[ip]  = pulsesInRecord->pulses_detected[ip].Tstart;
              event_list->tends[ip]  = pulsesInRecord->pulses_detected[ip].Tend;
              event_list->risetimes[ip]  = pulsesInRecord->pulses_detected[ip].riseTime;
@@ -461,7 +469,16 @@
              event_list->rmsbsln = new double[event_list->index];
              event_list->grading  = new int[event_list->index];
              event_list->grades2  = new int[event_list->index];
-             event_list->ph_ids   = new long[event_list->index];
+             if ((*pulsesAll)->ndetpulses != 0)
+             {
+                 event_list->ph_ids_array_size1 = (*pulsesAll)->ndetpulses;
+                 event_list->ph_ids_array_size2 = (*pulsesAll)->pulses_detected->phid_vector->size;
+                 event_list->ph_ids_array = new long*[event_list->ph_ids_array_size2];
+                 for (int i = 0; i < event_list->ph_ids_array_size2; i++)
+                 {
+                     event_list->ph_ids_array[i] = new long[(*pulsesAll)->pulses_detected->phid_vector->size];  // Allocate memory for each row
+                 }
+             }
              event_list->pix_ids   = new long[event_list->index];
              event_list->risetimes   = new double[event_list->index];
              event_list->falltimes   = new double[event_list->index];
@@ -489,7 +506,10 @@
                  event_list->grades1[ip]  = (*pulsesAll)->pulses_detected[ip].grade1;
                  event_list->grades2[ip]  = (*pulsesAll)->pulses_detected[ip].grade2;
                  event_list->pulse_heights[ip]  = (*pulsesAll)->pulses_detected[ip].pulse_height;
-                 event_list->ph_ids[ip]   = (*pulsesAll)->pulses_detected[ip].phid;
+                 for (int i = 0; i < event_list->ph_ids_array_size2; i++)
+                 {
+                     event_list->ph_ids_array[ip][i] = gsl_vector_get((*pulsesAll)->pulses_detected[ip].phid_vector,i);
+                 }
                  event_list->pix_ids[ip]  = (*pulsesAll)->pulses_detected[ip].pixid;
                  event_list->risetimes[ip]  = (*pulsesAll)->pulses_detected[ip].riseTime;
                  event_list->falltimes[ip]  = (*pulsesAll)->pulses_detected[ip].fallTime;
@@ -2276,9 +2296,16 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
     if (event_list->rmsbsln != NULL) 	delete [] event_list->rmsbsln;
     if (event_list->grading != NULL) 	delete [] event_list->grading;
     if (event_list->grades2 != NULL) 	delete [] event_list->grades2;
-    if (event_list->ph_ids != NULL) 	delete [] event_list->ph_ids;
-    if (event_list->ph_ids2 != NULL) 	delete [] event_list->ph_ids2;
-    if (event_list->ph_ids3 != NULL) 	delete [] event_list->ph_ids3;
+    if (event_list->ph_ids_array) {
+        for (int i = 0; i < event_list->ph_ids_array_size2; i++) {
+            if (event_list->ph_ids_array[i]) {
+                free(event_list->ph_ids_array[i]);
+                event_list->ph_ids_array[i] = NULL;
+            }
+        }
+        free(event_list->ph_ids_array);
+        event_list->ph_ids_array = NULL;
+    }
     if (event_list->pix_ids != NULL) 	delete [] event_list->pix_ids;
     if (event_list->tstarts != NULL) 	delete [] event_list->tstarts;
     if (event_list->tends != NULL) 	        delete [] event_list->tends;
@@ -3011,7 +3038,7 @@ int fillPulsesAll (PulsesCollection** pulsesAll, PulsesCollection* pulsesInRecor
 }
 
 
-int fillEventList (TesEventListSIRENA* event_list, PulsesCollection* pulsesInRecord, PulsesCollection* pulsesAll, ReconstructInitSIRENA* reconstruct_init, TesRecord* record, int lastRecord)
+/*int fillEventList (TesEventListSIRENA* event_list, PulsesCollection* pulsesInRecord, PulsesCollection* pulsesAll, ReconstructInitSIRENA* reconstruct_init, TesRecord* record, int lastRecord)
 {
     int status = 0;
 
@@ -3122,7 +3149,7 @@ int fillEventList (TesEventListSIRENA* event_list, PulsesCollection* pulsesInRec
     }
 
     return(status);
-}
+}*/
 
 long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_init ,int* const status)
 {
@@ -4146,9 +4173,7 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  grade2(0),
  grade2_1(0),
  pixid(0),
- phid(0),
- phid2(0),
- phid3(0),
+ phid_vector(0),
  pulse_adc(0),
  pulse_adc_preBuffer(0),
  Tstart(0.0f),
@@ -4179,9 +4204,7 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  grade2(other.grade2),
  grade2_1(other.grade2_1),
  pixid(other.pixid),
- phid(other.phid),
- phid2(other.phid2),
- phid3(other.phid3),
+ phid_vector(0),
  pulse_adc(0),
  pulse_adc_preBuffer(0),
  Tstart(other.Tstart),
@@ -4222,9 +4245,6 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
          grade2 = other.grade2;
          grade2_1 = other.grade2_1;
          pixid = other.pixid;
-         phid = other.phid;
-         phid2 = other.phid2;
-         phid3 = other.phid3;
          if(pulse_adc) {
              gsl_vector_free(pulse_adc); pulse_adc = 0;
          }

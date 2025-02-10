@@ -125,11 +125,54 @@ int teslib_main() {
     // Sixt standard keywords structure
     SixtStdKeywords* keywords = newSixtStdKeywords(&status);
     CHECK_STATUS_BREAK(status);
+
+    //Open input records file to get the PH_ID dimension
+    //(to dimension output PH_ID column in output events file)
+    fitsfile* fptr = NULL;
+    fits_open_file(&fptr, par.RecordFile, READONLY, &status);
+    if (status != EXIT_SUCCESS)
+    {
+        SIXT_ERROR("Error opening input RecordFile");
+        return(EXIT_FAILURE);
+    }
+    fits_movnam_hdu(fptr, ANY_HDU, "TESRECORDS", 0, &status);
+    if (status != 0) {
+        status = 0;
+        fits_movnam_hdu(fptr, ANY_HDU, "RECORDS", 0, &status);
+        if (status != EXIT_SUCCESS)
+        {
+            SIXT_ERROR("Error: Neither 'TESRECORDS' nor 'RECORDS' HDUs found in RecordFile");
+            return(EXIT_FAILURE);
+        }
+    }
+    int colnum = 0;
+    char column_name[] = "PH_ID";
+    fits_get_colnum(fptr, CASEINSEN, column_name, &colnum, &status);
+    if (status != EXIT_SUCCESS)
+    {
+        SIXT_ERROR("Cannot find PH_ID column in RecordFile");
+        return(EXIT_FAILURE);
+    }
+    int naxis = 0;
+    long ph_id_column_dim = 0;
+    fits_read_tdim(fptr, colnum, 1, &naxis, &ph_id_column_dim, &status);
+    if (status != EXIT_SUCCESS)
+    {
+        SIXT_ERROR("Error running fits_read_tdim in tesrecons");
+        return(EXIT_FAILURE);
+    }
+    fits_close_file(fptr, &status);
+    if (status != EXIT_SUCCESS)
+    {
+        SIXT_ERROR("Error closing input records file (RecordFile)");
+        return(EXIT_FAILURE);
+    }
     
-    //Open outfile 
+    //Open outfile (events)
     TesEventFileSIRENA * outfile = opennewTesEventFileSIRENA(par.TesEventFile,
                                                  keywords,
                                                  SIRENA_VERSION,
+                                                 ph_id_column_dim,
                                                  par.clobber,
                                                  &status);
     CHECK_STATUS_BREAK(status);
@@ -147,12 +190,12 @@ int teslib_main() {
     destroyAdvDet(&det);
 
     // Build up TesEventList
-    TesEventListSIRENA* event_list = newTesEventListSIRENA(&status);
+    /*TesEventListSIRENA* event_list = newTesEventListSIRENA(&status);
     allocateTesEventListTriggerSIRENA(event_list,par.EventListSize,&status);
-    CHECK_STATUS_BREAK(status);
+    CHECK_STATUS_BREAK(status);*/
             
     // Call SIRENA to build the library
-    status = callSIRENA(par.RecordFile, keywords, reconstruct_init_sirena, par, sampling_rate, &trig_reclength, pulsesAll, outfile);
+    status = callSIRENA(par.RecordFile, keywords, reconstruct_init_sirena, par, sampling_rate, &trig_reclength, pulsesAll, outfile, ph_id_column_dim);
     CHECK_STATUS_BREAK(status);
 
     // Save GTI extension to event file
@@ -172,7 +215,7 @@ int teslib_main() {
     freePulsesCollection(pulsesAll);
     freeOptimalFilterSIRENA(optimalFilter);
     freeTesEventFileSIRENA(outfile,&status);
-    freeTesEventListSIRENA(event_list);
+    //freeTesEventListSIRENA(event_list);
     freeSixtStdKeywords(keywords);
     CHECK_STATUS_BREAK(status);
  

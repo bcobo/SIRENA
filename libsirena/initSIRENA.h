@@ -216,6 +216,7 @@ TesEventFileSIRENA* newTesEventFileSIRENA(int* const status);
 TesEventFileSIRENA* opennewTesEventFileSIRENA(const char* const filename,
 				  SixtStdKeywords* keywords,
 			      const char* const sirenaVersion,
+				  int ph_id_size,
 				  const char clobber,
 				  int* const status);
 
@@ -224,7 +225,7 @@ void saveEventListToFileSIRENA(TesEventFileSIRENA* file,TesEventListSIRENA * eve
 
 /** Allocates memory for a TesEventList structure for the triggering stage:
  *  only event_index, pulse_height and grades1 */
-void allocateTesEventListTriggerSIRENA(TesEventListSIRENA* event_list,int size,int* const status);
+void allocateTesEventListTriggerSIRENA(TesEventListSIRENA* event_list,int size, int size_phid, int* const status);
 
 void freeTesEventFileSIRENA(TesEventFileSIRENA* file, int* const status);
 
@@ -239,11 +240,11 @@ int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par,
 
 int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, ReconstructInitSIRENA** reconstruct_init_sirena);
 
-int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile);
-int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile);
+int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim);
+int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim);
 
 int checkpreBuffer(struct Parameters* const par);
 
-int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRecord,int *startRecordGroup,int* const status);
+int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRecord,int *startRecordGroup, long ph_id_column_dim, int* const status);
 
 #endif /* INITSIRENA_H */

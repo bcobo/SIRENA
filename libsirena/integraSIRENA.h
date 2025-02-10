@@ -75,9 +75,9 @@ typedef struct {
 	int * grades2;
 
 	/** PH_ID of the reconstructed photons */
-	long * ph_ids;
-    long * ph_ids2;
-    long * ph_ids3;
+	long ** ph_ids_array;
+	int ph_ids_array_size1; // Number of photons in the record
+	int ph_ids_array_size2; // The same as the PH_ID of the input records file
 
 	/** PIX_ID of the reconstructed photons */
 	long * pix_ids;
@@ -372,9 +372,7 @@ typedef struct PulseDetected
 	int pixid;
         
     ///** PH_IDs corresponding to the record where is the detected pulse*/
-	int phid;
-    int phid2;
-    int phid3;
+	gsl_vector *phid_vector;
 	
 	/** Vector containing the pulse adc values */
 	gsl_vector *pulse_adc;
@@ -760,7 +758,7 @@ int prepareToConvertI2R (ReconstructInitSIRENA* reconstruct_init);
 
 int fillPulsesAll (PulsesCollection** pulsesAll, PulsesCollection* pulsesInRecord);
 
-int fillEventList (TesEventListSIRENA* event_list, PulsesCollection* pulsesAll, PulsesCollection* pulsesInRecord, ReconstructInitSIRENA* reconstruct_init, TesRecord* record, int lastRecord);
+//int fillEventList (TesEventListSIRENA* event_list, PulsesCollection* pulsesAll, PulsesCollection* pulsesInRecord, ReconstructInitSIRENA* reconstruct_init, TesRecord* record, int lastRecord);
 
 long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_init, int* const status);
 

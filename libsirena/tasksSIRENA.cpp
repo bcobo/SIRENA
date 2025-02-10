@@ -264,7 +264,8 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
 
     log_trace("Detecting...");
     // Process each record
-    gsl_vector *phid = gsl_vector_alloc(3);
+    gsl_vector *phid = gsl_vector_alloc(record->phid_list->size);
+    gsl_vector_set_all(phid,-999.0);
     for (int i=0;i<(int)(phid->size);i++)  gsl_vector_set(phid,i,record->phid_list->phid_array[i]);
     if (pulsesAll->ndetpulses == 0)
         procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid, phid, oscillations, nrecord, -999);
@@ -963,7 +964,8 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
     
     // Process each record
     // thread safe
-    gsl_vector *phid = gsl_vector_alloc(3);
+    gsl_vector *phid = gsl_vector_alloc(record->phid_list->size);
+    gsl_vector_set_all(phid,-999.0);
     for (int i=0;i<(int)(phid->size);i++)  gsl_vector_set(phid,i,record->phid_list->phid_array[i]);
     if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, 
         invector, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid,phid, oscillations, nrecord, pulsesAll->pulses_detected[pulsesAll->ndetpulses-1].Tstart))
@@ -2529,9 +2531,8 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
         foundPulses->pulses_detected[i].quality = gsl_vector_get(qualitygsl,i);
         foundPulses->pulses_detected[i].numLagsUsed = gsl_vector_get(lagsgsl,i);
         foundPulses->pulses_detected[i].pixid = pixid;
-        foundPulses->pulses_detected[i].phid = gsl_vector_get(phid,0);
-        foundPulses->pulses_detected[i].phid2 = gsl_vector_get(phid,1);
-        foundPulses->pulses_detected[i].phid3 = gsl_vector_get(phid,2);
+        foundPulses->pulses_detected[i].phid_vector = gsl_vector_alloc(phid->size);
+        gsl_vector_memcpy(foundPulses->pulses_detected[i].phid_vector, phid);
         if (gsl_vector_get(Bgsl,i) != -999.0)
         {
             foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
@@ -7782,7 +7783,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
                         EP_EXIT_ERROR(message,EPFAIL);
                     }
-                    gsl_vector_free(pulseToCalculateEnergy); pulseToCalculateEnergy = 0;
+                    //gsl_vector_free(pulseToCalculateEnergy); pulseToCalculateEnergy = 0;
                     log_debug("After calculateEnergy");
 
                     // If using lags, it is necessary to modify the tstart of the pulse
@@ -7909,10 +7910,23 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 double intpart;
                 (*pulsesInRecord)->pulses_detected[i].phi = modf(tstartNewDev,&intpart);    // fractpart=modf(param,&intpart) Se obtiene la parte entera y decimal
                 (*pulsesInRecord)->pulses_detected[i].lagsShift = lagsShift+intpart;
-                if (((*pulsesInRecord)->pulses_detected[i].phi) == 0)
+                /*if (((*pulsesInRecord)->pulses_detected[i].phi) == 0)
                     (*pulsesInRecord)->pulses_detected[i].grading = -2; // Pile-up
+                else*/
+                    (*pulsesInRecord)->pulses_detected[i].grading = pulseGrade;
+                if (((*pulsesInRecord)->pulses_detected[i].lagsShift) != 0)
+                {
+                    gsl_vector *pulseToCalculateEnergy_short = gsl_vector_alloc(6);
+                    if ((*reconstruct_init)->LagsOrNot == 1)
+                        temp = gsl_vector_subvector(pulseToCalculateEnergy,preBuffer_value+numlags2+(*pulsesInRecord)->pulses_detected[i].lagsShift,6);
                     else
-                        (*pulsesInRecord)->pulses_detected[i].grading = pulseGrade;
+                        temp = gsl_vector_subvector(pulseToCalculateEnergy,preBuffer_value+(*pulsesInRecord)->pulses_detected[i].lagsShift,6);
+
+                    gsl_vector_memcpy(pulseToCalculateEnergy_short, &temp.vector);
+                    differentiate (&pulseToCalculateEnergy_short, pulseToCalculateEnergy_short->size);
+                    (*pulsesInRecord)->pulses_detected[i].avg_4samplesDerivative = (gsl_vector_get(pulseToCalculateEnergy_short,0)+gsl_vector_get(pulseToCalculateEnergy_short,1)+gsl_vector_get(pulseToCalculateEnergy_short,2)+gsl_vector_get(pulseToCalculateEnergy_short,3))/4.0;
+                }
+                gsl_vector_free(pulseToCalculateEnergy); pulseToCalculateEnergy = 0;
 
                 // Free allocated GSL vectors
                 gsl_vector_free(optimalfilter); optimalfilter = 0;
@@ -10499,8 +10513,6 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
         gsl_vector_set(gradelim,i,gsl_matrix_get(reconstruct_init->grading->gradeData,i,0));	
     }
     int gradelim_pre = gsl_vector_max(gradelim);
-    gsl_vector_free(gradelim);
-
     
     // pulseGrade and OF length
     if (strcmp(reconstruct_init->OFStrategy,"FIXED") == 0)
@@ -10648,7 +10660,9 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
         *pulseGrade = -1;	
     }*/
     //if (((grade2 < gradelim_pre) || (grade1 == -1)) && (OFlength_strategy != 2))    *pulseGrade = -1;
-    if (grade2 < gradelim_pre) *pulseGrade = -1;
+    //if (grade2 < gradelim_pre) *pulseGrade = -1;
+    if (grade2 < gsl_vector_get(gradelim,*pulseGrade-1)) *pulseGrade = -1;
+    gsl_vector_free(gradelim);
 
     log_debug("pulseGrading *pulseGrade %d", *pulseGrade);
     log_debug("pulseGrading *OFLength %d", *OFlength);
