@@ -745,7 +745,6 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
                 //Reinitialize event list
                 event_list->index=0;
             }
-
             IntegrafreeTesEventListSIRENA(event_list);
         }
     }
@@ -1205,20 +1204,24 @@ double start_time,double delta_t,int* const status){
 	CHECK_STATUS_VOID(*status);
 
     //Save PH_ID column
-	if (event_list->ph_ids_array_size1 != 0)
+
+    if (event_list->ph_ids_array_size1 != 0)
     {
         // Bidimensional matrix => Unidimensional matrix
         long *flat_ph_ids_array = malloc(event_list->ph_ids_array_size1 * event_list->ph_ids_array_size2 * sizeof(long));
         int idx = 0;
+
         for (int kkk = 0; kkk < event_list->ph_ids_array_size1; kkk++) {
             for (int kkk1 = 0; kkk1 < event_list->ph_ids_array_size2; kkk1++) {
                 flat_ph_ids_array[idx] = event_list->ph_ids_array[kkk][kkk1];
                 idx++;
             }
         }
+
         fits_write_col(file->fptr, TLONG, file->phIDCol,
                        file->row, 1, event_list->ph_ids_array_size1 * event_list->ph_ids_array_size2, flat_ph_ids_array, status);
         free(flat_ph_ids_array);
+        flat_ph_ids_array = NULL;
     }
 
 	file->row = file->row + event_list->index;

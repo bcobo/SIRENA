@@ -374,6 +374,9 @@
      //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
      //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
 
+     //if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size)
+     //	EP_EXIT_ERROR("Number of detected pulses in the record greater than the PH_ID column dimension",EPFAIL);
+
      // Free & Fill TesEventListSIRENA structure
      event_list->index = pulsesInRecord->ndetpulses;
      event_list->energies = new double[event_list->index];
@@ -385,14 +388,22 @@
      event_list->rmsbsln = new double[event_list->index];
      event_list->grading = new int[event_list->index];
      event_list->grades2 = new int[event_list->index];
-     event_list->ph_ids_array_size1 = pulsesInRecord->ndetpulses;
+     event_list->ph_ids_array_size1 = event_list->index;
      if (pulsesInRecord->ndetpulses != 0)
      {
-        event_list->ph_ids_array_size2 = pulsesInRecord->pulses_detected->phid_vector->size;
-        event_list->ph_ids_array = new long*[event_list->ph_ids_array_size2];
-        for (int i = 0; i < event_list->ph_ids_array_size2; i++)
+        if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size)
         {
-            event_list->ph_ids_array[i] = new long[pulsesInRecord->pulses_detected->phid_vector->size];  // Allocate memory for each row
+            string message = "";
+            char str_ndetpulses[125];  snprintf(str_ndetpulses,125,"%d",pulsesInRecord->ndetpulses);
+            char str_nrecord[125];  snprintf(str_nrecord,125,"%d",nRecord);
+            char str_ph_id_size[125];  snprintf(str_ph_id_size,125,"%d",event_list->ph_ids_array_size2);
+            message = "Number of detected pulses (" + string(str_ndetpulses) + ") greater than the PH_ID column dimension (" + string(str_ph_id_size) + ") in record " + string(str_nrecord);
+            EP_PRINT_ERROR(message,-999);	// Only a warning
+        }
+        event_list->ph_ids_array = new long*[event_list->index];
+        for (int i = 0; i < event_list->index; i++)
+        {
+            event_list->ph_ids_array[i] = new long[event_list->ph_ids_array_size2];  // Allocate memory for each row
         }
      }
      event_list->pix_ids = new long[event_list->index];
@@ -427,10 +438,11 @@
              event_list->grades2[ip]  = pulsesInRecord->pulses_detected[ip].grade2;
              event_list->pulse_heights[ip]  = pulsesInRecord->pulses_detected[ip].pulse_height;
              event_list->pix_ids[ip]  = pulsesInRecord->pulses_detected[ip].pixid;
-             for (int i = 0; i < event_list->ph_ids_array_size2; i++)
+	         for (int i = 0; i < event_list->ph_ids_array_size2; i++)
              {
                 event_list->ph_ids_array[ip][i] = gsl_vector_get(pulsesInRecord->pulses_detected[ip].phid_vector,i);
              }
+
              event_list->tstarts[ip]  = pulsesInRecord->pulses_detected[ip].Tstart;
              event_list->tends[ip]  = pulsesInRecord->pulses_detected[ip].Tend;
              event_list->risetimes[ip]  = pulsesInRecord->pulses_detected[ip].riseTime;
@@ -469,12 +481,39 @@
              event_list->rmsbsln = new double[event_list->index];
              event_list->grading  = new int[event_list->index];
              event_list->grades2  = new int[event_list->index];
+
+
+
+             if (pulsesInRecord->ndetpulses != 0)
+             {
+                 if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size)
+                 {
+                     string message = "";
+                     char str_nrecord[125];  snprintf(str_nrecord,125,"%d",nRecord);
+                     message = "Number of detected pulses in the record greater than the PH_ID column dimension in record " + string(str_nrecord);
+                     EP_PRINT_ERROR(message,-999);	// Only a warning
+                 }
+                 event_list->ph_ids_array = new long*[event_list->index];
+                 for (int i = 0; i < event_list->index; i++)
+                 {
+                     event_list->ph_ids_array[i] = new long[event_list->ph_ids_array_size2];  // Allocate memory for each row
+                 }
+             }
+
+
              if ((*pulsesAll)->ndetpulses != 0)
              {
+                 if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size)
+                 {
+                     string message = "";
+                     char str_nrecord[125];  snprintf(str_nrecord,125,"%d",nRecord);
+                     message = "Number of detected pulses in the record greater than the PH_ID column dimension in record " + string(str_nrecord);
+                     EP_PRINT_ERROR(message,-999);	// Only a warning
+                 }
                  event_list->ph_ids_array_size1 = (*pulsesAll)->ndetpulses;
                  event_list->ph_ids_array_size2 = (*pulsesAll)->pulses_detected->phid_vector->size;
-                 event_list->ph_ids_array = new long*[event_list->ph_ids_array_size2];
-                 for (int i = 0; i < event_list->ph_ids_array_size2; i++)
+                 event_list->ph_ids_array = new long*[event_list->index];
+                 for (int i = 0; i < event_list->index; i++)
                  {
                      event_list->ph_ids_array[i] = new long[(*pulsesAll)->pulses_detected->phid_vector->size];  // Allocate memory for each row
                  }
@@ -2297,15 +2336,16 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
     if (event_list->grading != NULL) 	delete [] event_list->grading;
     if (event_list->grades2 != NULL) 	delete [] event_list->grades2;
     if (event_list->ph_ids_array) {
-        for (int i = 0; i < event_list->ph_ids_array_size2; i++) {
+        for (int i = 0; i < event_list->ph_ids_array_size1; i++) {
             if (event_list->ph_ids_array[i]) {
-                free(event_list->ph_ids_array[i]);
+                delete[] event_list->ph_ids_array[i];
                 event_list->ph_ids_array[i] = NULL;
             }
         }
-        free(event_list->ph_ids_array);
+        delete[] event_list->ph_ids_array;
         event_list->ph_ids_array = NULL;
     }
+
     if (event_list->pix_ids != NULL) 	delete [] event_list->pix_ids;
     if (event_list->tstarts != NULL) 	delete [] event_list->tstarts;
     if (event_list->tends != NULL) 	        delete [] event_list->tends;
