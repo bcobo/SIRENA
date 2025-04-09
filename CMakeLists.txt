@@ -32,7 +32,7 @@ target_compile_options(compiler_flags INTERFACE
 set(SIMPUT_ROOT ${CMAKE_INSTALL_PREFIX} CACHE STRING "Directory that contains the SIMPUT installation")
 set(SIMPUT_INCLUDE_DIR ${SIMPUT_ROOT}/${CMAKE_INSTALL_INCLUDEDIR})
 set(SIMPUT_LIBRARY_DIR ${SIMPUT_ROOT}/${CMAKE_INSTALL_LIBDIR})
-set(SIMPUT_LIBRARIES ape_simput atFunctions_simput cfitsio_simput fftw3_simput heainit_simput heaio_simput heasp_simput heautils_simput labnh posstring simput wcs-7.7_simput)
+set(SIMPUT_LIBRARIES ape_simput atFunctions_simput cfitsio_simput fftw3_simput heainit_simput heaio_simput heasp_simput heautils_simput labnh posstring simput wcs_simput-7.7)
 find_library(SIMPUT_LIBRARY
         NAMES ${SIMPUT_LIBRARIES}
         PATHS ${SIMPUT_LIBRARY_DIR})
