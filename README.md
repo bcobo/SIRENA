@@ -11,8 +11,8 @@ A full description of the algorithms that SIRENA contains as well as as the guid
 The SIRENA installation procedure is as follows:
 
 1. Required software and instrument files that must be installed and initialized following the instructions at their own sites:
-   * [SIXTE v3.0](https://www.sternwarte.uni-erlangen.de/sixte/sixte-beta/) 
-   * [XIFU instrument files](https://www.sternwarte.uni-erlangen.de/sixte/sixte-beta)
+   * [SIXTE v3.1.0 and SIMPUT v2.7.0](https://www.sternwarte.uni-erlangen.de/sixte/installation/) 
+   * [XIFU instrument files](https://www.sternwarte.uni-erlangen.de/sixte/instruments/)
    * [HEASoft](https://heasarc.gsfc.nasa.gov/docs/software/heasoft/) 
 2. Clone SIRENA repository 
    ```
