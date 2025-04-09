@@ -2144,15 +2144,14 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
     gsl_vector_memcpy(recordDERIVATIVE,record);
-    
+
     // Smooth derivative
-    /*if (smoothDerivative (&record, 4))
-     {
+    if (smoothDerivative (&record, 4))
+    {
      	message = "Cannot run routine smoothDerivative";
      	EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-     }
-     for (int i=0;i<4-1;i++)    gsl_vector_set(record,i,0.0);
-     gsl_vector_memcpy(recordDERIVATIVE,record);*/
+    }
+    gsl_vector_memcpy(recordDERIVATIVE,record);
     
     //It is not necessary to check the allocation because the allocation of 'recordDERIVATIVE' has been checked previously
     gsl_vector *recordDERIVATIVEOriginal = gsl_vector_alloc(recordDERIVATIVE->size);   // To be used in 'writeTestInfo'
@@ -6923,8 +6922,6 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
  *		- Subtract the sum of the filter if 0PAD and Sum0Filt=1
  *               - Calculate the energy of each pulse
  *               - If using lags, it is necessary to modify the tstart of the pulse and the length of the filter used
- *       - In order to subtract the pulse model, it has to be located in the tstart with jitter and know its values in the digitized samples
- *       - Subtract the pulse model from the record
  *	- Write info of the pulse in the output intemediate file if 'intermediate'=1
  * - Not valid pulse => Its info has to be also stored in the intermediate file (if 'intermediate'=1) and in the structure 'pulsesInRecord'
  * - Free allocated GSL vectors
@@ -7047,17 +7044,12 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
 
     double tstartSamplesRecord;		// Tstart of the pulse in samples from the beginning of the record
     double tstartRecord;			// Tstart of the record in seconds
-    double tstartJITTER;
     double tstartSamplesRecordStartDOUBLE;
-
-    double shift;
 
     int indexEalpha = 0;
     int indexEbeta = 0;
 
     long resize_mf;
-
-    double minimum;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     int length_lowres;
@@ -7247,8 +7239,6 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                     str.clear();
                     EP_EXIT_ERROR(message,EPFAIL);
                 }
-                tstartJITTER = ((*pulsesInRecord)->pulses_detected[i].Tstart-record->time)/record->delta_t;
-                shift = tstartJITTER - tstartSamplesRecord;
 
                 if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
                 {
@@ -7367,6 +7357,11 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         str.clear();
                         EP_EXIT_ERROR(message,EPFAIL);
                     }
+                    /*cout<<"tstartSamplesRecordStartDOUBLE: "<<tstartSamplesRecordStartDOUBLE<<endl;
+                    cout<<"preBuffer_value: "<<preBuffer_value<<endl;
+                    cout<<"Trozo de record desde "<<tstartSamplesRecordStartDOUBLE-preBuffer_value<<" con "<<resize_mfNEW<<" muestras"<<endl;
+                    for (int kkk=0;kkk<recordAux->size;kkk++)
+                        cout<<"recordAux "<<kkk<<" "<<gsl_vector_get(recordAux,kkk)<<endl;*/
                     temp = gsl_vector_subvector(recordAux,tstartSamplesRecordStartDOUBLE-preBuffer_value,resize_mfNEW);
 
                     if (gsl_vector_memcpy(pulseToCalculateEnergy, &temp.vector) != 0)
@@ -7377,6 +7372,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         str.clear();
                         EP_EXIT_ERROR(message,EPFAIL);
                     }
+                    /*for (int kkk=0;kkk<pulseToCalculateEnergy->size;kkk++)
+                        cout<<"pulseToCalculateEnergy "<<kkk<<" "<<gsl_vector_get(pulseToCalculateEnergy,kkk)<<endl;*/
                     log_debug("bslnEachPulse: %f",(*pulsesInRecord)->pulses_detected[i].bsln);
 
                     if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
@@ -7719,6 +7716,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         // Template correction
                         if ((!isNumber((*reconstruct_init)->tstartPulse1)) && (strcmp((*reconstruct_init)->FilterDomain,"T") == 0))
                         {
+                            cout<<"BEA: Template correction"<<endl;
                             double xmax;
                             double tstartPulse1_seconds = gsl_vector_get((*reconstruct_init)->tstartPulse1_i,pulsesAll->ndetpulses);
                             xmax = ceil((tstartPulse1_seconds-tstartRecord)/record->delta_t)-(tstartPulse1_seconds-tstartRecord)/record->delta_t;
@@ -7845,55 +7843,9 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 gsl_matrix_free(Estraddle); Estraddle = 0;
                 gsl_matrix_free(resultsE); resultsE = 0;
 
-                // Subtract the pulse model from the record
-                if (find_model_energies(energy, (*reconstruct_init), &model))
-                {
-                    message = "Cannot run find_model_energies routine for pulse i=" + boost::lexical_cast<std::string>(i);
-                    EP_EXIT_ERROR(message,EPFAIL);
-                }
-
-                tstartJITTER = ((*pulsesInRecord)->pulses_detected[i].Tstart-record->time)/record->delta_t;
-                shift = tstartJITTER - tstartSamplesRecord;
-                // In order to subtract the pulse model, it has to be located in the tstart with jitter and know its values in the digitized samples
-                gsl_vector *modelToSubtract = gsl_vector_alloc(model->size);
-                gsl_vector_set_all(modelToSubtract,-999.0);
-                for (int j=0;j<(int)(model->size);j++)
-                {
-                    if (shift < 0)
-                    {
-                        if (j != (int)(model->size)-1)
-                            gsl_vector_set(modelToSubtract,j,(gsl_vector_get(model,j+1)-gsl_vector_get(model,j))*(-shift)+gsl_vector_get(model,j));
-
-                        else
-                            gsl_vector_set(model,j,gsl_vector_get(model,j)); //?????????????????????
-                    }
-                    else if (shift > 0)
-                    {
-                        if (j == 0)
-                        {
-                            gsl_vector_set(modelToSubtract,j,(gsl_vector_get(model,j)-0)*(1-shift)+0);
-                        }
-                        else
-                        {
-                            gsl_vector_set(modelToSubtract,j,(gsl_vector_get(model,j)-gsl_vector_get(model,j-1))*(1-shift)+gsl_vector_get(model,j-1));
-                        }
-                    }
-                    else
-                    {
-                        gsl_vector_memcpy(modelToSubtract,model);
-                    }
-                }
-                gsl_vector_memcpy(model,modelToSubtract);
-                if (modelToSubtract != NULL) {gsl_vector_free(modelToSubtract); modelToSubtract = 0;}
-
-                minimum = min((double) trig_reclength,(double) record->trigger_size);
-                minimum = min((double) tstartSamplesRecord+(model->size),minimum);
-                log_debug("Delete model from %f to %f",tstartSamplesRecord,minimum);
-                for (int j=tstartSamplesRecord;j<minimum;j++)
-                {
-                    gsl_vector_set(recordAux,j,gsl_vector_get(recordAux,j)-gsl_vector_get(model,j-tstartSamplesRecord));
-                }
-                log_debug("After subtracting the pulse model from the record");
+                //minimum = min((double) trig_reclength,(double) record->trigger_size);
+                //minimum = min((double) tstartSamplesRecord+(model->size),minimum);
+                //log_debug("Delete model from %f to %f",tstartSamplesRecord,minimum);
 
                 // Write info of the pulse in the output intemediate file if 'intermediate'=1
                 if ((*reconstruct_init)->intermediate == 1)
@@ -8113,17 +8065,12 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
 
     double tstartSamplesRecord;		// Tstart of the pulse in samples from the beginning of the record
     double tstartRecord;			// Tstart of the record in seconds
-    double tstartJITTER;
     double tstartSamplesRecordStartDOUBLE;
-
-    double shift;
 
     int indexEalpha = 0;
     int indexEbeta = 0;
 
     long resize_mf;
-
-    double minimum;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     int length_lowres;
@@ -8313,8 +8260,6 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
                     str.clear();
                     EP_EXIT_ERROR(message,EPFAIL);
                 }
-                tstartJITTER = ((*pulsesInRecord)->pulses_detected[i].Tstart-record->time)/record->delta_t;
-                shift = tstartJITTER - tstartSamplesRecord;
 
                 if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
                 {
@@ -8909,54 +8854,6 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
 
                 gsl_matrix_free(Estraddle); Estraddle = 0;
                 gsl_matrix_free(resultsE); resultsE = 0;
-
-                // Subtract the pulse model from the record
-                if (find_model_energies(energy, (*reconstruct_init), &model))
-                {
-                    message = "Cannot run find_model_energies routine for pulse i=" + boost::lexical_cast<std::string>(i);
-                    EP_EXIT_ERROR(message,EPFAIL);
-                }
-
-                tstartJITTER = ((*pulsesInRecord)->pulses_detected[i].Tstart-record->time)/record->delta_t;
-                shift = tstartJITTER - tstartSamplesRecord;
-                // In order to subtract the pulse model, it has to be located in the tstart with jitter and know its values in the digitized samples
-                gsl_vector *modelToSubtract = gsl_vector_alloc(model->size);
-                gsl_vector_set_all(modelToSubtract,-999.0);
-                for (int j=0;j<(int)(model->size);j++)
-                {
-                    if (shift < 0)
-                    {
-                        if (j != (int)(model->size)-1)
-                            gsl_vector_set(modelToSubtract,j,(gsl_vector_get(model,j+1)-gsl_vector_get(model,j))*(-shift)+gsl_vector_get(model,j));
-
-                        else
-                            gsl_vector_set(model,j,gsl_vector_get(model,j)); //?????????????????????
-                    }
-                    else if (shift > 0)
-                    {
-                        if (j == 0)
-                        {
-                            gsl_vector_set(modelToSubtract,j,(gsl_vector_get(model,j)-0)*(1-shift)+0);
-                        }
-                        else
-                        {
-                            gsl_vector_set(modelToSubtract,j,(gsl_vector_get(model,j)-gsl_vector_get(model,j-1))*(1-shift)+gsl_vector_get(model,j-1));
-                        }
-                    }
-                    else
-                    {
-                        gsl_vector_memcpy(modelToSubtract,model);
-                    }
-                }
-                gsl_vector_memcpy(model,modelToSubtract);
-                if (modelToSubtract != NULL) {gsl_vector_free(modelToSubtract); modelToSubtract = 0;}
-
-                minimum = min((double) trig_reclength,(double) record->trigger_size);
-                minimum = min((double) tstartSamplesRecord+(model->size),minimum);
-                for (int j=tstartSamplesRecord;j<minimum;j++)
-                {
-                    gsl_vector_set(recordAux,j,gsl_vector_get(recordAux,j)-gsl_vector_get(model,j-tstartSamplesRecord));
-                }
 
                 // Write info of the pulse in the output intemediate file if 'intermediate'=1
                 if ((*reconstruct_init)->intermediate == 1)

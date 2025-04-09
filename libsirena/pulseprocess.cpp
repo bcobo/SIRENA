@@ -185,8 +185,8 @@ int differentiate (gsl_vector **invector,int szVct)
 {
 	for (int i=0; i<szVct-1; i++)
 	{
-		gsl_vector_set(*invector,i,gsl_vector_get(*invector,i+1)-gsl_vector_get(*invector,i));	
-	}
+ 		gsl_vector_set(*invector,i,gsl_vector_get(*invector,i+1)-gsl_vector_get(*invector,i));
+ 	}
 	gsl_vector_set(*invector,szVct-1,gsl_vector_get(*invector,szVct-2));
 	//gsl_vector_set(*invector,szVct-1,-999);
 
@@ -1418,12 +1418,22 @@ int find_model_energies(double energy, ReconstructInitSIRENA *reconstruct_init,g
 	if (energy < gsl_vector_get(reconstruct_init->library_collection->energies,0))
 	{
         gsl_vector_memcpy(modelFound_aux,reconstruct_init->library_collection->pulse_templates_B0[0].ptemplate);
+        cout<<"gsl_vector_max(modelFound_aux): "<<gsl_vector_max(modelFound_aux)<<endl;
+        cout<<"energy: "<<energy<<endl;
+        cout<<"gsl_vector_get(reconstruct_init->library_collection->energies,0): "<<gsl_vector_get(reconstruct_init->library_collection->energies,0)<<endl;
+        cout<<energy/gsl_vector_get(reconstruct_init->library_collection->energies,0)<<endl;
         gsl_vector_scale(modelFound_aux,energy/gsl_vector_get(reconstruct_init->library_collection->energies,0));
+        cout<<"gsl_vector_max(modelFound_aux): "<<gsl_vector_max(modelFound_aux)<<endl;
 	}
 	else if (energy > gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1))
 	{
         gsl_vector_memcpy(modelFound_aux,reconstruct_init->library_collection->pulse_templates_B0[nummodels-1].ptemplate);
+        cout<<"gsl_vector_max(modelFound_aux): "<<gsl_vector_max(modelFound_aux)<<endl;
+        cout<<"energy: "<<energy<<endl;
+        cout<<"gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1): "<<gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1)<<endl;
+        cout<<energy/gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1)<<endl;
         gsl_vector_scale(modelFound_aux,energy/gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1));
+        cout<<"gsl_vector_max(modelFound_aux): "<<gsl_vector_max(modelFound_aux)<<endl;
 	}
 	else
 	{
@@ -2852,7 +2862,7 @@ int find_model_samp1DERsNoReSCLD(double samp1DER, ReconstructInitSIRENA *reconst
 ******************************************************************************/
 int smoothDerivative (gsl_vector **invector, int N)
 {
-    if (N%2 != 0)   // Odd number
+    /*if (N%2 != 0)   // Odd number
     {
         string message = "";
         message = "In the smoothDerivative function, N must be an even number)";
@@ -2865,6 +2875,7 @@ int smoothDerivative (gsl_vector **invector, int N)
         gsl_vector *window = gsl_vector_alloc(N);
         gsl_vector_set_all(window,1.0);
         for (int i=0;i<N/2;i++)     gsl_vector_set(window,i,-1.0);
+        for (int i=0;i<N;i++) cout<<gsl_vector_get(window,i)<<endl;
 
         gsl_vector *conv = gsl_vector_alloc(szVct);
         gsl_vector_set_zero(conv);
@@ -2878,6 +2889,7 @@ int smoothDerivative (gsl_vector **invector, int N)
                 if ((j>=0) && (j<(int)((*invector)->size)))
                 {
                     gsl_vector_set(conv,i,gsl_vector_get(conv,i)+gsl_vector_get(*invector,j)*gsl_vector_get(window,index));
+                    cout<<i<<" "<<index<<" "<<gsl_vector_get(conv,i)<<" "<<gsl_vector_get(window,index)<<" "<<gsl_vector_get(*invector,j)<<endl;
                     index = index - 1;
                 }
             }
@@ -2890,8 +2902,41 @@ int smoothDerivative (gsl_vector **invector, int N)
         gsl_vector_memcpy(*invector,&temp.vector);
 
         gsl_vector_free(conv); conv = 0;
+    }*/
+
+    if (!invector || !(*invector)) return -1;
+    if (N % 2 != 0 || N < 2) return -2;
+
+    size_t n = (*invector)->size;
+    if (n < static_cast<size_t>(N)) return -3;
+
+    int half = N / 2;
+
+    // Crear filtro derivada: [-1,...,-1,1,...,1]
+    std::vector<double> filter(N, 0.0);
+    for (int i = 0; i < half; ++i) filter[i] = -1.0;
+    for (int i = half; i < N; ++i) filter[i] = 1.0;
+
+    // Calcular derivada suavizada
+    gsl_vector *newvec = gsl_vector_alloc(n);
+    if (!newvec) return -4;
+
+    // Calcular derivada para el rango válido
+    for (size_t i = half; i < n - half; ++i) {
+        double sum = 0.0;
+        for (int j = 0; j < N; ++j) {
+            sum += filter[j] * gsl_vector_get(*invector, i - half + j);
+        }
+        gsl_vector_set(newvec, i, sum / N); // puedes quitar el divisor si no quieres normalizar
     }
 
+    // Poner ceros en los extremos
+    for (int i = 0; i < half; ++i) {
+        gsl_vector_set(newvec, i, 0.0);
+        gsl_vector_set(newvec, n - 1 - i, gsl_vector_get(newvec,n-half-1));
+    }
+
+    *invector = newvec;
     return (EPOK);
 }
 /*xxxx end of SECTION 16 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
