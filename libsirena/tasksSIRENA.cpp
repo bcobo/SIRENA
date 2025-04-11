@@ -2138,12 +2138,12 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
     }
     
     // Differentiate after filtering
-    if (differentiate (&record, record->size))
+    /*if (differentiate (&record, record->size))
     {
         message = "Cannot run routine differentiate for differentiating after filtering";
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
-    gsl_vector_memcpy(recordDERIVATIVE,record);
+    gsl_vector_memcpy(recordDERIVATIVE,record);*/
 
     // Smooth derivative
     if (smoothDerivative (&record, 4))

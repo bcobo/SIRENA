@@ -2862,48 +2862,6 @@ int find_model_samp1DERsNoReSCLD(double samp1DER, ReconstructInitSIRENA *reconst
 ******************************************************************************/
 int smoothDerivative (gsl_vector **invector, int N)
 {
-    /*if (N%2 != 0)   // Odd number
-    {
-        string message = "";
-        message = "In the smoothDerivative function, N must be an even number)";
-        EP_PRINT_ERROR(message,EPFAIL);
-        message.clear();
-    }
-    else            // Even number
-    {
-        int szVct = (*invector)->size+N;
-        gsl_vector *window = gsl_vector_alloc(N);
-        gsl_vector_set_all(window,1.0);
-        for (int i=0;i<N/2;i++)     gsl_vector_set(window,i,-1.0);
-        for (int i=0;i<N;i++) cout<<gsl_vector_get(window,i)<<endl;
-
-        gsl_vector *conv = gsl_vector_alloc(szVct);
-        gsl_vector_set_zero(conv);
-
-        int index;
-        for (int i=0;i<szVct;i++)
-        {
-            index = N-1;
-            for (int j=i;j>=i-N+1;j--)
-            {
-                if ((j>=0) && (j<(int)((*invector)->size)))
-                {
-                    gsl_vector_set(conv,i,gsl_vector_get(conv,i)+gsl_vector_get(*invector,j)*gsl_vector_get(window,index));
-                    cout<<i<<" "<<index<<" "<<gsl_vector_get(conv,i)<<" "<<gsl_vector_get(window,index)<<" "<<gsl_vector_get(*invector,j)<<endl;
-                    index = index - 1;
-                }
-            }
-        }
-
-        gsl_vector_free(window); window = 0;
-
-        gsl_vector_view temp;
-        temp = gsl_vector_subvector(conv,0,szVct-N);
-        gsl_vector_memcpy(*invector,&temp.vector);
-
-        gsl_vector_free(conv); conv = 0;
-    }*/
-
     if (!invector || !(*invector)) return -1;
     if (N % 2 != 0 || N < 2) return -2;
 
@@ -2912,10 +2870,10 @@ int smoothDerivative (gsl_vector **invector, int N)
 
     int half = N / 2;
 
-    // Crear filtro derivada: [-1,...,-1,1,...,1]
+    // Crear filtro derivada: [1,...,1,-1,...,-1]
     std::vector<double> filter(N, 0.0);
-    for (int i = 0; i < half; ++i) filter[i] = -1.0;
-    for (int i = half; i < N; ++i) filter[i] = 1.0;
+    for (int i = 0; i < half; ++i) filter[i] = 1.0;
+    for (int i = half; i < N; ++i) filter[i] = -1.0;
 
     // Calcular derivada suavizada
     gsl_vector *newvec = gsl_vector_alloc(n);
