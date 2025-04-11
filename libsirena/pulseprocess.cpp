@@ -2862,39 +2862,43 @@ int find_model_samp1DERsNoReSCLD(double samp1DER, ReconstructInitSIRENA *reconst
 ******************************************************************************/
 int smoothDerivative (gsl_vector **invector, int N)
 {
-    if (!invector || !(*invector)) return -1;
-    if (N % 2 != 0 || N < 2) return -2;
+    if (N%2 != 0)   // Odd number
+    {
+        string message = "";
+        message = "In the smoothDerivative function, N must be an even number)";
+        EP_PRINT_ERROR(message,EPFAIL);
+        message.clear();
+    }
+    else            // Even number
+    {
+        size_t n = (*invector)->size;
 
-    size_t n = (*invector)->size;
-    if (n < static_cast<size_t>(N)) return -3;
+        int half = N / 2;
 
-    int half = N / 2;
+        // Create filter to calculate the derivative: [-1,...,-1,1,...,1]
+        std::vector<double> filter(N, 0.0);
+        for (int i = 0; i < half; ++i) filter[i] = -1.0;
+        for (int i = half; i < N; ++i) filter[i] = 1.0;
 
-    // Crear filtro derivada: [1,...,1,-1,...,-1]
-    std::vector<double> filter(N, 0.0);
-    for (int i = 0; i < half; ++i) filter[i] = 1.0;
-    for (int i = half; i < N; ++i) filter[i] = -1.0;
-
-    // Calcular derivada suavizada
-    gsl_vector *newvec = gsl_vector_alloc(n);
-    if (!newvec) return -4;
-
-    // Calcular derivada para el rango válido
-    for (size_t i = half; i < n - half; ++i) {
-        double sum = 0.0;
-        for (int j = 0; j < N; ++j) {
-            sum += filter[j] * gsl_vector_get(*invector, i - half + j);
+        // Calculate the smooth derivative in the valid range
+        gsl_vector *newvec = gsl_vector_alloc(n);
+        for (size_t i = half; i < n - half; ++i) {
+            double sum = 0.0;
+            for (int j = 0; j < N; ++j) {
+                sum += filter[j] * gsl_vector_get(*invector, i - half + j);
+            }
+            gsl_vector_set(newvec, i, sum / N); // puedes quitar el divisor si no quieres normalizar
         }
-        gsl_vector_set(newvec, i, sum / N); // puedes quitar el divisor si no quieres normalizar
+
+        // 0's at the beginning and repeat the last value at the end
+        for (int i = 0; i < half; ++i) {
+            gsl_vector_set(newvec, i, 0.0);
+            gsl_vector_set(newvec, n - 1 - i, gsl_vector_get(newvec,n-half-1));
+        }
+
+        *invector = newvec;
     }
 
-    // Poner ceros en los extremos
-    for (int i = 0; i < half; ++i) {
-        gsl_vector_set(newvec, i, 0.0);
-        gsl_vector_set(newvec, n - 1 - i, gsl_vector_get(newvec,n-half-1));
-    }
-
-    *invector = newvec;
     return (EPOK);
 }
 /*xxxx end of SECTION 16 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
