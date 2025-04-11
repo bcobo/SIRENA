@@ -33,6 +33,7 @@
 * - EventListSize: Default size of the event list per record
 * - clobber:Overwrite or not output files if exist (1/0)
 * - history: write program parameters into output file
+* - threshold: Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise)
 * - scaleFactor: Detection scale factor for initial filtering
 * - samplesUp: Number of consecutive samples up for threshold trespassing
 * - nSgms: Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm
@@ -306,10 +307,11 @@ int getpar_teslib(struct Parameters* const par)
     return(status);
   }
 
+  status=ape_trad_query_double("threshold", &par->threshold);
   status=ape_trad_query_double("scaleFactor", &par->scaleFactor);
   status=ape_trad_query_int("samplesUp", &par->samplesUp);
   status=ape_trad_query_double("nSgms", &par->nSgms);
-      
+
   status=ape_trad_query_double("LrsT", &par->LrsT);
   status=ape_trad_query_double("LbT", &par->LbT);
 

@@ -2057,7 +2057,18 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
     
     // Declare and initialize variables
     int numPulses = 0;
-    double threshold = 0.0;
+    //double threshold = 0.0;
+    double threshold = (*reconstruct_init)->threshold;
+    cout<<"threshold(procRecord):"<<threshold<<endl;
+    if (threshold == -999.0)
+    {
+        cout<<"(*reconstruct_init)->nSgms:"<<(*reconstruct_init)->nSgms<<endl;
+        cout<<"(*reconstruct_init)->library_collection->nsDerSG:"<<(*reconstruct_init)->library_collection->nsDerSG<<endl;
+        cout<<"(*reconstruct_init)->library_collection->nsDerMN:"<<(*reconstruct_init)->library_collection->nsDerMN<<endl;
+        threshold = (*reconstruct_init)->nSgms*(*reconstruct_init)->library_collection->nsDerSG+(*reconstruct_init)->library_collection->nsDerMN;
+    }
+
+    cout<<"threshold(procRecord1):"<<threshold<<endl;
     
     double stopCriteriaMKC = 1.0;	// Used in medianKappaClipping
     // Given in %
@@ -2138,6 +2149,8 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
     }
     
     // Differentiate after filtering
+    for (int kkk=3490;kkk<3800;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;
     if (differentiate (&record, record->size))
     {
         message = "Cannot run routine differentiate for differentiating after filtering";
@@ -2146,12 +2159,14 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
     gsl_vector_memcpy(recordDERIVATIVE,record);
 
     // Smooth derivative
-    if (smoothDerivative (&record, 4))
+    /*if (smoothDerivative (&record, 4))
     {
      	message = "Cannot run routine smoothDerivative";
      	EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
-    gsl_vector_memcpy(recordDERIVATIVE,record);
+    gsl_vector_memcpy(recordDERIVATIVE,record);*/
+    /*for (int kkk=3490;kkk<3700;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;*/
     
     //It is not necessary to check the allocation because the allocation of 'recordDERIVATIVE' has been checked previously
     gsl_vector *recordDERIVATIVEOriginal = gsl_vector_alloc(recordDERIVATIVE->size);   // To be used in 'writeTestInfo'
@@ -2177,6 +2192,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
             }
             else 
             {
+                cout<<"threshold before InitialTriggering, procRecord2_): "<<threshold<<endl;
                 if (InitialTriggering (recordDERIVATIVE, nSgms,
                     scaleFactor, samprate, stopCriteriaMKC, kappaMKC,
                     &triggerCondition, &tstartFirstEvent, &flagTruncated,
@@ -2185,6 +2201,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
                     message = "Cannot run routine InitialTriggering";
                     EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                 }
+                cout<<"threshold (after InitialTriggering, procRecord3): "<<threshold<<endl;
                 
                 if (strcmp((*reconstruct_init)->detectionMode,"STC") == 0)
                 {
@@ -2211,7 +2228,8 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
         }
         else if ((*reconstruct_init)->opmode == 0)	// In CALIBRATION mode
         {
-            if (findPulsesCAL (recordNOTFILTERED, recordDERIVATIVE, &tstartgsl, &qualitygsl, &pulseHeightsgsl, &maxDERgsl,               &numPulses, &threshold, scaleFactor, samprate, samplesUp, nSgms, Lb, Lrs, (*reconstruct_init),stopCriteriaMKC, kappaMKC))
+            cout<<"threshold(opmode=0,procRecord4):"<<threshold<<endl;
+            if (findPulsesCAL (recordNOTFILTERED, recordDERIVATIVE, &tstartgsl, &qualitygsl, &pulseHeightsgsl, &maxDERgsl, &numPulses, &threshold, scaleFactor, samprate, samplesUp, nSgms, Lb, Lrs, (*reconstruct_init),stopCriteriaMKC, kappaMKC))
             {
                 message = "Cannot run routine findPulsesCAL";
                 EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
@@ -4096,9 +4114,21 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
             EP_PRINT_ERROR(message,status);return(EPFAIL);
         }
         
-        if (fits_write_key(*inLibObject,TDOUBLE,"BASELINE",&(*reconstruct_init)->noise_spectrum->baseline,NULL,&status))
+        if (fits_write_key(*inLibObject,TDOUBLE,"NOISEBSL",&(*reconstruct_init)->noise_spectrum->baseline,NULL,&status))
         {
-            message = "Cannot write keyword BASELINE in library";
+            message = "Cannot write keyword NOISEBSL in library";
+            EP_PRINT_ERROR(message,status);return(EPFAIL);
+        }
+
+        if (fits_write_key(*inLibObject,TDOUBLE,"NSDERMN",&(*reconstruct_init)->noise_spectrum->nsDerMN,NULL,&status))
+        {
+            message = "Cannot write keyword NSDERMN in library";
+            EP_PRINT_ERROR(message,status);return(EPFAIL);
+        }
+
+        if (fits_write_key(*inLibObject,TDOUBLE,"NSDERSGM",&(*reconstruct_init)->noise_spectrum->nsDerSG,NULL,&status))
+        {
+            message = "Cannot write keyword NSDERSGM in library";
             EP_PRINT_ERROR(message,status);return(EPFAIL);
         }
         

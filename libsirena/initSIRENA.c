@@ -628,9 +628,12 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     record_file = openexistingTesTriggerFile(inputFile,keywords,&status);
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
 
+    printf("%s %f %s","par.threshold (callSIRENA_Filei): ",par.threshold,"\n");
+
     initializeReconstructionSIRENA(reconstruct_init_sirena, par.RecordFile, record_file->fptr,
-        par.LibraryFile, par.TesEventFile, par.flength_0pad, par.prebuff_0pad, par.scaleFactor, par.samplesUp,
-        par.samplesDown, par.nSgms, par.detectSP, par.opmode, par.detectionMode, par.LrsT,
+        par.LibraryFile, par.TesEventFile, par.flength_0pad, par.prebuff_0pad,
+        par.threshold, par.scaleFactor, par.samplesUp, par.samplesDown, par.nSgms,
+        par.detectSP, par.opmode, par.detectionMode, par.LrsT,
         par.LbT, par.NoiseFile, par.FilterDomain, par.FilterMethod, par.EnergyMethod,
         par.filtEev, par.Ifit, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter,
         par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.monoenergy,
@@ -730,7 +733,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
             strcpy(reconstruct_init_sirena->EnergyMethod,par.EnergyMethod);
         }
 
-        //printf("%s %d %s","** nrecord = ",nrecord,"\n");
+        printf("%s %d %s","** nrecord = ",nrecord,"\n");
         reconstructRecordSIRENA(record,*trig_reclength, event_list,reconstruct_init_sirena,
             lastRecord, startRecordGroup, &pulsesAll, &status);
         CHECK_STATUS_BREAK(status);

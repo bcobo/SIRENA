@@ -311,6 +311,7 @@ int getpar_tesrecons(struct Parameters* const par)
     return(status);
   }
 
+  status=ape_trad_query_double("threshold", &par->threshold);
   status=ape_trad_query_double("scaleFactor", &par->scaleFactor);
   status=ape_trad_query_int("samplesUp", &par->samplesUp);
   status=ape_trad_query_int("samplesDown", &par->samplesDown);

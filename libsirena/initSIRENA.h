@@ -75,6 +75,9 @@ struct Parameters {
 	// File containing the library
 	char LibraryFile[MAXFILENAME];
 
+	/** Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise)**/
+	double threshold;
+
 	// Scale Factor for initial filtering
 	double scaleFactor;
 

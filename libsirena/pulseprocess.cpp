@@ -301,6 +301,8 @@ int medianKappaClipping (gsl_vector *invector, double kappa, double stopCriteria
     }
 
 	gsl_vector_memcpy(invectorNew,invector);
+    cout<<"Paso1"<<endl;
+    cout<<"*threshold(Paso1): "<<*threshold<<endl;
 
 	// Iterate until no points out of the maximum excursion (kappa*sigma)
 	do
@@ -359,9 +361,15 @@ int medianKappaClipping (gsl_vector *invector, double kappa, double stopCriteria
 		}
 
 	} while (fabs((mean2-mean1)/mean1)>(stopCriteria/100.0));	// HARDPOINT!!!!!!!!!!!!!!!!!!! (stopCriteria)
+	cout<<"Paso2"<<endl;
+    cout<<"mean2(mKc): "<<mean2<<endl;
+    cout<<"sg2(mKc): "<<sg2<<endl;
+    cout<<"nSigmas(mKc): "<<nSigmas<<endl;
+    cout<<"*threshold(Paso3): "<<*threshold<<endl;
 
 	// Establish the threshold as mean+nSigmas*sigma
 	*threshold = mean2+nSigmas*sg2;	// HARDPOINT!!!!!!!!!!!!!!!!!!! (nSigmas)
+	cout<<"*threshold(Paso4): "<<*threshold<<endl;
 	
 	gsl_vector_free(invectorNew); invectorNew= 0;
     
@@ -1755,13 +1763,19 @@ int findPulsesCAL
 	gsl_vector_set_zero(*quality);
 	gsl_vector_set_zero(*pulseheight);	// Pulse height of the single pulses
 
-	// Establish the threshold
-	if (medianKappaClipping (vectorinDER, kappamkc, stopcriteriamkc, nsgms, (int)(pi*samplingRate*scalefactor), &thresholdmediankappa))
-	{
-		message = "Cannot run medianKappaClipping looking for single pulses";
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-	*threshold = thresholdmediankappa;
+    // Establish the threshold
+    /*if ((*threshold) == -999.0)
+    {*/
+        if (medianKappaClipping (vectorinDER, kappamkc, stopcriteriamkc, nsgms, (int)(pi*samplingRate*scalefactor), &thresholdmediankappa))
+        {
+            message = "Cannot run medianKappaClipping looking for single pulses";
+            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+        }
+        *threshold = thresholdmediankappa;
+    /*}
+    else
+        thresholdmediankappa = *threshold;*/
+    thresholdmediankappa = *threshold;
 
     /*cout<<"threshold: "<<*threshold<<endl;
     cout<<"DERIVATIVE:"<<endl;
@@ -1904,6 +1918,10 @@ int findTstartCAL
 	bool findTstarts = true;
         if ((isNumber(reconstruct_init->tstartPulse1)) && (atoi(reconstruct_init->tstartPulse1) != 0)) findTstarts = false;
 	
+    cout<<"threshold (findTstartCAL): "<<adaptativethreshold<<endl;
+    for (int kkk=3490;kkk<3700;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(der,kkk)<<endl;
+
 	if (findTstarts == true)
 	{
 		// It looks for a pulse
@@ -2078,11 +2096,14 @@ int InitialTriggering
 	*triggerCondition = false;
 
 	// Establish the threshold
-	if (medianKappaClipping (derivative, kappamkc, stopcriteriamkc, nSgms, (int)(pi*samplingRate*scalefactor), threshold))
-	{
-		message = "Cannot run medianKappaClipping doing the initial triggering";
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
+    cout<<"Hola"<<endl;
+    //double *threshold_record;
+    if (medianKappaClipping (derivative, kappamkc, stopcriteriamkc, nSgms, (int)(pi*samplingRate*scalefactor), threshold))
+    {
+        message = "Cannot run medianKappaClipping doing the initial triggering";
+        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+    }
+    cout<<"threshold_record: "<<*threshold<<endl;
 	//*threshold = 30; // samprate = 156.250 kHz
 	//*threshold = 55; // samprate/2 = 78.125 kHz
 
@@ -2862,7 +2883,7 @@ int find_model_samp1DERsNoReSCLD(double samp1DER, ReconstructInitSIRENA *reconst
 ******************************************************************************/
 int smoothDerivative (gsl_vector **invector, int N)
 {
-    /*if (N%2 != 0)   // Odd number
+    if (N%2 != 0)   // Odd number
     {
         string message = "";
         message = "In the smoothDerivative function, N must be an even number)";
@@ -2871,72 +2892,34 @@ int smoothDerivative (gsl_vector **invector, int N)
     }
     else            // Even number
     {
-        int szVct = (*invector)->size+N;
-        gsl_vector *window = gsl_vector_alloc(N);
-        gsl_vector_set_all(window,1.0);
-        for (int i=0;i<N/2;i++)     gsl_vector_set(window,i,-1.0);
-        for (int i=0;i<N;i++) cout<<gsl_vector_get(window,i)<<endl;
+        size_t n = (*invector)->size;
 
-        gsl_vector *conv = gsl_vector_alloc(szVct);
-        gsl_vector_set_zero(conv);
+        int half = N / 2;
 
-        int index;
-        for (int i=0;i<szVct;i++)
-        {
-            index = N-1;
-            for (int j=i;j>=i-N+1;j--)
-            {
-                if ((j>=0) && (j<(int)((*invector)->size)))
-                {
-                    gsl_vector_set(conv,i,gsl_vector_get(conv,i)+gsl_vector_get(*invector,j)*gsl_vector_get(window,index));
-                    cout<<i<<" "<<index<<" "<<gsl_vector_get(conv,i)<<" "<<gsl_vector_get(window,index)<<" "<<gsl_vector_get(*invector,j)<<endl;
-                    index = index - 1;
-                }
+        // Create filter to calculate the derivative: [-1,...,-1,1,...,1]
+        std::vector<double> filter(N, 0.0);
+        for (int i = 0; i < half; ++i) filter[i] = -1.0;
+        for (int i = half; i < N; ++i) filter[i] = 1.0;
+
+        // Calculate the smooth derivative in the valid range
+        gsl_vector *newvec = gsl_vector_alloc(n);
+        for (size_t i = half; i < n - half; ++i) {
+            double sum = 0.0;
+            for (int j = 0; j < N; ++j) {
+                sum += filter[j] * gsl_vector_get(*invector, i - half + j);
             }
+            gsl_vector_set(newvec, i, sum / N); // puedes quitar el divisor si no quieres normalizar
         }
 
-        gsl_vector_free(window); window = 0;
-
-        gsl_vector_view temp;
-        temp = gsl_vector_subvector(conv,0,szVct-N);
-        gsl_vector_memcpy(*invector,&temp.vector);
-
-        gsl_vector_free(conv); conv = 0;
-    }*/
-
-    if (!invector || !(*invector)) return -1;
-    if (N % 2 != 0 || N < 2) return -2;
-
-    size_t n = (*invector)->size;
-    if (n < static_cast<size_t>(N)) return -3;
-
-    int half = N / 2;
-
-    // Crear filtro derivada: [-1,...,-1,1,...,1]
-    std::vector<double> filter(N, 0.0);
-    for (int i = 0; i < half; ++i) filter[i] = -1.0;
-    for (int i = half; i < N; ++i) filter[i] = 1.0;
-
-    // Calcular derivada suavizada
-    gsl_vector *newvec = gsl_vector_alloc(n);
-    if (!newvec) return -4;
-
-    // Calcular derivada para el rango válido
-    for (size_t i = half; i < n - half; ++i) {
-        double sum = 0.0;
-        for (int j = 0; j < N; ++j) {
-            sum += filter[j] * gsl_vector_get(*invector, i - half + j);
+        // 0's at the beginning and repeat the last value at the end
+        for (int i = 0; i < half; ++i) {
+            gsl_vector_set(newvec, i, 0.0);
+            gsl_vector_set(newvec, n - 1 - i, gsl_vector_get(newvec,n-half-1));
         }
-        gsl_vector_set(newvec, i, sum / N); // puedes quitar el divisor si no quieres normalizar
+
+        *invector = newvec;
     }
 
-    // Poner ceros en los extremos
-    for (int i = 0; i < half; ++i) {
-        gsl_vector_set(newvec, i, 0.0);
-        gsl_vector_set(newvec, n - 1 - i, gsl_vector_get(newvec,n-half-1));
-    }
-
-    *invector = newvec;
     return (EPOK);
 }
 /*xxxx end of SECTION 16 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
@@ -3020,6 +3003,10 @@ int FindSecondariesSTC
     int limitMin, limitMax;
         
     int nodetectSecondaries = 1;
+
+    cout<<"adaptativethreshold: "<<adaptativethreshold<<endl;
+    for (int kkk=3490;kkk<3800;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(der,kkk)<<endl;
         	
     // It looks for &tstartgsl,&qualitygsl, &maxDERgsl,&samp1DERgsla pulse
     // If a pulse is found (foundPulse==true) => It looks for another pulse

@@ -81,6 +81,7 @@
   * - event_file: File name of output events (with reconstructed energy)
   * - flength_0pad: 0padding filter length
   * - prebuff_0pad: preBuffer used when 0-padding
+  * - threshold: Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise)
   * - scaleFactor: Detection scale factor for initial filtering
   * - samplesUp: Number of samples for threshold trespassing
   * - samplesDown: Number of samples below the threshold to look for other pulse
@@ -130,6 +131,7 @@
  extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                                 char* const record_file, fitsfile *fptr, char* const library_file, char* const event_file,
                                                 int flength_0pad, int prebuff_0pad,
+                                                double threshold,
                                                 double scaleFactor, int samplesUp, int samplesDown, double nSgms, int detectSP, int opmode, char *detectionMode,
                                                 double LrsT, double LbT,
                                                 char* const noise_file,
@@ -149,10 +151,12 @@
     string message = "";
 
     log_debug("Before fillReconstructInitSIRENA (integraSIRENA)");
+    cout<<"threshold (initializeReconstructionSIRENA): "<<threshold<<endl;
     // Fill in reconstruct_init
     *status = fillReconstructInitSIRENA(reconstruct_init,
                                        record_file, fptr, library_file, event_file,
                                        flength_0pad, prebuff_0pad,
+                                       threshold,
                                        scaleFactor, samplesUp, samplesDown, nSgms, detectSP, opmode, detectionMode,
                                        LrsT, LbT,
                                        noise_file,
@@ -779,12 +783,28 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          return(library_collection);
      }
      
+     cout<<"gLC1"<<endl;
      library_collection->baseline = -999.0;
-     if (fits_read_key(fptr,TDOUBLE,"BASELINE", &library_collection->baseline,NULL,status))
+     if (fits_read_key(fptr,TDOUBLE,"NOISEBSL", &library_collection->baseline,NULL,status))
      {
-         EP_PRINT_ERROR("Cannot read BASELINE keyword from HDU LIBRARY in library file => Check the noise file",-999);
+         EP_PRINT_ERROR("Cannot read NOISEBSL keyword from HDU LIBRARY in library file => Check the noise file",-999);
          *status = 0;
      }
+     library_collection->nsDerMN = -999.0;
+     if (fits_read_key(fptr,TDOUBLE,"NSDERMN", &library_collection->nsDerMN,NULL,status))
+     {
+         EP_PRINT_ERROR("Cannot read NSDERMN keyword from HDU LIBRARY in library file => Check the noise file",-999);
+         *status = 0;
+     }
+     library_collection->nsDerSG = -999.0;
+     if (fits_read_key(fptr,TDOUBLE,"NSDERSGM", &library_collection->nsDerSG,NULL,status))
+     {
+         EP_PRINT_ERROR("Cannot read NSDERSGM keyword from HDU LIBRARY in library file => Check the noise file",-999);
+         *status = 0;
+     }
+     cout<<"library_collection->nsDerMN: "<<library_collection->nsDerMN<<endl;
+     cout<<"library_collection->nsDerSG: "<<library_collection->nsDerSG<<endl;
+     cout<<"gLC2"<<endl;
      
      // Get number of templates (rows)
      long ntemplates;
@@ -2161,14 +2181,27 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          ((reconstruct_init->opmode == 1) && (strcmp(reconstruct_init->FilterMethod,"B0") == 0) && ((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RFITTED") == 0)|| (strcmp(reconstruct_init->EnergyMethod,"I2RDER") == 0)))
          || ((reconstruct_init->opmode == 1) && (strcmp(reconstruct_init->EnergyMethod,"INTCOVAR") == 0)))
      {
-         strcpy(keyname,"BASELINE");
+         strcpy(keyname,"NOISEBSL");
          
          if (fits_read_key(fptr,TDOUBLE,keyname, &noise_spectrum->baseline,NULL,status))
          {
-             EP_PRINT_ERROR("Cannot read BASELINE keyword",*status);
+             EP_PRINT_ERROR("Cannot read NOISEBSL keyword",*status);
              *status=EPFAIL;return(noise_spectrum);
          }
      }
+
+     if (fits_read_key(fptr,TDOUBLE,"NSDERMN", &noise_spectrum->nsDerMN,NULL,status))
+     {
+        EP_PRINT_ERROR("Cannot read NSDERMN keyword",*status);
+        *status=EPFAIL;return(noise_spectrum);
+     }
+     if (fits_read_key(fptr,TDOUBLE,"NSDERSGM", &noise_spectrum->nsDerSG,NULL,status))
+     {
+        EP_PRINT_ERROR("Cannot read NSDERSGM keyword",*status);
+        *status=EPFAIL;return(noise_spectrum);
+     }
+     cout<<"noise_spectrum->nsDerMN(getNoiseSpec):"<<noise_spectrum->nsDerMN<<endl;
+     cout<<"noise_spectrum->nsDerSG(getNoiseSpec):"<<noise_spectrum->nsDerSG<<endl;
      
      if (strcmp(reconstruct_init->EnergyMethod,"INTCOVAR") != 0)
      {
@@ -2386,6 +2419,7 @@ extern "C" unsigned checksum(void *buffer, size_t len, unsigned int seed)
 int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
     char* const record_file, fitsfile *fptr, char* const library_file, char* const event_file,
     int flength_0pad, int prebuff_0pad,
+    double threshold,
     double scaleFactor, int samplesUp, int samplesDown, double nSgms, int detectSP, int opmode, char *detectionMode,
     double LrsT, double LbT,
     char* const noise_file,
@@ -2433,6 +2467,8 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
          }
     }
 
+    reconstruct_init->threshold  	= threshold;
+    cout<<"reconstruct_init->threshold (fillReconstructInitSIRENA): "<<reconstruct_init->threshold<<endl;
     reconstruct_init->scaleFactor  	= scaleFactor;
     reconstruct_init->samplesUp    	= samplesUp;
     if (opmode == 1)    reconstruct_init->samplesDown  	= samplesDown;
@@ -2512,8 +2548,6 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
 
     strncpy(reconstruct_init->XMLFile,XMLFile,255);
     reconstruct_init->XMLFile[255]='\0';
-
-    reconstruct_init->threshold 	= 0.0;
 
     return(status);
 }
@@ -2595,7 +2629,7 @@ int loadNoise (ReconstructInitSIRENA* reconstruct_init)
          (((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RFITTED") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RDER") == 0)) && (reconstruct_init->opmode == 1) && (reconstruct_init->OFLib == 0))
          || ((reconstruct_init->opmode == 1) && (strcmp(reconstruct_init->EnergyMethod,"INTCOVAR") == 0) && (reconstruct_init->OFLib == 0))
          || ((reconstruct_init->opmode == 1) && (strcmp(reconstruct_init->EnergyMethod,"COVAR") == 0) && (reconstruct_init->OFLib == 0))
-         // If BASELINE is not in the library file, it is necessary to read its value from the noise file
+         // If NOISEBSL is not in the library file, it is necessary to read its value from the noise file
          || (((((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RFITTED") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RDER") == 0))  && (strcmp(reconstruct_init->FilterMethod,"B0") == 0)) || (strcmp(reconstruct_init->EnergyMethod,"INTCOVAR") == 0)) && (reconstruct_init->opmode == 1) && (reconstruct_init->OFLib == 1) && (baselineReadFromLibrary == false)))
      {
          int exists=0;
@@ -2605,7 +2639,7 @@ int loadNoise (ReconstructInitSIRENA* reconstruct_init)
          }
          if ((reconstruct_init->opmode == 1) && (exists != 1) && (baselineReadFromLibrary == false))
          {
-             EP_EXIT_ERROR("B0 chosen and BASELINE keyword not in the library file => Noise file is necessary but it does not exist",EPFAIL);
+             EP_EXIT_ERROR("B0 chosen and NOISEBSLN keyword not in the library file => Noise file is necessary but it does not exist",EPFAIL);
          }
          if ((exists != 1) && (baselineReadFromLibrary == true))
          {
