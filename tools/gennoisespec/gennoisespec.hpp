@@ -178,9 +178,6 @@ struct Parameters {
     
     double deltat;
 
-	double nsDerM;
-	double nsDerS;
-
 // OUTPUT FILE
 
 	fitsfile *gnoiseObject = NULL;	// Object which contains information of output FITS file

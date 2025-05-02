@@ -189,11 +189,8 @@ typedef struct LibraryCollection
 	/** NOISEBSL read from the noise file and propagated to the library file**/
 	double baseline;
 
-	/** NSDERMN read from the noise file and propagated to the library file**/
-	double nsDerMN;
-
-	/** NSDERSGM read from the noise file and propagated to the library file**/
-	double nsDerSG;
+	/** NOISESTD read from the noise file and propagated to the library file**/
+	double sigma;
 	
 	/** Number of fixed length filters in the structure. */
 	int nfixedfilters;
@@ -297,12 +294,6 @@ typedef struct NoiseSpec
   
   	/** Baseline */
   	double baseline;
-
-	/** Mean of the derivative */
-	double nsDerMN;
-
-	/** Sigma of the derivative */
-	double nsDerSG;
   
   	/** Duration of the noise spectrum */
   	int noise_duration;

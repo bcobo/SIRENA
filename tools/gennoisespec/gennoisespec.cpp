@@ -850,7 +850,6 @@
      {
          gsl_matrix_get_row(interval,noiseIntervals,i);
          findMeanSigma(interval, &bsln, &sgm);
-         cout<<"noise mean="<<bsln<<" sgm="<<sgm<<endl;
          gsl_vector_set(sigmaInterval,i, sgm);
      }
      
@@ -1186,7 +1185,6 @@
   *  	    - If there are pulses => Call findInterval
   *	    - No pulses => The whole event is going to be used (DIVIDING into intervals of intervalMinBins size) => Call findIntervalN
   *       - Calculating the mean and sigma of the intervals without pulses together => BSLN0 & NOISESTD
-  *       - Calculating mean and sigma of the derivative of the noise intervals without pulses together in order to calculate the threshold to detect
   *       - Preparing the CSD calculus (not filtered data)
   * - Free allocated GSL vectors
   ****************************************************************************/
@@ -1263,7 +1261,7 @@
          gsl_vector_memcpy(timegsl,timegsl_block);
          gsl_matrix_get_row(ioutgsl,ioutgsl_block,i);
          gsl_vector_scale(ioutgsl,ivcal);		//IVCAL to change arbitrary units of voltage to non-arbitrary units of current (Amps)
-         
+
          // Just in case the last record has been filled out with 0's => Last record discarded
          if ((gsl_vector_get(ioutgsl,ioutgsl->size-1) == 0) && (gsl_vector_get(ioutgsl,ioutgsl->size-2) == 0))		break;
          
@@ -1375,30 +1373,6 @@
              gsl_vector_set(baseline,indexBaseline,baselineIntervalFreeOfPulses);
              gsl_vector_set(sigma,indexBaseline,sigmaIntervalFreeOfPulses);
              indexBaseline++;
-         }
-
-         //Calculating mean and sigma of the derivative of the noise intervals without pulses together
-         //in order to calculate the threshold to detect
-         if (nIntervals != 0)
-         {
-             gsl_vector *der_intervalsWithoutPulsesTogether = gsl_vector_alloc(intervalsWithoutPulsesTogether->size);
-             gsl_vector_memcpy(der_intervalsWithoutPulsesTogether,intervalsWithoutPulsesTogether);
-             if (differentiate (&der_intervalsWithoutPulsesTogether,der_intervalsWithoutPulsesTogether->size))
-             {
-                 message = "Cannot run routine differentiate for differentiating after filtering";
-                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-             }
-
-             findMeanSigma (der_intervalsWithoutPulsesTogether, &nsDerM, &nsDerS);
-             cout<<"findMeanSigma m="<<nsDerM<<" sg="<<nsDerS<<endl;
-             double th;
-             if (medianKappaClipping (der_intervalsWithoutPulsesTogether, kappaMKC, stopCriteriaMKC,3.5,0,&th))
-             {
-                 message = "Cannot run medianKappaClipping_noiseSigma looking for mean and sigma of the noise sigmas";
-                 EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-             }
-             cout<<"medianKappaClipping th="<<th<<endl;
-             gsl_vector_free(der_intervalsWithoutPulsesTogether); der_intervalsWithoutPulsesTogether = 0;
          }
 
          gsl_vector_free(intervalsWithoutPulsesTogether); intervalsWithoutPulsesTogether = 0;
@@ -1970,12 +1944,10 @@
      }
      gsl_vector_free(sigmacsdgslnew); sigmacsdgslnew = 0;
      
-     //strcpy(keyname,"BSLN0");       // Real calculated baseline
      strcpy(keyname,"NOISEBSL");       // Real calculated baseline
      double sumBaseline;
      gsl_vector_Sumsubvector(baseline, 0, indexBaseline, &sumBaseline);
      double keyvaldouble;
-     //keyvaldouble = sumBaseline/indexBaseline;
      if (strcmp(par.EnergyMethod,"OPTFILT") == 0)
      {
         keyvaldouble = (sumBaseline/indexBaseline)/aducnv;
@@ -1989,32 +1961,12 @@
          message = "Cannot write keyword " + string(keyname) + " in file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);
      }
-     /*strcpy(keyname,"BASELINE");     // In order to be changed with test purposes
-     if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
-     {
-         message = "Cannot write keyword " + string(keyname) + " in file " + string(par.outFile);
-         EP_PRINT_ERROR(message,status); return(EPFAIL);
-     }*/
      
      strcpy(keyname,"NOISESTD");
      double sumSigma;
      gsl_vector_Sumsubvector(sigma, 0, indexBaseline, &sumSigma);
      keyvaldouble = (sumSigma/indexBaseline)/aducnv;
      if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
-     {
-         message = "Cannot write keyword " + string(keyname) + " in file " + string(par.outFile);
-         EP_PRINT_ERROR(message,status); return(EPFAIL);
-     }
-
-     //Mean and sigma of the noise derivative in order to calculate the threshold to detect
-     strcpy(keyname,"NSDERMN");
-     if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&nsDerM,comment,&status))
-     {
-         message = "Cannot write keyword " + string(keyname) + " in file " + string(par.outFile);
-         EP_PRINT_ERROR(message,status); return(EPFAIL);
-     }
-     strcpy(keyname,"NSDERSGM");
-     if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&nsDerS,comment,&status))
      {
          message = "Cannot write keyword " + string(keyname) + " in file " + string(par.outFile);
          EP_PRINT_ERROR(message,status); return(EPFAIL);

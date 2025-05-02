@@ -301,8 +301,6 @@ int medianKappaClipping (gsl_vector *invector, double kappa, double stopCriteria
     }
 
 	gsl_vector_memcpy(invectorNew,invector);
-    cout<<"Paso1"<<endl;
-    cout<<"*threshold(Paso1): "<<*threshold<<endl;
 
 	// Iterate until no points out of the maximum excursion (kappa*sigma)
 	do
@@ -361,16 +359,10 @@ int medianKappaClipping (gsl_vector *invector, double kappa, double stopCriteria
 		}
 
 	} while (fabs((mean2-mean1)/mean1)>(stopCriteria/100.0));	// HARDPOINT!!!!!!!!!!!!!!!!!!! (stopCriteria)
-	cout<<"Paso2"<<endl;
-    cout<<"mean2(mKc): "<<mean2<<endl;
-    cout<<"sg2(mKc): "<<sg2<<endl;
-    cout<<"nSigmas(mKc): "<<nSigmas<<endl;
-    cout<<"*threshold(Paso3): "<<*threshold<<endl;
 
 	// Establish the threshold as mean+nSigmas*sigma
 	*threshold = mean2+nSigmas*sg2;	// HARDPOINT!!!!!!!!!!!!!!!!!!! (nSigmas)
-	cout<<"*threshold(Paso4): "<<*threshold<<endl;
-	
+
 	gsl_vector_free(invectorNew); invectorNew= 0;
     
     message.clear();
@@ -1704,7 +1696,6 @@ int interpolate_model(gsl_vector **modelFound, double p_model, gsl_vector *model
 * findPulsesCAL: This function is going to find the pulses in a record (in the CALibration mode) by using the function findTstartCAL
 *
 * - Declare variables
-* - Establish the threshold (call medianKappaClipping)
 * - Find pulses (call findTstartCAL)
 * - If at least a pulse is found
 * 	- Get the 'pulseheight' of each found pulse (in order to be used to build the pulse templates library)
@@ -1718,7 +1709,7 @@ int interpolate_model(gsl_vector **modelFound, double p_model, gsl_vector *model
 * - pulseheight: Pulse height of the found pulses into the record
 * - maxDERgsl: Maximum of the derivative of the found low-pass filtered pulses into the record
 * - nPulses: Number of found pulses
-* - threshold: Threshold used to find the pulses (output parameter because it is necessary out of the function)
+* - threshold: Threshold used to find the pulses
 * - scalefactor: Scale factor to calculate the LPF box-car length
 * - samplingRate: Sampling rate
 * - samplesup: Number of consecutive samples over the threshold to locate a pulse ('samplesUp')
@@ -1740,7 +1731,7 @@ int findPulsesCAL
 	gsl_vector **maxDERgsl,
 
 	int *nPulses,
-	double *threshold,
+	double threshold,
 
 	double scalefactor,
 	double samplingRate,
@@ -1765,17 +1756,17 @@ int findPulsesCAL
 
     // Establish the threshold
     /*if ((*threshold) == -999.0)
-    {*/
+    {
         if (medianKappaClipping (vectorinDER, kappamkc, stopcriteriamkc, nsgms, (int)(pi*samplingRate*scalefactor), &thresholdmediankappa))
         {
             message = "Cannot run medianKappaClipping looking for single pulses";
             EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
         }
         *threshold = thresholdmediankappa;
-    /*}
+    }
     else
         thresholdmediankappa = *threshold;*/
-    thresholdmediankappa = *threshold;
+    //thresholdmediankappa = *threshold;
 
     /*cout<<"threshold: "<<*threshold<<endl;
     cout<<"DERIVATIVE:"<<endl;
@@ -1785,7 +1776,8 @@ int findPulsesCAL
     }*/
         
     // Find pulses
-	if (findTstartCAL (reconstruct_init->maxPulsesPerRecord, vectorinDER, thresholdmediankappa, samplesUp, reconstruct_init, nPulses, tstart, quality, maxDERgsl))
+	//if (findTstartCAL (reconstruct_init->maxPulsesPerRecord, vectorinDER, thresholdmediankappa, samplesUp, reconstruct_init, nPulses, tstart, quality, maxDERgsl))
+	if (findTstartCAL (reconstruct_init->maxPulsesPerRecord, vectorinDER, threshold, samplesUp, reconstruct_init, nPulses, tstart, quality, maxDERgsl))
 	{
 		message = "Cannot run findTstartCAL";
 		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
@@ -2053,7 +2045,6 @@ int findTstartCAL
 * InitialTriggering function: This function finds the first pulse in the input vector, first derivative of the (low-pass filtered) record
 *
 * - Declare variables
-* - Establish the threshold
 * - It is necessary to find the tstart of the first pulse...
 *   Obtain tstart of the first pulse in the derivative if der_i>threshold
 * - ...or to use the tstart provided as input parameter
@@ -2069,7 +2060,7 @@ int findTstartCAL
 *                     false -> the algorithm has not found any event
 * - tstart: First event tstart (in samples)
 * - flagTruncated: Flag indicating if the event is truncated (inside this function only initial truncated events are classified)
-* - threshold: Calculated threshold  (output parameter because it is necessary out of the function)
+* - threshold: Calculated threshold
 ****************************************/
 int InitialTriggering
 (
@@ -2085,7 +2076,7 @@ int InitialTriggering
 	int *tstart,
 	int *flagTruncated,
 
-	double *threshold)
+	double threshold)
 {
 	string message = "";
 
@@ -2095,28 +2086,12 @@ int InitialTriggering
 
 	*triggerCondition = false;
 
-	// Establish the threshold
-    cout<<"Hola"<<endl;
-    //double *threshold_record;
-    if (medianKappaClipping (derivative, kappamkc, stopcriteriamkc, nSgms, (int)(pi*samplingRate*scalefactor), threshold))
-    {
-        message = "Cannot run medianKappaClipping doing the initial triggering";
-        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-    }
-    cout<<"threshold_record: "<<*threshold<<endl;
 	//*threshold = 30; // samprate = 156.250 kHz
 	//*threshold = 55; // samprate/2 = 78.125 kHz
-
-	/*cout<<"threshold: "<<*threshold<<endl;
-    cout<<"DERIVATIVE:"<<endl;
-	for (int i=400;i<1400;i++)
-    {
-        cout<<i<<" "<<gsl_vector_get(derivative,i)<<endl;
-    }*/
 	
 	while (i < sizeRecord-1)
         {
-            if (gsl_vector_get(derivative,i) > *threshold)
+            if (gsl_vector_get(derivative,i) > threshold)
             {
                 *triggerCondition = true;
                 *tstart = i;

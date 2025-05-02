@@ -52,7 +52,7 @@
 		gsl_vector **maxDERgsl,
 
 		int *nPulses,
-		double *threshold,
+		double threshold,
 
 		double scalefactor,
 		double samplingRate,
@@ -100,7 +100,7 @@
 		int *tstart,
 		int *flagTruncated,
 
-		double *threshold);
+		double threshold);
 	
 	int FindSecondaries
 	(

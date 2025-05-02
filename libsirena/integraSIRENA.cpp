@@ -783,28 +783,18 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          return(library_collection);
      }
      
-     cout<<"gLC1"<<endl;
      library_collection->baseline = -999.0;
      if (fits_read_key(fptr,TDOUBLE,"NOISEBSL", &library_collection->baseline,NULL,status))
      {
          EP_PRINT_ERROR("Cannot read NOISEBSL keyword from HDU LIBRARY in library file => Check the noise file",-999);
          *status = 0;
      }
-     library_collection->nsDerMN = -999.0;
-     if (fits_read_key(fptr,TDOUBLE,"NSDERMN", &library_collection->nsDerMN,NULL,status))
+     library_collection->sigma = -999.0;
+     if (fits_read_key(fptr,TDOUBLE,"NOISESTD", &library_collection->sigma,NULL,status))
      {
-         EP_PRINT_ERROR("Cannot read NSDERMN keyword from HDU LIBRARY in library file => Check the noise file",-999);
+         EP_PRINT_ERROR("Cannot read NOISESTD keyword from HDU LIBRARY in library file => Check the noise file",-999);
          *status = 0;
      }
-     library_collection->nsDerSG = -999.0;
-     if (fits_read_key(fptr,TDOUBLE,"NSDERSGM", &library_collection->nsDerSG,NULL,status))
-     {
-         EP_PRINT_ERROR("Cannot read NSDERSGM keyword from HDU LIBRARY in library file => Check the noise file",-999);
-         *status = 0;
-     }
-     cout<<"library_collection->nsDerMN: "<<library_collection->nsDerMN<<endl;
-     cout<<"library_collection->nsDerSG: "<<library_collection->nsDerSG<<endl;
-     cout<<"gLC2"<<endl;
      
      // Get number of templates (rows)
      long ntemplates;
@@ -2189,19 +2179,6 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              *status=EPFAIL;return(noise_spectrum);
          }
      }
-
-     if (fits_read_key(fptr,TDOUBLE,"NSDERMN", &noise_spectrum->nsDerMN,NULL,status))
-     {
-        EP_PRINT_ERROR("Cannot read NSDERMN keyword",*status);
-        *status=EPFAIL;return(noise_spectrum);
-     }
-     if (fits_read_key(fptr,TDOUBLE,"NSDERSGM", &noise_spectrum->nsDerSG,NULL,status))
-     {
-        EP_PRINT_ERROR("Cannot read NSDERSGM keyword",*status);
-        *status=EPFAIL;return(noise_spectrum);
-     }
-     cout<<"noise_spectrum->nsDerMN(getNoiseSpec):"<<noise_spectrum->nsDerMN<<endl;
-     cout<<"noise_spectrum->nsDerSG(getNoiseSpec):"<<noise_spectrum->nsDerSG<<endl;
      
      if (strcmp(reconstruct_init->EnergyMethod,"INTCOVAR") != 0)
      {

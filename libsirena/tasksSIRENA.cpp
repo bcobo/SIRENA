@@ -145,6 +145,8 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
     double tstartRecord;
     // It is not necessary to check the allocation because 'record->trigger_size'='eventsz' has been checked previously
     gsl_vector *invector = gsl_vector_alloc(eventsz);	// Record
+
+    double threshold;
     
     if (isNumber((*reconstruct_init)->tstartPulse1))
     {
@@ -264,13 +266,23 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
 
     log_trace("Detecting...");
     // Process each record
+    threshold = (*reconstruct_init)->threshold;
+    cout<<"threshold0:"<<threshold<<endl;
+    if (threshold == -999.0)
+    {
+        cout<<"(*reconstruct_init)->nSgms:"<<(*reconstruct_init)->nSgms<<endl;
+        cout<<"(*reconstruct_init)->library_collection->baseline:"<<(*reconstruct_init)->library_collection->baseline<<endl;
+        cout<<"(*reconstruct_init)->library_collection->sigma:"<<(*reconstruct_init)->library_collection->sigma<<endl;
+        threshold = (*reconstruct_init)->nSgms*(*reconstruct_init)->library_collection->sigma;
+    }
+    cout<<"threshold1:"<<threshold<<endl;
     gsl_vector *phid = gsl_vector_alloc(record->phid_list->size);
     gsl_vector_set_all(phid,-999.0);
     for (int i=0;i<(int)(phid->size);i++)  gsl_vector_set(phid,i,record->phid_list->phid_array[i]);
     if (pulsesAll->ndetpulses == 0)
-        procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid, phid, oscillations, nrecord, -999);
+        procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, threshold, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid, phid, oscillations, nrecord, -999);
     else
-        procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid, phid, oscillations, nrecord, pulsesAll->pulses_detected[pulsesAll->ndetpulses-1].Tstart);
+        procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, threshold, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid, phid, oscillations, nrecord, pulsesAll->pulses_detected[pulsesAll->ndetpulses-1].Tstart);
 
     if (invectorOriginal != NULL) {gsl_vector_free(invectorOriginal); invectorOriginal = 0;}
     if (phid != NULL) {gsl_vector_free(phid); phid = 0;}
@@ -826,6 +838,8 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
     // It is not necessary to check the allocation because 
     //'record->trigger_size'='eventsz' has been checked previously
     gsl_vector *invector = gsl_vector_alloc(eventsz);    // Record
+
+    double threshold;
     
     if (isNumber((*reconstruct_init)->tstartPulse1))
     {
@@ -964,11 +978,16 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
     
     // Process each record
     // thread safe
+    threshold = (*reconstruct_init)->threshold;
+    if (threshold == -999.0)
+    {
+        threshold = (*reconstruct_init)->nSgms*(*reconstruct_init)->library_collection->sigma;
+    }
     gsl_vector *phid = gsl_vector_alloc(record->phid_list->size);
     gsl_vector_set_all(phid,-999.0);
     for (int i=0;i<(int)(phid->size);i++)  gsl_vector_set(phid,i,record->phid_list->phid_array[i]);
     if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, 
-        invector, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid,phid, oscillations, nrecord, pulsesAll->pulses_detected[pulsesAll->ndetpulses-1].Tstart))
+        invector, threshold, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid,phid, oscillations, nrecord, pulsesAll->pulses_detected[pulsesAll->ndetpulses-1].Tstart))
     {
         message = "Cannot run routine procRecord for record processing";
         EP_EXIT_ERROR(message,EPFAIL);
@@ -2041,6 +2060,7 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
  * - samprate: Sampling rate (in order to low-pass filter)
  * - dtcObject: Object which contains information of the intermediate FITS file (to be written if 'intermediate'=1)
  * - record: GSL vector with signal values of input record
+ * - threshold
  * - foundPulses: Input/output structure where the found pulses info is stored
  * - num_previousDetectedPulses: Number of previous detected pulses (to know the index to get the proper element from tstartPulse1_i in case tstartPulse1=nameFile)
  * - pixid: Pixel ID (from the input file) to be propagated 
@@ -2049,7 +2069,9 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
  * - nrecord: Current record index
  * - tstartPrevPulse: tstart of the previous pulse (last pulse of the previous record) (seconds)
  ****************************************************************************/
-int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, gsl_vector *phid, int oscillations, int nrecord, double tstartPrevPulse)
+int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record,
+double threshold, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, gsl_vector *phid, int oscillations,
+int nrecord, double tstartPrevPulse)
 {
     int status = EPOK;
     string message = "";
@@ -2058,17 +2080,16 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
     // Declare and initialize variables
     int numPulses = 0;
     //double threshold = 0.0;
-    double threshold = (*reconstruct_init)->threshold;
-    cout<<"threshold(procRecord):"<<threshold<<endl;
+    /*double threshold = (*reconstruct_init)->threshold;
+    //cout<<"threshold(procRecord):"<<threshold<<endl;
     if (threshold == -999.0)
     {
         cout<<"(*reconstruct_init)->nSgms:"<<(*reconstruct_init)->nSgms<<endl;
-        cout<<"(*reconstruct_init)->library_collection->nsDerSG:"<<(*reconstruct_init)->library_collection->nsDerSG<<endl;
-        cout<<"(*reconstruct_init)->library_collection->nsDerMN:"<<(*reconstruct_init)->library_collection->nsDerMN<<endl;
-        threshold = (*reconstruct_init)->nSgms*(*reconstruct_init)->library_collection->nsDerSG+(*reconstruct_init)->library_collection->nsDerMN;
+        cout<<"(*reconstruct_init)->library_collection->baseline:"<<(*reconstruct_init)->library_collection->baseline<<endl;
+        cout<<"(*reconstruct_init)->library_collection->sigma:"<<(*reconstruct_init)->library_collection->sigma<<endl;
+        threshold = (*reconstruct_init)->nSgms*(*reconstruct_init)->library_collection->sigma;
     }
-
-    cout<<"threshold(procRecord1):"<<threshold<<endl;
+    //cout<<"threshold(procRecord1):"<<threshold<<endl;*/
     
     double stopCriteriaMKC = 1.0;	// Used in medianKappaClipping
     // Given in %
@@ -2149,24 +2170,24 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
     }
     
     // Differentiate after filtering
-    for (int kkk=3490;kkk<3800;kkk++)
-        cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;
-    if (differentiate (&record, record->size))
+    //for (int kkk=3490;kkk<3800;kkk++)
+    //    cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;
+    /*if (differentiate (&record, record->size))
     {
         message = "Cannot run routine differentiate for differentiating after filtering";
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
-    gsl_vector_memcpy(recordDERIVATIVE,record);
+    gsl_vector_memcpy(recordDERIVATIVE,record);*/
 
     // Smooth derivative
-    /*if (smoothDerivative (&record, 4))
+    if (smoothDerivative (&record, 4))
     {
      	message = "Cannot run routine smoothDerivative";
      	EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
-    gsl_vector_memcpy(recordDERIVATIVE,record);*/
-    /*for (int kkk=3490;kkk<3700;kkk++)
-        cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;*/
+    gsl_vector_memcpy(recordDERIVATIVE,record);
+    //for (int kkk=3490;kkk<3700;kkk++)
+    //    cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;
     
     //It is not necessary to check the allocation because the allocation of 'recordDERIVATIVE' has been checked previously
     gsl_vector *recordDERIVATIVEOriginal = gsl_vector_alloc(recordDERIVATIVE->size);   // To be used in 'writeTestInfo'
@@ -2192,16 +2213,14 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
             }
             else 
             {
-                cout<<"threshold before InitialTriggering, procRecord2_): "<<threshold<<endl;
                 if (InitialTriggering (recordDERIVATIVE, nSgms,
                     scaleFactor, samprate, stopCriteriaMKC, kappaMKC,
                     &triggerCondition, &tstartFirstEvent, &flagTruncated,
-                    &threshold))
+                    threshold))
                 {
                     message = "Cannot run routine InitialTriggering";
                     EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                 }
-                cout<<"threshold (after InitialTriggering, procRecord3): "<<threshold<<endl;
                 
                 if (strcmp((*reconstruct_init)->detectionMode,"STC") == 0)
                 {
@@ -2229,7 +2248,7 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
         else if ((*reconstruct_init)->opmode == 0)	// In CALIBRATION mode
         {
             cout<<"threshold(opmode=0,procRecord4):"<<threshold<<endl;
-            if (findPulsesCAL (recordNOTFILTERED, recordDERIVATIVE, &tstartgsl, &qualitygsl, &pulseHeightsgsl, &maxDERgsl, &numPulses, &threshold, scaleFactor, samprate, samplesUp, nSgms, Lb, Lrs, (*reconstruct_init),stopCriteriaMKC, kappaMKC))
+            if (findPulsesCAL (recordNOTFILTERED, recordDERIVATIVE, &tstartgsl, &qualitygsl, &pulseHeightsgsl, &maxDERgsl, &numPulses, threshold, scaleFactor, samprate, samplesUp, nSgms, Lb, Lrs, (*reconstruct_init),stopCriteriaMKC, kappaMKC))
             {
                 message = "Cannot run routine findPulsesCAL";
                 EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
@@ -4120,15 +4139,9 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
             EP_PRINT_ERROR(message,status);return(EPFAIL);
         }
 
-        if (fits_write_key(*inLibObject,TDOUBLE,"NSDERMN",&(*reconstruct_init)->noise_spectrum->nsDerMN,NULL,&status))
+        if (fits_write_key(*inLibObject,TDOUBLE,"NOISESTD",&(*reconstruct_init)->noise_spectrum->noiseStd,NULL,&status))
         {
-            message = "Cannot write keyword NSDERMN in library";
-            EP_PRINT_ERROR(message,status);return(EPFAIL);
-        }
-
-        if (fits_write_key(*inLibObject,TDOUBLE,"NSDERSGM",&(*reconstruct_init)->noise_spectrum->nsDerSG,NULL,&status))
-        {
-            message = "Cannot write keyword NSDERSGM in library";
+            message = "Cannot write keyword NOISESTD in library";
             EP_PRINT_ERROR(message,status);return(EPFAIL);
         }
         
