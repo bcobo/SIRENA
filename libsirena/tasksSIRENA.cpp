@@ -2145,6 +2145,12 @@ int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, do
     }
     gsl_vector_memcpy(recordDERIVATIVE,record);*/
 
+    for (int kkk=0;kkk<10;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;
+    for (int kkk=1490;kkk<1510;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;
+    for (int kkk=12690;kkk<12699;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;
     // Smooth derivative
     if (smoothDerivative (&record, 4))
     {
@@ -10389,6 +10395,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
     log_debug("grade2 %d", grade2);
     
     gsl_vector *gradelim;
+    cout<<"reconstruct_init->grading->ngrades: "<<reconstruct_init->grading->ngrades<<endl;
     if ((gradelim = gsl_vector_alloc(reconstruct_init->grading->ngrades)) == 0)
     {
         sprintf(valERROR,"%d",__LINE__-2);
@@ -10485,6 +10492,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
     }
     else if (strcmp(reconstruct_init->OFStrategy,"BYGRADE") == 0)
     {
+        cout<<"Antes"<<endl;
         *pulseGrade = 0;
         *OFlength = 0;
         nopower2 = 0;
@@ -10501,18 +10509,25 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
             //                |                                                                   |
             // OFlength-pB <= tstart_(i+1)-tstart_(i)                             tstart_(i+1)-tstart_(i) = grade1-pBmax
             //                                      OFLength-pB <= grade1-pBmax
+            cout<<"i="<<i<<endl;
             pB = gsl_matrix_get(reconstruct_init->grading->gradeData,i,2);
             pBmax = gsl_matrix_get(reconstruct_init->grading->gradeData,0,2);
+            cout<<"Paso1"<<endl;
             if ((grade1 >= gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)) && (tstart > pB) && (gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)-gsl_matrix_get(reconstruct_init->grading->gradeData,i,2) <= grade1-pBmax))
             {
+                cout<<"Paso2"<<endl;
                 *pulseGrade = i+1;
+                cout<<"*pulseGrade: "<<*pulseGrade<<endl;
 
                 if (log2(gsl_matrix_get(reconstruct_init->grading->gradeData,i,1))-(int)log2(gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)) != 0)
                 {
+                    cout<<"Paso3"<<endl;
                     for (int j=i+1;j<reconstruct_init->grading->ngrades;j++)
                     {
+                        cout<<"j="<<j<<endl;
                         if (log2(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1))-(int)log2(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)) == 0)
                         {
+                            cout<<"Paso4"<<endl;
                             if (reconstruct_init->pulse_length < reconstruct_init->OFLength) // 0-padding
 		        	            *OFlength = gsl_matrix_get(reconstruct_init->grading->gradeData,j+1,1);
                             else
@@ -10521,9 +10536,11 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
                             break;
                         }
                     }
+                    cout<<"Paso5"<<endl;
                 }
                 else
                 {
+                    cout<<"PasoA"<<endl;
                     if (reconstruct_init->pulse_length < reconstruct_init->OFLength) // 0-padding
                     {
                         if (i==0)   *OFlength = gsl_matrix_get(reconstruct_init->grading->gradeData,i+1,1);
@@ -10532,12 +10549,15 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
                     else
                         *OFlength = gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
                     nopower2 = 1;
+                    cout<<"PasoB"<<endl;
                 }
                 break;
             }
         }
+        cout<<"Aqui"<<endl;
         if (reconstruct_init->pulse_length < reconstruct_init->OFLength) // 0-padding
             reconstruct_init->pulse_length = *OFlength;
+        cout<<"Despues"<<endl;
     }
     
     if ((strcmp(reconstruct_init->OFStrategy,"FIXED") != 0) && (nopower2 == 0))  // FREE or BYGRADE
@@ -10545,21 +10565,26 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
         //message = "No grade being a power of 2 in the XML file";
         //EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
+
     //if ((*pulseGrade == 0) && (OFlength_strategy != 2))     *pulseGrade = -2;
     /*if (*pulseGrade == 0)
     {
         *pulseGrade = -2;
         if (OFlength_strategy == 2) 	*OFlength = grade1; 
     }*/
-    
+    cout<<"Despues1"<<endl;
     /*if ((grade2 < gradelim_pre) || (grade1 == -1))	// Rejected: It is distinguished by the grade but currently its energy is also calculated (by using the info of the next pulse to establish the OFLength)
     {
         *pulseGrade = -1;	
     }*/
     //if (((grade2 < gradelim_pre) || (grade1 == -1)) && (OFlength_strategy != 2))    *pulseGrade = -1;
     //if (grade2 < gradelim_pre) *pulseGrade = -1;
+    cout<<"gradelim->size: "<<gradelim->size<<endl;
+    cout<<"*pulseGrade-1: "<<*pulseGrade-1<<endl;
     if (grade2 < gsl_vector_get(gradelim,*pulseGrade-1)) *pulseGrade = -1;
+    cout<<"Despues2"<<endl;
     gsl_vector_free(gradelim);
+    cout<<"Despues3"<<endl;
 
     log_debug("pulseGrading *pulseGrade %d", *pulseGrade);
     log_debug("pulseGrading *OFLength %d", *OFlength);

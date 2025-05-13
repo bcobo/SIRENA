@@ -2982,6 +2982,13 @@ int FindSecondariesSTC
     int limitMin, limitMax;
         
     int nodetectSecondaries = 1;
+    cout<<"adaptativethreshold: "<<adaptativethreshold<<endl;
+    for (int kkk=0;kkk<10;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(der,kkk)<<endl;
+    for (int kkk=1490;kkk<1510;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(der,kkk)<<endl;
+    for (int kkk=12690;kkk<12699;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(der,kkk)<<endl;
         	
     // It looks for &tstartgsl,&qualitygsl, &maxDERgsl,&samp1DERgsla pulse
     // If a pulse is found (foundPulse==true) => It looks for another pulse
