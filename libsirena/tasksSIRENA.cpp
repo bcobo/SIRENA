@@ -267,15 +267,17 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
     log_trace("Detecting...");
     // Process each record
     threshold = (*reconstruct_init)->threshold;
-    cout<<"threshold0:"<<threshold<<endl;
     if (threshold == -999.0)
     {
-        cout<<"(*reconstruct_init)->nSgms:"<<(*reconstruct_init)->nSgms<<endl;
-        cout<<"(*reconstruct_init)->library_collection->baseline:"<<(*reconstruct_init)->library_collection->baseline<<endl;
-        cout<<"(*reconstruct_init)->library_collection->sigma:"<<(*reconstruct_init)->library_collection->sigma<<endl;
-        threshold = (*reconstruct_init)->nSgms*(*reconstruct_init)->library_collection->sigma;
+        if ((*reconstruct_init)->opmode == 0)
+        {
+            threshold = (*reconstruct_init)->nSgms*(*reconstruct_init)->noise_spectrum->noiseStd;
+        }
+        else
+        {
+            threshold = (*reconstruct_init)->nSgms*(*reconstruct_init)->library_collection->sigma;
+        }
     }
-    cout<<"threshold1:"<<threshold<<endl;
     gsl_vector *phid = gsl_vector_alloc(record->phid_list->size);
     gsl_vector_set_all(phid,-999.0);
     for (int i=0;i<(int)(phid->size);i++)  gsl_vector_set(phid,i,record->phid_list->phid_array[i]);
@@ -2247,7 +2249,6 @@ int nrecord, double tstartPrevPulse)
         }
         else if ((*reconstruct_init)->opmode == 0)	// In CALIBRATION mode
         {
-            cout<<"threshold(opmode=0,procRecord4):"<<threshold<<endl;
             if (findPulsesCAL (recordNOTFILTERED, recordDERIVATIVE, &tstartgsl, &qualitygsl, &pulseHeightsgsl, &maxDERgsl, &numPulses, threshold, scaleFactor, samprate, samplesUp, nSgms, Lb, Lrs, (*reconstruct_init),stopCriteriaMKC, kappaMKC))
             {
                 message = "Cannot run routine findPulsesCAL";

@@ -628,8 +628,6 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     record_file = openexistingTesTriggerFile(inputFile,keywords,&status);
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
 
-    printf("%s %f %s","par.threshold (callSIRENA_Filei): ",par.threshold,"\n");
-
     initializeReconstructionSIRENA(reconstruct_init_sirena, par.RecordFile, record_file->fptr,
         par.LibraryFile, par.TesEventFile, par.flength_0pad, par.prebuff_0pad,
         par.threshold, par.scaleFactor, par.samplesUp, par.samplesDown, par.nSgms,

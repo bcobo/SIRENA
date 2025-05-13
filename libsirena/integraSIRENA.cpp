@@ -151,7 +151,6 @@
     string message = "";
 
     log_debug("Before fillReconstructInitSIRENA (integraSIRENA)");
-    cout<<"threshold (initializeReconstructionSIRENA): "<<threshold<<endl;
     // Fill in reconstruct_init
     *status = fillReconstructInitSIRENA(reconstruct_init,
                                        record_file, fptr, library_file, event_file,
@@ -2445,7 +2444,6 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
     }
 
     reconstruct_init->threshold  	= threshold;
-    cout<<"reconstruct_init->threshold (fillReconstructInitSIRENA): "<<reconstruct_init->threshold<<endl;
     reconstruct_init->scaleFactor  	= scaleFactor;
     reconstruct_init->samplesUp    	= samplesUp;
     if (opmode == 1)    reconstruct_init->samplesDown  	= samplesDown;
@@ -2623,6 +2621,7 @@ int loadNoise (ReconstructInitSIRENA* reconstruct_init)
              EP_EXIT_ERROR("The necessary noise file does not exist",EPFAIL);
          }
          reconstruct_init->noise_spectrum = getNoiseSpec(reconstruct_init, &status);
+
          if (status)
          {
              EP_EXIT_ERROR((char*)"Error in getNoiseSpec",EPFAIL);

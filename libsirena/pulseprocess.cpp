@@ -1418,23 +1418,13 @@ int find_model_energies(double energy, ReconstructInitSIRENA *reconstruct_init,g
 	if (energy < gsl_vector_get(reconstruct_init->library_collection->energies,0))
 	{
         gsl_vector_memcpy(modelFound_aux,reconstruct_init->library_collection->pulse_templates_B0[0].ptemplate);
-        cout<<"gsl_vector_max(modelFound_aux): "<<gsl_vector_max(modelFound_aux)<<endl;
-        cout<<"energy: "<<energy<<endl;
-        cout<<"gsl_vector_get(reconstruct_init->library_collection->energies,0): "<<gsl_vector_get(reconstruct_init->library_collection->energies,0)<<endl;
-        cout<<energy/gsl_vector_get(reconstruct_init->library_collection->energies,0)<<endl;
         gsl_vector_scale(modelFound_aux,energy/gsl_vector_get(reconstruct_init->library_collection->energies,0));
-        cout<<"gsl_vector_max(modelFound_aux): "<<gsl_vector_max(modelFound_aux)<<endl;
-	}
+    }
 	else if (energy > gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1))
 	{
         gsl_vector_memcpy(modelFound_aux,reconstruct_init->library_collection->pulse_templates_B0[nummodels-1].ptemplate);
-        cout<<"gsl_vector_max(modelFound_aux): "<<gsl_vector_max(modelFound_aux)<<endl;
-        cout<<"energy: "<<energy<<endl;
-        cout<<"gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1): "<<gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1)<<endl;
-        cout<<energy/gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1)<<endl;
         gsl_vector_scale(modelFound_aux,energy/gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1));
-        cout<<"gsl_vector_max(modelFound_aux): "<<gsl_vector_max(modelFound_aux)<<endl;
-	}
+    }
 	else
 	{
 		for (int i=0;i<nummodels-1;i++)
@@ -1910,9 +1900,9 @@ int findTstartCAL
 	bool findTstarts = true;
         if ((isNumber(reconstruct_init->tstartPulse1)) && (atoi(reconstruct_init->tstartPulse1) != 0)) findTstarts = false;
 	
-    cout<<"threshold (findTstartCAL): "<<adaptativethreshold<<endl;
+    /*cout<<"threshold (findTstartCAL): "<<adaptativethreshold<<endl;
     for (int kkk=3490;kkk<3700;kkk++)
-        cout<<kkk<<" "<<gsl_vector_get(der,kkk)<<endl;
+        cout<<kkk<<" "<<gsl_vector_get(der,kkk)<<endl;*/
 
 	if (findTstarts == true)
 	{
@@ -2979,9 +2969,9 @@ int FindSecondariesSTC
         
     int nodetectSecondaries = 1;
 
-    cout<<"adaptativethreshold: "<<adaptativethreshold<<endl;
+    /*cout<<"adaptativethreshold: "<<adaptativethreshold<<endl;
     for (int kkk=3490;kkk<3800;kkk++)
-        cout<<kkk<<" "<<gsl_vector_get(der,kkk)<<endl;
+        cout<<kkk<<" "<<gsl_vector_get(der,kkk)<<endl;*/
         	
     // It looks for &tstartgsl,&qualitygsl, &maxDERgsl,&samp1DERgsla pulse
     // If a pulse is found (foundPulse==true) => It looks for another pulse

@@ -32,6 +32,7 @@
 * - EventListSize: Default size of the event list per record
 * - clobber:Overwrite or not output files if exist (1/0)
 * - history: write program parameters into output file
+* - threshold: Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise)
 * - scaleFactor: Detection scale factor for initial filtering
 * - samplesUp: Number of consecutive samples up for threshold trespassing (only used with STC detection mode)
 * - samplesDown: Number of consecutive samples below the threshold to look for other pulse (only used with STC detection mode)
