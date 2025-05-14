@@ -2858,28 +2858,34 @@ int smoothDerivative (gsl_vector **invector, int N)
     else            // Even number
     {
         size_t n = (*invector)->size;
-
         int half = N / 2;
 
-        // Create filter to calculate the derivative: [-1,...,-1,1,...,1]
+        // Create filter: [-1, ..., -1, 1, ..., 1]
         std::vector<double> filter(N, 0.0);
         for (int i = 0; i < half; ++i) filter[i] = -1.0;
         for (int i = half; i < N; ++i) filter[i] = 1.0;
 
-        // Calculate the smooth derivative in the valid range
         gsl_vector *newvec = gsl_vector_alloc(n);
-        for (size_t i = half; i < n - half; ++i) {
+
+        // Calculate derivative from index half to (n - N + half)
+        size_t last_valid_index = n - N + half;
+        for (size_t i = half; i <= last_valid_index; ++i) {
             double sum = 0.0;
             for (int j = 0; j < N; ++j) {
                 sum += filter[j] * gsl_vector_get(*invector, i - half + j);
             }
-            gsl_vector_set(newvec, i, sum / N); // puedes quitar el divisor si no quieres normalizar
+            gsl_vector_set(newvec, i, sum / N);
         }
 
-        // 0's at the beginning and repeat the last value at the end
+        // Set 0s at the beginning
         for (int i = 0; i < half; ++i) {
             gsl_vector_set(newvec, i, 0.0);
-            gsl_vector_set(newvec, n - 1 - i, gsl_vector_get(newvec,n-half-1));
+        }
+
+        // Repeat the last valid derivative value for the remaining indices
+        double last_value = gsl_vector_get(newvec, last_valid_index);
+        for (size_t i = last_valid_index + 1; i < n; ++i) {
+            gsl_vector_set(newvec, i, last_value);
         }
 
         *invector = newvec;
