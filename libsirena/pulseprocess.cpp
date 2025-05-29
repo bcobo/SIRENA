@@ -1739,7 +1739,7 @@ int findPulsesCAL
 {
 	string message = "";
 
-	double thresholdmediankappa;		// Threshold to look for pulses in the first derivative
+	//double thresholdmediankappa;		// Threshold to look for pulses in the first derivative
 
 	gsl_vector_set_zero(*quality);
 	gsl_vector_set_zero(*pulseheight);	// Pulse height of the single pulses
@@ -1764,6 +1764,8 @@ int findPulsesCAL
     {
         cout<<i<<" "<<gsl_vector_get(vectorinDER,i)<<endl;
     }*/
+
+    //cout<<"threshold: "<<threshold<<endl;
         
     // Find pulses
 	//if (findTstartCAL (reconstruct_init->maxPulsesPerRecord, vectorinDER, thresholdmediankappa, samplesUp, reconstruct_init, nPulses, tstart, quality, maxDERgsl))
@@ -2848,14 +2850,13 @@ int find_model_samp1DERsNoReSCLD(double samp1DER, ReconstructInitSIRENA *reconst
 ******************************************************************************/
 int smoothDerivative (gsl_vector **invector, int N)
 {
-    if (N%2 != 0)   // Odd number
+    if (N % 2 != 0)   // Odd number
     {
-        string message = "";
-        message = "In the smoothDerivative function, N must be an even number)";
-        EP_PRINT_ERROR(message,EPFAIL);
-        message.clear();
+        string message = "In the smoothDerivative function, N must be an even number";
+        EP_PRINT_ERROR(message, EPFAIL);
+        return EPFAIL;
     }
-    else            // Even number
+    else    // Even number
     {
         size_t n = (*invector)->size;
         int half = N / 2;
@@ -2874,7 +2875,7 @@ int smoothDerivative (gsl_vector **invector, int N)
             for (int j = 0; j < N; ++j) {
                 sum += filter[j] * gsl_vector_get(*invector, i - half + j);
             }
-            gsl_vector_set(newvec, i, sum / N);
+            gsl_vector_set(newvec, i, sum);
         }
 
         // Set 0s at the beginning
@@ -2891,7 +2892,7 @@ int smoothDerivative (gsl_vector **invector, int N)
         *invector = newvec;
     }
 
-    return (EPOK);
+    return EPOK;
 }
 /*xxxx end of SECTION 16 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
@@ -2975,9 +2976,7 @@ int FindSecondariesSTC
         
     int nodetectSecondaries = 1;
 
-    /*cout<<"adaptativethreshold: "<<adaptativethreshold<<endl;
-    for (int kkk=3490;kkk<3800;kkk++)
-        cout<<kkk<<" "<<gsl_vector_get(der,kkk)<<endl;*/
+    //cout<<"adaptativethreshold: "<<adaptativethreshold<<endl;
         	
     // It looks for &tstartgsl,&qualitygsl, &maxDERgsl,&samp1DERgsla pulse
     // If a pulse is found (foundPulse==true) => It looks for another pulse

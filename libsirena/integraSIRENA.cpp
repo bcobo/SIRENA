@@ -309,14 +309,31 @@
      
      log_trace("pulsesAll: %i",(*pulsesAll)->ndetpulses);
      //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
-     //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
+     //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;*/
+
+     int num0s = 0;
+     for (int i=0;i<pulsesInRecord->pulses_detected->phid_vector->size;i++)
+         if (gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i) == 0) num0s = num0s+1;
+     if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size-num0s)
+     {
+        //(*pulsesAll)->nfakepulses = pulsesInRecord->ndetpulses-(pulsesInRecord->pulses_detected->phid_vector->size-num0s);
+        pulsesInRecord->nfakepulses = pulsesInRecord->ndetpulses-(pulsesInRecord->pulses_detected->phid_vector->size-num0s);
+        string message = "";
+        char str_ndetpulses[125];  snprintf(str_ndetpulses,125,"%d",pulsesInRecord->ndetpulses);
+        char str_nrecord[125];  snprintf(str_nrecord,125,"%d",nRecord);
+        char str_ph_id_size[125];  snprintf(str_ph_id_size,125,"%d",event_list->ph_ids_array_size2-num0s);
+        message = "Detected pulses (" + string(str_ndetpulses) + ") greater than photons (" + string(str_ph_id_size) + ") in record " + string(str_nrecord);
+        EP_PRINT_ERROR(message,-999);	// Only a warning
+     }
+     //cout<<"nfakepulses = "<<pulsesInRecord->nfakepulses<<endl;
      
-     // Free & Fill TesEventListSIRENA structure
+     /*// Free & Fill TesEventListSIRENA structure
      *status = fillEventList (event_list, *pulsesAll, pulsesInRecord, reconstruct_init, record, lastRecord);*/
 
      if ((pulsesInRecord->ndetpulses != 0) && ((*pulsesAll)->ndetpulses == 0))
      {
          (*pulsesAll)->ndetpulses = pulsesInRecord->ndetpulses;
+         (*pulsesAll)->nfakepulses = pulsesInRecord->nfakepulses;
          if((*pulsesAll)->pulses_detected != 0 && (*pulsesAll)->size < pulsesInRecord->ndetpulses){
              delete [] (*pulsesAll)->pulses_detected; (*pulsesAll)->pulses_detected = 0;
              (*pulsesAll)->size = resize_array((*pulsesAll)->size, (*pulsesAll)->ndetpulses);
@@ -340,6 +357,7 @@
          pulsesAllAux->ndetpulses = (*pulsesAll)->ndetpulses;
 
          (*pulsesAll)->ndetpulses = (*pulsesAll)->ndetpulses + pulsesInRecord->ndetpulses;
+         (*pulsesAll)->nfakepulses = (*pulsesAll)->nfakepulses + pulsesInRecord->nfakepulses;
 
          if ((*pulsesAll)->pulses_detected != NULL && (*pulsesAll)->size < (*pulsesAll)->ndetpulses)
          {
@@ -373,10 +391,6 @@
          }
      }
 
-     log_trace("pulsesAll: %i",(*pulsesAll)->ndetpulses);
-     //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
-     //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
-
      //if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size)
      //	EP_EXIT_ERROR("Number of detected pulses in the record greater than the PH_ID column dimension",EPFAIL);
 
@@ -394,15 +408,6 @@
      event_list->ph_ids_array_size1 = event_list->index;
      if (pulsesInRecord->ndetpulses != 0)
      {
-        if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size)
-        {
-            string message = "";
-            char str_ndetpulses[125];  snprintf(str_ndetpulses,125,"%d",pulsesInRecord->ndetpulses);
-            char str_nrecord[125];  snprintf(str_nrecord,125,"%d",nRecord);
-            char str_ph_id_size[125];  snprintf(str_ph_id_size,125,"%d",event_list->ph_ids_array_size2);
-            message = "Number of detected pulses (" + string(str_ndetpulses) + ") greater than the PH_ID column dimension (" + string(str_ph_id_size) + ") in record " + string(str_nrecord);
-            EP_PRINT_ERROR(message,-999);	// Only a warning
-        }
         event_list->ph_ids_array = new long*[event_list->index];
         for (int i = 0; i < event_list->index; i++)
         {
@@ -414,6 +419,12 @@
      event_list->tstarts = new double[event_list->index];
      event_list->risetimes = new double[event_list->index];
      event_list->falltimes = new double[event_list->index];
+
+
+     log_trace("pulsesDetected: %i",(*pulsesAll)->ndetpulses);
+     log_trace("pulsesFake: %i",(*pulsesAll)->nfakepulses);
+     //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
+     //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
 
      if (strcmp(reconstruct_init->EnergyMethod,"PCA") != 0)     // Different from PCA
      {
@@ -641,6 +652,7 @@
      
      // Initialize values for SIRENA
      PulsesColl->ndetpulses=0;
+     PulsesColl->nfakepulses=0;
      PulsesColl->size = POOL_SIZE;
 
      PulsesColl->pulses_detected->Tstart = -999;
@@ -794,7 +806,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          EP_PRINT_ERROR("Cannot read NOISESTD keyword from HDU LIBRARY in library file => Check the noise file",-999);
          *status = 0;
      }
-     
+
      // Get number of templates (rows)
      long ntemplates;
      if (fits_get_num_rows(fptr,&ntemplates, status))
@@ -2250,7 +2262,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              EP_PRINT_ERROR("Cannot read FREQ colum in noise file",*status);
              *status=EPFAIL; return(noise_spectrum);
          }
-         
+
          if (((reconstruct_init->opmode == 0) && (reconstruct_init->addOFWN == 1))
              || ((reconstruct_init->opmode == 1) && ((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RFITTED") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RDER") == 0)) && (strcmp(reconstruct_init->OFNoise,"WEIGHTN") == 0)))
          {
@@ -2614,7 +2626,7 @@ int loadNoise (ReconstructInitSIRENA* reconstruct_init)
          }
          if ((reconstruct_init->opmode == 1) && (exists != 1) && (baselineReadFromLibrary == false))
          {
-             EP_EXIT_ERROR("B0 chosen and NOISEBSLN keyword not in the library file => Noise file is necessary but it does not exist",EPFAIL);
+             EP_EXIT_ERROR("B0 chosen and NOISEBSL keyword not in the library file => Noise file is necessary but it does not exist",EPFAIL);
          }
          if ((exists != 1) && (baselineReadFromLibrary == true))
          {
@@ -3039,6 +3051,7 @@ int fillPulsesAll (PulsesCollection** pulsesAll, PulsesCollection* pulsesInRecor
     if ((pulsesInRecord->ndetpulses != 0) && ((*pulsesAll)->ndetpulses == 0))
     {
         (*pulsesAll)->ndetpulses = pulsesInRecord->ndetpulses;
+        (*pulsesAll)->nfakepulses = pulsesInRecord->nfakepulses;
         if((*pulsesAll)->pulses_detected != 0 && (*pulsesAll)->size < pulsesInRecord->ndetpulses)
         {
             delete [] (*pulsesAll)->pulses_detected; (*pulsesAll)->pulses_detected = 0;
@@ -3054,8 +3067,10 @@ int fillPulsesAll (PulsesCollection** pulsesAll, PulsesCollection* pulsesInRecor
     else
     {
         pulsesAllAux->ndetpulses = (*pulsesAll)->ndetpulses;
+        pulsesAllAux->nfakepulses = (*pulsesAll)->nfakepulses;
 
         (*pulsesAll)->ndetpulses = (*pulsesAll)->ndetpulses + pulsesInRecord->ndetpulses;
+        (*pulsesAll)->nfakepulses = (*pulsesAll)->nfakepulses + pulsesInRecord->nfakepulses;
 
         if ((*pulsesAll)->pulses_detected != NULL && (*pulsesAll)->size < (*pulsesAll)->ndetpulses)
         {
@@ -4683,6 +4698,7 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  
  PulsesCollection::PulsesCollection():
  ndetpulses(0),
+ nfakepulses(0),
  size(0),
  pulses_detected(0)
  {
@@ -4691,6 +4707,7 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  
  PulsesCollection::PulsesCollection(const PulsesCollection& other):
  ndetpulses(other.ndetpulses),
+ nfakepulses(other.nfakepulses),
  size(other.size),
  pulses_detected(0)
  {
@@ -4706,6 +4723,7 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  {
      if(this != &other){
          ndetpulses = other.ndetpulses;
+         nfakepulses = other.nfakepulses;
          size = other.size;
          if (pulses_detected) {
              delete [] pulses_detected; pulses_detected = 0;

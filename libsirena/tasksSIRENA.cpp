@@ -275,6 +275,8 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
         }
         else
         {
+            //cout<<"(*reconstruct_init)->nSgms: "<<(*reconstruct_init)->nSgms<<endl;
+            //cout<<"(*reconstruct_init)->library_collection->sigma: "<<(*reconstruct_init)->library_collection->sigma<<endl;
             threshold = (*reconstruct_init)->nSgms*(*reconstruct_init)->library_collection->sigma;
         }
     }
@@ -2081,18 +2083,8 @@ int nrecord, double tstartPrevPulse)
     
     // Declare and initialize variables
     int numPulses = 0;
-    //double threshold = 0.0;
-    /*double threshold = (*reconstruct_init)->threshold;
     //cout<<"threshold(procRecord):"<<threshold<<endl;
-    if (threshold == -999.0)
-    {
-        cout<<"(*reconstruct_init)->nSgms:"<<(*reconstruct_init)->nSgms<<endl;
-        cout<<"(*reconstruct_init)->library_collection->baseline:"<<(*reconstruct_init)->library_collection->baseline<<endl;
-        cout<<"(*reconstruct_init)->library_collection->sigma:"<<(*reconstruct_init)->library_collection->sigma<<endl;
-        threshold = (*reconstruct_init)->nSgms*(*reconstruct_init)->library_collection->sigma;
-    }
-    //cout<<"threshold(procRecord1):"<<threshold<<endl;*/
-    
+
     double stopCriteriaMKC = 1.0;	// Used in medianKappaClipping
     // Given in %
     double kappaMKC = 3.0;		// Used in medianKappaClipping
@@ -2188,8 +2180,9 @@ int nrecord, double tstartPrevPulse)
      	EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
     gsl_vector_memcpy(recordDERIVATIVE,record);
-    //for (int kkk=3490;kkk<3700;kkk++)
-    //    cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;
+    /*cout<<"______Derivative:"<<endl;
+    for (int kkk=3490;kkk<6070;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;*/
     
     //It is not necessary to check the allocation because the allocation of 'recordDERIVATIVE' has been checked previously
     gsl_vector *recordDERIVATIVEOriginal = gsl_vector_alloc(recordDERIVATIVE->size);   // To be used in 'writeTestInfo'
@@ -6800,7 +6793,7 @@ int convertI2R (char* EnergyMethod,double Ibias, double Imin, double Imax, doubl
 
 
 /***** SECTION A21 ************************************************************
- * obtainRiseFallTimes: This funcion provides an estimation of the rise and fall time of the detected pulses in a record.
+ * obtainRiseFallTimes: This function provides an estimation of the rise and fall time of the detected pulses in a record.
  * 
  * Steps:
  * - Find the maximum of each pulse: amax
@@ -6859,14 +6852,14 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
         indexup = -999;
         
         abase = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
-        
+
         temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i),gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i));
         amax = gsl_vector_max(&temp.vector);
         indexmax = gsl_vector_max_index(&temp.vector);
-        
+
         thresholdlow = abase+(amax-abase)*low/100.0;
         thresholdup = abase+(amax-abase)*up/100.0;
-        
+
         if (abase < amax)
         {
             for (int k=0;k<(int)((&temp.vector)->size);k++)
@@ -6879,17 +6872,17 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
                     break;
                 }
             }
-            
+
             if (providingRiseTime == true)
             {
                 tlow = indexlow/samprate;
                 tup = indexup/samprate;
                 alow = gsl_vector_get(&temp.vector,indexlow);
                 aup = gsl_vector_get(&temp.vector,indexup);
-                
+
                 m = (aup-alow)/(tup-tlow);
                 b = aup-m*tup;
-                
+
                 t0 = (abase-b)/m;
                 tmax = (amax-b)/m;
 
@@ -7196,7 +7189,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 message = "Cannot run routine pulseGrading";
                 EP_EXIT_ERROR(message,EPFAIL);
             }
-            if ((pulseGrade ==0) && (resize_mf == 0)) // Less than worst grading
+            if ((pulseGrade == 0) && (resize_mf == 0)) // Less than worst grading
             {
 
                 message = "Worse than the worst grading => SIGNAL=-999 & GRADE1=0 for pulse i=" + boost::lexical_cast<std::string>(i+1) + " in record " + boost::lexical_cast<std::string>(nrecord);
@@ -7760,7 +7753,6 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                             // Template correction
                             if ((!isNumber((*reconstruct_init)->tstartPulse1)) && (strcmp((*reconstruct_init)->FilterDomain,"T") == 0))
                             {
-                                cout<<"BEA: Template correction"<<endl;
                                 double xmax;
                                 double tstartPulse1_seconds = gsl_vector_get((*reconstruct_init)->tstartPulse1_i,pulsesAll->ndetpulses);
                                 xmax = ceil((tstartPulse1_seconds-tstartRecord)/record->delta_t)-(tstartPulse1_seconds-tstartRecord)/record->delta_t;

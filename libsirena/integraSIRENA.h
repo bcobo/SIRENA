@@ -450,6 +450,9 @@ typedef struct PulsesCollection
 {
   	/** Number of detected pulses in the structure. **/
   	int ndetpulses;
+
+	/** Number of invented pulses in the structure. **/
+	int nfakepulses;
         
   	/** Current size of the array **/
   	int size;

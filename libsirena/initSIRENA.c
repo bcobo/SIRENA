@@ -731,11 +731,18 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
             strcpy(reconstruct_init_sirena->EnergyMethod,par.EnergyMethod);
         }
 
-        printf("%s %d %s","** nrecord = ",nrecord,"\n");
+        //printf("%s %d %s","** nrecord = ",nrecord,"\n");
         reconstructRecordSIRENA(record,*trig_reclength, event_list,reconstruct_init_sirena,
             lastRecord, startRecordGroup, &pulsesAll, &status);
         CHECK_STATUS_BREAK(status);
 
+        if (lastRecord == 1)
+        {
+            fits_write_key(outfile->fptr, TINT, "EVENTS", &(pulsesAll->ndetpulses), "Number of detected pulses (including fakes)", &status);
+            CHECK_STATUS_BREAK(status);
+            fits_write_key(outfile->fptr, TINT, "EVENTSFK", &(pulsesAll->nfakepulses), "Number of invented pulses", &status);
+            CHECK_STATUS_BREAK(status);
+        }
         if ((strcmp(par.EnergyMethod,"PCA") != 0) || ((strcmp(par.EnergyMethod,"PCA") == 0) && lastRecord == 1))
         {
             // In THREADING mode, saveEventListToFileSIRENA is not called until finishing with calculus
@@ -767,6 +774,8 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
 
     if (pulsesAll->ndetpulses == 0)
         printf("%s","WARNING: no pulses have been detected\n");
+    if (pulsesAll->nfakepulses != 0)
+        printf("%s","WARNING: some pulses have been invented\n");
 
     // Copy trigger keywords to event file
     //copyTriggerKeywords(record_file->fptr,outfile->fptr,&status);
