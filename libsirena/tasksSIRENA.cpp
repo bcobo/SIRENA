@@ -2180,9 +2180,9 @@ int nrecord, double tstartPrevPulse)
      	EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
     gsl_vector_memcpy(recordDERIVATIVE,record);
-    /*cout<<"______Derivative:"<<endl;
-    for (int kkk=3490;kkk<6070;kkk++)
-        cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;*/
+    cout<<"______Derivative:"<<endl;
+    for (int kkk=3490;kkk<4400;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;
     
     //It is not necessary to check the allocation because the allocation of 'recordDERIVATIVE' has been checked previously
     gsl_vector *recordDERIVATIVEOriginal = gsl_vector_alloc(recordDERIVATIVE->size);   // To be used in 'writeTestInfo'

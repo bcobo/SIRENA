@@ -313,7 +313,10 @@
 
      int num0s = 0;
      for (int i=0;i<pulsesInRecord->pulses_detected->phid_vector->size;i++)
+     {
          if (gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i) == 0) num0s = num0s+1;
+         cout<<"ph_id_i: "<<gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i)<<endl;
+     }
      if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size-num0s)
      {
         //(*pulsesAll)->nfakepulses = pulsesInRecord->ndetpulses-(pulsesInRecord->pulses_detected->phid_vector->size-num0s);

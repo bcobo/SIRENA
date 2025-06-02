@@ -2976,7 +2976,7 @@ int FindSecondariesSTC
         
     int nodetectSecondaries = 1;
 
-    //cout<<"adaptativethreshold: "<<adaptativethreshold<<endl;
+    cout<<"adaptativethreshold: "<<adaptativethreshold<<endl;
         	
     // It looks for &tstartgsl,&qualitygsl, &maxDERgsl,&samp1DERgsla pulse
     // If a pulse is found (foundPulse==true) => It looks for another pulse
