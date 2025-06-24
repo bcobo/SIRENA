@@ -315,7 +315,7 @@
      for (int i=0;i<pulsesInRecord->pulses_detected->phid_vector->size;i++)
      {
          if (gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i) == 0) num0s = num0s+1;
-         cout<<"ph_id_i: "<<gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i)<<endl;
+         //cout<<"ph_id_i: "<<gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i)<<endl;
      }
      if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size-num0s)
      {
@@ -422,7 +422,6 @@
      event_list->tstarts = new double[event_list->index];
      event_list->risetimes = new double[event_list->index];
      event_list->falltimes = new double[event_list->index];
-
 
      log_trace("pulsesDetected: %i",(*pulsesAll)->ndetpulses);
      log_trace("pulsesFake: %i",(*pulsesAll)->nfakepulses);
