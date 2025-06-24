@@ -731,7 +731,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
             strcpy(reconstruct_init_sirena->EnergyMethod,par.EnergyMethod);
         }
 
-        printf("%s %d %s","** nrecord = ",nrecord,"\n");
+        //printf("%s %d %s","** nrecord = ",nrecord,"\n");
         reconstructRecordSIRENA(record,*trig_reclength, event_list,reconstruct_init_sirena,
             lastRecord, startRecordGroup, &pulsesAll, &status);
         CHECK_STATUS_BREAK(status);
@@ -1373,9 +1373,18 @@ int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRe
             int sizeToWrite;
 
             int sizeLastRow = 0;
+            //printf("%s %d %s","record->trigger_size:",record->trigger_size,"\n");
+            //printf("%s %d %s","record->extend:",record->extend,"\n");
             div_t nrowsTogether_div_t = div(record->trigger_size+record->extend,record->trigger_size);
-            nrowsTogether = nrowsTogether_div_t.quot +1;
+
+
             sizeLastRow = nrowsTogether_div_t.rem;
+            if (sizeLastRow == 0)
+                nrowsTogether = nrowsTogether_div_t.quot;
+            else
+                nrowsTogether = nrowsTogether_div_t.quot+1;
+            //printf("%s %d %s","nrowsTogether: ",nrowsTogether,"\n");
+            //printf("%s %d %s","sizeLastRow: ",sizeLastRow,"\n");
             resizeTesRecord(record,(unsigned long) record->extend + record->trigger_size,status);
             double *singleRecord = NULL;
             int rowToRead = file->row;
