@@ -81,10 +81,13 @@
   * - event_file: File name of output events (with reconstructed energy)
   * - flength_0pad: 0padding filter length
   * - prebuff_0pad: preBuffer used when 0-padding
+  * - threshold: Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise)
   * - scaleFactor: Detection scale factor for initial filtering
   * - samplesUp: Number of samples for threshold trespassing
   * - samplesDown: Number of samples below the threshold to look for other pulse
-  * - nSgms: Number of standard deviations in the kappa-clipping process for threshold estimation
+  * - nSgms: Number of quiescent-signal standard deviations to establish the threshold (if 'threshold'=-999)
+  * - windowSize: Window size used to compute the averaged derivative
+  * - offset: Window offset
   * - detectSP: Detect secondary pulses or not
   * - opmode: Calibration run (0) or energy reconstruction run (1)
   * - detectionMode: Adjusted Derivative (AD) or Single Threshold Crossing (STC)
@@ -130,6 +133,7 @@
  extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                                 char* const record_file, fitsfile *fptr, char* const library_file, char* const event_file,
                                                 int flength_0pad, int prebuff_0pad,
+                                                double threshold, int windowSize, int offset,
                                                 double scaleFactor, int samplesUp, int samplesDown, double nSgms, int detectSP, int opmode, char *detectionMode,
                                                 double LrsT, double LbT,
                                                 char* const noise_file,
@@ -153,6 +157,7 @@
     *status = fillReconstructInitSIRENA(reconstruct_init,
                                        record_file, fptr, library_file, event_file,
                                        flength_0pad, prebuff_0pad,
+                                       threshold, windowSize, offset,
                                        scaleFactor, samplesUp, samplesDown, nSgms, detectSP, opmode, detectionMode,
                                        LrsT, LbT,
                                        noise_file,
@@ -306,14 +311,36 @@
      
      log_trace("pulsesAll: %i",(*pulsesAll)->ndetpulses);
      //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
-     //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
-     
-     // Free & Fill TesEventListSIRENA structure
+     //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;*/
+
+     if (pulsesInRecord->ndetpulses > 0)
+     {
+        int num0s = 0;
+        for (int i=0;i<pulsesInRecord->pulses_detected->phid_vector->size;i++)
+        {
+            if (gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i) == 0) num0s = num0s+1;
+            //cout<<"ph_id_i: "<<gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i)<<endl;
+        }
+        if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size-num0s)
+        {
+            //(*pulsesAll)->nfakepulses = pulsesInRecord->ndetpulses-(pulsesInRecord->pulses_detected->phid_vector->size-num0s);
+            pulsesInRecord->nfakepulses = pulsesInRecord->ndetpulses-(pulsesInRecord->pulses_detected->phid_vector->size-num0s);
+            string message = "";
+            char str_ndetpulses[125];  snprintf(str_ndetpulses,125,"%d",pulsesInRecord->ndetpulses);
+            char str_nrecord[125];  snprintf(str_nrecord,125,"%d",nRecord);
+            char str_ph_id_size[125];  snprintf(str_ph_id_size,125,"%d",event_list->ph_ids_array_size2-num0s);
+            message = "Detected pulses (" + string(str_ndetpulses) + ") greater than photons (" + string(str_ph_id_size) + ") in record " + string(str_nrecord);
+            EP_PRINT_ERROR(message,-999);	// Only a warning
+        }
+     }
+
+     /*// Free & Fill TesEventListSIRENA structure
      *status = fillEventList (event_list, *pulsesAll, pulsesInRecord, reconstruct_init, record, lastRecord);*/
 
      if ((pulsesInRecord->ndetpulses != 0) && ((*pulsesAll)->ndetpulses == 0))
      {
          (*pulsesAll)->ndetpulses = pulsesInRecord->ndetpulses;
+         (*pulsesAll)->nfakepulses = pulsesInRecord->nfakepulses;
          if((*pulsesAll)->pulses_detected != 0 && (*pulsesAll)->size < pulsesInRecord->ndetpulses){
              delete [] (*pulsesAll)->pulses_detected; (*pulsesAll)->pulses_detected = 0;
              (*pulsesAll)->size = resize_array((*pulsesAll)->size, (*pulsesAll)->ndetpulses);
@@ -337,6 +364,7 @@
          pulsesAllAux->ndetpulses = (*pulsesAll)->ndetpulses;
 
          (*pulsesAll)->ndetpulses = (*pulsesAll)->ndetpulses + pulsesInRecord->ndetpulses;
+         (*pulsesAll)->nfakepulses = (*pulsesAll)->nfakepulses + pulsesInRecord->nfakepulses;
 
          if ((*pulsesAll)->pulses_detected != NULL && (*pulsesAll)->size < (*pulsesAll)->ndetpulses)
          {
@@ -370,10 +398,6 @@
          }
      }
 
-     log_trace("pulsesAll: %i",(*pulsesAll)->ndetpulses);
-     //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
-     //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
-
      //if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size)
      //	EP_EXIT_ERROR("Number of detected pulses in the record greater than the PH_ID column dimension",EPFAIL);
 
@@ -391,15 +415,6 @@
      event_list->ph_ids_array_size1 = event_list->index;
      if (pulsesInRecord->ndetpulses != 0)
      {
-        if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size)
-        {
-            string message = "";
-            char str_ndetpulses[125];  snprintf(str_ndetpulses,125,"%d",pulsesInRecord->ndetpulses);
-            char str_nrecord[125];  snprintf(str_nrecord,125,"%d",nRecord);
-            char str_ph_id_size[125];  snprintf(str_ph_id_size,125,"%d",event_list->ph_ids_array_size2);
-            message = "Number of detected pulses (" + string(str_ndetpulses) + ") greater than the PH_ID column dimension (" + string(str_ph_id_size) + ") in record " + string(str_nrecord);
-            EP_PRINT_ERROR(message,-999);	// Only a warning
-        }
         event_list->ph_ids_array = new long*[event_list->index];
         for (int i = 0; i < event_list->index; i++)
         {
@@ -411,6 +426,11 @@
      event_list->tstarts = new double[event_list->index];
      event_list->risetimes = new double[event_list->index];
      event_list->falltimes = new double[event_list->index];
+
+     log_trace("pulsesDetected: %i",(*pulsesAll)->ndetpulses);
+     log_trace("pulsesFake: %i",(*pulsesAll)->nfakepulses);
+     //cout<<"pulsesAll: "<<(*pulsesAll)->ndetpulses<<endl;
+     //cout<<"pulsesInRecord: "<<pulsesInRecord->ndetpulses<<endl;
 
      if (strcmp(reconstruct_init->EnergyMethod,"PCA") != 0)     // Different from PCA
      {
@@ -638,6 +658,7 @@
      
      // Initialize values for SIRENA
      PulsesColl->ndetpulses=0;
+     PulsesColl->nfakepulses=0;
      PulsesColl->size = POOL_SIZE;
 
      PulsesColl->pulses_detected->Tstart = -999;
@@ -780,12 +801,18 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
      }
      
      library_collection->baseline = -999.0;
-     if (fits_read_key(fptr,TDOUBLE,"BASELINE", &library_collection->baseline,NULL,status))
+     if (fits_read_key(fptr,TDOUBLE,"NOISEBSL", &library_collection->baseline,NULL,status))
      {
-         EP_PRINT_ERROR("Cannot read BASELINE keyword from HDU LIBRARY in library file => Check the noise file",-999);
+         EP_PRINT_ERROR("Cannot read NOISEBSL keyword from HDU LIBRARY in library file => Check the noise file",-999);
          *status = 0;
      }
-     
+     library_collection->sigma = -999.0;
+     if (fits_read_key(fptr,TDOUBLE,"NOISESTD", &library_collection->sigma,NULL,status))
+     {
+         EP_PRINT_ERROR("Cannot read NOISESTD keyword from HDU LIBRARY in library file => Check the noise file",-999);
+         *status = 0;
+     }
+
      // Get number of templates (rows)
      long ntemplates;
      if (fits_get_num_rows(fptr,&ntemplates, status))
@@ -2161,11 +2188,11 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
          ((reconstruct_init->opmode == 1) && (strcmp(reconstruct_init->FilterMethod,"B0") == 0) && ((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RFITTED") == 0)|| (strcmp(reconstruct_init->EnergyMethod,"I2RDER") == 0)))
          || ((reconstruct_init->opmode == 1) && (strcmp(reconstruct_init->EnergyMethod,"INTCOVAR") == 0)))
      {
-         strcpy(keyname,"BASELINE");
+         strcpy(keyname,"NOISEBSL");
          
          if (fits_read_key(fptr,TDOUBLE,keyname, &noise_spectrum->baseline,NULL,status))
          {
-             EP_PRINT_ERROR("Cannot read BASELINE keyword",*status);
+             EP_PRINT_ERROR("Cannot read NOISEBSL keyword",*status);
              *status=EPFAIL;return(noise_spectrum);
          }
      }
@@ -2241,7 +2268,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
              EP_PRINT_ERROR("Cannot read FREQ colum in noise file",*status);
              *status=EPFAIL; return(noise_spectrum);
          }
-         
+
          if (((reconstruct_init->opmode == 0) && (reconstruct_init->addOFWN == 1))
              || ((reconstruct_init->opmode == 1) && ((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RFITTED") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RDER") == 0)) && (strcmp(reconstruct_init->OFNoise,"WEIGHTN") == 0)))
          {
@@ -2386,6 +2413,7 @@ extern "C" unsigned checksum(void *buffer, size_t len, unsigned int seed)
 int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
     char* const record_file, fitsfile *fptr, char* const library_file, char* const event_file,
     int flength_0pad, int prebuff_0pad,
+    double threshold, int windowSize, int offset,
     double scaleFactor, int samplesUp, int samplesDown, double nSgms, int detectSP, int opmode, char *detectionMode,
     double LrsT, double LbT,
     char* const noise_file,
@@ -2433,6 +2461,9 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
          }
     }
 
+    reconstruct_init->threshold  	= threshold;
+    reconstruct_init->windowSize  	= windowSize;
+    reconstruct_init->offset  	= offset;
     reconstruct_init->scaleFactor  	= scaleFactor;
     reconstruct_init->samplesUp    	= samplesUp;
     if (opmode == 1)    reconstruct_init->samplesDown  	= samplesDown;
@@ -2512,8 +2543,6 @@ int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
 
     strncpy(reconstruct_init->XMLFile,XMLFile,255);
     reconstruct_init->XMLFile[255]='\0';
-
-    reconstruct_init->threshold 	= 0.0;
 
     return(status);
 }
@@ -2595,7 +2624,7 @@ int loadNoise (ReconstructInitSIRENA* reconstruct_init)
          (((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RFITTED") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RDER") == 0)) && (reconstruct_init->opmode == 1) && (reconstruct_init->OFLib == 0))
          || ((reconstruct_init->opmode == 1) && (strcmp(reconstruct_init->EnergyMethod,"INTCOVAR") == 0) && (reconstruct_init->OFLib == 0))
          || ((reconstruct_init->opmode == 1) && (strcmp(reconstruct_init->EnergyMethod,"COVAR") == 0) && (reconstruct_init->OFLib == 0))
-         // If BASELINE is not in the library file, it is necessary to read its value from the noise file
+         // If NOISEBSL is not in the library file, it is necessary to read its value from the noise file
          || (((((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2R") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RFITTED") == 0) || (strcmp(reconstruct_init->EnergyMethod,"I2RDER") == 0))  && (strcmp(reconstruct_init->FilterMethod,"B0") == 0)) || (strcmp(reconstruct_init->EnergyMethod,"INTCOVAR") == 0)) && (reconstruct_init->opmode == 1) && (reconstruct_init->OFLib == 1) && (baselineReadFromLibrary == false)))
      {
          int exists=0;
@@ -2605,13 +2634,14 @@ int loadNoise (ReconstructInitSIRENA* reconstruct_init)
          }
          if ((reconstruct_init->opmode == 1) && (exists != 1) && (baselineReadFromLibrary == false))
          {
-             EP_EXIT_ERROR("B0 chosen and BASELINE keyword not in the library file => Noise file is necessary but it does not exist",EPFAIL);
+             EP_EXIT_ERROR("B0 chosen and NOISEBSL keyword not in the library file => Noise file is necessary but it does not exist",EPFAIL);
          }
          if ((exists != 1) && (baselineReadFromLibrary == true))
          {
              EP_EXIT_ERROR("The necessary noise file does not exist",EPFAIL);
          }
          reconstruct_init->noise_spectrum = getNoiseSpec(reconstruct_init, &status);
+
          if (status)
          {
              EP_EXIT_ERROR((char*)"Error in getNoiseSpec",EPFAIL);
@@ -3029,6 +3059,7 @@ int fillPulsesAll (PulsesCollection** pulsesAll, PulsesCollection* pulsesInRecor
     if ((pulsesInRecord->ndetpulses != 0) && ((*pulsesAll)->ndetpulses == 0))
     {
         (*pulsesAll)->ndetpulses = pulsesInRecord->ndetpulses;
+        (*pulsesAll)->nfakepulses = pulsesInRecord->nfakepulses;
         if((*pulsesAll)->pulses_detected != 0 && (*pulsesAll)->size < pulsesInRecord->ndetpulses)
         {
             delete [] (*pulsesAll)->pulses_detected; (*pulsesAll)->pulses_detected = 0;
@@ -3044,8 +3075,10 @@ int fillPulsesAll (PulsesCollection** pulsesAll, PulsesCollection* pulsesInRecor
     else
     {
         pulsesAllAux->ndetpulses = (*pulsesAll)->ndetpulses;
+        pulsesAllAux->nfakepulses = (*pulsesAll)->nfakepulses;
 
         (*pulsesAll)->ndetpulses = (*pulsesAll)->ndetpulses + pulsesInRecord->ndetpulses;
+        (*pulsesAll)->nfakepulses = (*pulsesAll)->nfakepulses + pulsesInRecord->nfakepulses;
 
         if ((*pulsesAll)->pulses_detected != NULL && (*pulsesAll)->size < (*pulsesAll)->ndetpulses)
         {
@@ -3276,6 +3309,8 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  ReconstructInitSIRENA::ReconstructInitSIRENA():
  library_collection(0),
  threshold(0.0f),
+ windowSize(0),
+ offset(0),
  record_file_fptr(0),
  pulse_length(0),
  scaleFactor(0.0f),
@@ -3318,6 +3353,8 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  ReconstructInitSIRENA::ReconstructInitSIRENA(const ReconstructInitSIRENA& other):
  library_collection(0),
  threshold(other.threshold),
+ windowSize(other.windowSize),
+ offset(other.offset),
  record_file_fptr(0),
  pulse_length(other.pulse_length),
  scaleFactor(other.scaleFactor),
@@ -3420,6 +3457,8 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
          }
          
          threshold = other.threshold;
+         windowSize = other.windowSize;
+         offset = other.offset;
          strcpy(library_file,other.library_file);
          strcpy(record_file,other.record_file);
          
@@ -3552,6 +3591,8 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
      }
      
      ret->threshold = this->threshold;
+     ret->windowSize = this->windowSize;
+     ret->offset = this->offset;
      strcpy(ret->library_file, this->library_file);
      strcpy(ret->record_file, this->record_file);
      
@@ -4673,6 +4714,7 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  
  PulsesCollection::PulsesCollection():
  ndetpulses(0),
+ nfakepulses(0),
  size(0),
  pulses_detected(0)
  {
@@ -4681,6 +4723,7 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  
  PulsesCollection::PulsesCollection(const PulsesCollection& other):
  ndetpulses(other.ndetpulses),
+ nfakepulses(other.nfakepulses),
  size(other.size),
  pulses_detected(0)
  {
@@ -4696,6 +4739,7 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  {
      if(this != &other){
          ndetpulses = other.ndetpulses;
+         nfakepulses = other.nfakepulses;
          size = other.size;
          if (pulses_detected) {
              delete [] pulses_detected; pulses_detected = 0;

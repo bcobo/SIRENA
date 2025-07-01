@@ -950,7 +950,7 @@
      gsl_vector_scale(EventSamplesFFTMean,sqrt(2*intervalMinBins/samprate));
      
      // Load in noiseIntervals only those intervals with a proper sigma and NumMeanSamples = cnt
-     // (in order not to change excesively the code when weightMS)
+     // (in order not to change excessively the code when weightMS)
      gsl_matrix *matrixaux = gsl_matrix_alloc(noiseIntervals->size1,noiseIntervals->size2);
      gsl_vector *vectoraux = gsl_vector_alloc(noiseIntervals->size2);
      gsl_matrix_memcpy(matrixaux,noiseIntervals);
@@ -1261,7 +1261,7 @@
          gsl_vector_memcpy(timegsl,timegsl_block);
          gsl_matrix_get_row(ioutgsl,ioutgsl_block,i);
          gsl_vector_scale(ioutgsl,ivcal);		//IVCAL to change arbitrary units of voltage to non-arbitrary units of current (Amps)
-         
+
          // Just in case the last record has been filled out with 0's => Last record discarded
          if ((gsl_vector_get(ioutgsl,ioutgsl->size-1) == 0) && (gsl_vector_get(ioutgsl,ioutgsl->size-2) == 0))		break;
          
@@ -1374,8 +1374,9 @@
              gsl_vector_set(sigma,indexBaseline,sigmaIntervalFreeOfPulses);
              indexBaseline++;
          }
+
          gsl_vector_free(intervalsWithoutPulsesTogether); intervalsWithoutPulsesTogether = 0;
-         
+
          // Preparing the CSD calculus (not filtered data)
          for (int k=0; k<nIntervals;k++)
          {
@@ -1943,11 +1944,10 @@
      }
      gsl_vector_free(sigmacsdgslnew); sigmacsdgslnew = 0;
      
-     strcpy(keyname,"BSLN0");       // Real calculated baseline
+     strcpy(keyname,"NOISEBSL");       // Real calculated baseline
      double sumBaseline;
      gsl_vector_Sumsubvector(baseline, 0, indexBaseline, &sumBaseline);
      double keyvaldouble;
-     //keyvaldouble = sumBaseline/indexBaseline;
      if (strcmp(par.EnergyMethod,"OPTFILT") == 0)
      {
         keyvaldouble = (sumBaseline/indexBaseline)/aducnv;
@@ -1956,12 +1956,6 @@
      {
          keyvaldouble = (sumBaseline/indexBaseline);
      }
-     if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
-     {
-         message = "Cannot write keyword " + string(keyname) + " in file " + string(par.outFile);
-         EP_PRINT_ERROR(message,status); return(EPFAIL);
-     }
-     strcpy(keyname,"BASELINE");     // In order to be changed with test purposes
      if (fits_write_key(gnoiseObject,TDOUBLE,keyname,&keyvaldouble,comment,&status))
      {
          message = "Cannot write keyword " + string(keyname) + " in file " + string(par.outFile);

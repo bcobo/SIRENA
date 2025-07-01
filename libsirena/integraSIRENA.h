@@ -59,7 +59,7 @@ typedef struct {
 	/** Baseline calculated just previously to the pulse (in general)(see 'getB') */
 	double * bsln;  //SIRENA
 
-        /** Rms of the baseline calculated just previously to the pulse (in general)(see 'getB') */
+    /** Rms of the baseline calculated just previously to the pulse (in general)(see 'getB') */
 	double * rmsbsln;  //SIRENA
 
 	/** Pulse grade */
@@ -186,8 +186,11 @@ typedef struct LibraryCollection
 	/** Number of templates & matched filters in the structure. */
 	int ntemplates;
         
-	/** BASELINE read from the noise file and propagated to the library file**/
+	/** NOISEBSL read from the noise file and propagated to the library file**/
 	double baseline;
+
+	/** NOISESTD read from the noise file and propagated to the library file**/
+	double sigma;
 	
 	/** Number of fixed length filters in the structure. */
 	int nfixedfilters;
@@ -447,6 +450,9 @@ typedef struct PulsesCollection
 {
   	/** Number of detected pulses in the structure. **/
   	int ndetpulses;
+
+	/** Number of invented pulses in the structure. **/
+	int nfakepulses;
         
   	/** Current size of the array **/
   	int size;
@@ -475,9 +481,6 @@ typedef struct ReconstructInitSIRENA
   	/** LibraryCollection structure (pulse templates and matched filters)*/
   	LibraryCollection* library_collection;
   
-  	/** Threshold of each record **/
-  	double threshold;
-  
 	/** Library file (to be used or to be created) **/
   	char library_file[256];
   
@@ -493,9 +496,12 @@ typedef struct ReconstructInitSIRENA
   	/** Output event file **/
   	char event_file[256];
   
-  	/** Pulse length */
+  	/** Pulse length **/
   	int pulse_length;
   
+	/** Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise) **/
+	double threshold;
+
   	/** Detection scaleFactor (0.005 ? no filtering) **/
   	double scaleFactor;
   
@@ -507,6 +513,12 @@ typedef struct ReconstructInitSIRENA
   
   	/** Detection nSgms (sigmas to establish a threshold for detection) **/
   	double nSgms;
+
+	/** Window size used to compute the averaged derivative **/
+	int windowSize;
+
+	/** Window offset **/
+	int offset;
   
   	// Detect secondary pulses or not
   	int detectSP;
@@ -676,6 +688,7 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     char* const library_file,
                                     char* const event_file,
                                     int flength_0pad, int prebuff_0pad,
+									double threshold, int windowSize, int offset,
 									double scaleFactor, int samplesUp, int samplesDown,
                                     double nSgms, int detectSP,
                                     int opmode, char* detectionMode,double LrsT, 
@@ -736,6 +749,7 @@ NoiseSpec* getNoiseSpec(ReconstructInitSIRENA* reconstruct_init, int* const stat
 int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
 	char* const record_file, fitsfile *fptr, char* const library_file, char* const event_file,
 	int flength_0pad, int prebuff_0pad,
+	double threshold, int windowSize, int offset,
 	double scaleFactor, int samplesUp, int samplesDown, double nSgms, int detectSP, int opmode, char *detectionMode,
 	double LrsT, double LbT,
 	char* const noise_file,

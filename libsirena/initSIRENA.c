@@ -629,8 +629,9 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
 
     initializeReconstructionSIRENA(reconstruct_init_sirena, par.RecordFile, record_file->fptr,
-        par.LibraryFile, par.TesEventFile, par.flength_0pad, par.prebuff_0pad, par.scaleFactor, par.samplesUp,
-        par.samplesDown, par.nSgms, par.detectSP, par.opmode, par.detectionMode, par.LrsT,
+        par.LibraryFile, par.TesEventFile, par.flength_0pad, par.prebuff_0pad,
+        par.threshold, par.windowSize, par.offset, par.scaleFactor, par.samplesUp, par.samplesDown, par.nSgms,
+        par.detectSP, par.opmode, par.detectionMode, par.LrsT,
         par.LbT, par.NoiseFile, par.FilterDomain, par.FilterMethod, par.EnergyMethod,
         par.filtEev, par.Ifit, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter,
         par.OFLib, par.OFInterp, par.OFStrategy, par.OFLength, par.monoenergy,
@@ -735,6 +736,13 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
             lastRecord, startRecordGroup, &pulsesAll, &status);
         CHECK_STATUS_BREAK(status);
 
+        if (lastRecord == 1)
+        {
+            fits_write_key(outfile->fptr, TINT, "EVENTS", &(pulsesAll->ndetpulses), "Number of detected pulses (including fakes)", &status);
+            CHECK_STATUS_BREAK(status);
+            fits_write_key(outfile->fptr, TINT, "EVENTSFK", &(pulsesAll->nfakepulses), "Number of invented pulses", &status);
+            CHECK_STATUS_BREAK(status);
+        }
         if ((strcmp(par.EnergyMethod,"PCA") != 0) || ((strcmp(par.EnergyMethod,"PCA") == 0) && lastRecord == 1))
         {
             // In THREADING mode, saveEventListToFileSIRENA is not called until finishing with calculus
@@ -766,6 +774,8 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
 
     if (pulsesAll->ndetpulses == 0)
         printf("%s","WARNING: no pulses have been detected\n");
+    if (pulsesAll->nfakepulses != 0)
+        printf("%s","WARNING: some pulses have been invented\n");
 
     // Copy trigger keywords to event file
     //copyTriggerKeywords(record_file->fptr,outfile->fptr,&status);
@@ -1364,8 +1374,17 @@ int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRe
 
             int sizeLastRow = 0;
             div_t nrowsTogether_div_t = div(record->trigger_size+record->extend,record->trigger_size);
-            nrowsTogether = nrowsTogether_div_t.quot +1;
+
             sizeLastRow = nrowsTogether_div_t.rem;
+            if (sizeLastRow == 0)
+            {
+                nrowsTogether = nrowsTogether_div_t.quot;
+            }
+            else
+            {
+                nrowsTogether = nrowsTogether_div_t.quot+1;
+            }
+            //printf("%s %d %s","nrowsTogether: ",nrowsTogether,"\n");
             resizeTesRecord(record,(unsigned long) record->extend + record->trigger_size,status);
             double *singleRecord = NULL;
             int rowToRead = file->row;
@@ -1388,6 +1407,8 @@ int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRe
                 }
                 else
                 {
+                    //if (sizeLastRow==0) sizeToWrite = sizeADC;
+                    //else sizeToWrite = sizeLastRow;
                     sizeToWrite = sizeLastRow;
                 }
                 for (int j=0;j<sizeToWrite;j++)

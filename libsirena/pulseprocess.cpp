@@ -41,6 +41,8 @@ MAP OF SECTIONS IN THIS FILE:
  - 17. smoothDerivative
  - 18. FindSecondariesSTC
  - 19. noDetect
+ - 20. offsetAveragingFilter
+ - 21. smoothDerivative_causal
 
 *******************************************************************************/
 
@@ -185,8 +187,8 @@ int differentiate (gsl_vector **invector,int szVct)
 {
 	for (int i=0; i<szVct-1; i++)
 	{
-		gsl_vector_set(*invector,i,gsl_vector_get(*invector,i+1)-gsl_vector_get(*invector,i));	
-	}
+ 		gsl_vector_set(*invector,i,gsl_vector_get(*invector,i+1)-gsl_vector_get(*invector,i));
+ 	}
 	gsl_vector_set(*invector,szVct-1,gsl_vector_get(*invector,szVct-2));
 	//gsl_vector_set(*invector,szVct-1,-999);
 
@@ -362,7 +364,7 @@ int medianKappaClipping (gsl_vector *invector, double kappa, double stopCriteria
 
 	// Establish the threshold as mean+nSigmas*sigma
 	*threshold = mean2+nSigmas*sg2;	// HARDPOINT!!!!!!!!!!!!!!!!!!! (nSigmas)
-	
+
 	gsl_vector_free(invectorNew); invectorNew= 0;
     
     message.clear();
@@ -1419,12 +1421,12 @@ int find_model_energies(double energy, ReconstructInitSIRENA *reconstruct_init,g
 	{
         gsl_vector_memcpy(modelFound_aux,reconstruct_init->library_collection->pulse_templates_B0[0].ptemplate);
         gsl_vector_scale(modelFound_aux,energy/gsl_vector_get(reconstruct_init->library_collection->energies,0));
-	}
+    }
 	else if (energy > gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1))
 	{
         gsl_vector_memcpy(modelFound_aux,reconstruct_init->library_collection->pulse_templates_B0[nummodels-1].ptemplate);
         gsl_vector_scale(modelFound_aux,energy/gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1));
-	}
+    }
 	else
 	{
 		for (int i=0;i<nummodels-1;i++)
@@ -1686,7 +1688,6 @@ int interpolate_model(gsl_vector **modelFound, double p_model, gsl_vector *model
 * findPulsesCAL: This function is going to find the pulses in a record (in the CALibration mode) by using the function findTstartCAL
 *
 * - Declare variables
-* - Establish the threshold (call medianKappaClipping)
 * - Find pulses (call findTstartCAL)
 * - If at least a pulse is found
 * 	- Get the 'pulseheight' of each found pulse (in order to be used to build the pulse templates library)
@@ -1700,7 +1701,7 @@ int interpolate_model(gsl_vector **modelFound, double p_model, gsl_vector *model
 * - pulseheight: Pulse height of the found pulses into the record
 * - maxDERgsl: Maximum of the derivative of the found low-pass filtered pulses into the record
 * - nPulses: Number of found pulses
-* - threshold: Threshold used to find the pulses (output parameter because it is necessary out of the function)
+* - threshold: Threshold used to find the pulses
 * - scalefactor: Scale factor to calculate the LPF box-car length
 * - samplingRate: Sampling rate
 * - samplesup: Number of consecutive samples over the threshold to locate a pulse ('samplesUp')
@@ -1722,7 +1723,7 @@ int findPulsesCAL
 	gsl_vector **maxDERgsl,
 
 	int *nPulses,
-	double *threshold,
+	double threshold,
 
 	double scalefactor,
 	double samplingRate,
@@ -1740,18 +1741,24 @@ int findPulsesCAL
 {
 	string message = "";
 
-	double thresholdmediankappa;		// Threshold to look for pulses in the first derivative
+	//double thresholdmediankappa;		// Threshold to look for pulses in the first derivative
 
 	gsl_vector_set_zero(*quality);
 	gsl_vector_set_zero(*pulseheight);	// Pulse height of the single pulses
 
-	// Establish the threshold
-	if (medianKappaClipping (vectorinDER, kappamkc, stopcriteriamkc, nsgms, (int)(pi*samplingRate*scalefactor), &thresholdmediankappa))
-	{
-		message = "Cannot run medianKappaClipping looking for single pulses";
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
-	*threshold = thresholdmediankappa;
+    // Establish the threshold
+    /*if ((*threshold) == -999.0)
+    {
+        if (medianKappaClipping (vectorinDER, kappamkc, stopcriteriamkc, nsgms, (int)(pi*samplingRate*scalefactor), &thresholdmediankappa))
+        {
+            message = "Cannot run medianKappaClipping looking for single pulses";
+            EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+        }
+        *threshold = thresholdmediankappa;
+    }
+    else
+        thresholdmediankappa = *threshold;*/
+    //thresholdmediankappa = *threshold;
 
     /*cout<<"threshold: "<<*threshold<<endl;
     cout<<"DERIVATIVE:"<<endl;
@@ -1759,9 +1766,12 @@ int findPulsesCAL
     {
         cout<<i<<" "<<gsl_vector_get(vectorinDER,i)<<endl;
     }*/
+
+    //cout<<"threshold: "<<threshold<<endl;
         
     // Find pulses
-	if (findTstartCAL (reconstruct_init->maxPulsesPerRecord, vectorinDER, thresholdmediankappa, samplesUp, reconstruct_init, nPulses, tstart, quality, maxDERgsl))
+	//if (findTstartCAL (reconstruct_init->maxPulsesPerRecord, vectorinDER, thresholdmediankappa, samplesUp, reconstruct_init, nPulses, tstart, quality, maxDERgsl))
+	if (findTstartCAL (reconstruct_init->maxPulsesPerRecord, vectorinDER, threshold, samplesUp, reconstruct_init, nPulses, tstart, quality, maxDERgsl))
 	{
 		message = "Cannot run findTstartCAL";
 		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
@@ -1894,6 +1904,10 @@ int findTstartCAL
 	bool findTstarts = true;
         if ((isNumber(reconstruct_init->tstartPulse1)) && (atoi(reconstruct_init->tstartPulse1) != 0)) findTstarts = false;
 	
+    /*cout<<"threshold (findTstartCAL): "<<adaptativethreshold<<endl;
+    for (int kkk=3490;kkk<3700;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(der,kkk)<<endl;*/
+
 	if (findTstarts == true)
 	{
 		// It looks for a pulse
@@ -2025,7 +2039,6 @@ int findTstartCAL
 * InitialTriggering function: This function finds the first pulse in the input vector, first derivative of the (low-pass filtered) record
 *
 * - Declare variables
-* - Establish the threshold
 * - It is necessary to find the tstart of the first pulse...
 *   Obtain tstart of the first pulse in the derivative if der_i>threshold
 * - ...or to use the tstart provided as input parameter
@@ -2041,7 +2054,7 @@ int findTstartCAL
 *                     false -> the algorithm has not found any event
 * - tstart: First event tstart (in samples)
 * - flagTruncated: Flag indicating if the event is truncated (inside this function only initial truncated events are classified)
-* - threshold: Calculated threshold  (output parameter because it is necessary out of the function)
+* - threshold: Calculated threshold
 ****************************************/
 int InitialTriggering
 (
@@ -2057,7 +2070,7 @@ int InitialTriggering
 	int *tstart,
 	int *flagTruncated,
 
-	double *threshold)
+	double threshold)
 {
 	string message = "";
 
@@ -2067,25 +2080,12 @@ int InitialTriggering
 
 	*triggerCondition = false;
 
-	// Establish the threshold
-	if (medianKappaClipping (derivative, kappamkc, stopcriteriamkc, nSgms, (int)(pi*samplingRate*scalefactor), threshold))
-	{
-		message = "Cannot run medianKappaClipping doing the initial triggering";
-		EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-	}
 	//*threshold = 30; // samprate = 156.250 kHz
 	//*threshold = 55; // samprate/2 = 78.125 kHz
-
-	/*cout<<"threshold: "<<*threshold<<endl;
-    cout<<"DERIVATIVE:"<<endl;
-	for (int i=400;i<1400;i++)
-    {
-        cout<<i<<" "<<gsl_vector_get(derivative,i)<<endl;
-    }*/
 	
 	while (i < sizeRecord-1)
         {
-            if (gsl_vector_get(derivative,i) > *threshold)
+            if (gsl_vector_get(derivative,i) > threshold)
             {
                 *triggerCondition = true;
                 *tstart = i;
@@ -2852,47 +2852,50 @@ int find_model_samp1DERsNoReSCLD(double samp1DER, ReconstructInitSIRENA *reconst
 ******************************************************************************/
 int smoothDerivative (gsl_vector **invector, int N)
 {
-    if (N%2 != 0)   // Odd number
+    if (N % 2 != 0)   // Odd number
     {
-        string message = "";
-        message = "In the smoothDerivative function, N must be an even number)";
-        EP_PRINT_ERROR(message,EPFAIL);
-        message.clear();
+        string message = "In the smoothDerivative function, N must be an even number";
+        EP_PRINT_ERROR(message, EPFAIL);
+        return EPFAIL;
     }
-    else            // Even number
+    else    // Even number
     {
-        int szVct = (*invector)->size+N;
-        gsl_vector *window = gsl_vector_alloc(N);
-        gsl_vector_set_all(window,1.0);
-        for (int i=0;i<N/2;i++)     gsl_vector_set(window,i,-1.0);
+        size_t n = (*invector)->size;
+        int half = N / 2;
 
-        gsl_vector *conv = gsl_vector_alloc(szVct);
-        gsl_vector_set_zero(conv);
+        // Create filter: [-1, ..., -1, 1, ..., 1]
+        std::vector<double> filter(N, 0.0);
+        for (int i = 0; i < half; ++i) filter[i] = -1.0;
+        for (int i = half; i < N; ++i) filter[i] = 1.0;
 
-        int index;
-        for (int i=0;i<szVct;i++)
-        {
-            index = N-1;
-            for (int j=i;j>=i-N+1;j--)
-            {
-                if ((j>=0) && (j<(int)((*invector)->size)))
-                {
-                    gsl_vector_set(conv,i,gsl_vector_get(conv,i)+gsl_vector_get(*invector,j)*gsl_vector_get(window,index));
-                    index = index - 1;
-                }
+        gsl_vector *newvec = gsl_vector_alloc(n);
+
+        // Calculate derivative from index half to (n - N + half)
+        size_t last_valid_index = n - N + half;
+        for (size_t i = half; i <= last_valid_index; ++i) {
+            double sum = 0.0;
+            for (int j = 0; j < N; ++j) {
+                sum += filter[j] * gsl_vector_get(*invector, i - half + j);
             }
+            gsl_vector_set(newvec, i, sum);
         }
 
-        gsl_vector_free(window); window = 0;
+        // Set 0s at the beginning
+        for (int i = 0; i < half; ++i) {
+            gsl_vector_set(newvec, i, 0.0);
+        }
 
-        gsl_vector_view temp;
-        temp = gsl_vector_subvector(conv,0,szVct-N);
-        gsl_vector_memcpy(*invector,&temp.vector);
+        // Repeat the last valid derivative value for the remaining indices
+        double last_value = gsl_vector_get(newvec, last_valid_index);
+        for (size_t i = last_valid_index + 1; i < n; ++i) {
+            gsl_vector_set(newvec, i, last_value);
+        }
 
-        gsl_vector_free(conv); conv = 0;
+        gsl_vector_memcpy(*invector,newvec);
+        gsl_vector_free(newvec);
     }
 
-    return (EPOK);
+    return EPOK;
 }
 /*xxxx end of SECTION 16 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
@@ -2975,7 +2978,9 @@ int FindSecondariesSTC
     int limitMin, limitMax;
         
     int nodetectSecondaries = 1;
-        	
+
+    //cout<<"adaptativethreshold: "<<adaptativethreshold<<endl;
+
     // It looks for &tstartgsl,&qualitygsl, &maxDERgsl,&samp1DERgsla pulse
     // If a pulse is found (foundPulse==true) => It looks for another pulse
     do
@@ -3235,3 +3240,106 @@ int noDetect(gsl_vector *der, ReconstructInitSIRENA *reconstruct_init, int *numb
     return (EPOK);
 }
 /*xxxx end of SECTION 18 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+
+/***** SECTION 19 ************************************************************
+ * offsetAveragingFilter function: This function modifies the input vector in place by subtracting the mean of the previous N values
+ *                               at a given offset. If there are not enough previous values, the value remains unchanged.
+ *                               Returns 0 on success, 1 on parameter or memory error.
+ *
+ * Parameters:
+ * - invector: Input/Output GSL vector (input vector/output vector)
+ * - N: box-car length
+ * - offset: number of samples to skip before averaging
+ ******************************************************************************/
+int offsetAveragingFilter(gsl_vector **invector, int N, int offset)
+{
+    if (invector == NULL || *invector == NULL)
+        return 1; // Invalid input
+
+    if (N==0)
+    {
+        size_t len = (*invector)->size;
+
+        // Create a temporary copy of the input vector to preserve original values for averaging
+        gsl_vector* temp = gsl_vector_alloc(len);
+        if (!temp) return 1; // Memory allocation failure
+
+        gsl_vector_memcpy(temp, *invector);
+
+        for (size_t i = 0; i < len; ++i) {
+            double value = gsl_vector_get(temp, i);
+
+            if (i >= (size_t)(N + offset)) {
+                // Compute the mean of N samples at the specified offset
+                double mean = gsl_stats_mean(
+                    temp->data + temp->stride * (i - offset - N),
+                                            temp->stride,
+                                            N
+                );
+                gsl_vector_set(*invector, i, value - mean);
+            } else {
+                // Not enough previous values: leave the value unchanged
+                gsl_vector_set(*invector, i, value);
+            }
+        }
+
+        gsl_vector_free(temp);
+    }
+
+    return EPOK;  // Success
+}
+/*xxxx end of SECTION 19 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+
+/***** SECTION 20 ************************************************************
+ * smoothDerivative_causal function: This function applies the smooth derivative to the input vector
+ *                                   (kernel coefficients applied only to past temporal values to ensure causality)
+ *
+ * Parameters:
+ * - invector: Input/Ouput GSL vector (input vector/smooth differentiated input vector)
+ * - N: box-car length (it must be an even number)
+ ******************************************************************************/
+int smoothDerivative_causal(gsl_vector **invector, int N)
+{
+    if (N <= 0) {
+        std::string message = "In smoothDerivative_causal, N must be > 0";
+        EP_PRINT_ERROR(message, EPFAIL);
+        return EPFAIL;
+    }
+
+    size_t n = (*invector)->size;
+    //cout<<"(*invector)->size0: "<<(*invector)->size<<endl;
+
+    // Create filter: first half -1, second half +1
+    std::vector<double> filter(N, 0.0);
+    int half = N / 2;
+    for (int i = 0; i < half; ++i) filter[i] = -1.0;
+    for (int i = half; i < N; ++i) filter[i] = 1.0;
+
+    gsl_vector *newvec = gsl_vector_alloc(n);
+    if (!newvec) return EPFAIL;
+
+    // Apply filter from index N-1 to n-1
+    for (size_t i = N - 1; i < n; ++i) {
+        double sum = 0.0;
+        for (int j = 0; j < N; ++j) {
+            sum += filter[j] * gsl_vector_get(*invector, i - N + 1 + j);
+        }
+        gsl_vector_set(newvec, i, sum);
+    }
+
+    // Fill first N-1 values with zero (not enough history)
+    for (size_t i = 0; i < N - 1; ++i) {
+        gsl_vector_set(newvec, i, 0.0);
+    }
+
+    //cout<<"(*invector)->size1: "<<(*invector)->size<<endl;
+    //gsl_vector_free(*invector);
+    //*invector = newvec;
+    gsl_vector_memcpy(*invector,newvec);
+    gsl_vector_free(newvec);
+
+    return EPOK;
+}
+/*xxxx end of SECTION 20 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/

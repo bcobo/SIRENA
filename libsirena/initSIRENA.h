@@ -75,6 +75,12 @@ struct Parameters {
 	// File containing the library
 	char LibraryFile[MAXFILENAME];
 
+	/** Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise)**/
+	double threshold;
+
+	// Number of quiescent-signal standard deviations to establish the threshold (if 'threshold'=-999)
+	double nSgms;
+
 	// Scale Factor for initial filtering
 	double scaleFactor;
 
@@ -84,8 +90,11 @@ struct Parameters {
     // Number of samples below the threshold to look for other pulse
 	int samplesDown;
 
-	// Number of standard deviations in the kappa-clipping process for threshold estimation
-	double nSgms;
+	// Window size used to compute the averaged derivative
+	int windowSize;
+
+	// Window offset
+	int offset;
 
     // Detect secondary pulses or not
     int detectSP;
