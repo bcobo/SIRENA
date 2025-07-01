@@ -513,6 +513,12 @@ typedef struct ReconstructInitSIRENA
   
   	/** Detection nSgms (sigmas to establish a threshold for detection) **/
   	double nSgms;
+
+	/** Window size used to compute the averaged derivative **/
+	int windowSize;
+
+	/** Window offset **/
+	int offset;
   
   	// Detect secondary pulses or not
   	int detectSP;
@@ -682,7 +688,7 @@ void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
                                     char* const library_file,
                                     char* const event_file,
                                     int flength_0pad, int prebuff_0pad,
-									double threshold,
+									double threshold, int windowSize, int offset,
 									double scaleFactor, int samplesUp, int samplesDown,
                                     double nSgms, int detectSP,
                                     int opmode, char* detectionMode,double LrsT, 
@@ -743,7 +749,7 @@ NoiseSpec* getNoiseSpec(ReconstructInitSIRENA* reconstruct_init, int* const stat
 int fillReconstructInitSIRENA(ReconstructInitSIRENA* reconstruct_init,
 	char* const record_file, fitsfile *fptr, char* const library_file, char* const event_file,
 	int flength_0pad, int prebuff_0pad,
-	double threshold,
+	double threshold, int windowSize, int offset,
 	double scaleFactor, int samplesUp, int samplesDown, double nSgms, int detectSP, int opmode, char *detectionMode,
 	double LrsT, double LbT,
 	char* const noise_file,

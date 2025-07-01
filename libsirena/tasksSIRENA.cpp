@@ -284,9 +284,9 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
     gsl_vector_set_all(phid,-999.0);
     for (int i=0;i<(int)(phid->size);i++)  gsl_vector_set(phid,i,record->phid_list->phid_array[i]);
     if (pulsesAll->ndetpulses == 0)
-        procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, threshold, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid, phid, oscillations, nrecord, -999);
+        procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, threshold, (*reconstruct_init)->windowSize, (*reconstruct_init)->offset, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid, phid, oscillations, nrecord, -999);
     else
-        procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, threshold, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid, phid, oscillations, nrecord, pulsesAll->pulses_detected[pulsesAll->ndetpulses-1].Tstart);
+        procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, threshold, (*reconstruct_init)->windowSize, (*reconstruct_init)->offset, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid, phid, oscillations, nrecord, pulsesAll->pulses_detected[pulsesAll->ndetpulses-1].Tstart);
 
     if (invectorOriginal != NULL) {gsl_vector_free(invectorOriginal); invectorOriginal = 0;}
     if (phid != NULL) {gsl_vector_free(phid); phid = 0;}
@@ -991,7 +991,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
     gsl_vector_set_all(phid,-999.0);
     for (int i=0;i<(int)(phid->size);i++)  gsl_vector_set(phid,i,record->phid_list->phid_array[i]);
     if (procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, 
-        invector, threshold, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid,phid, oscillations, nrecord, pulsesAll->pulses_detected[pulsesAll->ndetpulses-1].Tstart))
+        invector, threshold, (*reconstruct_init)->windowSize, (*reconstruct_init)->offset, *pulsesInRecord, pulsesAll->ndetpulses,record->pixid,phid, oscillations, nrecord, pulsesAll->pulses_detected[pulsesAll->ndetpulses-1].Tstart))
     {
         message = "Cannot run routine procRecord for record processing";
         EP_EXIT_ERROR(message,EPFAIL);
@@ -2064,7 +2064,9 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
  * - samprate: Sampling rate (in order to low-pass filter)
  * - dtcObject: Object which contains information of the intermediate FITS file (to be written if 'intermediate'=1)
  * - record: GSL vector with signal values of input record
- * - threshold
+ * - threshold: Threshold to use with the derivative to detect
+ * - windowSize: Window size used to compute the averaged derivative
+ * - offset: Window offset
  * - foundPulses: Input/output structure where the found pulses info is stored
  * - num_previousDetectedPulses: Number of previous detected pulses (to know the index to get the proper element from tstartPulse1_i in case tstartPulse1=nameFile)
  * - pixid: Pixel ID (from the input file) to be propagated 
@@ -2074,7 +2076,7 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
  * - tstartPrevPulse: tstart of the previous pulse (last pulse of the previous record) (seconds)
  ****************************************************************************/
 int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record,
-double threshold, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, gsl_vector *phid, int oscillations,
+double threshold, int windowSize, int offset, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, gsl_vector *phid, int oscillations,
 int nrecord, double tstartPrevPulse)
 {
     int status = EPOK;
@@ -2173,16 +2175,31 @@ int nrecord, double tstartPrevPulse)
     }
     gsl_vector_memcpy(recordDERIVATIVE,record);*/
 
-    // Smooth derivative
-    if (smoothDerivative (&record, 4))
+    gsl_vector *recordRaw = gsl_vector_alloc(record->size);
+    gsl_vector_memcpy(recordRaw,record);
+
+    // Causal smooth derivative
+    if (smoothDerivative_causal (&record, 4))
     {
-     	message = "Cannot run routine smoothDerivative";
-     	EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+        message = "Cannot run routine smoothDerivative_causal";
+        EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
-    gsl_vector_memcpy(recordDERIVATIVE,record);
+
+    cout<<"Paso1"<<endl;
+    // This function modifies the input derivative in place by subtracting the mean of the previous N values at a given offset.
+    if (offsetAveragingFilter (&record, windowSize, offset))
+    {
+        message = "Cannot run routine offsetAveragingFilter";
+        EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+    }
+    cout<<"Paso2"<<endl;
     /*cout<<"______Derivative:"<<endl;
-    for (int kkk=0;kkk<record->size;kkk++)
-        cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;*/
+    for (int kkk=0;kkk<4000;kkk++)
+        cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;*/
+
+    gsl_vector_free(recordRaw);
+
+    gsl_vector_memcpy(recordDERIVATIVE,record);
     
     //It is not necessary to check the allocation because the allocation of 'recordDERIVATIVE' has been checked previously
     gsl_vector *recordDERIVATIVEOriginal = gsl_vector_alloc(recordDERIVATIVE->size);   // To be used in 'writeTestInfo'

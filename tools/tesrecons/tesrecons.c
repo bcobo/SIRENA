@@ -33,10 +33,12 @@
 * - clobber:Overwrite or not output files if exist (1/0)
 * - history: write program parameters into output file
 * - threshold: Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise)
+* - nSgms: Number of quiescent-signal standard deviations to establish the threshold (if -999 it is going to be calculated from noise)
 * - scaleFactor: Detection scale factor for initial filtering
 * - samplesUp: Number of consecutive samples up for threshold trespassing (only used with STC detection mode)
 * - samplesDown: Number of consecutive samples below the threshold to look for other pulse (only used with STC detection mode)
-* - nSgms: Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm
+* - windowSize: Window size used to compute the averaged derivative
+* - offset: Window offset
 * - detectionMode: Adjusted Derivative (AD) or Single Threshold Crossing (STC)
 * - detectSP: Detect secondary pulses (1) or not (0)
 * - LbT: Baseline averaging length (seconds)
@@ -318,6 +320,9 @@ int getpar_tesrecons(struct Parameters* const par)
   status=ape_trad_query_int("samplesDown", &par->samplesDown);
   status=ape_trad_query_double("nSgms", &par->nSgms);
 
+  status=ape_trad_query_int("windowSize", &par->windowSize);
+  status=ape_trad_query_int("offset", &par->offset);
+
   status=ape_trad_query_string("detectionMode", &sbuffer);
   strcpy(par->detectionMode, sbuffer);
   free(sbuffer);
@@ -499,6 +504,15 @@ int getpar_tesrecons(struct Parameters* const par)
            "OFStrategy must be FREE, BYGRADE or FIXED");
 
   MyAssert(par->OFLength > 0, "OFLength must be greater than 0");
+
+  MyAssert(par->windowSize >= 0, "windowSize must be greater or equal than 0");
+  if (par->windowSize == 0)
+  {
+      par->offset=0;
+      MyAssert(par->offset != 0, "windowSize=0 => offset=0");
+  }
+  else
+      MyAssert(par->offset >= 0, "offset must be greater or equal than 0");
 
   return(status);
 }

@@ -630,7 +630,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
 
     initializeReconstructionSIRENA(reconstruct_init_sirena, par.RecordFile, record_file->fptr,
         par.LibraryFile, par.TesEventFile, par.flength_0pad, par.prebuff_0pad,
-        par.threshold, par.scaleFactor, par.samplesUp, par.samplesDown, par.nSgms,
+        par.threshold, par.windowSize, par.offset, par.scaleFactor, par.samplesUp, par.samplesDown, par.nSgms,
         par.detectSP, par.opmode, par.detectionMode, par.LrsT,
         par.LbT, par.NoiseFile, par.FilterDomain, par.FilterMethod, par.EnergyMethod,
         par.filtEev, par.Ifit, par.OFNoise, par.LagsOrNot, par.nLags, par.Fitting35, par.OFIter,
@@ -1407,9 +1407,9 @@ int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRe
                 }
                 else
                 {
-                    if (sizeLastRow==0) sizeToWrite = sizeADC;
-                    else sizeToWrite = sizeLastRow;
-                    //sizeToWrite = sizeLastRow;
+                    //if (sizeLastRow==0) sizeToWrite = sizeADC;
+                    //else sizeToWrite = sizeLastRow;
+                    sizeToWrite = sizeLastRow;
                 }
                 for (int j=0;j<sizeToWrite;j++)
                 {

@@ -11,9 +11,11 @@ clobber,b,h,yes,,,"Overwrite or not output files if they exist (yes/no)"
 history,b,h,yes,,,"Write program parameters into output FITS file (yes/no)"
 
 threshold,r,h,-999,,,"Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise)"
+nSgms,r,h,3.5,,,"Number of quiescent-signal standard deviations to establish the threshold (if 'threshold'=-999)"
 scaleFactor,r,h,0,,,"Detection scale factor for initial filtering (to enable a varying cut-off frequency of a low-pass filter)"
 samplesUp,i,h,3,,,"Number of consecutive samples up for threshold trespassing"
-nSgms,r,h,3.5,,,"Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm"
+windowSize,i,h,10,,,"Window size used to compute the averaged derivative"
+offset,i,h,4,,,"Window offset"
 
 LrsT,r,h,30E-6,,,"Running sum length for the RS raw energy estimation (seconds)"
 LbT,r,h,6.4E-3,,,"Baseline averaging length (seconds)"

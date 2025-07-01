@@ -34,9 +34,11 @@
 * - clobber:Overwrite or not output files if exist (1/0)
 * - history: write program parameters into output file
 * - threshold: Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise)
+* - nSgms: Number of quiescent-signal standard deviations to establish the threshold (if -999 it is going to be calculated from noise)
 * - scaleFactor: Detection scale factor for initial filtering
 * - samplesUp: Number of consecutive samples up for threshold trespassing
-* - nSgms: Number of quiescent-signal standard deviations to establish the threshold through the kappa-clipping algorithm
+* - windowSize: Window size used to compute the averaged derivative
+* - offset: Window offset
 * - LrsT: Running sum length for the RS raw energy estimation (seconds) 
 * - LbT: Baseline averaging length (seconds)
 * - monoenergy: Monochromatic energy of the pulses in the input FITS file in eV 
@@ -312,6 +314,9 @@ int getpar_teslib(struct Parameters* const par)
   status=ape_trad_query_int("samplesUp", &par->samplesUp);
   status=ape_trad_query_double("nSgms", &par->nSgms);
 
+  status=ape_trad_query_int("windowSize", &par->windowSize);
+  status=ape_trad_query_int("offset", &par->offset);
+
   status=ape_trad_query_double("LrsT", &par->LrsT);
   status=ape_trad_query_double("LbT", &par->LbT);
 
@@ -357,6 +362,15 @@ int getpar_teslib(struct Parameters* const par)
   }
 
   MyAssert((par->intermediate == 0) || (par->intermediate == 1), "intermediate must be 0 or 1");
+
+  MyAssert(par->windowSize >= 0, "windowSize must be greater or equal than 0");
+  if (par->windowSize == 0)
+  {
+    par->offset=0;
+    MyAssert(par->offset != 0, "windowSize=0 => offset=0");
+  }
+  else
+    MyAssert(par->offset >= 0, "offset must be greater or equal than 0");
 
   return(status);
 }

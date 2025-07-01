@@ -123,6 +123,8 @@
         
         int find_model_samp1DERsNoReSCLD(double samp1DER, ReconstructInitSIRENA *reconstruct_init, gsl_vector **modelFound, int *indexMin, int *indexMax);
         int smoothDerivative (gsl_vector **invector, int N);
+		int smoothDerivative_causal(gsl_vector **invector, int N);
+		int offsetAveragingFilter(gsl_vector **invector, int N, int offset);
         
         int FindSecondariesSTC
         (       

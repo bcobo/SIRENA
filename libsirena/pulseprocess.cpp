@@ -41,6 +41,8 @@ MAP OF SECTIONS IN THIS FILE:
  - 17. smoothDerivative
  - 18. FindSecondariesSTC
  - 19. noDetect
+ - 20. offsetAveragingFilter
+ - 21. smoothDerivative_causal
 
 *******************************************************************************/
 
@@ -2889,7 +2891,8 @@ int smoothDerivative (gsl_vector **invector, int N)
             gsl_vector_set(newvec, i, last_value);
         }
 
-        *invector = newvec;
+        gsl_vector_memcpy(*invector,newvec);
+        gsl_vector_free(newvec);
     }
 
     return EPOK;
@@ -2977,7 +2980,7 @@ int FindSecondariesSTC
     int nodetectSecondaries = 1;
 
     //cout<<"adaptativethreshold: "<<adaptativethreshold<<endl;
-        	
+
     // It looks for &tstartgsl,&qualitygsl, &maxDERgsl,&samp1DERgsla pulse
     // If a pulse is found (foundPulse==true) => It looks for another pulse
     do
@@ -3237,3 +3240,106 @@ int noDetect(gsl_vector *der, ReconstructInitSIRENA *reconstruct_init, int *numb
     return (EPOK);
 }
 /*xxxx end of SECTION 18 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+
+/***** SECTION 19 ************************************************************
+ * offsetAveragingFilter function: This function modifies the input vector in place by subtracting the mean of the previous N values
+ *                               at a given offset. If there are not enough previous values, the value remains unchanged.
+ *                               Returns 0 on success, 1 on parameter or memory error.
+ *
+ * Parameters:
+ * - invector: Input/Output GSL vector (input vector/output vector)
+ * - N: box-car length
+ * - offset: number of samples to skip before averaging
+ ******************************************************************************/
+int offsetAveragingFilter(gsl_vector **invector, int N, int offset)
+{
+    if (invector == NULL || *invector == NULL)
+        return 1; // Invalid input
+
+    if (N==0)
+    {
+        size_t len = (*invector)->size;
+
+        // Create a temporary copy of the input vector to preserve original values for averaging
+        gsl_vector* temp = gsl_vector_alloc(len);
+        if (!temp) return 1; // Memory allocation failure
+
+        gsl_vector_memcpy(temp, *invector);
+
+        for (size_t i = 0; i < len; ++i) {
+            double value = gsl_vector_get(temp, i);
+
+            if (i >= (size_t)(N + offset)) {
+                // Compute the mean of N samples at the specified offset
+                double mean = gsl_stats_mean(
+                    temp->data + temp->stride * (i - offset - N),
+                                            temp->stride,
+                                            N
+                );
+                gsl_vector_set(*invector, i, value - mean);
+            } else {
+                // Not enough previous values: leave the value unchanged
+                gsl_vector_set(*invector, i, value);
+            }
+        }
+
+        gsl_vector_free(temp);
+    }
+
+    return EPOK;  // Success
+}
+/*xxxx end of SECTION 19 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+
+/***** SECTION 20 ************************************************************
+ * smoothDerivative_causal function: This function applies the smooth derivative to the input vector
+ *                                   (kernel coefficients applied only to past temporal values to ensure causality)
+ *
+ * Parameters:
+ * - invector: Input/Ouput GSL vector (input vector/smooth differentiated input vector)
+ * - N: box-car length (it must be an even number)
+ ******************************************************************************/
+int smoothDerivative_causal(gsl_vector **invector, int N)
+{
+    if (N <= 0) {
+        std::string message = "In smoothDerivative_causal, N must be > 0";
+        EP_PRINT_ERROR(message, EPFAIL);
+        return EPFAIL;
+    }
+
+    size_t n = (*invector)->size;
+    //cout<<"(*invector)->size0: "<<(*invector)->size<<endl;
+
+    // Create filter: first half -1, second half +1
+    std::vector<double> filter(N, 0.0);
+    int half = N / 2;
+    for (int i = 0; i < half; ++i) filter[i] = -1.0;
+    for (int i = half; i < N; ++i) filter[i] = 1.0;
+
+    gsl_vector *newvec = gsl_vector_alloc(n);
+    if (!newvec) return EPFAIL;
+
+    // Apply filter from index N-1 to n-1
+    for (size_t i = N - 1; i < n; ++i) {
+        double sum = 0.0;
+        for (int j = 0; j < N; ++j) {
+            sum += filter[j] * gsl_vector_get(*invector, i - N + 1 + j);
+        }
+        gsl_vector_set(newvec, i, sum);
+    }
+
+    // Fill first N-1 values with zero (not enough history)
+    for (size_t i = 0; i < N - 1; ++i) {
+        gsl_vector_set(newvec, i, 0.0);
+    }
+
+    //cout<<"(*invector)->size1: "<<(*invector)->size<<endl;
+    //gsl_vector_free(*invector);
+    //*invector = newvec;
+    gsl_vector_memcpy(*invector,newvec);
+    gsl_vector_free(newvec);
+
+    return EPOK;
+}
+/*xxxx end of SECTION 20 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
