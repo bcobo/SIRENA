@@ -2185,14 +2185,12 @@ int nrecord, double tstartPrevPulse)
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
 
-    cout<<"Paso1"<<endl;
     // This function modifies the input derivative in place by subtracting the mean of the previous N values at a given offset.
     if (offsetAveragingFilter (&record, windowSize, offset))
     {
         message = "Cannot run routine offsetAveragingFilter";
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
-    cout<<"Paso2"<<endl;
     /*cout<<"______Derivative:"<<endl;
     for (int kkk=0;kkk<4000;kkk++)
         cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;*/
