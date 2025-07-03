@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>SIRENA documentation &#8212; SIRENA 10.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=335988e4"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SIRENA description" href="SIRENA.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="SIRENA.html" title="SIRENA description"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">SIRENA 10.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">SIRENA documentation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="sirena-documentation">
+<span id="contents"></span><h1>SIRENA documentation<a class="headerlink" href="#sirena-documentation" title="Link to this heading">¶</a></h1>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="SIRENA.html">SIRENA description</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="SIRENA.html#purpose">Purpose</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENA.html#files">Files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="SIRENA.html#auxiliary-files">Auxiliary Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SIRENA.html#input-files">Input Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SIRENA.html#output-files">Output Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENA.html#reconstruction-process">Reconstruction Process</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="SIRENA.html#event-detection">Event Detection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SIRENA.html#event-grading">Event Grading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SIRENA.html#event-energy-determination-methods">Event Energy Determination: methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SIRENA.html#use-of-library-columns-in-the-different-reconstruction-methods">Use of library columns in the different reconstruction methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SIRENA.html#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="SIRENAcommandline.html">SIRENA Tools CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAcommandline.html#gennoisespec">gennoisespec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAcommandline.html#teslib">teslib</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAcommandline.html#tesrecons">tesrecons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAcommandline.html#xifusim">xifusim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAcommandline.html#tessim">tessim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAcommandline.html#tesconstpileup">tesconstpileup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="SIRENAfunctions.html">SIRENA functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv411addFirstRowP21ReconstructInitSIRENAPP8fitsfilediP10gsl_vectorP10gsl_vectorP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_matrix"><code class="docutils literal notranslate"><span class="pre">addFirstRow()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv45aligndPP10gsl_vectorPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">align()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv415calculateEnergyP10gsl_vectorP10gsl_vectorP18gsl_vector_complexiiP21ReconstructInitSIRENAdP10gsl_vectorP10gsl_matrixP10gsl_matrixPdPdPiiii"><code class="docutils literal notranslate"><span class="pre">calculateEnergy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv418calculateIntParamsP21ReconstructInitSIRENAiidiP10gsl_matrixP10gsl_matrixP10gsl_matrixP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_vectorPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixPP10gsl_matrixP10gsl_matrixPP10gsl_matrix"><code class="docutils literal notranslate"><span class="pre">calculateIntParams()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv417calculateTemplateP21ReconstructInitSIRENAP16PulsesCollectionP16PulsesCollectiondPP10gsl_vectorPP10gsl_vectorPdPP10gsl_matrixPP10gsl_matrixPP10gsl_vectorPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">calculateTemplate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv422calculus_optimalFilteriiiP10gsl_vectorldiP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP18gsl_vector_complex"><code class="docutils literal notranslate"><span class="pre">calculus_optimalFilter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv416callSIRENA_FileiPcP15SixtStdKeywordsP21ReconstructInitSIRENA10ParametersdPiP16PulsesCollectionP12TesEventFile"><code class="docutils literal notranslate"><span class="pre">callSIRENA_Filei()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv410callSIRENAPcP15SixtStdKeywordsP21ReconstructInitSIRENA10ParametersdPiP16PulsesCollectionP12TesEventFile"><code class="docutils literal notranslate"><span class="pre">callSIRENA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv49checkXmlsPC10Parameters"><code class="docutils literal notranslate"><span class="pre">checkXmls()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv410convertI2RPcddddddddddPP10gsl_vectori"><code class="docutils literal notranslate"><span class="pre">convertI2R()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv416createDetectFileP21ReconstructInitSIRENAdPP8fitsfilei"><code class="docutils literal notranslate"><span class="pre">createDetectFile()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv411createHistoP10gsl_vectoriPP10gsl_vectorPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">createHisto()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413createLibraryP21ReconstructInitSIRENAPbPP8fitsfile"><code class="docutils literal notranslate"><span class="pre">createLibrary()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv417createTPSreprFilev"><code class="docutils literal notranslate"><span class="pre">createTPSreprFile()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413differentiatePP10gsl_vectori"><code class="docutils literal notranslate"><span class="pre">differentiate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv47eigenVVP10gsl_matrixPP10gsl_matrixPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">eigenVV()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv410exit_errorPCKc6stringi"><code class="docutils literal notranslate"><span class="pre">exit_error()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv43FFTP10gsl_vectorP18gsl_vector_complexd"><code class="docutils literal notranslate"><span class="pre">FFT()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv410FFTinverseP18gsl_vector_complexP10gsl_vectord"><code class="docutils literal notranslate"><span class="pre">FFTinverse()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413filderLibraryPP21ReconstructInitSIRENAd"><code class="docutils literal notranslate"><span class="pre">filderLibrary()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv410fileExistsRKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">fileExists()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv432fillReconstructInitSIRENAGrading10ParametersP6AdvDetPP21ReconstructInitSIRENA"><code class="docutils literal notranslate"><span class="pre">fillReconstructInitSIRENAGrading()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv416filterByWaveletsP21ReconstructInitSIRENAPP10gsl_vectoriPi"><code class="docutils literal notranslate"><span class="pre">filterByWavelets()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv412findIntervaliP10gsl_vectorP10gsl_vectoriiiiPiPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">findInterval()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413findIntervalNP10gsl_vectoriPiPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">findIntervalN()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413findMeanSigmaP10gsl_vectorPdPd"><code class="docutils literal notranslate"><span class="pre">findMeanSigma()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413findPulsesCALP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPiPdddidddP21ReconstructInitSIRENAdd"><code class="docutils literal notranslate"><span class="pre">findPulsesCAL()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv415findPulsesNoiseP10gsl_vectorP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPiPddididdd"><code class="docutils literal notranslate"><span class="pre">findPulsesNoise()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv415FindSecondariesiP10gsl_vectordP21ReconstructInitSIRENAiPiPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">FindSecondaries()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv418FindSecondariesSTCiP10gsl_vectordP21ReconstructInitSIRENAiPiPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">FindSecondariesSTC()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413findTstartCALiP10gsl_vectordiP21ReconstructInitSIRENAPiPP10gsl_vectorPP10gsl_vectorPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">findTstartCAL()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv415findTstartNoiseiP10gsl_vectordiPiPP10gsl_vectorPP10gsl_vectorPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">findTstartNoise()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv415find_EsboundarydP10gsl_vectorP21ReconstructInitSIRENAPiPiPdPdd"><code class="docutils literal notranslate"><span class="pre">find_Esboundary()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv421find_matchedfilterSABdP10gsl_vectoriP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd"><code class="docutils literal notranslate"><span class="pre">find_matchedfilterSAB()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv419find_model_energiesdP21ReconstructInitSIRENAPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">find_model_energies()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv418find_model_maxDERsdP21ReconstructInitSIRENAPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">find_model_maxDERs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv420find_model_samp1DERsdP21ReconstructInitSIRENAPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">find_model_samp1DERs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv421find_optimalfilterSABdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd"><code class="docutils literal notranslate"><span class="pre">find_optimalfilterSAB()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413find_prclofwndP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPdPdd"><code class="docutils literal notranslate"><span class="pre">find_prclofwn()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv412find_prclcovdP10gsl_vectorP21ReconstructInitSIRENAPP10gsl_vectorPP10gsl_vectorPdPdd"><code class="docutils literal notranslate"><span class="pre">find_prclcov()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv423freeOptimalFilterSIRENAP19OptimalFilterSIRENA"><code class="docutils literal notranslate"><span class="pre">freeOptimalFilterSIRENA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv425freeReconstructInitSIRENAP21ReconstructInitSIRENA"><code class="docutils literal notranslate"><span class="pre">freeReconstructInitSIRENA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv420freePulsesCollectionP16PulsesCollection"><code class="docutils literal notranslate"><span class="pre">freePulsesCollection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413fromGslMatrixPPvPP10gsl_matrixi"><code class="docutils literal notranslate"><span class="pre">fromGslMatrix()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413fromGslVectorPPvPP10gsl_vectori"><code class="docutils literal notranslate"><span class="pre">fromGslVector()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv417gennoisespec_mainv"><code class="docutils literal notranslate"><span class="pre">gennoisespec_main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv44getBP10gsl_vectorP10gsl_vectoriPP10gsl_vectoriPP10gsl_vectorPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">getB()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv420getLibraryCollectionP21ReconstructInitSIRENAP10gsl_vectorP10gsl_vectorPCi"><code class="docutils literal notranslate"><span class="pre">getLibraryCollection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv412getNoiseSpecP21ReconstructInitSIRENAPCi"><code class="docutils literal notranslate"><span class="pre">getNoiseSpec()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv416getpar_noiseSpecPC10Parameters"><code class="docutils literal notranslate"><span class="pre">getpar_noiseSpec()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413getpar_teslibPC10Parameters"><code class="docutils literal notranslate"><span class="pre">getpar_teslib()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv416getpar_tesreconsPC10Parameters"><code class="docutils literal notranslate"><span class="pre">getpar_tesrecons()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv414getPulseHeightP10gsl_vectorddidddiPd"><code class="docutils literal notranslate"><span class="pre">getPulseHeight()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv435getSamplingrate_trigreclength_FileiPc10ParametersPdPi"><code class="docutils literal notranslate"><span class="pre">getSamplingrate_trigreclength_Filei()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv429getSamplingrate_trigreclengthPc10ParametersPdPiPi"><code class="docutils literal notranslate"><span class="pre">getSamplingrate_trigreclength()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv426gsl_vector_complex_absIFCAP10gsl_vectorP18gsl_vector_complex"><code class="docutils literal notranslate"><span class="pre">gsl_vector_complex_absIFCA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv426gsl_vector_complex_argIFCAP10gsl_vectorP18gsl_vector_complex"><code class="docutils literal notranslate"><span class="pre">gsl_vector_complex_argIFCA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv428gsl_vector_complex_scaleIFCAP18gsl_vector_complex11gsl_complex"><code class="docutils literal notranslate"><span class="pre">gsl_vector_complex_scaleIFCA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv419gsl_vector_sqrtIFCAP10gsl_vectorP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">gsl_vector_sqrtIFCA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv423gsl_vector_SumsubvectorP10gsl_vectorllPd"><code class="docutils literal notranslate"><span class="pre">gsl_vector_Sumsubvector()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv414inDataIteratorlllliP11iteratorColPv"><code class="docutils literal notranslate"><span class="pre">inDataIterator()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv430initializeReconstructionSIRENAP21ReconstructInitSIRENAPCcP8fitsfilePCcPCciidiidiiPcddPCcPcPcPcddPciiiicPcPcicdccciiPCciicidPCciiddPCcPCi"><code class="docutils literal notranslate"><span class="pre">initializeReconstructionSIRENA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv417InitialTriggeringP10gsl_vectordddddPbPiPiPdi"><code class="docutils literal notranslate"><span class="pre">InitialTriggering()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv429IntegrafreeTesEventListSIRENAP12TesEventList"><code class="docutils literal notranslate"><span class="pre">IntegrafreeTesEventListSIRENA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv415interactiveParsP7inparami6string"><code class="docutils literal notranslate"><span class="pre">interactivePars()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv414interpolatePOSP10gsl_vectorP10gsl_vectorldPP10gsl_vectorPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">interpolatePOS()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv417interpolate_modelPP10gsl_vectordP10gsl_vectordP10gsl_vectord"><code class="docutils literal notranslate"><span class="pre">interpolate_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv48isNumber6string"><code class="docutils literal notranslate"><span class="pre">isNumber()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv410loadRecordP9TesRecordPdPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">loadRecord()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv410lpf_boxcarPP10gsl_vectorii"><code class="docutils literal notranslate"><span class="pre">lpf_boxcar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413matrix2vectorP10gsl_matrixPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">matrix2vector()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv419medianKappaClippingP10gsl_vectordddiPd"><code class="docutils literal notranslate"><span class="pre">medianKappaClipping()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv430medianKappaClipping_noiseSigmaP10gsl_vectordddPdPd"><code class="docutils literal notranslate"><span class="pre">medianKappaClipping_noiseSigma()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv48MyAssertiPc"><code class="docutils literal notranslate"><span class="pre">MyAssert()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv422newOptimalFilterSIRENAPCi"><code class="docutils literal notranslate"><span class="pre">newOptimalFilterSIRENA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv419newPulsesCollectionPCi"><code class="docutils literal notranslate"><span class="pre">newPulsesCollection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv424newReconstructInitSIRENAPCi"><code class="docutils literal notranslate"><span class="pre">newReconstructInitSIRENA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv48noDetectP10gsl_vectorP21ReconstructInitSIRENAPiPP10gsl_vectorPP10gsl_vectorPP10gsl_vectorPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">noDetect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv419obtainRiseFallTimesP10gsl_vectordP10gsl_vectorP10gsl_vectorP10gsl_vectorP10gsl_vectoriPP10gsl_vectorPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">obtainRiseFallTimes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv412parabola3PtsP10gsl_vectorP10gsl_vectorPdPdPd"><code class="docutils literal notranslate"><span class="pre">parabola3Pts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv47polyFitP10gsl_vectorP10gsl_vectorPdPdPd"><code class="docutils literal notranslate"><span class="pre">polyFit()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413polyFitLinearP10gsl_vectorP10gsl_vectorPdPd"><code class="docutils literal notranslate"><span class="pre">polyFitLinear()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv411print_errorPCKc6stringi"><code class="docutils literal notranslate"><span class="pre">print_error()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv410procRecordPP21ReconstructInitSIRENAddP8fitsfileP10gsl_vectorP10gsl_vectorP16PulsesCollectionliP10gsl_vectoriid"><code class="docutils literal notranslate"><span class="pre">procRecord()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv412pulseGradingP21ReconstructInitSIRENAiiiPiPli"><code class="docutils literal notranslate"><span class="pre">pulseGrading()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv417readAddSortParamsP21ReconstructInitSIRENAPP8fitsfiledidP10gsl_vectorP10gsl_vectorP10gsl_matrixP10gsl_matrixP10gsl_vectorP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">readAddSortParams()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv415readFitsComplex6IODataPP10gsl_matrix"><code class="docutils literal notranslate"><span class="pre">readFitsComplex()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv414readFitsSimple6IODataPP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">readFitsSimple()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv423reconstructRecordSIRENAP9TesRecordiP12TesEventListP21ReconstructInitSIRENAiiPP16PulsesCollectionPCi"><code class="docutils literal notranslate"><span class="pre">reconstructRecordSIRENA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv49RS_filterP10gsl_vectordddPd"><code class="docutils literal notranslate"><span class="pre">RS_filter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv49runDetectP9TesRecordiiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection"><code class="docutils literal notranslate"><span class="pre">runDetect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv49runEnergyP9TesRecordiiiPP21ReconstructInitSIRENAPP16PulsesCollectionP16PulsesCollection"><code class="docutils literal notranslate"><span class="pre">runEnergy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv412th_runEnergyP9TesRecordiiPP21ReconstructInitSIRENAPP16PulsesCollectionP16PulsesCollection"><code class="docutils literal notranslate"><span class="pre">th_runEnergy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv46shiftmP10gsl_vectorP10gsl_vectori"><code class="docutils literal notranslate"><span class="pre">shiftm()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv47shift_mP10gsl_vectorP10gsl_vectori"><code class="docutils literal notranslate"><span class="pre">shift_m()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv49subStringPKciiPc"><code class="docutils literal notranslate"><span class="pre">subString()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv411teslib_mainv"><code class="docutils literal notranslate"><span class="pre">teslib_main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv414tesrecons_mainv"><code class="docutils literal notranslate"><span class="pre">tesrecons_main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv412th_runDetectP9TesRecordiiiP16PulsesCollectionPP21ReconstructInitSIRENAPP16PulsesCollection"><code class="docutils literal notranslate"><span class="pre">th_runDetect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv411toGslMatrixPPvPP10gsl_matrixliii"><code class="docutils literal notranslate"><span class="pre">toGslMatrix()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv411toGslVectorPPvPP10gsl_vectorlii"><code class="docutils literal notranslate"><span class="pre">toGslVector()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413vector2matrixP10gsl_vectorPP10gsl_matrix"><code class="docutils literal notranslate"><span class="pre">vector2matrix()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv412weightMatrixP21ReconstructInitSIRENAbP16PulsesCollectionP16PulsesCollectionlP10gsl_vectorP10gsl_vectorPP10gsl_matrixPP10gsl_matrix"><code class="docutils literal notranslate"><span class="pre">weightMatrix()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv417weightMatrixNoiseP10gsl_matrixPP10gsl_matrix"><code class="docutils literal notranslate"><span class="pre">weightMatrixNoise()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv414writeFilterHDUPP21ReconstructInitSIRENAidP10gsl_vectorPP8fitsfile"><code class="docutils literal notranslate"><span class="pre">writeFilterHDU()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv416writeFitsComplex6IODataP10gsl_matrix"><code class="docutils literal notranslate"><span class="pre">writeFitsComplex()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv415writeFitsSimple6IODataP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">writeFitsSimple()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv412writeLibraryP21ReconstructInitSIRENAddP10gsl_vectorP10gsl_vectorP10gsl_matrixP10gsl_matrixbPP8fitsfileP10gsl_vectorP10gsl_vector"><code class="docutils literal notranslate"><span class="pre">writeLibrary()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv48writeLogP4FILE6stringi6string"><code class="docutils literal notranslate"><span class="pre">writeLog()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv411writePulsesPP21ReconstructInitSIRENAddP10gsl_vectoriP10gsl_vectorP10gsl_vectorP10gsl_vectorP10gsl_vectorP10gsl_vectorP8fitsfile"><code class="docutils literal notranslate"><span class="pre">writePulses()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv413writeTestInfoP21ReconstructInitSIRENAP10gsl_vectordP8fitsfile"><code class="docutils literal notranslate"><span class="pre">writeTestInfo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="SIRENAfunctions.html#_CPPv417writeTPSreprExtenv"><code class="docutils literal notranslate"><span class="pre">writeTPSreprExten()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="zreferences.html">References</a></li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="#">
+              <img class="logo" src="_static/SIRENA_black.png" alt="Logo of SIRENA"/>
+            </a></p>
+  <div>
+    <h3><a href="#">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">SIRENA documentation</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="SIRENA.html"
+                          title="next chapter">SIRENA description</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="SIRENA.html" title="SIRENA description"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">SIRENA 10.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">SIRENA documentation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, B. Cobo, M.T. Ceballos.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>
