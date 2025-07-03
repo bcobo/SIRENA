@@ -3257,7 +3257,7 @@ int offsetAveragingFilter(gsl_vector **invector, int N, int offset)
     if (invector == NULL || *invector == NULL)
         return 1; // Invalid input
 
-    if (N==0)
+    if (N != 0)
     {
         size_t len = (*invector)->size;
 

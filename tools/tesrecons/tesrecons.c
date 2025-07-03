@@ -86,7 +86,7 @@ int tesrecons_main() {
   printf("Running TESRECONS v%s\n",SIRENA_VERSION);
   time_t ttstart = time(0);
   
-  // Containing all programm parameters read by PIL.
+  // Containing all program parameters read by PIL.
   struct Parameters par;
   par.OFLib = 1;        // Debugger complains about an initialized variable (only the boolean type)
   
@@ -509,10 +509,12 @@ int getpar_tesrecons(struct Parameters* const par)
   if (par->windowSize == 0)
   {
       par->offset=0;
-      MyAssert(par->offset != 0, "windowSize=0 => offset=0");
+      MyAssert(par->offset >= 0, "windowSize=0 => offset=0");
   }
   else
+  {
       MyAssert(par->offset >= 0, "offset must be greater or equal than 0");
+  }
 
   return(status);
 }

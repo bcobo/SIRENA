@@ -367,10 +367,12 @@ int getpar_teslib(struct Parameters* const par)
   if (par->windowSize == 0)
   {
     par->offset=0;
-    MyAssert(par->offset != 0, "windowSize=0 => offset=0");
+    MyAssert(par->offset >= 0, "windowSize=0 => offset=0");
   }
   else
+  {
     MyAssert(par->offset >= 0, "offset must be greater or equal than 0");
+  }
 
   return(status);
 }

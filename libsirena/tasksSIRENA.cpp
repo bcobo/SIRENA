@@ -2178,12 +2178,16 @@ int nrecord, double tstartPrevPulse)
     gsl_vector *recordRaw = gsl_vector_alloc(record->size);
     gsl_vector_memcpy(recordRaw,record);
 
+    //gsl_vector *recordDerivative_causal = gsl_vector_alloc(record->size);   // To delete
+    //gsl_vector_memcpy(recordDerivative_causal,record);                      // To delete
     // Causal smooth derivative
+    //if (smoothDerivative_causal (&recordDerivative_causal, 4))                // To delete
     if (smoothDerivative_causal (&record, 4))
     {
         message = "Cannot run routine smoothDerivative_causal";
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
+    //gsl_vector_memcpy(record,recordDerivative_causal);  // To delete
 
     // This function modifies the input derivative in place by subtracting the mean of the previous N values at a given offset.
     if (offsetAveragingFilter (&record, windowSize, offset))
@@ -2193,9 +2197,11 @@ int nrecord, double tstartPrevPulse)
     }
     /*cout<<"______Derivative:"<<endl;
     for (int kkk=0;kkk<4000;kkk++)
+        //cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(recordDerivative_causal,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;
         cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;*/
 
     gsl_vector_free(recordRaw);
+    //gsl_vector_free(recordDerivative_causal);    //To delete
 
     gsl_vector_memcpy(recordDERIVATIVE,record);
     
