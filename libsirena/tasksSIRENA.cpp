@@ -2455,7 +2455,7 @@ int nrecord, double tstartPrevPulse)
         }
         else if ((i == 0) && (nrecord !=1))
         {
-            foundPulses->pulses_detected[i].grade2 = (int)((gsl_vector_get(tstartgsl,i)/samprate+tstartRecord-tstartPrevPulse)*samprate);
+            foundPulses->pulses_detected[i].grade2 = (long)((gsl_vector_get(tstartgsl,i)/samprate+tstartRecord-tstartPrevPulse)*samprate);
         }
         else
         {
@@ -2596,7 +2596,7 @@ int nrecord, double tstartPrevPulse)
         log_debug("tstart= %f", gsl_vector_get(tstartgsl,i));
         log_debug("tend= %f", gsl_vector_get(tendgsl,i));
         log_debug("pulse duration %d", foundPulses->pulses_detected[i].pulse_duration);
-        log_debug("grade2 %d", foundPulses->pulses_detected[i].grade2);
+        log_debug("grade2 %ld", foundPulses->pulses_detected[i].grade2);
         log_debug("quality %f", foundPulses->pulses_detected[i].quality);
     }
     
@@ -7212,13 +7212,12 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
             }
             if ((pulseGrade == 0) && (resize_mf == 0)) // Less than worst grading
             {
-
                 message = "Worse than the worst grading => SIGNAL=-999 & GRADE1=0 for pulse i=" + boost::lexical_cast<std::string>(i+1) + " in record " + boost::lexical_cast<std::string>(nrecord);
                 EP_PRINT_ERROR(message,-999);	// Only a warning
 
                 (*pulsesInRecord)->pulses_detected[i].energy = -999.0;
                 (*pulsesInRecord)->pulses_detected[i].E_lowres = -999.0;
-                (*pulsesInRecord)->pulses_detected[i].grading = -999.0;
+                (*pulsesInRecord)->pulses_detected[i].grading = -2;
                 (*pulsesInRecord)->pulses_detected[i].phi = -999.0;
                 (*pulsesInRecord)->pulses_detected[i].lagsShift = -999.0;
             }
@@ -10438,14 +10437,14 @@ int find_Esboundary(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *r
  * - OFlength: Optimal filter length (='OFLength' only if 'OFStrategy'=FIXED and 'OFLength' <= grade1) (output)
  * - nrecord: Current record index (to know the particular record where there could be more than one pulse => message)
  ****************************************/
-int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade1, int grade2, int *pulseGrade, long *OFlength, int nrecord)
+int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grade1, long grade2, int *pulseGrade, long *OFlength, int nrecord)
 {
     string message = "";
     char valERROR[256];
 
     log_debug("PulseGrading..............");
-    log_debug("grade1 %d", grade1);
-    log_debug("grade2 %d", grade2);
+    log_debug("grade1 %ld", grade1);
+    log_debug("grade2 %ld", grade2);
     
     gsl_vector *gradelim;
     if ((gradelim = gsl_vector_alloc(reconstruct_init->grading->ngrades)) == 0)
@@ -10617,6 +10616,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade
     }*/
     //if (((grade2 < gradelim_pre) || (grade1 == -1)) && (OFlength_strategy != 2))    *pulseGrade = -1;
     //if (grade2 < gradelim_pre) *pulseGrade = -1;
+
     if (*pulseGrade != 0)
     {
         if (grade2 < gsl_vector_get(gradelim,*pulseGrade-1)) *pulseGrade = -1;

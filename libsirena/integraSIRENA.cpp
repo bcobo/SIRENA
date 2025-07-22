@@ -411,7 +411,7 @@
      event_list->bsln = new double[event_list->index];
      event_list->rmsbsln = new double[event_list->index];
      event_list->grading = new int[event_list->index];
-     event_list->grades2 = new int[event_list->index];
+     event_list->grades2 = new long[event_list->index];
      event_list->ph_ids_array_size1 = event_list->index;
      if (pulsesInRecord->ndetpulses != 0)
      {
@@ -500,7 +500,7 @@
              event_list->bsln = new double[event_list->index];
              event_list->rmsbsln = new double[event_list->index];
              event_list->grading  = new int[event_list->index];
-             event_list->grades2  = new int[event_list->index];
+             event_list->grades2  = new long[event_list->index];
 
 
 
@@ -4252,7 +4252,6 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  pulse_duration(0),
  grade1(0),
  grade2(0),
- grade2_1(0),
  pixid(0),
  phid_vector(0),
  pulse_adc(0),
@@ -4283,7 +4282,6 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  pulse_duration(other.pulse_duration),
  grade1(other.grade1),
  grade2(other.grade2),
- grade2_1(other.grade2_1),
  pixid(other.pixid),
  phid_vector(0),
  pulse_adc(0),
@@ -4324,7 +4322,6 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
          pulse_duration = other.pulse_duration;
          grade1 = other.grade1;
          grade2 = other.grade2;
-         grade2_1 = other.grade2_1;
          pixid = other.pixid;
          if(pulse_adc) {
              gsl_vector_free(pulse_adc); pulse_adc = 0;

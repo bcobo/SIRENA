@@ -1111,7 +1111,7 @@ TesEventFileSIRENA* opennewTesEventFileSIRENA(const char* const filename,
     char temp[10];
     sprintf(temp, "%dJ", ph_id_size);
 	char   *ttype[]={"TIME","SIGNAL","AVG4SD","ELOWRES","GRADE1","GRADE2","PHI","LAGS","BSLN","RMSBSLN","PIXID","PH_ID","RISETIME","FALLTIME","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"};
-	char *tform[]={"1D", "1D", "1D", "1D", "1J", "1J", "1D", "1J", "1D", "1D", "1J", temp, "1D", "1D", "1D", "1D", "1E", "1E", "1I", "1J", "1I", "1D"};
+	char *tform[]={"1D", "1D", "1D", "1D", "1K", "1K", "1D", "1J", "1D", "1D", "1J", temp, "1D", "1D", "1D", "1D", "1E", "1E", "1I", "1J", "1I", "1D"};
 	char *tunit[]={"s", "keV", "", "keV", "", "", "", "", "", "", "", "", "s", "s", "deg", "deg", "m", "m", "", "", "", "keV"};
 
 	fits_create_tbl(file->fptr, BINARY_TBL, 0, 22, ttype, tform, tunit,"EVENTS", status);
@@ -1194,12 +1194,12 @@ double start_time,double delta_t,int* const status){
 	CHECK_STATUS_VOID(*status);
 
 	//Save grade1 column
-	fits_write_col(file->fptr, TINT, file->grade1Col,
+	fits_write_col(file->fptr, TLONGLONG, file->grade1Col,
 					file->row, 1, event_list->index, event_list->grades1, status);
 	CHECK_STATUS_VOID(*status);
 
 	//Save grade2 column
-	fits_write_col(file->fptr, TINT, file->grade2Col,
+	fits_write_col(file->fptr, TLONGLONG, file->grade2Col,
 					file->row, 1, event_list->index, event_list->grades2, status);
 	CHECK_STATUS_VOID(*status);
 

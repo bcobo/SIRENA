@@ -69,10 +69,10 @@ typedef struct {
 	double * energies;
 
 	/** Grade 1: length of the filter used during the reconstruction */
-	int * grades1;
+	long * grades1;
 
 	/** Grade 2: distance in samples to the previous pulse */
-	int * grades2;
+	long * grades2;
 
 	/** PH_ID of the reconstructed photons */
 	long ** ph_ids_array;
@@ -363,13 +363,11 @@ typedef struct PulseDetected
 	int pulse_duration;
 
 	/** Length of filter used during reconstruction (samples)*/
-	int grade1;
+	long grade1;
       
     /** Distance to previous pulse (samples)*/
     /** tstart(i)-tstart(i-1)*/
-	int grade2;
-
-    int grade2_1;
+	long grade2;
 
 	/** PIX_ID of the detected pulse*/
 	int pixid;

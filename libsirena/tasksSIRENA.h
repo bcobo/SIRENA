@@ -82,7 +82,7 @@ int find_optimalfilterSAB(double maxDER, gsl_vector *maxDERs, ReconstructInitSIR
 int find_prclcov(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, gsl_matrix **PRCLCOVFound, gsl_vector **DabFound,double *Ealpha, double *Ebeta, double margin);
 int find_prclofwn(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, gsl_matrix **PRCLOFWNFound,double *Ealpha, double *Ebeta, double margin);
 int find_Esboundary(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reconstruct_init, int *indexEalpha, int *indexEbeta,double *Ealpha, double *Ebeta, double margin);
-int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, int grade1, int grade2, int *pulseGrade, long *OFlength, int nrecord);
+int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grade1, long grade2, int *pulseGrade, long *OFlength, int nrecord);
 int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *filterFFT, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, gsl_vector *Dab, gsl_matrix *PRCLCOV, gsl_matrix *PRCLOFWN, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes, int productSize, int tooshortPulse_NoLags);
 int writeFilterHDU(ReconstructInitSIRENA **reconstruct_init, int pulse_index, double energy, gsl_vector *optimalfilter, fitsfile **dtcObject);
 
