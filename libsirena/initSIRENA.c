@@ -686,7 +686,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     while(getNextRecordSIRENA(record_file,record,&lastRecord,&startRecordGroup,ph_id_column_dim,&status))
     {
         // Progress bar
-        float progress;
+        /*float progress;
         if (numrecords == 1)
             progress = 1.0;
         else
@@ -708,7 +708,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
         if (nrecord == numrecords-1)
         {
             printf("\n"); // New line after ending "Building the library..../Reconstructing..."
-        }
+        }*/
 
         nrecord = nrecord + 1;
         /*if(nrecord < 5887)

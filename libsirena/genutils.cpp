@@ -397,16 +397,17 @@ void print_error(const char* const func, string message, int status)
 {
 	if (status > 0 && status <= 10)
 	{
-		cout<<"Error in "<<string(func)<<": "<<message<<endl;
+		printf("Error in %s: %s\n", func, message.c_str());
+
 	}
 	else if (status > 10)  // CFITSIO Error
 	{
-                cout<<message<<endl;
-		fits_report_error(stderr, status); // print error report 
+     	printf("%s\n",message.c_str());
+		fits_report_error(stderr, status); // print error report
 	}
 	else if (status == -999)
 	{
-		cout<<"Warning in "<<string(func)<<": "<<message<<endl;
+		printf("Warning in %s: %s\n", func, message.c_str());
 	}
 	return;
 }

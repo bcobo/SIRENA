@@ -63,6 +63,7 @@
  *******************************************************************************/
 
 #include "tasksSIRENA.h"
+#include "genutils.h"
 #include "log.h"
 #include "scheduler.h"
 
