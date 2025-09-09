@@ -1379,12 +1379,12 @@ int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRe
             if (sizeLastRow == 0)
             {
                 nrowsTogether = nrowsTogether_div_t.quot;
+                sizeLastRow = record->trigger_size;
             }
             else
             {
                 nrowsTogether = nrowsTogether_div_t.quot+1;
             }
-            //printf("%s %d %s","nrowsTogether: ",nrowsTogether,"\n");
             resizeTesRecord(record,(unsigned long) record->extend + record->trigger_size,status);
             double *singleRecord = NULL;
             int rowToRead = file->row;
@@ -1411,6 +1411,7 @@ int getNextRecordSIRENA(TesTriggerFile* const file,TesRecord* record,int *lastRe
                     //else sizeToWrite = sizeLastRow;
                     sizeToWrite = sizeLastRow;
                 }
+
                 for (int j=0;j<sizeToWrite;j++)
                 {
                     record->adc_double[j+index] = singleRecord[j];
