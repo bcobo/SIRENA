@@ -43,7 +43,7 @@ void th_runDetect(TesRecord* record, int trig_reclength,
 
 int createLibrary(ReconstructInitSIRENA* reconstruct_init, bool *appendToLibrary, fitsfile **inLibObject);
 int createDetectFile(ReconstructInitSIRENA* reconstruct_init, double samprate, fitsfile **dtcObject);
-int filderLibrary(ReconstructInitSIRENA** reconstruct_init, double samprate);
+int filderLibrary(ReconstructInitSIRENA** reconstruct_init, double samprate, int windowSize, int offset);
 int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double);
 int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record, double threshold, int windowSize, int offset, PulsesCollection *foundPulses,long num_previousDetectedPulses, int pixid, gsl_vector *phid, int oscillations, int nrecord, double tstartPrevPulse);
 int writePulses(ReconstructInitSIRENA** reconstruct_init, double samprate, double initialtime, gsl_vector *invectorNOTFIL, int numPulsesRecord, gsl_vector *tstart, gsl_vector *tend, gsl_vector *quality, gsl_vector *taurise, gsl_vector *taufall, fitsfile *dtcObject);

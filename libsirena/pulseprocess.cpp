@@ -3246,6 +3246,21 @@ int noDetect(gsl_vector *der, ReconstructInitSIRENA *reconstruct_init, int *numb
  * offsetAveragingFilter function: This function modifies the input vector in place by subtracting the mean of the previous N values
  *                               at a given offset. If there are not enough previous values, the value remains unchanged.
  *                               Returns 0 on success, 1 on parameter or memory error.
+ *   For each index i >= N + offset:
+ *
+ *      mean = (1/N) * Σ_{k = i - offset - N}^{i - offset - 1} x_k
+ *      x_i  →  x_i - mean
+ *
+ *   For i < N + offset, the value x_i is left unchanged.
+ *
+ * Examples:
+ *   - offset = 0, N = 2:
+ *       mean = (x_{i-2} + x_{i-1}) / 2
+ *       x_i  → x_i - mean
+ *
+ *   - offset = 3, N = 2:
+ *       mean = (x_{i-5} + x_{i-4}) / 2
+ *       x_i  → x_i - mean
  *
  * Parameters:
  * - invector: Input/Output GSL vector (input vector/output vector)

@@ -181,7 +181,7 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
     //(Filter and) differentiate the 'models' of the library (only for the first record in PRODUCTION 'opmode=1') ('filderLibrary')
     if ((*reconstruct_init)->opmode == 1)
     {
-        if (filderLibrary(reconstruct_init,1/record->delta_t))
+        if (filderLibrary(reconstruct_init,1/record->delta_t, (*reconstruct_init)->windowSize, (*reconstruct_init)->offset))
         {
             message = "Cannot run routine filderLibrary to filter & differentiate library if the 1st record";
             EP_EXIT_ERROR(message,EPFAIL);
@@ -860,7 +860,7 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
     // thread safe
     // Not treadsafe for the library
     // lock here
-    if (filderLibrary(reconstruct_init, 1/record->delta_t))
+    if (filderLibrary(reconstruct_init, 1/record->delta_t, (*reconstruct_init)->windowSize, (*reconstruct_init)->offset))
     {
         message = "Cannot run routine filderLibrary to filter "
         + string("& differentiate library if the 1st record");
@@ -1864,8 +1864,10 @@ int createDetectFile(ReconstructInitSIRENA* reconstruct_init, double samprate, f
  *                     In particular, this function uses some parameters to filter ('scaleFactor') and others to handle the pulse templates
  * 		      and their derivatives ('ntemplates', 'pulse_templates', 'pulse_templates_filder' and 'maxDERs')
  * - samprate: Sampling rate
+ * - windowSize: Window size used to compute the averaged derivative
+ * - offset: Window offset
  ******************************************************************************/
-int filderLibrary(ReconstructInitSIRENA** reconstruct_init, double samprate)
+int filderLibrary(ReconstructInitSIRENA** reconstruct_init, double samprate, int windowSize, int offset)
 {
     int status = EPOK;
     string message = "";
@@ -1922,9 +1924,20 @@ int filderLibrary(ReconstructInitSIRENA** reconstruct_init, double samprate)
             }
             
             // PULSE TEMPLATE: Derivative after filtering
-            if (differentiate (&model,model->size))
+            /*if (differentiate (&model,model->size))
             {
                 message = "Cannot run routine differentiate in filderLibrary";
+                EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+            }*/
+            if (smoothDerivative_causal (&model, 4))
+            {
+                message = "Cannot run routine smoothDerivative_causal";
+                EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+            }
+            // This function modifies the input derivative in place by subtracting the mean of the previous N values at a given offset.
+            if (offsetAveragingFilter (&model, windowSize, offset))
+            {
+                message = "Cannot run routine offsetAveragingFilter";
                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
             }
             
@@ -9474,93 +9487,103 @@ int find_matchedfilter(int runF0orB0val, double maxDER, gsl_vector *maxDERs, int
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
     
-    if (maxDER < (gsl_vector_get(maxDERs_LIB1row,0)-gsl_vector_get(maxDERs_LIB1row,0)*margin/100.0))
+    if (nummodels == 1)
     {
-        if (reconstruct_init->filtEev == 0)
-        {
-            if ((runF0orB0val == 0) || (runF0orB0val == 2)) gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[0].mfilter);
-            else                                            gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters_B0[0].mfilter);
-            *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
-        }
-        else
-        {
-            if ((runF0orB0val == 0) || (runF0orB0val == 2)) gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[index_E_LIB1row].mfilter);
-            else                                            gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters_B0[index_E_LIB1row].mfilter);
-            *Ebeta = reconstruct_init->filtEev;
-        }
-        
-        *Ealpha = 0.0;
-    }
-    else if (maxDER > (gsl_vector_get(maxDERs_LIB1row,nummodels-1)+gsl_vector_get(maxDERs_LIB1row,nummodels-1)*margin/100.0))
-    {
-        if (reconstruct_init->filtEev == 0)
-        {
-            if ((runF0orB0val == 0) || (runF0orB0val == 2))		gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection
-                ->matched_filters[nummodels-1].mfilter);
-            *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1);
-        }
-        else
-        {
-            if ((runF0orB0val == 0) || (runF0orB0val == 2))     gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection
-                ->matched_filters[index_E_LIB1row].mfilter);
-            *Ealpha = reconstruct_init->filtEev;
-        }
-        
+        *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,0);
         *Ebeta = 0.0;
+        if ((runF0orB0val == 0) || (runF0orB0val == 2)) gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[0].mfilter);
+        else                                            gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters_B0[0].mfilter);
     }
     else
     {
-        for (int i=0;i<nummodels;i++)
+        if (maxDER < (gsl_vector_get(maxDERs_LIB1row,0)-gsl_vector_get(maxDERs_LIB1row,0)*margin/100.0))
         {
-            if (maxDER == gsl_vector_get(maxDERs_LIB1row,i))
+            if (reconstruct_init->filtEev == 0)
             {
-                if ((runF0orB0val == 0) || (runF0orB0val == 2)) gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[i].mfilter);
-                else                                            gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters_B0[i].mfilter);
-                
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                
-                break;
+                if ((runF0orB0val == 0) || (runF0orB0val == 2)) gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[0].mfilter);
+                else                                            gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters_B0[0].mfilter);
+                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
             }
-            else if ((maxDER > (gsl_vector_get(maxDERs_LIB1row,i)-gsl_vector_get(maxDERs_LIB1row,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs_LIB1row,i+1)-gsl_vector_get(maxDERs_LIB1row,i+1)*margin/100.0)))
+            else
             {
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
-                
-                // Interpolate between the two corresponding rows in "models"
-                gsl_vector *matchedfilterAux;
-                if ((matchedfilterAux = gsl_vector_alloc(reconstruct_init->library_collection->matched_filters[0].mfilter_duration)) == 0)
+                if ((runF0orB0val == 0) || (runF0orB0val == 2)) gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[index_E_LIB1row].mfilter);
+                else                                            gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters_B0[index_E_LIB1row].mfilter);
+                *Ebeta = reconstruct_init->filtEev;
+            }
+
+            *Ealpha = 0.0;
+        }
+        else if (maxDER > (gsl_vector_get(maxDERs_LIB1row,nummodels-1)+gsl_vector_get(maxDERs_LIB1row,nummodels-1)*margin/100.0))
+        {
+            if (reconstruct_init->filtEev == 0)
+            {
+                if ((runF0orB0val == 0) || (runF0orB0val == 2))		gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection
+                    ->matched_filters[nummodels-1].mfilter);
+                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1);
+            }
+            else
+            {
+                if ((runF0orB0val == 0) || (runF0orB0val == 2))     gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection
+                    ->matched_filters[index_E_LIB1row].mfilter);
+                *Ealpha = reconstruct_init->filtEev;
+            }
+
+            *Ebeta = 0.0;
+        }
+        else
+        {
+            for (int i=0;i<nummodels;i++)
+            {
+                if (maxDER == gsl_vector_get(maxDERs_LIB1row,i))
                 {
-                    sprintf(valERROR,"%d",__LINE__-2);
-                    string str(valERROR);
-                    message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-                    str.clear();
-                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                    if ((runF0orB0val == 0) || (runF0orB0val == 2)) gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[i].mfilter);
+                    else                                            gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters_B0[i].mfilter);
+
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+
+                    break;
                 }
-                gsl_vector_set_zero(matchedfilterAux);
-                if ((runF0orB0val == 0) || (runF0orB0val == 2))
+                else if ((maxDER > (gsl_vector_get(maxDERs_LIB1row,i)-gsl_vector_get(maxDERs_LIB1row,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs_LIB1row,i+1)-gsl_vector_get(maxDERs_LIB1row,i+1)*margin/100.0)))
                 {
-                    if (interpolate_model(&matchedfilterAux,maxDER,reconstruct_init->library_collection->matched_filters[i].mfilter,gsl_vector_get(maxDERs_LIB1row,i),
-                        reconstruct_init->library_collection->matched_filters[i+1].mfilter,gsl_vector_get(maxDERs_LIB1row,i+1)))
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
+
+                    // Interpolate between the two corresponding rows in "models"
+                    gsl_vector *matchedfilterAux;
+                    if ((matchedfilterAux = gsl_vector_alloc(reconstruct_init->library_collection->matched_filters[0].mfilter_duration)) == 0)
                     {
-                        message = "Cannot run interpolate_model routine for model interpolation";
+                        sprintf(valERROR,"%d",__LINE__-2);
+                        string str(valERROR);
+                        message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+                        str.clear();
                         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
                     }
-                }
-                else
-                {
-                    if (interpolate_model(&matchedfilterAux,maxDER,reconstruct_init->library_collection->matched_filters_B0[i].mfilter,gsl_vector_get(maxDERs_LIB1row,i),
-                        reconstruct_init->library_collection->matched_filters_B0[i+1].mfilter,gsl_vector_get(maxDERs_LIB1row,i+1)))
+                    gsl_vector_set_zero(matchedfilterAux);
+                    if ((runF0orB0val == 0) || (runF0orB0val == 2))
                     {
-                        message = "Cannot run interpolate_model routine for model interpolation";
-                        EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                        if (interpolate_model(&matchedfilterAux,maxDER,reconstruct_init->library_collection->matched_filters[i].mfilter,gsl_vector_get(maxDERs_LIB1row,i),
+                            reconstruct_init->library_collection->matched_filters[i+1].mfilter,gsl_vector_get(maxDERs_LIB1row,i+1)))
+                        {
+                            message = "Cannot run interpolate_model routine for model interpolation";
+                            EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                        }
                     }
+                    else
+                    {
+                        if (interpolate_model(&matchedfilterAux,maxDER,reconstruct_init->library_collection->matched_filters_B0[i].mfilter,gsl_vector_get(maxDERs_LIB1row,i),
+                            reconstruct_init->library_collection->matched_filters_B0[i+1].mfilter,gsl_vector_get(maxDERs_LIB1row,i+1)))
+                        {
+                            message = "Cannot run interpolate_model routine for model interpolation";
+                            EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                        }
+                    }
+                    gsl_vector_memcpy(matchedfilterFound_aux,matchedfilterAux);
+
+                    gsl_vector_free(matchedfilterAux); matchedfilterAux = 0;
+
+                    break;
                 }
-                gsl_vector_memcpy(matchedfilterFound_aux,matchedfilterAux);
-                
-                gsl_vector_free(matchedfilterAux); matchedfilterAux = 0;
-                
-                break;
             }
         }
     }
@@ -9622,63 +9645,73 @@ int find_matchedfilterSAB(double maxDER, gsl_vector *maxDERs, int preBuffer, Rec
     // It is not necessary to check the allocation because the allocation of 'matchedfilterFound_aux' has been checked previously 
     gsl_vector *DabFound_aux = gsl_vector_alloc(reconstruct_init->library_collection->pulse_templates[0].template_duration);
     
-    if (maxDER < (gsl_vector_get(maxDERs,0)-gsl_vector_get(maxDERs,0)*margin/100.0))
+    if (nummodels == 1)
     {
+        *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,0);
+        *Ebeta = 0.0;
         gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[0].mfilter);
-        
         gsl_matrix_get_row(DabFound_aux,reconstruct_init->library_collection->DAB,0);
-        
-        *Ealpha = 0.0;
-        *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
-    }
-    else if (maxDER > (gsl_vector_get(maxDERs,nummodels-1)+gsl_vector_get(maxDERs,nummodels-1)*margin/100.0))
-    {
-        if (nummodels == 1)
-        {
-            gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[0].mfilter);
-            
-            gsl_matrix_get_row(DabFound_aux,reconstruct_init->library_collection->DAB,0);
-            
-            *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,0);
-            *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
-        }
-        else
-        {
-            gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[nummodels-2].mfilter);
-            
-            gsl_matrix_get_row(DabFound_aux,reconstruct_init->library_collection->DAB,nummodels-2);	//!!!!!! -2 !!!!!!!
-            // -1 because of the GSL indexes start in 0
-            // -1 because the info AB between two energies A<B is stored in the row of the energy A 
-            
-            *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-2);
-            *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1);
-        }
     }
     else
     {
-        for (int i=0;i<nummodels;i++)
+        if (maxDER < (gsl_vector_get(maxDERs,0)-gsl_vector_get(maxDERs,0)*margin/100.0))
         {
-            if (maxDER == gsl_vector_get(maxDERs,i))
+            gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[0].mfilter);
+
+            gsl_matrix_get_row(DabFound_aux,reconstruct_init->library_collection->DAB,0);
+
+            *Ealpha = 0.0;
+            *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
+        }
+        else if (maxDER > (gsl_vector_get(maxDERs,nummodels-1)+gsl_vector_get(maxDERs,nummodels-1)*margin/100.0))
+        {
+            if (nummodels == 1)
             {
-                gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[i].mfilter);
-                
-                gsl_matrix_get_row(DabFound_aux,reconstruct_init->library_collection->DAB,i);
-                
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                
-                break;
+                gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[0].mfilter);
+
+                gsl_matrix_get_row(DabFound_aux,reconstruct_init->library_collection->DAB,0);
+
+                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,0);
+                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
             }
-            else if ((maxDER > (gsl_vector_get(maxDERs,i)-gsl_vector_get(maxDERs,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs,i+1)-gsl_vector_get(maxDERs,i+1)*margin/100.0)))
+            else
             {
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
-                
-                gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[i].mfilter);
-                
-                gsl_matrix_get_row(DabFound_aux,reconstruct_init->library_collection->DAB,i);
-                
-                break;
+                gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[nummodels-2].mfilter);
+
+                gsl_matrix_get_row(DabFound_aux,reconstruct_init->library_collection->DAB,nummodels-2);	//!!!!!! -2 !!!!!!!
+                // -1 because of the GSL indexes start in 0
+                // -1 because the info AB between two energies A<B is stored in the row of the energy A
+
+                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-2);
+                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1);
+            }
+        }
+        else
+        {
+            for (int i=0;i<nummodels;i++)
+            {
+                if (maxDER == gsl_vector_get(maxDERs,i))
+                {
+                    gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[i].mfilter);
+
+                    gsl_matrix_get_row(DabFound_aux,reconstruct_init->library_collection->DAB,i);
+
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+
+                    break;
+                }
+                else if ((maxDER > (gsl_vector_get(maxDERs,i)-gsl_vector_get(maxDERs,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs,i+1)-gsl_vector_get(maxDERs,i+1)*margin/100.0)))
+                {
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
+
+                    gsl_vector_memcpy(matchedfilterFound_aux,reconstruct_init->library_collection->matched_filters[i].mfilter);
+
+                    gsl_matrix_get_row(DabFound_aux,reconstruct_init->library_collection->DAB,i);
+
+                    break;
+                }
             }
         }
     }
@@ -9746,7 +9779,7 @@ int find_optimalfilter(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA
             }
         }
     }
-    
+
     int sizeFilter = -999;
     gsl_matrix *optimal_filters = nullptr;
     if (strcmp(reconstruct_init->FilterDomain,"F") == 0)
@@ -9763,7 +9796,7 @@ int find_optimalfilter(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA
         for (int i=0;i<reconstruct_init->library_collection->ntemplates;i++)
             gsl_matrix_set_row(optimal_filters,i,reconstruct_init->library_collection->optimal_filtersTIME[i].ofilter);
     }
-    
+
     gsl_vector *optimalfilterFound_Aux;
     if ((optimalfilterFound_Aux = gsl_vector_alloc(reconstruct_init->library_collection->optimal_filters[0].ofilter_duration)) == 0)
     {
@@ -9773,104 +9806,116 @@ int find_optimalfilter(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA
         str.clear();
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
-    
-    if (maxDER < (gsl_vector_get(maxDERs_LIB1row,0)-gsl_vector_get(maxDERs_LIB1row,0)*margin/100.0))
-    {  
-        if (reconstruct_init->filtEev == 0)
-        {
-            //gsl_vector_memcpy(optimalfilterFound_Aux,reconstruct_init->library_collection->optimal_filters[0].ofilter);
-            gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
-            gsl_matrix_get_row(row,optimal_filters,0);
-            gsl_vector_memcpy(optimalfilterFound_Aux,row);
-            gsl_vector_free(row); row = 0;
-            *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
-        }
-        else
-        {
-            //gsl_vector_memcpy(optimalfilterFound_Aux,reconstruct_init->library_collection->optimal_filters[index_E_LIB1row].ofilter);
-            gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
-            gsl_matrix_get_row(row,optimal_filters,index_E_LIB1row);
-            gsl_vector_memcpy(optimalfilterFound_Aux,row);
-            gsl_vector_free(row); row = 0;
-            *Ebeta = reconstruct_init->filtEev;
-        }
-        
-        *Ealpha = 0.0;
-    }
-    else if (maxDER > (gsl_vector_get(maxDERs_LIB1row,nummodels-1)+gsl_vector_get(maxDERs_LIB1row,nummodels-1)*margin/100.0))
+
+    if (nummodels == 1)
     {
-        if (reconstruct_init->filtEev == 0)
-        {
-            //gsl_vector_memcpy(optimalfilterFound_Aux,reconstruct_init->library_collection->optimal_filters[nummodels-1].ofilter);
-            gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
-            gsl_matrix_get_row(row,optimal_filters,nummodels-1);
-            gsl_vector_memcpy(optimalfilterFound_Aux,row);
-            gsl_vector_free(row); row = 0;
-            *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1);
-        }
-        else
-        {
-            //gsl_vector_memcpy(optimalfilterFound_Aux,reconstruct_init->library_collection->optimal_filters[index_E_LIB1row].ofilter);
-            gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
-            gsl_matrix_get_row(row,optimal_filters,index_E_LIB1row);
-            gsl_vector_memcpy(optimalfilterFound_Aux,row);
-            gsl_vector_free(row); row = 0;
-            *Ealpha = reconstruct_init->filtEev;
-        }
-        
+        *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,0);
         *Ebeta = 0.0;
+        gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
+        gsl_matrix_get_row(row,optimal_filters,0);
+        gsl_vector_memcpy(optimalfilterFound_Aux,row);
+        gsl_vector_free(row); row = 0;
     }
     else
     {
-        for (int i=0;i<nummodels;i++)
+        if (maxDER < (gsl_vector_get(maxDERs_LIB1row,0)-gsl_vector_get(maxDERs_LIB1row,0)*margin/100.0))
         {
-            if (maxDER == gsl_vector_get(maxDERs,i))
+            if (reconstruct_init->filtEev == 0)
             {
+                //gsl_vector_memcpy(optimalfilterFound_Aux,reconstruct_init->library_collection->optimal_filters[0].ofilter);
                 gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
-                gsl_matrix_get_row(row,optimal_filters,i);
+                gsl_matrix_get_row(row,optimal_filters,0);
                 gsl_vector_memcpy(optimalfilterFound_Aux,row);
                 gsl_vector_free(row); row = 0;
-                
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                
-                break;
+                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
             }
-            else if ((maxDER > (gsl_vector_get(maxDERs,i)-gsl_vector_get(maxDERs,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs,i+1)-gsl_vector_get(maxDERs,i+1)*margin/100.0)))
+            else
             {
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
-                
-                // Interpolate between the two corresponding rows in "models"
-                gsl_vector *optimalfilter_Aux2;
-                if ((optimalfilter_Aux2 = gsl_vector_alloc(reconstruct_init->library_collection->optimal_filters[0].ofilter_duration)) == 0)
-                {
-                    sprintf(valERROR,"%d",__LINE__-2);
-                    string str(valERROR);
-                    message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
-                    str.clear();
-                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-                }
-                gsl_vector_set_zero(optimalfilter_Aux2);
+                //gsl_vector_memcpy(optimalfilterFound_Aux,reconstruct_init->library_collection->optimal_filters[index_E_LIB1row].ofilter);
+                gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
+                gsl_matrix_get_row(row,optimal_filters,index_E_LIB1row);
+                gsl_vector_memcpy(optimalfilterFound_Aux,row);
+                gsl_vector_free(row); row = 0;
+                *Ebeta = reconstruct_init->filtEev;
+            }
 
-                gsl_vector *row1 = gsl_vector_alloc(optimal_filters->size2);
-                gsl_matrix_get_row(row1,optimal_filters,i);
-                gsl_vector *row2 = gsl_vector_alloc(optimal_filters->size2);
-                gsl_matrix_get_row(row2,optimal_filters,i);
+            *Ealpha = 0.0;
+        }
+        else if (maxDER > (gsl_vector_get(maxDERs_LIB1row,nummodels-1)+gsl_vector_get(maxDERs_LIB1row,nummodels-1)*margin/100.0))
+        {
+            if (reconstruct_init->filtEev == 0)
+            {
+                //gsl_vector_memcpy(optimalfilterFound_Aux,reconstruct_init->library_collection->optimal_filters[nummodels-1].ofilter);
+                gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
+                gsl_matrix_get_row(row,optimal_filters,nummodels-1);
+                gsl_vector_memcpy(optimalfilterFound_Aux,row);
+                gsl_vector_free(row); row = 0;
+                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1);
+            }
+            else
+            {
+                //gsl_vector_memcpy(optimalfilterFound_Aux,reconstruct_init->library_collection->optimal_filters[index_E_LIB1row].ofilter);
+                gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
+                gsl_matrix_get_row(row,optimal_filters,index_E_LIB1row);
+                gsl_vector_memcpy(optimalfilterFound_Aux,row);
+                gsl_vector_free(row); row = 0;
+                *Ealpha = reconstruct_init->filtEev;
+            }
 
-                if (interpolate_model(&optimalfilter_Aux2,maxDER,row1,gsl_vector_get(maxDERs,i), row2,gsl_vector_get(maxDERs,i+1)))
+            *Ebeta = 0.0;
+        }
+        else
+        {
+            for (int i=0;i<nummodels;i++)
+            {
+                if (maxDER == gsl_vector_get(maxDERs,i))
                 {
-                    message = "Cannot run interpolate_model routine for model interpolation";
-                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                    gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
+                    gsl_matrix_get_row(row,optimal_filters,i);
+                    gsl_vector_memcpy(optimalfilterFound_Aux,row);
+                    gsl_vector_free(row); row = 0;
+
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+
+                    break;
                 }
-                gsl_vector_free(row1); row1 = 0;
-                gsl_vector_free(row2); row2 = 0;
-                
-                gsl_vector_memcpy(optimalfilterFound_Aux,optimalfilter_Aux2);
-                
-                if (optimalfilter_Aux2 != NULL) {gsl_vector_free(optimalfilter_Aux2); optimalfilter_Aux2 = 0;}
-                
-                break;
+                else if ((maxDER > (gsl_vector_get(maxDERs,i)-gsl_vector_get(maxDERs,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs,i+1)-gsl_vector_get(maxDERs,i+1)*margin/100.0)))
+                {
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
+
+                    // Interpolate between the two corresponding rows in "models"
+                    gsl_vector *optimalfilter_Aux2;
+                    if ((optimalfilter_Aux2 = gsl_vector_alloc(reconstruct_init->library_collection->optimal_filters[0].ofilter_duration)) == 0)
+                    {
+                        sprintf(valERROR,"%d",__LINE__-2);
+                        string str(valERROR);
+                        message = "Allocating with <= 0 size in line " + str + " (" + __FILE__ + ")";
+                        str.clear();
+                        EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                    }
+                    gsl_vector_set_zero(optimalfilter_Aux2);
+
+                    gsl_vector *row1 = gsl_vector_alloc(optimal_filters->size2);
+                    gsl_matrix_get_row(row1,optimal_filters,i);
+                    gsl_vector *row2 = gsl_vector_alloc(optimal_filters->size2);
+                    gsl_matrix_get_row(row2,optimal_filters,i);
+
+                    if (interpolate_model(&optimalfilter_Aux2,maxDER,row1,gsl_vector_get(maxDERs,i), row2,gsl_vector_get(maxDERs,i+1)))
+                    {
+                        message = "Cannot run interpolate_model routine for model interpolation";
+                        EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                    }
+                    gsl_vector_free(row1); row1 = 0;
+                    gsl_vector_free(row2); row2 = 0;
+
+                    gsl_vector_memcpy(optimalfilterFound_Aux,optimalfilter_Aux2);
+
+                    if (optimalfilter_Aux2 != NULL) {gsl_vector_free(optimalfilter_Aux2); optimalfilter_Aux2 = 0;}
+
+                    break;
+                }
             }
         }
     }
@@ -9970,76 +10015,88 @@ int find_optimalfilterSAB(double maxDER, gsl_vector *maxDERs, ReconstructInitSIR
         }
     }
 
-    if (maxDER < (gsl_vector_get(maxDERs,0)-gsl_vector_get(maxDERs,0)*margin/100.0))
+    if (nummodels == 1)
     {
+        *Ealpha = 0.0;
+        *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
         gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
         gsl_matrix_get_row(row,optimal_filters,0);
         gsl_vector_memcpy(optimalfilterFound_Aux,row);
         gsl_vector_free(row); row = 0;
-        
-        gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,0);
-        
-        *Ealpha = 0.0;
-        *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
     }
-    else if (maxDER > (gsl_vector_get(maxDERs,nummodels-1)+gsl_vector_get(maxDERs,nummodels-1)*margin/100.0))
+    else
     {
-        if (nummodels == 1)
+        if (maxDER < (gsl_vector_get(maxDERs,0)-gsl_vector_get(maxDERs,0)*margin/100.0))
         {
             gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
             gsl_matrix_get_row(row,optimal_filters,0);
             gsl_vector_memcpy(optimalfilterFound_Aux,row);
             gsl_vector_free(row); row = 0;
+
             gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,0);
-            
+
             *Ealpha = 0.0;
             *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
         }
+        else if (maxDER > (gsl_vector_get(maxDERs,nummodels-1)+gsl_vector_get(maxDERs,nummodels-1)*margin/100.0))
+        {
+            if (nummodels == 1)
+            {
+                gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
+                gsl_matrix_get_row(row,optimal_filters,0);
+                gsl_vector_memcpy(optimalfilterFound_Aux,row);
+                gsl_vector_free(row); row = 0;
+                gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,0);
+
+                *Ealpha = 0.0;
+                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
+            }
+            else
+            {
+                gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
+                gsl_matrix_get_row(row,optimal_filters,nummodels-2);
+                gsl_vector_memcpy(optimalfilterFound_Aux,row);
+                gsl_vector_free(row); row = 0;
+
+                gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,nummodels-2);	//!!!!!! -2 !!!!!!!
+                    // -1 because of the GSL indexes start in 0
+                    // -1 because the info AB between two energies A<B is stored in the row of the energy A
+                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-2);
+                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1);
+            }
+        }
         else
         {
-            gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
-            gsl_matrix_get_row(row,optimal_filters,nummodels-2);
-            gsl_vector_memcpy(optimalfilterFound_Aux,row);
-            gsl_vector_free(row); row = 0;
-            
-            gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,nummodels-2);	//!!!!!! -2 !!!!!!!
-                // -1 because of the GSL indexes start in 0
-                // -1 because the info AB between two energies A<B is stored in the row of the energy A
-            *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-2);
-            *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1);
-        }
-    }
-    else
-    {
-        for (int i=0;i<nummodels;i++)
-        {
-            if (maxDER == gsl_vector_get(maxDERs,i))
+            for (int i=0;i<nummodels;i++)
             {
-                gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
-                gsl_matrix_get_row(row,optimal_filters,i);
-                gsl_vector_memcpy(optimalfilterFound_Aux,row);
-                gsl_vector_free(row); row = 0;
-                
-                gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,i);
-                
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                
-                break;
-            }
-            else if ((maxDER > (gsl_vector_get(maxDERs,i)-gsl_vector_get(maxDERs,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs,i+1)-gsl_vector_get(maxDERs,i+1)*margin/100.0)))
-            {
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
-                
-                gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
-                gsl_matrix_get_row(row,optimal_filters,i);
-                gsl_vector_memcpy(optimalfilterFound_Aux,row);
-                gsl_vector_free(row); row = 0;
-                
-                gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,i);
-                
-                break;
+                if (maxDER == gsl_vector_get(maxDERs,i))
+                {
+                    gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
+                    gsl_matrix_get_row(row,optimal_filters,i);
+                    gsl_vector_memcpy(optimalfilterFound_Aux,row);
+                    gsl_vector_free(row); row = 0;
+
+                    gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,i);
+
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+
+                    break;
+                }
+                else if ((maxDER > (gsl_vector_get(maxDERs,i)-gsl_vector_get(maxDERs,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs,i+1)-gsl_vector_get(maxDERs,i+1)*margin/100.0)))
+                {
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
+
+                    gsl_vector *row = gsl_vector_alloc(optimal_filters->size2);
+                    gsl_matrix_get_row(row,optimal_filters,i);
+                    gsl_vector_memcpy(optimalfilterFound_Aux,row);
+                    gsl_vector_free(row); row = 0;
+
+                    gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,i);
+
+                    break;
+                }
             }
         }
     }
@@ -10125,49 +10182,61 @@ int find_prclcov(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *reco
     }
     gsl_vector *DabFound_Aux = gsl_vector_alloc(reconstruct_init->library_collection->pulse_templates[0].template_duration);
     
-    if (maxDER < (gsl_vector_get(maxDERs,0)-gsl_vector_get(maxDERs,0)*margin/100.0))
+    if (nummodels == 1)
     {
         gsl_matrix_get_row(PRCLCOVFound_Aux,reconstruct_init->library_collection->PRCLCOV,0);
-        
+
         gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,0);
-        
+
         *Ealpha = 0.0;
         *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
     }
-    else if (maxDER > (gsl_vector_get(maxDERs,nummodels-1)+gsl_vector_get(maxDERs,nummodels-1)*margin/100.0))
-    {
-        gsl_matrix_get_row(PRCLCOVFound_Aux,reconstruct_init->library_collection->PRCLCOV,nummodels-2);
-        
-        gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,nummodels-2);
-        
-        *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-2);
-        *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1);
-    }
     else
     {
-        for (int i=0;i<nummodels-1;i++)
+        if (maxDER < (gsl_vector_get(maxDERs,0)-gsl_vector_get(maxDERs,0)*margin/100.0))
         {
-            if (maxDER == gsl_vector_get(maxDERs,i))
-            {
-                gsl_matrix_get_row(PRCLCOVFound_Aux,reconstruct_init->library_collection->PRCLCOV,i);
-                
-                gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,i);
-                
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                
-                break;
-            }
-            else if ((maxDER > (gsl_vector_get(maxDERs,i)-gsl_vector_get(maxDERs,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs,i+1)-gsl_vector_get(maxDERs,i+1)*margin/100.0)))
-            {
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
-                
-                gsl_matrix_get_row(PRCLCOVFound_Aux,reconstruct_init->library_collection->PRCLCOV,i);
-                
-                gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,i);
+            gsl_matrix_get_row(PRCLCOVFound_Aux,reconstruct_init->library_collection->PRCLCOV,0);
 
-                break;
+            gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,0);
+
+            *Ealpha = 0.0;
+            *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
+        }
+        else if (maxDER > (gsl_vector_get(maxDERs,nummodels-1)+gsl_vector_get(maxDERs,nummodels-1)*margin/100.0))
+        {
+            gsl_matrix_get_row(PRCLCOVFound_Aux,reconstruct_init->library_collection->PRCLCOV,nummodels-2);
+
+            gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,nummodels-2);
+
+            *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-2);
+            *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1);
+        }
+        else
+        {
+            for (int i=0;i<nummodels-1;i++)
+            {
+                if (maxDER == gsl_vector_get(maxDERs,i))
+                {
+                    gsl_matrix_get_row(PRCLCOVFound_Aux,reconstruct_init->library_collection->PRCLCOV,i);
+
+                    gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,i);
+
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+
+                    break;
+                }
+                else if ((maxDER > (gsl_vector_get(maxDERs,i)-gsl_vector_get(maxDERs,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs,i+1)-gsl_vector_get(maxDERs,i+1)*margin/100.0)))
+                {
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
+
+                    gsl_matrix_get_row(PRCLCOVFound_Aux,reconstruct_init->library_collection->PRCLCOV,i);
+
+                    gsl_matrix_get_row(DabFound_Aux,reconstruct_init->library_collection->DAB,i);
+
+                    break;
+                }
             }
         }
     }
@@ -10265,55 +10334,64 @@ int find_prclofwn(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *rec
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
     
-    if (maxDER < (gsl_vector_get(maxDERs_LIB1row,0)-gsl_vector_get(maxDERs_LIB1row,0)*margin/100.0))
+    if (nummodels == 1)
     {
-        if (reconstruct_init->filtEev == 0)
-        {
-            gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,0);
-            *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
-        }
-        else
-        {
-            gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,index_E_LIB1row);
-            *Ebeta = reconstruct_init->filtEev;
-        }
-        
-        *Ealpha = 0.0;
-    }
-    else if (maxDER > (gsl_vector_get(maxDERs_LIB1row,nummodels-1)+gsl_vector_get(maxDERs_LIB1row,nummodels-1)*margin/100.0))
-    {
-        if (reconstruct_init->filtEev == 0)
-        {
-            gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,nummodels-1);
-            *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,0);
-        }
-        else
-        {
-            gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,index_E_LIB1row);
-            *Ealpha = reconstruct_init->filtEev;
-        }
-        
-        *Ebeta = 0.0;
+        gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,0);
+        *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,0);
+        *Ebeta = 0;
     }
     else
     {
-        for (int i=0;i<nummodels-1;i++)
+        if (maxDER < (gsl_vector_get(maxDERs_LIB1row,0)-gsl_vector_get(maxDERs_LIB1row,0)*margin/100.0))
         {
-            if (maxDER == gsl_vector_get(maxDERs_LIB1row,i))
+            if (reconstruct_init->filtEev == 0)
             {
-                gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,i);
-                
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,0);
+                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
             }
-            else if ((maxDER > (gsl_vector_get(maxDERs_LIB1row,i)-gsl_vector_get(maxDERs_LIB1row,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs_LIB1row,i+1)-gsl_vector_get(maxDERs_LIB1row,i+1)*margin/100.0)))
-            {		
-                gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,i);
+            else
+            {
+                gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,index_E_LIB1row);
+                *Ebeta = reconstruct_init->filtEev;
+            }
 
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
-                
-                break;
+            *Ealpha = 0.0;
+        }
+        else if (maxDER > (gsl_vector_get(maxDERs_LIB1row,nummodels-1)+gsl_vector_get(maxDERs_LIB1row,nummodels-1)*margin/100.0))
+        {
+            if (reconstruct_init->filtEev == 0)
+            {
+                gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,nummodels-1);
+                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,0);
+            }
+            else
+            {
+                gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,index_E_LIB1row);
+                *Ealpha = reconstruct_init->filtEev;
+            }
+
+            *Ebeta = 0.0;
+        }
+        else
+        {
+            for (int i=0;i<nummodels-1;i++)
+            {
+                if (maxDER == gsl_vector_get(maxDERs_LIB1row,i))
+                {
+                    gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,i);
+
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                }
+                else if ((maxDER > (gsl_vector_get(maxDERs_LIB1row,i)-gsl_vector_get(maxDERs_LIB1row,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs_LIB1row,i+1)-gsl_vector_get(maxDERs_LIB1row,i+1)*margin/100.0)))
+                {
+                    gsl_matrix_get_row(PRCLOFWNFound_Aux,reconstruct_init->library_collection->PRCLOFWN,i);
+
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
+
+                    break;
+                }
             }
         }
     }
@@ -10374,45 +10452,56 @@ int find_Esboundary(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *r
     string message = "";
     int nummodels = maxDERs->size;
     
-    if (maxDER < (gsl_vector_get(maxDERs,0)-gsl_vector_get(maxDERs,0)*margin/100.0))
+    if (nummodels == 1)
     {
         *indexEalpha = 0;
         *indexEbeta = 0;
-        
+
         *Ealpha = 0.0;
         *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
     }
-    else if (maxDER > (gsl_vector_get(maxDERs,nummodels-1)+gsl_vector_get(maxDERs,nummodels-1)*margin/100.0))
-    {
-        *indexEalpha = nummodels - 1;
-        *indexEbeta = nummodels - 1;
-        
-        *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-2);
-        *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1);
-    }
     else
     {
-        for (int i=0;i<nummodels-1;i++)
+        if (maxDER < (gsl_vector_get(maxDERs,0)-gsl_vector_get(maxDERs,0)*margin/100.0))
         {
-            if (maxDER == gsl_vector_get(maxDERs,i))
+            *indexEalpha = 0;
+            *indexEbeta = 0;
+
+            *Ealpha = 0.0;
+            *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,0);
+        }
+        else if (maxDER > (gsl_vector_get(maxDERs,nummodels-1)+gsl_vector_get(maxDERs,nummodels-1)*margin/100.0))
+        {
+            *indexEalpha = nummodels - 1;
+            *indexEbeta = nummodels - 1;
+
+            *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-2);
+            *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,nummodels-1);
+        }
+        else
+        {
+            for (int i=0;i<nummodels-1;i++)
             {
-                *indexEalpha = i;
-                *indexEbeta = i+1;
-                
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
-                
-                break;
-            }
-            else if ((maxDER > (gsl_vector_get(maxDERs,i)-gsl_vector_get(maxDERs,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs,i+1)-gsl_vector_get(maxDERs,i+1)*margin/100.0)))
-            {
-                *indexEalpha = i;
-                *indexEbeta = i+1;
-                
-                *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
-                *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
-                
-                break;
+                if (maxDER == gsl_vector_get(maxDERs,i))
+                {
+                    *indexEalpha = i;
+                    *indexEbeta = i+1;
+
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
+
+                    break;
+                }
+                else if ((maxDER > (gsl_vector_get(maxDERs,i)-gsl_vector_get(maxDERs,i)*margin/100.0)) && (maxDER < (gsl_vector_get(maxDERs,i+1)-gsl_vector_get(maxDERs,i+1)*margin/100.0)))
+                {
+                    *indexEalpha = i;
+                    *indexEbeta = i+1;
+
+                    *Ealpha = gsl_vector_get(reconstruct_init->library_collection->energies,i);
+                    *Ebeta = gsl_vector_get(reconstruct_init->library_collection->energies,i+1);
+
+                    break;
+                }
             }
         }
     }
