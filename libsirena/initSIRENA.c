@@ -731,7 +731,7 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
             strcpy(reconstruct_init_sirena->EnergyMethod,par.EnergyMethod);
         }
 
-        //printf("%s %d %s","** nrecord = ",nrecord,"\n");
+        printf("%s %d %s","** nrecord = ",nrecord,"\n");
         reconstructRecordSIRENA(record,*trig_reclength, event_list,reconstruct_init_sirena,
             lastRecord, startRecordGroup, &pulsesAll, &status);
         CHECK_STATUS_BREAK(status);

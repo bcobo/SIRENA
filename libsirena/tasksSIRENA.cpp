@@ -7219,11 +7219,14 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
         {
             // Establish the pulse grade and the optimal filter length
             pulseGrade = 0;
+            //if (pulseGrading(*reconstruct_init,(*pulsesInRecord)->pulses_detected[i].TstartSamples,(*pulsesInRecord)->pulses_detected[i].pulse_duration,(*pulsesInRecord)->pulses_detected[i].grade2,&pulseGrade,&resize_mf,nrecord))
             if (pulseGrading(*reconstruct_init,(*pulsesInRecord)->pulses_detected[i].TstartSamples,(*pulsesInRecord)->pulses_detected[i].pulse_duration,(*pulsesInRecord)->pulses_detected[i].grade2,&pulseGrade,&resize_mf,nrecord))
             {
                 message = "Cannot run routine pulseGrading";
                 EP_EXIT_ERROR(message,EPFAIL);
             }
+            cout<<"pulseGrade: "<<pulseGrade<<endl;
+            cout<<"resize_mf: "<<resize_mf<<endl;
             if ((pulseGrade == 0) && (resize_mf == 0)) // Less than worst grading
             {
                 message = "Worse than the worst grading => SIGNAL=-999 & GRADE1=0 for pulse i=" + boost::lexical_cast<std::string>(i+1) + " in record " + boost::lexical_cast<std::string>(nrecord);
@@ -7381,6 +7384,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         }
 
                         // Calculate the low resolution estimator
+                        cout<<"optimalfilter_lowres->size: "<<optimalfilter_lowres->size<<endl;
                         if (calculateEnergy(pulse_lowres,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,(*reconstruct_init),
                             Dab_lowres,PRCLCOV_lowres,PRCLOFWN_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
                         {
@@ -7845,6 +7849,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         }
 
                         // Calculate the energy of each pulse
+                        cout<<"optimalfilter->size: "<<optimalfilter->size<<endl;
                         if (calculateEnergy(pulseToCalculateEnergy,optimalfilter,optimalfilter_FFT_complex,indexEalpha,indexEbeta,(*reconstruct_init),
                             Dab,PRCLCOV,PRCLOFWN,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
                         {
@@ -7857,6 +7862,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         // If using lags, it is necessary to modify the tstart of the pulse
                         if (((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0)) && tstartNewDev != -999.0)
                         {
+                            cout<<"Tstart0: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
+                            //(*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + tstartNewDev*record->delta_t; // In seconds
                             (*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + (tstartNewDev+lagsShift)*record->delta_t; // In seconds
                         }
                         log_debug("Tstart: %f",(*pulsesInRecord)->pulses_detected[i].Tstart);
@@ -10635,11 +10642,14 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
     {
         *pulseGrade = 0;
         *OFlength = 0;
+        cout<<"-1*pulseGrade: "<<*pulseGrade<<endl;
+        cout<<"-1*OFlength: "<<*OFlength<<endl;
         nopower2 = 0;
         int pB = -1;
         int pBmax = 0;
         for (int i=0;i<reconstruct_init->grading->ngrades;i++)
         {
+            cout<<"i: "<<i<<endl;
             //if ((grade1 >= gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)) && (grade2 > gsl_matrix_get(reconstruct_init->grading->gradeData,i,2)) && (tstart > gsl_matrix_get(reconstruct_init->grading->gradeData,i,2)))
 
 
@@ -10651,14 +10661,21 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
             //                                      OFLength-pB <= grade1-pBmax
             pB = gsl_matrix_get(reconstruct_init->grading->gradeData,i,2);
             pBmax = gsl_matrix_get(reconstruct_init->grading->gradeData,0,2);
+            cout<<"gsl_matrix_get(reconstruct_init->grading->gradeData,i,1): "<< gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)<<endl;
+            cout<<"gsl_matrix_get(reconstruct_init->grading->gradeData,i,2): "<< gsl_matrix_get(reconstruct_init->grading->gradeData,i,2)<<endl;
             if ((grade1 >= gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)) && (tstart > pB) && (gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)-gsl_matrix_get(reconstruct_init->grading->gradeData,i,2) <= grade1-pBmax))
             {
+                cout<<"ifA"<<endl;
                 *pulseGrade = i+1;
 
+                cout<<"gsl_matrix_get(reconstruct_init->grading->gradeData,i,1): "<<gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)<<endl;
                 if (log2(gsl_matrix_get(reconstruct_init->grading->gradeData,i,1))-(int)log2(gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)) != 0)
                 {
+                    cout<<"ifA1"<<endl;
                     for (int j=i+1;j<reconstruct_init->grading->ngrades;j++)
                     {
+                        cout<<"j: "<<j<<endl;
+                        cout<<"gsl_matrix_get(reconstruct_init->grading->gradeData,j,1): "<<gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)<<endl;
                         if (log2(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1))-(int)log2(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)) == 0)
                         {
                             if (reconstruct_init->pulse_length < reconstruct_init->OFLength) // 0-padding
@@ -10672,6 +10689,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
                 }
                 else
                 {
+                    cout<<"ifA2"<<endl;
                     if (reconstruct_init->pulse_length < reconstruct_init->OFLength) // 0-padding
                     {
                         if (i==0)   *OFlength = gsl_matrix_get(reconstruct_init->grading->gradeData,i+1,1);
@@ -10687,7 +10705,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
         if (reconstruct_init->pulse_length < reconstruct_init->OFLength) // 0-padding
             reconstruct_init->pulse_length = *OFlength;
     }
-    
+    cout<<"nopower2: "<<nopower2<<endl;
     if ((strcmp(reconstruct_init->OFStrategy,"FIXED") != 0) && (nopower2 == 0))  // FREE or BYGRADE
     {
         //message = "No grade being a power of 2 in the XML file";
@@ -10709,10 +10727,12 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
 
     if (*pulseGrade != 0)
     {
+        cout<<"gsl_vector_get(gradelim,*pulseGrade-1): "<<gsl_vector_get(gradelim,*pulseGrade-1)<<endl;
         if (grade2 < gsl_vector_get(gradelim,*pulseGrade-1)) *pulseGrade = -1;
     }
     else
     {
+        cout<<"gsl_vector_get(gradelim,*pulseGrade): "<<gsl_vector_get(gradelim,*pulseGrade)<<endl;
         if (grade2 < gsl_vector_get(gradelim,*pulseGrade)) *pulseGrade = -1;
     }
     gsl_vector_free(gradelim);
@@ -10994,6 +11014,9 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             }
                             indexmax = gsl_vector_max_index(calculatedEnergy_vector);
                             
+                            cout<<"Parabola0"<<endl;
+                            cout<<"  lags: "<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<" "<<endl;
+                            cout<<"  calculatedEnergy: "<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<" "<<endl;
                             if (parabola3Pts (lags_vector, calculatedEnergy_vector, &a, &b, &c))
                             {
                                 message = "Cannot run routine parabola3Pts";
@@ -11006,6 +11029,9 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             {
                                 maxParabolaFound = true;
                             }
+                            cout<<"  indexmax: "<<indexmax<<endl;
+                            cout<<"  xmax: "<<xmax<<endl;
+                            cout<<"  maxParabolaFound: "<<maxParabolaFound<<endl;
 
                             if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
                             {
@@ -11049,6 +11075,9 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     }
                                     indexmax = gsl_vector_max_index(calculatedEnergy_vector);
 
+                                    cout<<"Parabolai"<<endl;
+                                    cout<<"  lags: "<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<" "<<endl;
+                                    cout<<"  calculatedEnergy: "<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<" "<<endl;
                                     if (parabola3Pts (lags_vector, calculatedEnergy_vector, &a, &b, &c))
                                     {
                                         message = "Cannot run routine parabola3Pts";
@@ -11062,6 +11091,9 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                         maxParabolaFound = true;
                                     }
                                     else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
+                                    cout<<"  indexmax: "<<indexmax<<endl;
+                                    cout<<"  xmax: "<<xmax<<endl;
+                                    cout<<"  maxParabolaFound: "<<maxParabolaFound<<endl;
 
                                 } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
                             }
@@ -11177,6 +11209,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                         }
                         
                         log_debug("calculatedEnergyTIME: %f",*calculatedEnergy);
+                        cout<<"calculatedEnergytstartNewDev: "<<*tstartNewDev<<endl;
+                        cout<<"calculatedEnergylagsShift "<<*lagsShift<<endl;
                     }
                 }
             }
