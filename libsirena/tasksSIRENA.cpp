@@ -2189,8 +2189,8 @@ int nrecord, double tstartPrevPulse)
     }
     gsl_vector_memcpy(recordDERIVATIVE,record);*/
 
-    gsl_vector *recordRaw = gsl_vector_alloc(record->size);
-    gsl_vector_memcpy(recordRaw,record);
+    //gsl_vector *recordRaw = gsl_vector_alloc(record->size);
+    //gsl_vector_memcpy(recordRaw,record);
 
     //gsl_vector *recordDerivative_causal = gsl_vector_alloc(record->size);   // To delete
     //gsl_vector_memcpy(recordDerivative_causal,record);                      // To delete
@@ -2214,7 +2214,7 @@ int nrecord, double tstartPrevPulse)
         //cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(recordDerivative_causal,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;
         cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;*/
 
-    gsl_vector_free(recordRaw);
+    //gsl_vector_free(recordRaw);
     //gsl_vector_free(recordDerivative_causal);    //To delete
 
     gsl_vector_memcpy(recordDERIVATIVE,record);
@@ -7091,6 +7091,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
     int lagsShift = -999;                   // Number of samples shifted to find the maximum of the parabola
 
     int tooshortPulse_NoLags;
+    int nextCloser8 = 0;
 
     double Ealpha, Ebeta;
     gsl_vector *optimalfilter = NULL;	// Resized optimal filter expressed in the time domain (optimalfilter(t))
@@ -7219,14 +7220,11 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
         {
             // Establish the pulse grade and the optimal filter length
             pulseGrade = 0;
-            //if (pulseGrading(*reconstruct_init,(*pulsesInRecord)->pulses_detected[i].TstartSamples,(*pulsesInRecord)->pulses_detected[i].pulse_duration,(*pulsesInRecord)->pulses_detected[i].grade2,&pulseGrade,&resize_mf,nrecord))
             if (pulseGrading(*reconstruct_init,(*pulsesInRecord)->pulses_detected[i].TstartSamples,(*pulsesInRecord)->pulses_detected[i].pulse_duration,(*pulsesInRecord)->pulses_detected[i].grade2,&pulseGrade,&resize_mf,nrecord))
             {
                 message = "Cannot run routine pulseGrading";
                 EP_EXIT_ERROR(message,EPFAIL);
             }
-            cout<<"pulseGrade: "<<pulseGrade<<endl;
-            cout<<"resize_mf: "<<resize_mf<<endl;
             if ((pulseGrade == 0) && (resize_mf == 0)) // Less than worst grading
             {
                 message = "Worse than the worst grading => SIGNAL=-999 & GRADE1=0 for pulse i=" + boost::lexical_cast<std::string>(i+1) + " in record " + boost::lexical_cast<std::string>(nrecord);
@@ -7324,6 +7322,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
 
                     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     //////////// In order to get the low resolution energy estimator by filtering with the shortest filter ///////////////////
+                    if (((*pulsesInRecord)->pulses_detected[i].pulse_duration-(*reconstruct_init)->preBuffer_max_value) < gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1))
+                        nextCloser8 = 1;
                     log_trace("Calculating the low energy estimator...");
                     energy_lowres = -999;
                     // Pulse
@@ -7384,9 +7384,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         }
 
                         // Calculate the low resolution estimator
-                        cout<<"optimalfilter_lowres->size: "<<optimalfilter_lowres->size<<endl;
                         if (calculateEnergy(pulse_lowres,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,(*reconstruct_init),
-                            Dab_lowres,PRCLCOV_lowres,PRCLOFWN_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
+                            Dab_lowres,PRCLCOV_lowres,PRCLOFWN_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags,nextCloser8))
                         {
                             message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
                             EP_EXIT_ERROR(message,EPFAIL);
@@ -7849,9 +7848,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         }
 
                         // Calculate the energy of each pulse
-                        cout<<"optimalfilter->size: "<<optimalfilter->size<<endl;
                         if (calculateEnergy(pulseToCalculateEnergy,optimalfilter,optimalfilter_FFT_complex,indexEalpha,indexEbeta,(*reconstruct_init),
-                            Dab,PRCLCOV,PRCLOFWN,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
+                            Dab,PRCLCOV,PRCLOFWN,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags, nextCloser8))
                         {
                             message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
                             EP_EXIT_ERROR(message,EPFAIL);
@@ -7862,8 +7860,6 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         // If using lags, it is necessary to modify the tstart of the pulse
                         if (((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0)) && tstartNewDev != -999.0)
                         {
-                            cout<<"Tstart0: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
-                            //(*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + tstartNewDev*record->delta_t; // In seconds
                             (*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + (tstartNewDev+lagsShift)*record->delta_t; // In seconds
                         }
                         log_debug("Tstart: %f",(*pulsesInRecord)->pulses_detected[i].Tstart);
@@ -8118,6 +8114,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
     int lagsShift = -999;                   // Number of samples shifted to find the maximum of the parabola
 
     int tooshortPulse_NoLags;
+    int nextCloser8 = 0;
 
     double Ealpha, Ebeta;
     gsl_vector *optimalfilter = NULL;	// Resized optimal filter expressed in the time domain (optimalfilter(t))
@@ -8409,8 +8406,10 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
                         }
 
                         // Calculate the low resolution estimator
+                        if (((*pulsesInRecord)->pulses_detected[i].pulse_duration-(*reconstruct_init)->preBuffer_max_value) < gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1))
+                            nextCloser8 = 1;
                         if (calculateEnergy(pulse_lowres,optimalfilter_lowres,optimalfilter_FFT_complex_lowres,0,0,(*reconstruct_init),
-                            Dab_lowres,PRCLCOV_lowres,PRCLOFWN_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags))
+                            Dab_lowres,PRCLCOV_lowres,PRCLOFWN_lowres,&energy_lowres,&tstartNewDev,&lagsShift,1,resize_mf_lowres,tooshortPulse_NoLags,nextCloser8))
                         {
                             message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
                             EP_EXIT_ERROR(message,EPFAIL);
@@ -8867,7 +8866,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
 
                         // Calculate the energy of each pulse
                         if (calculateEnergy(pulseToCalculateEnergy,optimalfilter,optimalfilter_FFT_complex,indexEalpha,indexEbeta,(*reconstruct_init),
-                            Dab,PRCLCOV,PRCLOFWN,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags))
+                            Dab,PRCLCOV,PRCLOFWN,&energy,&tstartNewDev,&lagsShift,0,resize_mf,tooshortPulse_NoLags,nextCloser8))
                         {
                             message = "Cannot run calculateEnergy routine for pulse i=" + boost::lexical_cast<std::string>(i);
                             EP_EXIT_ERROR(message,EPFAIL);
@@ -10642,14 +10641,11 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
     {
         *pulseGrade = 0;
         *OFlength = 0;
-        cout<<"-1*pulseGrade: "<<*pulseGrade<<endl;
-        cout<<"-1*OFlength: "<<*OFlength<<endl;
         nopower2 = 0;
         int pB = -1;
         int pBmax = 0;
         for (int i=0;i<reconstruct_init->grading->ngrades;i++)
         {
-            cout<<"i: "<<i<<endl;
             //if ((grade1 >= gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)) && (grade2 > gsl_matrix_get(reconstruct_init->grading->gradeData,i,2)) && (tstart > gsl_matrix_get(reconstruct_init->grading->gradeData,i,2)))
 
 
@@ -10661,21 +10657,14 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
             //                                      OFLength-pB <= grade1-pBmax
             pB = gsl_matrix_get(reconstruct_init->grading->gradeData,i,2);
             pBmax = gsl_matrix_get(reconstruct_init->grading->gradeData,0,2);
-            cout<<"gsl_matrix_get(reconstruct_init->grading->gradeData,i,1): "<< gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)<<endl;
-            cout<<"gsl_matrix_get(reconstruct_init->grading->gradeData,i,2): "<< gsl_matrix_get(reconstruct_init->grading->gradeData,i,2)<<endl;
             if ((grade1 >= gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)) && (tstart > pB) && (gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)-gsl_matrix_get(reconstruct_init->grading->gradeData,i,2) <= grade1-pBmax))
             {
-                cout<<"ifA"<<endl;
                 *pulseGrade = i+1;
 
-                cout<<"gsl_matrix_get(reconstruct_init->grading->gradeData,i,1): "<<gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)<<endl;
                 if (log2(gsl_matrix_get(reconstruct_init->grading->gradeData,i,1))-(int)log2(gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)) != 0)
                 {
-                    cout<<"ifA1"<<endl;
                     for (int j=i+1;j<reconstruct_init->grading->ngrades;j++)
                     {
-                        cout<<"j: "<<j<<endl;
-                        cout<<"gsl_matrix_get(reconstruct_init->grading->gradeData,j,1): "<<gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)<<endl;
                         if (log2(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1))-(int)log2(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)) == 0)
                         {
                             if (reconstruct_init->pulse_length < reconstruct_init->OFLength) // 0-padding
@@ -10689,7 +10678,6 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
                 }
                 else
                 {
-                    cout<<"ifA2"<<endl;
                     if (reconstruct_init->pulse_length < reconstruct_init->OFLength) // 0-padding
                     {
                         if (i==0)   *OFlength = gsl_matrix_get(reconstruct_init->grading->gradeData,i+1,1);
@@ -10705,7 +10693,6 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
         if (reconstruct_init->pulse_length < reconstruct_init->OFLength) // 0-padding
             reconstruct_init->pulse_length = *OFlength;
     }
-    cout<<"nopower2: "<<nopower2<<endl;
     if ((strcmp(reconstruct_init->OFStrategy,"FIXED") != 0) && (nopower2 == 0))  // FREE or BYGRADE
     {
         //message = "No grade being a power of 2 in the XML file";
@@ -10727,12 +10714,10 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
 
     if (*pulseGrade != 0)
     {
-        cout<<"gsl_vector_get(gradelim,*pulseGrade-1): "<<gsl_vector_get(gradelim,*pulseGrade-1)<<endl;
         if (grade2 < gsl_vector_get(gradelim,*pulseGrade-1)) *pulseGrade = -1;
     }
     else
     {
-        cout<<"gsl_vector_get(gradelim,*pulseGrade): "<<gsl_vector_get(gradelim,*pulseGrade)<<endl;
         if (grade2 < gsl_vector_get(gradelim,*pulseGrade)) *pulseGrade = -1;
     }
     gsl_vector_free(gradelim);
@@ -10860,7 +10845,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
  * - productSize: Size of the scalar product to be calculated
  * - tooshortPulse_NoLags: Pulse too short to apply lags (1) or not (0)
  ****************************************************************************/
-int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *filterFFT, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, gsl_vector *Dab, gsl_matrix *PRCLCOV, gsl_matrix *PRCLOFWN, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes, int productSize, int tooshortPulse_NoLags)
+int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *filterFFT, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, gsl_vector *Dab, gsl_matrix *PRCLCOV, gsl_matrix *PRCLOFWN, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes, int productSize, int tooshortPulse_NoLags, int nextCloser8)
 {
     log_trace("calculateEnergy...");    
     if (filter)
@@ -10890,7 +10875,9 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
         message = "If tstartPulse1 starts with '@' (exact tstarts in a piximpact file) => NO lags";
         EP_PRINT_ERROR(message,-999);	// Only a warning
     }
-    
+    int cE_nLags = reconstruct_init->nLags;
+    if (nextCloser8 == 1)   cE_nLags = 3;
+
     *tstartNewDev = 0;
 
     int numlags = -999; // Different from numlags = nLags/2
@@ -10914,7 +10901,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                 if (pulse->size > Dab->size)
                 {
                     vector = gsl_vector_alloc(productSize);
-                    temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2-1,productSize);
+                    //temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2-1,productSize);
+                    temp = gsl_vector_subvector(pulse,cE_nLags/2-1,productSize);
                     gsl_vector_memcpy(vector,&temp.vector);
                     gsl_vector_free(pulse); pulse=0;
                     pulse= gsl_vector_alloc(productSize);
@@ -10994,7 +10982,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             vector = gsl_vector_alloc(productSize);
                             for (int j=0;j<numlags;j++)
                             {
-                                temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,productSize);
+                                //temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,productSize);
+                                temp = gsl_vector_subvector(pulse,cE_nLags/2+j-1,productSize);
                                 gsl_vector_memcpy(vector,&temp.vector);
 
                                 // Apply a Hann window to reduce spectral leakage
@@ -11014,9 +11003,6 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             }
                             indexmax = gsl_vector_max_index(calculatedEnergy_vector);
                             
-                            cout<<"Parabola0"<<endl;
-                            cout<<"  lags: "<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<" "<<endl;
-                            cout<<"  calculatedEnergy: "<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<" "<<endl;
                             if (parabola3Pts (lags_vector, calculatedEnergy_vector, &a, &b, &c))
                             {
                                 message = "Cannot run routine parabola3Pts";
@@ -11029,11 +11015,9 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             {
                                 maxParabolaFound = true;
                             }
-                            cout<<"  indexmax: "<<indexmax<<endl;
-                            cout<<"  xmax: "<<xmax<<endl;
-                            cout<<"  maxParabolaFound: "<<maxParabolaFound<<endl;
 
-                            if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
+                            //if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
+                            if (((xmax < -1) || (xmax > 1)) && (cE_nLags > 3))
                             {
                                 do
                                 {  
@@ -11056,7 +11040,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     }
 
                                     newEnergy = 0.0;
-                                    temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+newLag,productSize);
+                                    //temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+newLag,productSize);
+                                    temp = gsl_vector_subvector(pulse,cE_nLags/2+newLag,productSize);
                                     gsl_vector_memcpy(vector,&temp.vector);
                                     for (int k=0;k<productSize;k++)
                                     {
@@ -11075,9 +11060,6 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     }
                                     indexmax = gsl_vector_max_index(calculatedEnergy_vector);
 
-                                    cout<<"Parabolai"<<endl;
-                                    cout<<"  lags: "<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<" "<<endl;
-                                    cout<<"  calculatedEnergy: "<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<" "<<endl;
                                     if (parabola3Pts (lags_vector, calculatedEnergy_vector, &a, &b, &c))
                                     {
                                         message = "Cannot run routine parabola3Pts";
@@ -11091,11 +11073,9 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                         maxParabolaFound = true;
                                     }
                                     else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
-                                    cout<<"  indexmax: "<<indexmax<<endl;
-                                    cout<<"  xmax: "<<xmax<<endl;
-                                    cout<<"  maxParabolaFound: "<<maxParabolaFound<<endl;
 
-                                } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
+                                //} while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
+                                } while ((exitLags == false) && (indexLags < cE_nLags/2-1));
                             }
 
                             gsl_vector_free(vector); vector = 0;
@@ -11105,7 +11085,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             vector = gsl_vector_alloc(productSize);
                             for (int j=0;j<numlags;j++)
                             {
-                                temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,productSize);
+                                //temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,productSize);
+                                temp = gsl_vector_subvector(pulse,cE_nLags/2+j-1,productSize);
                                 gsl_vector_memcpy(vector,&temp.vector);
 
                                 // Apply a Hann window to reduce spectral leakage
@@ -11133,7 +11114,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             
                             if ((xmax >= -2) && (xmax <= 2)) maxParabolaFound = true;
                             
-                            if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5))
+                            //if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5))
+                            if (((xmax < -2) || (xmax > 2)) && (cE_nLags > 5))
                             {
                                 do
                                 {  
@@ -11160,7 +11142,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     }
                                     
                                     newEnergy = 0.0;
-                                    temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+newLag,productSize);
+                                    //temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+newLag,productSize);
+                                    temp = gsl_vector_subvector(pulse,cE_nLags/2+newLag,productSize);
                                     gsl_vector_memcpy(vector,&temp.vector);
                                     for (int k=0;k<productSize;k++)
                                     {
@@ -11191,7 +11174,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     }
                                     else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
                                     
-                                } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-2));
+                                //} while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-2));
+                                } while ((exitLags == false) && (indexLags < cE_nLags/2-2));
                             }
                             gsl_vector_free(vector); vector = 0;
                         }
@@ -11209,8 +11193,6 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                         }
                         
                         log_debug("calculatedEnergyTIME: %f",*calculatedEnergy);
-                        cout<<"calculatedEnergytstartNewDev: "<<*tstartNewDev<<endl;
-                        cout<<"calculatedEnergylagsShift "<<*lagsShift<<endl;
                     }
                 }
             }
@@ -11272,7 +11254,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             for (int j=0;j<numlags;j++)
                             {
                                 gsl_vector  *vectorSHORT = gsl_vector_alloc(filterFFT->size);
-                                temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,filterFFT->size);
+                                //temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,filterFFT->size);
+                                temp = gsl_vector_subvector(pulse,cE_nLags/2+j-1,filterFFT->size);
                                 
                                 gsl_vector_memcpy(vectorSHORT,&temp.vector);
                                 
@@ -11309,7 +11292,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             
                             if ((xmax >= -1) && (xmax <= 1)) maxParabolaFound = true;
                             
-                            if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
+                            //if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
+                            if (((xmax < -1) || (xmax > 1)) && (cE_nLags > 3))
                             {
                                 do
                                 {  
@@ -11332,7 +11316,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     }
                                     
                                     gsl_vector  *vectorSHORT = gsl_vector_alloc(filterFFT->size);
-                                    temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+newLag,filterFFT->size);
+                                    //temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+newLag,filterFFT->size);
+                                    temp = gsl_vector_subvector(pulse,cE_nLags/2+newLag,filterFFT->size);
                                     gsl_vector_memcpy(vectorSHORT,&temp.vector);
                                     if (FFT(vectorSHORT,vectorFFT))
                                     {
@@ -11371,7 +11356,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     }
                                     else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector);
                                     
-                                } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
+                                //} while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
+                                } while ((exitLags == false) && (indexLags < cE_nLags/2-1));
                             }
                         }
                         else if ((reconstruct_init->Fitting35) == 5) //Fitting by using 5 points
@@ -11379,7 +11365,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             for (int j=0;j<numlags;j++)
                             {
                                 gsl_vector  *vectorSHORT = gsl_vector_alloc(filterFFT->size);
-                                temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-2,filterFFT->size);
+                                //temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-2,filterFFT->size);
+                                temp = gsl_vector_subvector(pulse,cE_nLags/2+j-2,filterFFT->size);
                                 gsl_vector_memcpy(vectorSHORT,&temp.vector);
                                 
                                 // Apply a Hann window to reduce spectral leakage
@@ -11414,7 +11401,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             
                             if ((xmax >= -2) && (xmax <= 2)) maxParabolaFound = true;
                             
-                            if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5))
+                            //if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5))
+                            if (((xmax < -2) || (xmax > 2)) && (cE_nLags > 5))
                             {
                                 do
                                 {  
@@ -11441,7 +11429,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     }
                                     
                                     gsl_vector  *vectorSHORT = gsl_vector_alloc(filterFFT->size);
-                                    temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+newLag,filterFFT->size);
+                                    //temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+newLag,filterFFT->size);
+                                    temp = gsl_vector_subvector(pulse,cE_nLags/2+newLag,filterFFT->size);
                                     gsl_vector_memcpy(vectorSHORT,&temp.vector);
                                     if (FFT(vectorSHORT,vectorFFT))
                                     {
@@ -11480,7 +11469,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     }
                                     else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
                                     
-                                } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-2));
+                                //} while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-2));
+                                } while ((exitLags == false) && (indexLags < cE_nLags/2-2));
                             }
                         }
                         
