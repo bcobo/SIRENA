@@ -69,6 +69,7 @@
 
 #include "versionSIRENA.h"
 #include <gsl/gsl_vector_double.h>
+#include <iostream>
 
 /***** SECTION A ************************************************************
  * runDetect: This function is responsible for the detection in SIRENA, record by record.
@@ -7324,6 +7325,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                     //////////// In order to get the low resolution energy estimator by filtering with the shortest filter ///////////////////
                     if (((*pulsesInRecord)->pulses_detected[i].pulse_duration-(*reconstruct_init)->preBuffer_max_value) < gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1))
                         nextCloser8 = 1;
+                    else
+                        nextCloser8 = 0;
                     log_trace("Calculating the low energy estimator...");
                     energy_lowres = -999;
                     // Pulse
@@ -10847,6 +10850,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
  ****************************************************************************/
 int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *filterFFT, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, gsl_vector *Dab, gsl_matrix *PRCLCOV, gsl_matrix *PRCLOFWN, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes, int productSize, int tooshortPulse_NoLags, int nextCloser8)
 {
+    //nextCloser8 = 0;
     log_trace("calculateEnergy...");    
     if (filter)
     {
@@ -10855,6 +10859,9 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
         log_debug("pulse->size: %i",pulse->size);
         log_debug("productSize: %i",productSize);
     }
+    /*cout<<"pulse: "<<endl;
+    for (int i=0;i<9;i++)
+        cout<<gsl_vector_get(pulse,i)<<endl;*/
 
     gsl_vector *vector;
     
@@ -10876,7 +10883,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
         EP_PRINT_ERROR(message,-999);	// Only a warning
     }
     int cE_nLags = reconstruct_init->nLags;
-    if (nextCloser8 == 1)   cE_nLags = 3;
+    if ((nextCloser8 == 1) && ((reconstruct_init->Fitting35) == 3))   cE_nLags = 3;
+    else if ((nextCloser8 == 1) && ((reconstruct_init->Fitting35) == 5))   cE_nLags = 5;
 
     *tstartNewDev = 0;
 
@@ -10982,8 +10990,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             vector = gsl_vector_alloc(productSize);
                             for (int j=0;j<numlags;j++)
                             {
-                                //temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,productSize);
-                                temp = gsl_vector_subvector(pulse,cE_nLags/2+j-1,productSize);
+                                temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,productSize);
+                                //temp = gsl_vector_subvector(pulse,cE_nLags/2+j-1,productSize);
                                 gsl_vector_memcpy(vector,&temp.vector);
 
                                 // Apply a Hann window to reduce spectral leakage
@@ -10992,10 +11000,12 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     message = "Cannot run hannWindow routine";
                                     EP_PRINT_ERROR(message,EPFAIL);
                                 }*/
-                                
+
+                                cout<<"j: "<<j<<endl;
                                 for (int i=0;i<productSize;i++)
                                 {
                                     gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i)*gsl_vector_get(filter,i));
+                                    if (i<8) cout<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size<<endl;
                                 }
 
                                 // Because of the FFT and FFTinverse normalization factors
@@ -11015,6 +11025,17 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             {
                                 maxParabolaFound = true;
                             }
+                            /*cout<<"nextCloser8: "<<nextCloser8<<endl;
+                            cout<<"cE_nLags: "<<cE_nLags<<endl;
+                            cout<<"Parabola0"<<endl;
+                            cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<endl;
+                            cout<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;
+                            cout<<"a: "<<a<<endl;
+                            cout<<"b: "<<b<<endl;
+                            cout<<"c: "<<c<<endl;
+                            cout<<"indexmax: "<<indexmax<<endl;
+                            cout<<"xmax: "<<xmax<<endl;
+                            cout<<"maxParabolaFound1: "<<maxParabolaFound<<endl;*/
 
                             //if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
                             if (((xmax < -1) || (xmax > 1)) && (cE_nLags > 3))
@@ -11046,6 +11067,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     for (int k=0;k<productSize;k++)
                                     {
                                         newEnergy = newEnergy + gsl_vector_get(vector,k)*gsl_vector_get(filter,k);
+                                        if (k<8) cout<<gsl_vector_get(vector,k)<<" "<<gsl_vector_get(filter,k)<<" "<<fabs(newEnergy/filter->size)<<endl;
                                     }
 
                                     newEnergy = fabs(newEnergy/filter->size);
@@ -11073,6 +11095,15 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                         maxParabolaFound = true;
                                     }
                                     else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
+                                    /*cout<<"Parabolai"<<endl;
+                                    cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<endl;
+                                    cout<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;
+                                    cout<<"a: "<<a<<endl;
+                                    cout<<"b: "<<b<<endl;
+                                    cout<<"c: "<<c<<endl;
+                                    cout<<"indexmax: "<<indexmax<<endl;
+                                    cout<<"xmax: "<<xmax<<endl;
+                                    cout<<"maxParabolaFound2: "<<maxParabolaFound<<endl;*/
 
                                 //} while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
                                 } while ((exitLags == false) && (indexLags < cE_nLags/2-1));
@@ -11085,8 +11116,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             vector = gsl_vector_alloc(productSize);
                             for (int j=0;j<numlags;j++)
                             {
-                                //temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,productSize);
-                                temp = gsl_vector_subvector(pulse,cE_nLags/2+j-1,productSize);
+                                temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,productSize);
+                                //temp = gsl_vector_subvector(pulse,cE_nLags/2+j-1,productSize);
                                 gsl_vector_memcpy(vector,&temp.vector);
 
                                 // Apply a Hann window to reduce spectral leakage
@@ -11191,8 +11222,11 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             *tstartNewDev = 0;
                             *lagsShift = 0;
                         }
+                        //cout<<"maxParabolaFound3: "<<maxParabolaFound<<" "<<*calculatedEnergy<<endl;
                         
                         log_debug("calculatedEnergyTIME: %f",*calculatedEnergy);
+                        log_debug("calculatedEnergytstartNewDev: %f",*tstartNewDev);
+                        log_debug("calculatedEnergylagsShift: %d",*lagsShift);
                     }
                 }
             }
