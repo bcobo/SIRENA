@@ -444,7 +444,7 @@
              }
              else if (reconstruct_init->opmode == 0)
              {
-                 event_list->energies[ip] = 999.;
+                 event_list->energies[ip] = -999.;
              }
 
              event_list->avgs_4samplesDerivative[ip] = pulsesInRecord->pulses_detected[ip].avg_4samplesDerivative;
@@ -552,7 +552,7 @@
                  }
                  else if (reconstruct_init->opmode == 0)
                  {
-                     event_list->energies[ip] = 999.;
+                     event_list->energies[ip] = -999.;
                  }
 
                  event_list->avgs_4samplesDerivative[ip]  = (*pulsesAll)->pulses_detected[ip].avg_4samplesDerivative;
@@ -3146,7 +3146,7 @@ int fillPulsesAll (PulsesCollection** pulsesAll, PulsesCollection* pulsesInRecor
             }
             else if (reconstruct_init->opmode == 0)
             {
-                event_list->energies[ip] = 999.;
+                event_list->energies[ip] = -999.;
             }
 
             event_list->avgs_4samplesDerivative[ip] = pulsesInRecord->pulses_detected[ip].avg_4samplesDerivative;
@@ -3200,7 +3200,7 @@ int fillPulsesAll (PulsesCollection** pulsesAll, PulsesCollection* pulsesInRecor
                 }
                 else if (reconstruct_init->opmode == 0)
                 {
-                    event_list->energies[ip] = 999.;
+                    event_list->energies[ip] = -999.;
                 }
 
                 event_list->avgs_4samplesDerivative[ip]  = pulsesAll->pulses_detected[ip].avg_4samplesDerivative;

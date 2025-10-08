@@ -7226,6 +7226,12 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 message = "Cannot run routine pulseGrading";
                 EP_EXIT_ERROR(message,EPFAIL);
             }
+
+            if (pulseGrade == -1)
+            {
+                resize_mf = 8;
+            }
+
             if ((pulseGrade == 0) && (resize_mf == 0)) // Less than worst grading
             {
                 message = "Worse than the worst grading => SIGNAL=-999 & GRADE1=0 for pulse i=" + boost::lexical_cast<std::string>(i+1) + " in record " + boost::lexical_cast<std::string>(nrecord);
@@ -7312,6 +7318,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         str.clear();
                         EP_EXIT_ERROR(message,EPFAIL);
                     }
+                    cout<<"runEnergy0 pulse->size: "<<pulse->size<<endl;
 
                     if (((runF0orB0val == 1) || (runF0orB0val == 2)) && ((runEMethod == 0) || (runEMethod == 3)))
                     {
@@ -7342,7 +7349,10 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                             gsl_vector_free(baselinegsl); baselinegsl = 0;
                         }
 
-                        temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres-numlags2,length_lowres);
+                        if ((*reconstruct_init)->LagsOrNot == 0)
+                            temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres,length_lowres);
+                        else if ((*reconstruct_init)->LagsOrNot == 1)
+                            temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres-numlags2,length_lowres);
 
                         gsl_vector *vectoraux = gsl_vector_alloc(length_lowres);
                         gsl_vector_memcpy(vectoraux,&temp.vector);
@@ -8364,7 +8374,10 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
                             gsl_vector_free(baselinegsl); baselinegsl = 0;
                         }
 
-                        temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres-numlags2,length_lowres);
+                        if ((*reconstruct_init)->LagsOrNot == 0)
+                            temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres,length_lowres);
+                        else if ((*reconstruct_init)->LagsOrNot == 1)
+                            temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres-numlags2,length_lowres);
 
                         gsl_vector *vectoraux = gsl_vector_alloc(length_lowres);
                         gsl_vector_memcpy(vectoraux,&temp.vector);
@@ -10847,10 +10860,12 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
  * - LowRes: 1 if the low resolution energy estimator (without lags) is going to be calculated
  * - productSize: Size of the scalar product to be calculated
  * - tooshortPulse_NoLags: Pulse too short to apply lags (1) or not (0)
+ * - nextCloser8: If next pulse is closer than 8 samples => nLags=3 (if Fitting35=3 or nLags=5 if Fitting35=5)
  ****************************************************************************/
 int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *filterFFT, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, gsl_vector *Dab, gsl_matrix *PRCLCOV, gsl_matrix *PRCLOFWN, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes, int productSize, int tooshortPulse_NoLags, int nextCloser8)
 {
-    //nextCloser8 = 0;
+    nextCloser8 = 0;  // If next pulse is closer than 8 samples => nLags=3
+                        // nLags (no matter if next pulse is closer than 8 samples or not)
     log_trace("calculateEnergy...");    
     if (filter)
     {
@@ -10859,8 +10874,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
         log_debug("pulse->size: %i",pulse->size);
         log_debug("productSize: %i",productSize);
     }
-    /*cout<<"pulse: "<<endl;
-    for (int i=0;i<9;i++)
+    /*cout<<"pulse->size: "<<pulse->size<<endl;
+    for (int i=0;i<8;i++)
         cout<<gsl_vector_get(pulse,i)<<endl;*/
 
     gsl_vector *vector;
@@ -10958,6 +10973,9 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                     {
                         vector = gsl_vector_alloc(pulse->size);
                         gsl_vector_memcpy(vector,pulse);
+                        /*vector = gsl_vector_alloc(productSize);
+                        temp = gsl_vector_subvector(pulse, (reconstruct_init->nLags)/2, productSize);
+                        gsl_vector_memcpy(vector,&temp.vector);*/
                         
                         // Apply a Hann window to reduce spectral leakage
                         /*if (hannWindow(&vector))
@@ -10969,6 +10987,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                         for (int i=0;i<productSize;i++)
                         {
                             gsl_vector_set(calculatedEnergy_vector,0,gsl_vector_get(calculatedEnergy_vector,0)+gsl_vector_get(vector,i+0)*gsl_vector_get(filter,i));
+                            //if (i<8) cout<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,0))/filter->size<<endl;
                         }
                         // Because of the FFT and FFTinverse normalization factors
                         gsl_vector_set(calculatedEnergy_vector,0,fabs(gsl_vector_get(calculatedEnergy_vector,0))/filter->size);
@@ -11001,11 +11020,11 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     EP_PRINT_ERROR(message,EPFAIL);
                                 }*/
 
-                                cout<<"j: "<<j<<endl;
+                                //cout<<"j: "<<j<<endl;
                                 for (int i=0;i<productSize;i++)
                                 {
                                     gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i)*gsl_vector_get(filter,i));
-                                    if (i<8) cout<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size<<endl;
+                                    //if (i<8) cout<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size<<endl;
                                 }
 
                                 // Because of the FFT and FFTinverse normalization factors
@@ -11025,17 +11044,20 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             {
                                 maxParabolaFound = true;
                             }
-                            /*cout<<"nextCloser8: "<<nextCloser8<<endl;
-                            cout<<"cE_nLags: "<<cE_nLags<<endl;
-                            cout<<"Parabola0"<<endl;
-                            cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<endl;
-                            cout<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;
-                            cout<<"a: "<<a<<endl;
-                            cout<<"b: "<<b<<endl;
-                            cout<<"c: "<<c<<endl;
-                            cout<<"indexmax: "<<indexmax<<endl;
-                            cout<<"xmax: "<<xmax<<endl;
-                            cout<<"maxParabolaFound1: "<<maxParabolaFound<<endl;*/
+                            if (LowRes==0)
+                            {
+                                //cout<<"nextCloser8: "<<nextCloser8<<endl;
+                                //cout<<"cE_nLags: "<<cE_nLags<<endl;
+                                cout<<"Parabola0"<<endl;
+                                //cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<endl;
+                                cout<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;
+                                /*cout<<"a: "<<a<<endl;
+                                cout<<"b: "<<b<<endl;
+                                cout<<"c: "<<c<<endl;
+                                cout<<"indexmax: "<<indexmax<<endl;*/
+                                cout<<"xmax: "<<xmax<<endl;
+                                cout<<"maxParabolaFound1: "<<maxParabolaFound<<endl;
+                            }
 
                             //if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
                             if (((xmax < -1) || (xmax > 1)) && (cE_nLags > 3))
@@ -11067,7 +11089,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     for (int k=0;k<productSize;k++)
                                     {
                                         newEnergy = newEnergy + gsl_vector_get(vector,k)*gsl_vector_get(filter,k);
-                                        if (k<8) cout<<gsl_vector_get(vector,k)<<" "<<gsl_vector_get(filter,k)<<" "<<fabs(newEnergy/filter->size)<<endl;
+                                        //if (k<8) cout<<gsl_vector_get(vector,k)<<" "<<gsl_vector_get(filter,k)<<" "<<fabs(newEnergy/filter->size)<<endl;
                                     }
 
                                     newEnergy = fabs(newEnergy/filter->size);
@@ -11095,15 +11117,18 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                         maxParabolaFound = true;
                                     }
                                     else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
-                                    /*cout<<"Parabolai"<<endl;
-                                    cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<endl;
-                                    cout<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;
-                                    cout<<"a: "<<a<<endl;
-                                    cout<<"b: "<<b<<endl;
-                                    cout<<"c: "<<c<<endl;
-                                    cout<<"indexmax: "<<indexmax<<endl;
-                                    cout<<"xmax: "<<xmax<<endl;
-                                    cout<<"maxParabolaFound2: "<<maxParabolaFound<<endl;*/
+                                    if (LowRes==0)
+                                    {
+                                        cout<<"Parabolai"<<endl;
+                                        //cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<endl;
+                                        cout<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;
+                                        /*cout<<"a: "<<a<<endl;
+                                        cout<<"b: "<<b<<endl;
+                                        cout<<"c: "<<c<<endl;
+                                        cout<<"indexmax: "<<indexmax<<endl;*/
+                                        cout<<"xmax: "<<xmax<<endl;
+                                        cout<<"maxParabolaFoundi: "<<maxParabolaFound<<endl;
+                                    }
 
                                 //} while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
                                 } while ((exitLags == false) && (indexLags < cE_nLags/2-1));
@@ -11225,8 +11250,12 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                         //cout<<"maxParabolaFound3: "<<maxParabolaFound<<" "<<*calculatedEnergy<<endl;
                         
                         log_debug("calculatedEnergyTIME: %f",*calculatedEnergy);
-                        log_debug("calculatedEnergytstartNewDev: %f",*tstartNewDev);
-                        log_debug("calculatedEnergylagsShift: %d",*lagsShift);
+                        if (LowRes==0)
+                        {
+                            log_debug("calculatedEnergytstartNewDev: %f",*tstartNewDev);
+                            log_debug("calculatedEnergylagsShift: %d",*lagsShift);
+                            cout<<"lagsShift = "<<*lagsShift<<" LowRes = "<<LowRes<<endl;
+                        }
                     }
                 }
             }
