@@ -43,6 +43,7 @@ MAP OF SECTIONS IN THIS FILE:
  - 19. noDetect
  - 20. offsetAveragingFilter
  - 21. smoothDerivative_causal
+ - 22. kernelCharles
 
 *******************************************************************************/
 
@@ -3272,37 +3273,37 @@ int offsetAveragingFilter(gsl_vector **invector, int N, int offset)
     if (invector == NULL || *invector == NULL)
         return 1; // Invalid input
 
-    if (N != 0)
-    {
-        size_t len = (*invector)->size;
+        if (N != 0)
+        {
+            size_t len = (*invector)->size;
 
-        // Create a temporary copy of the input vector to preserve original values for averaging
-        gsl_vector* temp = gsl_vector_alloc(len);
-        if (!temp) return 1; // Memory allocation failure
+            // Create a temporary copy of the input vector to preserve original values for averaging
+            gsl_vector* temp = gsl_vector_alloc(len);
+            if (!temp) return 1; // Memory allocation failure
 
-        gsl_vector_memcpy(temp, *invector);
+            gsl_vector_memcpy(temp, *invector);
 
-        for (size_t i = 0; i < len; ++i) {
-            double value = gsl_vector_get(temp, i);
+            for (size_t i = 0; i < len; ++i) {
+                double value = gsl_vector_get(temp, i);
 
-            if (i >= (size_t)(N + offset)) {
-                // Compute the mean of N samples at the specified offset
-                double mean = gsl_stats_mean(
-                    temp->data + temp->stride * (i - offset - N),
-                                            temp->stride,
-                                            N
-                );
-                gsl_vector_set(*invector, i, value - mean);
-            } else {
-                // Not enough previous values: leave the value unchanged
-                gsl_vector_set(*invector, i, value);
+                if (i >= (size_t)(N + offset)) {
+                    // Compute the mean of N samples at the specified offset
+                    double mean = gsl_stats_mean(
+                        temp->data + temp->stride * (i - offset - N),
+                                                 temp->stride,
+                                                 N
+                    );
+                    gsl_vector_set(*invector, i, value - mean);
+                } else {
+                    // Not enough previous values: leave the value unchanged
+                    gsl_vector_set(*invector, i, value);
+                }
             }
+
+            gsl_vector_free(temp);
         }
 
-        gsl_vector_free(temp);
-    }
-
-    return EPOK;  // Success
+        return EPOK;  // Success
 }
 /*xxxx end of SECTION 19 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
@@ -3358,3 +3359,91 @@ int smoothDerivative_causal(gsl_vector **invector, int N)
     return EPOK;
 }
 /*xxxx end of SECTION 20 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+
+/***** SECTION 21 ************************************************************
+ * generic_causalDerivative function: Applies a causal convolution filter to the input vector using the provided kernel.
+ * The kernel is applied only to past and current samples, ensuring causality.
+ *
+ * For indices i < kernel_size-1, the output is set to 0 (not enough past samples).
+ *
+ * Parameters:
+ * - invector: Input/Ouput GSL vector (input vector/differentiated input vector)
+ * - kernel: GSL vector containing the filter coefficients (length = filter size).
+ ******************************************************************************/
+int generic_causalDerivative(gsl_vector **invector, const gsl_vector *kernel)
+{
+    if (invector == NULL || *invector == NULL || kernel == NULL) {
+        std::string message = "In generic_causalDerivative(, invalid input vectors";
+        EP_PRINT_ERROR(message, EPFAIL);
+        return EPFAIL;
+    }
+
+    size_t n = (*invector)->size;
+    size_t ksize = kernel->size;
+
+    gsl_vector *newvec = gsl_vector_alloc(n);
+    if (!newvec) return EPFAIL;
+
+    // Apply convolution causally
+    for (size_t i = 0; i < n; ++i) {
+        if (i + 1 < ksize) {
+            gsl_vector_set(newvec, i, 0.0);  // Not enough history
+        } else {
+            double sum = 0.0;
+            for (size_t j = 0; j < ksize; ++j) {
+                double coeff = gsl_vector_get(kernel, j);
+                double value = gsl_vector_get(*invector, i - ksize + 1 + j);
+                sum += coeff * value;
+            }
+            gsl_vector_set(newvec, i, sum);
+        }
+    }
+
+    // Copy result back into input vector
+    gsl_vector_memcpy(*invector, newvec);
+    gsl_vector_free(newvec);
+
+    return EPOK;
+}
+/*xxxx end of SECTION 21 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+/***** SECTION 22 ************************************************************
+ * kernelCharles function:
+ *
+ * Parameters:
+ * - invector: Input/Ouput GSL vector (input vector/differentiated input vector)
+ ******************************************************************************/
+int kernelCharles(gsl_vector **invector)
+// Ii′​=I_(i−2)​+I_(i−1)​−I_i​−I_(i+1)
+// It is NOT causal
+{
+    if (invector == NULL || *invector == NULL)
+        return 1; // Invalid input
+
+        size_t n = (*invector)->size;
+
+    gsl_vector *temp = gsl_vector_alloc(n);
+    if (!temp) return 1;
+
+    gsl_vector_memcpy(temp, *invector);
+
+    // Kernel [-1, -1, 1, 1] because IFCA pulse values are opposite to the DEMUX values
+    for (size_t i = 2; i < n - 1; ++i) {
+        double result = -gsl_vector_get(temp, i - 2)
+        - gsl_vector_get(temp, i - 1)
+        + gsl_vector_get(temp, i)
+        + gsl_vector_get(temp, i + 1);
+
+        gsl_vector_set(*invector, i, result);
+    }
+
+    // Manejo de bordes: sin suficientes vecinos → 0
+    gsl_vector_set(*invector, 0, 0.0);
+    gsl_vector_set(*invector, 1, 0.0);
+    gsl_vector_set(*invector, n - 1, 0.0);
+
+    gsl_vector_free(temp);
+    return 0; // Success
+}
+/*xxxx end of SECTION 22 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
