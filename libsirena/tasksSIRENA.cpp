@@ -2115,6 +2115,18 @@ int nrecord, double tstartPrevPulse)
     {
         sizePulse_b = (*reconstruct_init)->pulse_length;
     }
+    else if (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)
+    {
+        sizePulse_b = (*reconstruct_init)->pulse_length;
+        for (int j=0; j<(int)((*reconstruct_init)->grading->gradeData->size1);j++)
+        {
+            if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == (*reconstruct_init)->OFLength)
+            {
+                preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
+                break;
+            }
+        }
+    }
     else
     {
         sizePulse_b = (*reconstruct_init)->post_max_value;
@@ -2327,6 +2339,17 @@ int nrecord, double tstartPrevPulse)
                 gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->prebuff_0pad+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
             }
         }
+        else if (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)
+        {
+            if (gsl_vector_get(tstartgsl,i)-preBuffer_value <0)
+            {
+                gsl_vector_set(tendgsl,i,sizePulse_b);	//tend_i = Pulse_Length
+            }
+            else
+            {
+                gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)-preBuffer_value+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
+            }
+        }
         else
         {
             if (gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value <0)
@@ -2425,6 +2448,10 @@ int nrecord, double tstartPrevPulse)
             {
                 foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->prebuff_0pad));
             }
+            else if (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)
+            {
+                foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-preBuffer_value));
+            }
             else
             {
                 foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value));
@@ -2433,17 +2460,35 @@ int nrecord, double tstartPrevPulse)
 
         if ((*reconstruct_init)->opmode == 1)
         {
-            if (((*reconstruct_init)->pulse_length<(*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)) // 0-padding and OFStrategy=FIXED
-            {
-                preBuffer_value = (*reconstruct_init)->prebuff_0pad;
+            /*if (((*reconstruct_init)->pulse_length<(*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)) // 0-padding and OFStrategy=FIXED
+             { *
+             //preBuffer_value = (*reconstruct_init)->prebuff_0pad;
             }
             else
+            {
+            for (int j=0; j<(int)((*reconstruct_init)->grading->gradeData->size1);j++)
+            {
+            if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == (*reconstruct_init)->OFLength)
+            {
+            //preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
+            resize_mfvsposti = 1;
+            break;
+            }
+            }
+            if (resize_mfvsposti == 0)
+            {
+            message = "The grading/preBuffer info of the XML file does not match the filter length";
+            EP_EXIT_ERROR(message,EPFAIL);
+            }
+            }*/
+            // Skip this block for 0-padding and OFStrategy=FIXED
+            if (!( ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) &&
+                (strcmp((*reconstruct_init)->OFStrategy, "FIXED") == 0)))
             {
                 for (int j=0; j<(int)((*reconstruct_init)->grading->gradeData->size1);j++)
                 {
                     if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == (*reconstruct_init)->OFLength)
                     {
-                        preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
                         resize_mfvsposti = 1;
                         break;
                     }

@@ -316,12 +316,16 @@
      if (pulsesInRecord->ndetpulses > 0)
      {
         int num0s = 0;
-        for (int i=0;i<pulsesInRecord->pulses_detected->phid_vector->size;i++)
+        if (event_list->ph_ids_array_size2 != 1)
         {
-            if (gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i) == 0) num0s = num0s+1;
-            //cout<<"ph_id_i: "<<gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i)<<endl;
+            for (int i=0;i<pulsesInRecord->pulses_detected->phid_vector->size;i++)
+            {
+                if (gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i) == 0) num0s = num0s+1;
+                //cout<<"ph_id_i: "<<gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i)<<endl;
+            }
         }
-        if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size-num0s)
+        //if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size-num0s)
+        if (pulsesInRecord->ndetpulses > event_list->ph_ids_array_size2-num0s)
         {
             //(*pulsesAll)->nfakepulses = pulsesInRecord->ndetpulses-(pulsesInRecord->pulses_detected->phid_vector->size-num0s);
             pulsesInRecord->nfakepulses = pulsesInRecord->ndetpulses-(pulsesInRecord->pulses_detected->phid_vector->size-num0s);
