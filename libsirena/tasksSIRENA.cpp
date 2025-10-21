@@ -2109,12 +2109,24 @@ int nrecord, double tstartPrevPulse)
     gsl_vector_view temp;
     
     double scaleFactor = (*reconstruct_init)->scaleFactor;
-    int preBuffer_value = 0;  // For a low resolution filter (length 8) => preBuffer=0
+    int preBuffer_value = 0;  // For a low resolution filter (length 8) => preBuffer=0?????????????????????
     
     int sizePulse_b;
     if (((*reconstruct_init)->pulse_length<(*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)) // 0-padding and OFStrategy=FIXED
     {
         sizePulse_b = (*reconstruct_init)->pulse_length;
+    }
+    else if (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)
+    {
+        sizePulse_b = (*reconstruct_init)->pulse_length;
+        for (int j=0; j<(int)((*reconstruct_init)->grading->gradeData->size1);j++)
+        {
+            if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == (*reconstruct_init)->OFLength)
+            {
+                preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
+                break;
+            }
+        }
     }
     else
     {
@@ -2334,6 +2346,17 @@ int nrecord, double tstartPrevPulse)
                 gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->prebuff_0pad+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
             }
         }
+        else if (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)
+        {
+            if (gsl_vector_get(tstartgsl,i)-preBuffer_value <0)
+            {
+                gsl_vector_set(tendgsl,i,sizePulse_b);	//tend_i = Pulse_Length
+            }
+            else
+            {
+                gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)-preBuffer_value+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
+            }
+        }
         else
         {
             if (gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value <0)
@@ -2402,7 +2425,7 @@ int nrecord, double tstartPrevPulse)
         }
     }
     log_debug("procRecord: After calculating the baseline");
-    
+
     // Obtain the approximate rise and fall times of each pulse
     // It is not necessary to check the allocation because '(*reconstruct_init)->maxPulsesPerRecord'='EventListSize'(input parameter) must already be > 0
     gsl_vector *tauRisegsl = gsl_vector_alloc((*reconstruct_init)->maxPulsesPerRecord);
@@ -2415,7 +2438,7 @@ int nrecord, double tstartPrevPulse)
         EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
     }
     log_debug("procRecord: After obtaining rise and fall times");
-    
+
     // Load the found pulses data in the input/output 'foundPulses' structure
     foundPulses->ndetpulses = numPulses;
     foundPulses->pulses_detected = new PulseDetected[numPulses];
@@ -2432,6 +2455,10 @@ int nrecord, double tstartPrevPulse)
             {
                 foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->prebuff_0pad));
             }
+            else if (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)
+            {
+                foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-preBuffer_value));
+            }
             else
             {
                 foundPulses->pulses_detected[i].pulse_duration = floor(gsl_vector_get(tendgsl,i)-(gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value));
@@ -2440,9 +2467,9 @@ int nrecord, double tstartPrevPulse)
 
         if ((*reconstruct_init)->opmode == 1)
         {
-            if (((*reconstruct_init)->pulse_length<(*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)) // 0-padding and OFStrategy=FIXED
+            /*if (((*reconstruct_init)->pulse_length<(*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)) // 0-padding and OFStrategy=FIXED
             {
-                preBuffer_value = (*reconstruct_init)->prebuff_0pad;
+                //preBuffer_value = (*reconstruct_init)->prebuff_0pad;
             }
             else
             {
@@ -2450,7 +2477,25 @@ int nrecord, double tstartPrevPulse)
                 {
                     if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == (*reconstruct_init)->OFLength)
                     {
-                        preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
+                        //preBuffer_value = gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,2);
+                        resize_mfvsposti = 1;
+                        break;
+                    }
+                }
+                if (resize_mfvsposti == 0)
+                {
+                    message = "The grading/preBuffer info of the XML file does not match the filter length";
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }
+            }*/
+            // Skip this block for 0-padding and OFStrategy=FIXED
+            if (!( ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) &&
+                (strcmp((*reconstruct_init)->OFStrategy, "FIXED") == 0)))
+            {
+                for (int j=0; j<(int)((*reconstruct_init)->grading->gradeData->size1);j++)
+                {
+                    if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == (*reconstruct_init)->OFLength)
+                    {
                         resize_mfvsposti = 1;
                         break;
                     }
@@ -2482,7 +2527,7 @@ int nrecord, double tstartPrevPulse)
         {
             foundPulses->pulses_detected[i].grade2 = (int)(gsl_vector_get(tstartgsl,i)-gsl_vector_get(tstartgsl,i-1));
         }
-        
+
         // 'phi' and 'lagsShift' will be known after running 'runEnergy' (but initialize for library creation!)
         foundPulses->pulses_detected[i].phi = -999;
         foundPulses->pulses_detected[i].lagsShift = -999;
@@ -2537,7 +2582,7 @@ int nrecord, double tstartPrevPulse)
                 str.clear();
                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
             }
-           
+
             if ((foundPulses->pulses_detected[i].pulse_adc_preBuffer = gsl_vector_alloc(foundPulses->pulses_detected[i].pulse_duration)) == 0)
             {
                 sprintf(valERROR,"%d",__LINE__-2);
@@ -2546,7 +2591,7 @@ int nrecord, double tstartPrevPulse)
                 str.clear();
                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
             }
-            
+
             if ((*reconstruct_init)->opmode == 0)
             {
                 if (gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value >= 0)
