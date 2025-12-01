@@ -65,69 +65,67 @@
  #define resize_array(size, pulses) _resize_array(size, pulses)
  
  /***** SECTION 1 ************************************************************
-  * initializeReconstructionSIRENA: This function initializes the structure ReconstructInitSIRENA with the variables required 
-  *                                 for SIRENA reconstruction. The values are taken from the input parameters.
-  * 
-  * - Fill in reconstruct_init
-  * - Load LibraryCollection structure if library file exists
-  * - Load NoiseSpec structure
-  * - Fill in the matrix tstartPulse1_i if tstartPulse1 = nameFile
-  * 
+  * initializeReconstructionSIRENA: This function initializes the ReconstructInitSIRENA structure with all variables required
+  *                                 for SIRENA reconstruction. Values are taken from the input parameters.
+  *
+  * - Fill in the reconstruct_init structure
+  * - Load the LibraryCollection structure if the library file exists
+  * - Load the NoiseSpec structure
+  * - Fill in the tstartPulse1_i matrix if tstartPulse1 is a filename
+  *
   * Parameters:
-  * - reconstruct_init: Member of ReconstructInitSIRENA structure to initialize the reconstruction parameters (pointer and values)
+  * - reconstruct_init: Member of ReconstructInitSIRENA structure that initializes the reconstruction parameters (pointer and values)
   * - record_file: Filename of input data file with records
   * - fptr: FITS object with pointer to data file
   * - library_file: File name of calibration library
   * - event_file: File name of output events (with reconstructed energy)
-  * - flength_0pad: 0padding filter length
+  * - flength_0pad: 0-padding filter length
   * - prebuff_0pad: preBuffer used when 0-padding
-  * - threshold: Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise)
+  * - threshold: Threshold to use with the derivative to detect (if -999 it will be calculated from noise)
+  * - windowSize: Window size used to compute the averaged derivative
+  * - offset: Window offset used to compute the averaged derivative
   * - scaleFactor: Detection scale factor for initial filtering
-  * - samplesUp: Number of samples for threshold trespassing
+  * - samplesUp: Number of samples for threshold crossing
   * - samplesDown: Number of samples below the threshold to look for other pulse
   * - nSgms: Number of quiescent-signal standard deviations to establish the threshold (if 'threshold'=-999)
-  * - windowSize: Window size used to compute the averaged derivative
-  * - offset: Window offset
   * - detectSP: Detect secondary pulses or not
   * - opmode: Calibration run (0) or energy reconstruction run (1)
   * - detectionMode: Adjusted Derivative (AD) or Single Threshold Crossing (STC)
   * - LrsT: Running sum length for the RS raw energy estimation (seconds)
   * - LbT: Baseline averaging length for the RS raw energy estimation (seconds)
   * - noise_file: Noise file
-  * - filter_domain: Filtering Domain: Time(T) or Frequency(F)
-  * - filter_method: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline) or F0B0 (deleting always the baseline)
-  * - energy_method: Energy calculation Method: OPTFILT, 0PAD, INTCOVAR, COVAR, I2R, I2RFITTED or PCA
-  * - filtEeV: Energy of the filters of the library to be used to calculate energy (only for OPTFILT, 0PAD, I2R and I2RFITTED)
-  * - Ifit: Constant to apply the I2RFITTED conversion
-  * - ofnoise: Noise to use with Optimal Filtering: NSD or WEIGHTN
+  * - filter_domain: Filtering domain: Time(T) or Frequency(F)
+  * - filter_method: Filtering method: F0 (delete the zero frequency bin) or B0 (delete the baseline)
+  * - energy_method: Energy calculation method: OPTFILT, 0PAD, INTCOVAR, COVAR, I2R, I2RFITTED or PCA
+  * - filtEeV: Energy of the filters from the library to calculate energy (for OPTFILT, 0PAD, I2R and I2RFITTED)
+  * - Ifit: Constant used to apply the I2RFITTED conversion
+  * - ofnoise: Noise to use with optimal filtering: NSD or WEIGHTN
   * - lagsornot: Lags (1) or no lags (0)
   * - nLags: Number of lags (positive odd number)
-  * - Fitting35: Number of lags to analytically calculate a parabola (3) or to fit a parabola (5)
+  * - Fitting35: Number of points to analytically calculate a parabola (3) or to fit a parabola (5)
   * - ofiter: Iterate (1) or not iterate (0)
-  * - oflib: Work or not with a library with optimal filters (1/0)
+  * - oflib: Use a library with optimal filters (1) or not (0)
   * - ofinterp: Optimal Filter by using the Matched Filter or the SAB as matched filter (MF/SAB)
-  *             It has been fixed in 'tesreconstruction' as 'SAB'
-  * - oflength_strategy: Optimal Filter length Strategy: FREE, BYGRADE or FIXED
-  * - oflength: Optimal filter length (taken into account if :option:`OFStrategy`=FIXED)
-  * - monoenergy: Monochromatic energy of input file in eV (only for library creation)
-  * - addCOVAR: Add or not pre-calculated values related to COVAR reconstruction method in the library file (1/0) (only for library creation)
-  * - addINTCOVAR: Add or not tpre-calculated values related to INT_COVAR reconstruction method in the library file (1/0) (only for library creation)
-  * - addOFWN: Add or not pre-calculated values related to Optimal Filtering by using Weight Noise matrix in the library file (1/0) (only for library creation)
-  * - interm: Write or not intermediate files (1/0)
-  * - detectFile: Intermediate detections file (if intermediate=1)
-  * - errorT: Additional error (in samples) added to the detected time (logically, it changes the reconstructed energies)
+  *             It has been fixed in 'tesrecons' as 'SAB'
+  * - oflength_strategy: Optimal Filter length strategy: FREE, BYGRADE or FIXED
+  * - oflength: Optimal filter length (used if :option:`OFStrategy`=FIXED)
+  * - monoenergy: Monochromatic energy of input file (eV) (library creation only)
+  * - addCOVAR: Add pre-calculated COVAR values in library (1/0, library creation only)
+  * - addINTCOVAR: Add pre-calculated INTCOVAR values in library (1/0, library creation only)
+  * - addOFWN: AAdd pre-calculated values related to optimal filtering by using weight noise matrix in library (1/0, library creation only)
+  * - interm: Write intermediate files (1/0)
+  * - detectFile: Intermediate detections file (if interm=1)
+  * - errorT: Additional error (samples) added to detected time (affects reconstructed energies)
   * - Sum0Filt: 0-padding: Subtract the sum of the filter (1) or not (0)
-  * - clobber: Overwrite or not output files if exist (1/0)
+  * - clobber: Overwrite output files if they exist (1/0)
   * - maxPulsesPerRecord: Default size of the event list per record
   * - SaturationValue: Saturation level of the ADC curves
-  * - tstartPulse1: If integer number => Sample where the first pulse starts 
-  *                  or
-  *                  if nameFile => File where is the tstart (in seconds) of every pulse
-  * - tstartPulse2: Tstart (samples) of the second pulse
-  * - tstartPulse3: Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS)
-  * - energyPCA1: First energy (only for PCA) 
+  * - tstartPulse1: Sample number where the first pulse starts or file containing tstart (seconds) for each pulse
+  * - tstartPulse2: Sample where the second pulse starts
+  * - tstartPulse3: Sample where the third pulse starts (0 = PAIRS, non-zero = TRIOS)
+  * - energyPCA1: First energy (only for PCA)
   * - energyPCA2: Second energy (only for PCA)
-  * - XMLFile: File name of the XML input file with instrument definition
+  * - XMLFile: XML input file containing instrument definition
   * - status: Input/output status
   ******************************************************************************/
  extern "C" void initializeReconstructionSIRENA(ReconstructInitSIRENA* reconstruct_init,
@@ -214,25 +212,25 @@
  /***** SECTION 2 ************************************************************
   * reconstructRecordSIRENA: This function is the main wrapper function to detect, grade and calculate the energy of the pulses in the input records.
   *
-  * - Inititalize PulsesCollection structure
+  * - Inititalize the 'PulsesCollection' structure
   * - Check consistency of some input parameters
   * - If first record, read the necessary keywords and columns from the input file in order to convert from current to quasi-resistance space
-  * - In case of running with threading
-  * - Detect pulses in input record (runDetect()). 
-  * - If in RECONSTRUCTION (:option:`opmode` = 1) and not PCA:
-  *       - Filter and calculate energy of pulses (runEnergy())
-  * - Fill in the pulsesAll structure
-  * - Populate output event list with pulses energies, arrival time and grading
+  * - If running in threading mode
+  * - Detect pulses in input record ('runDetect()').
+  * - If in RECONSTRUCTION (`opmode` = 1) and not PCA:
+  *       - Filter and calculate the pulse energy ('runEnergy()')
+  * - Fill the 'pulsesAll' structure
+  * - Populate the output event list with pulses energies, arrival times and grading
   *
   * Parameters:
-  * - record: Instance of TesRecord structure that contains the input record
+  * - record: Instance of 'TesRecord' structure that contains the input record
   * - trig_reclength: Record size (just in case threading and input files with different 'ADC' lengths but the same record size indeed)
-  * - event_list: Instance of TesEventListSIRENA structure that contains the information of the reconstructed pulses
-  * - reconstruct_init: Member of ReconstructInitSIRENA structure to initialize the reconstruction parameters (pointer and values)
-  * - lastRecord: If record being analyzed is the last one, lastRecord = 1. Otherwise it is equal to 0
+  * - event_list: Instance of 'TesEventListSIRENA' structure containing the reconstructed pulses
+  * - reconstruct_init: Member of ReconstructInitSIRENA structure that initializes the reconstruction parameters (pointer and values)
+  * - lastRecord: If record being analyzed is the last one, 'lastRecord' = 1. Otherwise it is equal to 0
   * - nRecord: Input record number
-  * - pulsesAll: Member of PulsesCollection structure to successively store all the pulses used to create the library. 
-  *              Re-populated after each processed record.
+  * - pulsesAll: Member of 'PulsesCollection' structure used to successively store all pulses used to create the library.
+  *              Re-populated after each processed record
   * - optimalFilter: Optimal filters used in reconstruction
   * - status:Input/output status
   ******************************************************************************/
@@ -2352,8 +2350,10 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
 
 
  /***** SECTION 11 ************************************************************
-  * IntegrafreeTesEventListSIRENA: This function frees the structure in the input parameter.
+  * IntegrafreeTesEventListSIRENA: This function frees the memory allocated for the input TesEventListSIRENA structure.
   *
+  * * Parameters:
+  * - eventList: Instance of TesEventListSIRENA structure that contains the information of the reconstructed pulses
   ******************************************************************************/
  extern "C" void IntegrafreeTesEventListSIRENA(TesEventListSIRENA* event_list)
  {

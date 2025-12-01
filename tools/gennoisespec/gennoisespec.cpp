@@ -74,7 +74,7 @@
   * 
   * Steps:
   * 
-  * - Reading all programm parameters by using PIL
+  * - Reading all program parameters by using PIL
   * - Open input FITS file
   * - Check if input FITS file have been simulated with TESSIM or XIFUSIM
   * - To calculate 'aducnv' (conversion factor between arbitrary units and A)...
@@ -1167,25 +1167,25 @@
  
  
  /***** SECTION 2 ************************************************************
-  * inDataIterator: This function takes the optimum number of rows to read the input FITS file
-  *                 and works iteratively
+  * inDataIterator: This function determines the optimum number of rows to read from the input FITS file
+  *  and processes the data iteratively.
   *
   * - Declare variables
   * - Allocate input GSL vectors
   * - Read iterator
   * - Processing each record
-  *     - Information has been read by blocks (with nrows per block)
-  *     - Just in case the last record has been filled out with 0's => Last record discarded
-  * 	- Convert to the resistance space if necessary
-  *     - To avoid taking into account the pulse tails at the beginning of a record as part of a pulse-free interval
-  * 	- Low-pass filtering
-  *   	- Differentiate 
-  *   	- Finding the pulses: Pulses tstarts are found (call findPulsesNoise)
-  *       - Finding the pulse-free intervals in each record
-  *  	    - If there are pulses => Call findInterval
-  *	    - No pulses => The whole event is going to be used (DIVIDING into intervals of intervalMinBins size) => Call findIntervalN
-  *       - Calculating the mean and sigma of the intervals without pulses together => BSLN0 & NOISESTD
-  *       - Preparing the CSD calculus (not filtered data)
+  *     - Data are read in blocks (with nrows per block)
+  *     - If the last record has been padded with zeros => The last record is discarded
+  * 	- Convert data to resistance space if required
+  *     - Avoid interpreting pulse tails at the beginning of a record as part of a pulse-free interval
+  * 	- Apply low-pass filtering
+  *   	- Differentiate the filtered data
+  *   	- Find the pulses: determine pulse tstarts (call 'findPulsesNoise')
+  *       - Determine pulse-free intervals in each record
+  *  	    - If pulses are present => Call findInterval
+  *	    - If no pulses are present => The whole record is used (divided into intervals of intervalMinBins size) => Call 'findIntervalN'
+  *       - Compute the mean and standard deviation of  all pulse-free intervals together => NOISEBSL & NOISESTD
+  *       - Prepare data for CSD computation (using non-filtered data)
   * - Free allocated GSL vectors
   ****************************************************************************/
  int inDataIterator(long totalrows, long offset, long firstrow, long nrows, int ncols, iteratorCol *cols, void *user_strct)
@@ -1432,26 +1432,28 @@
  
  
  /***** SECTION 3 ************************************************************
-  * findInterval: This function finds the pulse-free intervals when the input vector has pulses.
-  *               The pulse-free intervals must have a minimum length (intervalMinBins).
-  *               The interval with pulse is Tstart,Tend+nPF*pulse_length (being Tend=pulse_length).
+  * findInterval: This function identifies pulse-free intervals in an input vector containing pulses.
+  *               The pulse-free intervals must have a minimum length specified by 'intervalMinBins'.
+  *               For a given pulse, the interval including the pulse is defined as:
+  *                 Tstart, Tend + nPF * pulse_length  (with Tend = pulse_length)
+  *
+  * - Declare necessary variables
+  * - If the input vector contains pulses:
+  * 	- Search for pulse-free intervals between pulses
+  * - If there are no more pulses in the input vector:
+  * 	- Search for pulse-free intervals at the end of the event
+  *     - End the search for additional pulse-free intervals
   *
   * Parameters:
-  * - tail_duration: Length of the tail of a previous pulse
-  * - invector: Input vector WITH pulses
-  * - startpulse: Vector with the Tstart of all the pulses of the input vector (samples)
+  * - tail_duration: Length of the tail of a previous pulse (samples)
+  * - invector: Input vector CONTAINING pulses
+  * - startpulse: Vector containing the start times (Tstart) of all pulses in the input vector (samples)
   * - npin: Number of pulses in the input vector
   * - pulse_length: Pulse length (samples)
-  * - nPF: Number of pulse lengths after ending the pulse to start the pulse-free interval
-  * - interval: Minimum length of the interval (samples)
-  * - ni: Number of pulse-free intervals in the input vector
-  * - startinterval: Vector with the starting time of each pulse-free interval (samples).
-  *
-  * - Declare variables
-  * - Processing if the input vector has more pulses
-  * 	- It looks for pulse-free intervals between pulses
-  * - Processing if there are no more pulses in the input vector
-  * 	-It looks for pulse-free intervals at the end of the event and the search for more pulse-free intervals is finished
+  * - nPF: Number of pulse lengths after the end of a pulse to start a pulse-free interval
+  * - interval: Minimum length of a pulse-free interval (samples)
+  * - ni: Number of pulse-free intervals found in the input vector
+  * - startinterval: Vector containing the starting time of each pulse-free interval (samples)
   *****************************************************************************/
  int findInterval(int tail_duration, gsl_vector *invector, gsl_vector *startpulse, int npin, int local_pulse_length, int nPF, int interval,
                   int *ni, gsl_vector **startinterval)
@@ -1516,14 +1518,14 @@
  
  
  /***** SECTION 4 ************************************************************
-  * findIntervalN: This function finds the pulse-free intervals when the input vector has No pulses.
-  *                The pulse-free intervals must have a minimum length (intervalMinBins).
+  * findIntervalN: This function finds the pulse-free intervals when the input vector contains NO pulses.
+  *                All pulse-free intervals must have a minimum duration (intervalMinBins).
   *
   * Parameters:
   * - invector: Input vector WITHOUT pulses
   * - interval: Minimum length of the interval (samples)
-  * - ni: Number of pulse-free intervals in the input vector
-  * - startinterval: Vector with the starting time of each pulse-free interval (samples)
+  * - ni: Number of pulse-free intervals found in the input vector
+  * - startinterval: Vector containing the starting time of each pulse-free interval (samples)
   *****************************************************************************/
  int findIntervalN (gsl_vector *invector, int interval, int *ni, gsl_vector **startinterval)
  {
@@ -1546,9 +1548,9 @@
  /***** SECTION 5 ************************************************************
   * createTPSreprFile: This function creates the gennoisespec output FITS file (_noisespec.fits).
   *
-  * - Create the NOISE representation file (if it does not exist already)
-  * - Create the extensions NOISE, NOISEALL and WEIGHTMS
-  * - Write keywords
+  * - Create the noise representation file if it does not already exist
+  * - Create the extensions: NOISE, NOISEALL and WEIGHTMS
+  * - Write the relevant keywords to the FITS file
   ****************************************/
  int createTPSreprFile ()
  {
@@ -1836,13 +1838,13 @@
  
  
  /***** SECTION 6 ************************************************************
-  * writeTPSreprExten: This function writes the noisespec output FITS file (_noisespec.fits).
+  * writeTPSreprExten: This function writes the noise output to a FITS file (_noisespec.fits).
   *
   * - Allocate GSL vectors
-  * - Write the data in the output FITS file (print only half of FFT to prevent aliasing)
-  * - NOISE HDU only contains positive frequencies (=>Multiply by 2 the amplitude)
-  * - NOISEALL HDU contains negative and positive frequencies => It is the HDU read to build the optimal filters
-  * - WEIGHTMS HDU
+  * - Write the data to the output FITS file (only half of the FFT is written to prevent aliasing)
+  * - The NOISE HDU contains only positive frequencies (amplitudes are multiplied by 2)
+  * - The NOISEALL HDU contains both negative and positive frequencies and is the HDU used to build the optimal filters
+  * - The WEIGHTMS HDU
   *****************************************************************************/
  int writeTPSreprExten ()
  {	
@@ -2047,29 +2049,27 @@
  
  
  /***** SECTION 7 ************************************************************
-  * findPulsesNoise function: This function is going to find the pulses in a record by using the function findTstartNoise 
+  * findPulsesNoise function: This function finds the pulses in a record by using the 'findTstartNoise' function.
   * 
   * - Declare variables
-  * - Establish the threshold (call medianKappaClipping)
-  * - Find pulses (call findTstartNoise) 
+  * - Estimate the threshold (call 'medianKappaClipping')
+  * - Find pulses (call 'findTstartNoise')
   * - Free allocated GSL vectors
   *
   * Parameters:
   * - vectorinDER: Derivative of the low-pass filtered 'vectorin'
-  * - tstart: Starting time of the found pulses into the record (in samples)
-  * - quality: Quality of the found pulses into the record
-  * - nPulses: Number of found pulses
-  * - threshold: Threshold used to find the pulses (output parameter because it is necessary out of the function)
-  * - scalefactor: Scale factor to calculate the LPF box-car length
+  * - tstart: Starting time of the detected pulses in the record (samples)
+  * - quality: Quality of the detected pulses in the record
+  * - nPulses: Number of detected pulses
+  * - threshold: Threshold used to detect pulses (output parameter because it is necessary out of the function)
+  * - scalefactor: Scale factor used to calculate the LPF box-car length
   * - samplingRate: Sampling rate
-  * - samplesup: Number of consecutive samples over the threshold to locate a pulse ('samplesUp')
-  * - nsgms: Number of Sigmas to establish the threshold
-  * - stopCriteriamkc: Used in medianKappaClipping_noiseSigma (%)
-  * - kappamkc: Used in medianKappaClipping_noiseSigma
-  * 
+  * - samplesup: Number of consecutive samples above the threshold required to identify a pulse ('samplesUp')
+  * - nsgms: Number of sigmas used to set the threshold
+  * - stopCriteriamkc: Stop criterion used in 'medianKappaClipping_noiseSigma' (%)
+  * - kappamkc: Kappa value used in 'medianKappaClipping_noiseSigma'
   ****************************************************************************/
- int findPulsesNoise
- (
+ int findPulsesNoise(
   gsl_vector *vectorinDER,
   gsl_vector **tstart,
   gsl_vector **quality,
@@ -2142,8 +2142,7 @@
   * - flagTruncated: Flag indicating if the pulse is truncated (inside this function only initial truncated pulses are classified)
   * - maxDERgsl: Maximum of the first derivative of the (low-pass filtered) record inside each found pulse
   ******************************************************************************/
- int findTstartNoise
- (
+ int findTstartNoise(
     int maxPulsesPerRecord,
   
     gsl_vector *der,
@@ -2253,27 +2252,27 @@
  /***** SECTION 9 ************************************************************
   * weightMatrixNoise function: This function calculates the weight matrix of the noise.
   *
-  * Di: Pulse free interval
-  * V: Covariance matrix
+  * Ni: Pulse free interval
+  * R: Covariance matrix
   * 
-  *  Vij = E[DiDj]-E[Di]E[Dj] 
+  *  Rij = E[NiNj]-E[Ni]E[Nj]
   * 
-  * Di^p: Value of the pth-sample of the pulse-free interval i
+  * Ni^p: Value of the pth-sample of the pulse-free interval i
   * N: Number of samples
   *
   *       (i)
-  * <DiDj> = E[DiDj] - E[Di]E[Dj] =
+  * <NiNj> = E[NiNj] - E[Ni]E[Nj] =
   *       (ii)
-  *        =(1/N)sum(p=1,N){(Di^p)(Dj^p)} - (1/N)sum(p=1,N){(Di^p) * (1/N)sum(p=1,N){(Dj^p)
+  *        =(1/N)sum(p=1,N){(Ni^p)(Nj^p)} - (1/N)sum(p=1,N){(Ni^p) * (1/N)sum(p=1,N){(Nj^p)
   *
   * (i) Var(X) = <X> = E[(X-E[X])^2] = E[X^2] - (E[X])^2
   * (ii) E[X] = (1/N)sum(i=1,N){(xi}
   * 
-  * 		        |<D1D1> <D1D2>...<D1Dn>|
-  *  Vij = <DiDj> = |<D2D1> <D2D2>...<D2Dn>|	where n is the pulse-free interval length     V => (nxn)
+  * 		        |<N1N1> <N1N2>...<N1Nn>|
+  *  Rij = <NiNj> = |<N2N1> <N2N2>...<N2Nn>|	where n is the pulse-free interval length     R => (nxn)
   *                 |...                   |
-  *                 |<DnD1> <DnD2>...<DnDn>|
-  *  W = 1/V
+  *                 |<NnN1> <NnN2>...<NnNn>|
+  *  R^(-1) = 1/R
   *
   * - Calculate the elements of the diagonal of the covariance matrix
   * - Calculate the elements out of the diagonal of the covariance matrix
@@ -2281,7 +2280,7 @@
   *
   * Parameters:
   * - intervalMatrix: GSL matrix containing pulse-free intervals whose baseline is 0 (baseline previously subtracted) [nintervals x intervalMinSamples]
-  * - weight: GSL matrix with weight matrix
+  * - weight: GSL matrix containing the weight matrix
   ******************************************************************************/
  int weightMatrixNoise (gsl_matrix *intervalMatrix, gsl_matrix **weight)
  {
@@ -2382,25 +2381,23 @@
  
  
  /***** SECTION 10 ************************************************************
-  * medianKappaClipping_noiseSigma function: This function provides the mean and the sigma of an input vector (with noise sigmas) 
-  *                               by using a Kappa-clipping method (replacing points beyond mean+-Kappa*sigma with the
-  *                               median).
-  *
-  * First, mean and sigma are calculated and invector values out of (mean+Kappa*sigma,mean-Kappa*sigma) are replaced
-  * with the median (it is trying to look for the baseline). And this process is iteratively repeated until there are
-  * no points beyond mean+-Kappa *sigma. Finally, the mean and sigma of the resulting vector are provided.
+  * medianKappaClipping_noiseSigma function: This function calculates the mean and the sigma of the input vector
+  *                                          (first derivative of the record) (with noise sigmas) using a
+  *                                          Kappa-clipping method (replacing points beyond mean+-Kappa*sigma with the
+  *                                          median).
   *
   * - Declare variables
-  * - Calculate the median
-  * - Iterate until there are no points out of the maximum excursion (kappa*sigma)
+  * - Calculate median of the input vector
+  * - Replace values out of the range (mean+-Kappa*sigma) with the median (it is trying to look for the baseline)
+  * - Repeat iteratively until no points are beyond kappa*sigma
   * - Calculate mean and sigma
   *
   * Parameters:
   * - invector: First derivative of the (filtered) record
-  * - kappa: To establish the range around of the mean
-  * - stopCriteria: It is given in %
-  * - mean: Mean value of the invector (no points beyond mean+-Kappa *sigma)
-  * - local_sigma: Sigma value of the invector (no points beyond mean+-Kappa *sigma)
+  * - kappa: Range factor around the mean
+  * - stopCriteria: Maximum percentage allowed to stop the iteration (%)
+  * - mean: Mean value of the invector after clipping (no points beyond mean+-Kappa *sigma)
+  * - local_sigma: Sigma value of the invector after clipping (no points beyond mean+-Kappa *sigma)
   ******************************************************************************/
  int medianKappaClipping_noiseSigma (gsl_vector *invector, double kappa, double stopCriteria, double *mean, double *local_sigma)
  {
