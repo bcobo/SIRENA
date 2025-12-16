@@ -3382,8 +3382,9 @@ int generic_causalDerivative(gsl_vector **invector, const gsl_vector *kernel)
  * - invector: Input/Ouput GSL vector (input vector/differentiated input vector)
  ******************************************************************************/
 int kernelCharles(gsl_vector **invector)
-// Ii′​=I_(i−2)​+I_(i−1)​−I_i​−I_(i+1)
-// It is NOT causal
+// output = -I_{i-2} - I_{i-1} + I_i + I_{i+1}
+// It is NOT causal (i+1)
+// Kernel [-1, -1, 1, 1] because IFCA pulse values are opposite to the DEMUX values
 {
     if (invector == NULL || *invector == NULL)
         return 1; // Invalid input
