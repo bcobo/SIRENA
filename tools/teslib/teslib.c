@@ -24,55 +24,57 @@
 * 
 * Parameters:
 * 
-* - RecordFile: Record FITS file
-*   - If RecordFile starts with '@' it provides a file text containing several record input FITS files
-* - TesEventFile: Output event list file
-* - LibraryFile: Library FITS file to be created
-* - NoiseFile: Noise FITS file with noise spectrum
-* - XMLFile: XML input FITS file with instrument definition
+* - RecordFile: Input record FITS file
+*   - If RecordFile starts with '@', it provides a text file containing multiple record input FITS files
+* - TesEventFile: Output event list FITS file
+* - LibraryFile: Library FITS file to be created (or appended to)
+* - NoiseFile: Noise FITS file containing the noise spectrum (and noise weight matrices)
+* - XMLFile: XML input file containing instrument definition
 * - EventListSize: Default size of the event list per record
-* - clobber:Overwrite or not output files if exist (1/0)
-* - history: write program parameters into output file
-* - threshold: Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise)
-* - nSgms: Number of quiescent-signal standard deviations to establish the threshold (if -999 it is going to be calculated from noise)
+* - clobber:Overwrite output files if they exist (1 = yes, 0 = no)
+* - history:  Write program parameters into the output FITS file (1 = yes, 0 = no)
+* - threshold: Threshold to use with the derivative for detection (if -999, it will be calculated from noise)
+* - nSgms: Number of quiescent-signal standard deviations to establish the threshold (if 'threshold'=-999)
 * - scaleFactor: Detection scale factor for initial filtering
-* - samplesUp: Number of consecutive samples up for threshold trespassing
+* - samplesUp: Number of consecutive samples above the threshold to detect a pulse
 * - windowSize: Window size used to compute the averaged derivative
-* - offset: Window offset
+* - offset: Window offset used to compute the averaged derivative
 * - LrsT: Running sum length for the RS raw energy estimation (seconds) 
 * - LbT: Baseline averaging length (seconds)
-* - monoenergy: Monochromatic energy of the pulses in the input FITS file in eV 
-* - addCOVAR: Add or not pre-calculated values related to COVAR reconstruction method in the library file (1/0)
-* - addINTCOVAR: Add or not pre-calculated values related to INTCOVAR reconstruction method in the library file (1/0)
+* - monoenergy: Monochromatic energy of the pulses in the input record FITS file (eV)
+* - addCOVAR: Add or not pre-calculated values related to the COVAR reconstruction method in the library file (1/0)
+* - addINTCOVAR: Add or not pre-calculated values related to the INTCOVAR reconstruction method in the library file (1/0)
 * - addOFWN: Add or not pre-calculated values related to Optimal Filtering by using Weight Noise matrix in the library file (1/0)
-* - FilterDomain: Filtering Domain: Time (T) or Frequency (F)
-****** - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline) or F0B0 (deleting always the baseline)
-* - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)
-* - EnergyMethod: Energy calculation Method: OPTFILT, INTCOVAR, COVAR, I2R, I2RALL, I2RNOL, I2RFITTED or PCA
-* - Ifit: Constant to apply the I2RFITTED conversion
-* - intermediate: Write or not intermediate files (1/0)
-* - detectFile: Intermediate detections file (if intermediate=1)
-* 
+* - FilterDomain: Filtering domain: Time (T) or Frequency (F)
+* - FilterMethod: Filtering method: F0 (delete the zero frequency bin) or B0 (delete the baseline)
+* - EnergyMethod: Energy calculation method: OPTFILT, I2R, I2RFITTED or PCA
+* - Ifit: Constant used to apply the I2RFITTED conversion
+* - intermediate: Write intermediate files or not (1/0)
+* - detectFile: Intermediate detections FITS file (if 'intermediate'=1)
+* - tstartPulse1: Sample number where the first pulse starts or file containing tstart (seconds) for each pulse
+* - tstartPulse2: Sample where the second pulse starts
+* - tstartPulse3: Sample where the third pulse starts (0 = PAIRS, non-zero = TRIOS)
+*
 * Steps:
 * 
 * - Register HEATOOL
-* - Reading all programm parameters by using PIL
-* - Read XML info
-* - getSamplingrate_trigreclength => Obtain the 'trig_reclength' and the sampling rate
-* - Sixt standard keywords structure
-* - Open output FITS file
-* - Initialize data structures
-* - Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
-* - Build up TesEventList
+* - Reading all program parameters by using PIL
+* - Read XML information
+* - get_trigreclength => Obtain the 'trig_reclength'
+* - Set up the standard Sixt keywords structure
+* - Open the output FITS file
+* - Initialize data structures needed
+* - Read grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
+* - Build the TesEventList
 * - Call SIRENA to build the library
-* - Save GTI extension to event file
+* - Save the GTI extension to the event file
 * - Free memory
 *****************************************************/
 int teslib_main() {
   printf("Running TESLIB v%s\n",SIRENA_VERSION);
   time_t ttstart = time(0);
 
-  // Containing all programm parameters read by PIL.
+  // Containing all program parameters read by PIL.
   struct Parameters par;
   par.addOFWN = 0;  // Debugger complains about an initialized variable (only the boolean type)
   par.addCOVAR = 0;  // Debugger complains about an initialized variable (only the boolean type)
@@ -107,21 +109,21 @@ int teslib_main() {
         
     AdvDet *det = newAdvDet(&status);
     CHECK_STATUS_BREAK(status);
-    double sampling_rate_XML = -999.; // Sampling rate from XML
+    //double sampling_rate_XML = -999.; // Sampling rate from XML
     // Read XML info
     det = loadAdvDet(par.XMLFile, &status);
     CHECK_STATUS_BREAK(status);
-    sampling_rate_XML = det->SampleFreq;
+    //sampling_rate_XML = det->SampleFreq;
 
     // Obtain the 'trig_reclength' and the sampling rate
-    double sampling_rate = -999.0;
+    //double sampling_rate = -999.0;
     int trig_reclength = -999;
-    sampling_rate = sampling_rate_XML;
+    //sampling_rate = sampling_rate_XML;
     int numfits = -999;
-    status = getSamplingrate_trigreclength (par.RecordFile,par,&sampling_rate,&trig_reclength, &numfits);
+    status = get_trigreclength (par.RecordFile,par,&trig_reclength, &numfits);
     if (status != EXIT_SUCCESS)
     {
-        SIXT_ERROR("Error in 'getSamplingrate_trigreclength' function");
+        SIXT_ERROR("Error in 'get_trigreclength' function");
         return(EXIT_FAILURE);
     }
 
@@ -198,7 +200,7 @@ int teslib_main() {
     CHECK_STATUS_BREAK(status);*/
             
     // Call SIRENA to build the library
-    status = callSIRENA(par.RecordFile, keywords, reconstruct_init_sirena, par, sampling_rate, &trig_reclength, pulsesAll, outfile, ph_id_column_dim);
+    status = callSIRENA(par.RecordFile, keywords, reconstruct_init_sirena, par, &trig_reclength, pulsesAll, outfile, ph_id_column_dim);
     CHECK_STATUS_BREAK(status);
 
     // Save GTI extension to event file

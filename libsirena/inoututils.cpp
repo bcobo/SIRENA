@@ -37,11 +37,11 @@ MAP OF SECTIONS IN THIS FILE:
 #include "inoututils.h"
 
 /***** SECTION 1 ************************************
-* readFitsSimple function: This function reads values of a simple column of a FITS file. 
-*                          After that, the function puts them into a GSL vector for an easier processing.
+* readFitsSimple function: This function reads the values of a simple column from a FITS file.
+*                          It then stores them in a GSL vector for easier processing.
 * 
 * Parameters:
-* - obj: Input object for (simple) FITS column
+* - obj: Input object representing the (simple) FITS column
 * - result: Output GSL vector
 ****************************************************/
 extern "C" int readFitsSimple(IOData obj,gsl_vector **result)
@@ -114,11 +114,11 @@ extern "C" int readFitsSimple(IOData obj,gsl_vector **result)
 
 
 /***** SECTION 2 ************************************
-* readFitsComplex function: This function reads values of a complex column of a FITS file. 
-*                           After that, the function puts it into a GSL matrix for an easier processing.
+* readFitsComplex function: This function reads the values of a complex column from a FITS file.
+*                           It then stores them in a GSL matrix for easier processing.
 * 
 * Parameters:
-* - obj: Input object for complex FITS column
+* - obj: Input object representing the complex FITS column
 * - result: Output GSL matrix
 ****************************************************/
 int readFitsComplex(IOData obj, gsl_matrix **result)
@@ -204,12 +204,11 @@ int readFitsComplex(IOData obj, gsl_matrix **result)
 
 
 /***** SECTION 3 ************************************
-* writeFitsSimple function: This function reads values of a GSL vector.	
-*                           After that, the function puts them into a column of the output FITS file.
+* writeFitsSimple function: This function reads values from a GSL vector and writes them into a column of the output FITS file.
 * 
 * Parameters:
-* - obj: Object for FITS column to be written
-* - vector: Input GSL vector with data
+* - obj: FITS column object to be written
+* - vector: Input GSL vector containing the data
 ****************************************************/
 int writeFitsSimple(IOData obj, gsl_vector *vector)
 {
@@ -332,12 +331,11 @@ int writeFitsSimple(IOData obj, gsl_vector *vector)
 
 
 /***** SECTION 4 ************************************
-* writeFitsComplex function: This function reads values of a GSL matrix. 
-*                            After that, the function puts them into a complex column of the output FITS file.
+* writeFitsComplex function: This function reads values from a GSL matrix and writes them into a complex column of the output FITS file.
 * 
 * Parameters:
-* - obj: Object for FITS column to be written
-* - matrix: Input GSL matrix with data
+* - obj: FITS column object to be written
+* - matrix: Input GSL matrix containing the data
 ****************************************************/
 int writeFitsComplex(IOData obj, gsl_matrix *matrix)
 {
@@ -489,16 +487,16 @@ int writeFitsComplex(IOData obj, gsl_matrix *matrix)
 
 
 /***** SECTION 5 ************************************
-* toGslMatrix function: The function puts the values of the input buffer into an output GSL matrix. Columns and
-*                       rows are input parameters.
+* toGslMatrix function: The function puts the values of the input buffer into an output GSL matrix.
+*                       The number of columns and rows are provided as input parameters.
 * 
 * Parameters:
-* - buffer: Input buffer with data
+* - buffer: Input buffer containing the data
 * - matrix: Output GSL matrix
 * - numCol: Number of columns
 * - numRow: Number of rows
-* - type: FITS type (TINT, TSHORT, TDOUBLE, etc.)
-* - eventini: Initial event to start writing
+* - type: FITS data type (e.g., TINT, TSHORT, TDOUBLE, etc.).
+* - eventini: Index of the first element (event) to start writing
 ****************************************************/
 int toGslMatrix(void **buffer, gsl_matrix **matrix, long numCol, int numRow, int type, int eventini)
 {
@@ -533,14 +531,14 @@ int toGslMatrix(void **buffer, gsl_matrix **matrix, long numCol, int numRow, int
 
 
 /***** SECTION 6 ************************************
-* toGslVector function: The function puts the values of the input buffer into an output GSL vector.
+* toGslVector function: The function stores the values of the input buffer into an output GSL vector.
 * 
 * Parameters:
-* - buffer: Input buffer with data
+* - buffer: Input buffer containing the data
 * - array: Output GSL vector
 * - nevent: Number of elements to store
-* - eventini: Initial element number
-* - type: FITS type (TINT, TSHORT, TDOUBLE, etc.) 
+* - eventini: Index of the first element to store
+* - type: FITS data type (e.g., TINT, TSHORT, TDOUBLE, etc.)
 ****************************************************/
 int toGslVector(void **buffer, gsl_vector **array, long nevent, int eventini, int type)
 { 
@@ -615,13 +613,13 @@ int fromGslMatrix(void **buffer, gsl_matrix **matrix, int type)
 
 
 /***** SECTION 9 ************************************
-* interactivePars function: This function reads input parameters interactively (provided by the user or taken as default values).
-*                           Used in tool gennoisespec.
+ * interactivePars function: This function reads input parameters interactively, either provided by the user or taken as default values.
+ *                           It is used in the tool gennoisespec.
 * 
 * Parameters: 
 * - taskPars: Instance of Inparam structure storing input parameters
 * - np: Number of parameters
-* - task: Tool name
+* - task: Name of the tool
 ****************************************************/
 int interactivePars(inparam *taskPars, int np, string task)
 {

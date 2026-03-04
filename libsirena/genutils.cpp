@@ -44,15 +44,15 @@ MAP OF SECTIONS IN THIS FILE::
 #include "genutils.h"
 
 /***** SECTION 1 ************************************************************
-* polyFit: This function makes a polynomial fitting: ax² + bx + c using the regression quadratic analysis
-*          To measure how well the model agrees with the data, the chi-square merit function is used
+ * polyFit: This function performs a quadratic polynomial fit: y = a*x² + b*x + c, using quadratic regression analysis.
+ *          The chi-square merit function is used to evaluate the goodness of fit.
 * 
 * Parameters:
-* - x_fit: Input GSL x vector
-* - y_fit: Input GSL y vector
-* - a: Fit coefficient of the quadratic term
-* - b: Fit coefficient of the linear term
-* - c: Fit coefficient (independent term)
+* - x_fit: Input GSL vector containing x values
+* - y_fit: Input GSL vector containing y values
+* - a: Output fit coefficient for the quadratic term (x²)
+* - b: Output fit coefficient for the linear term (x)
+* - c: Output fit coefficient for the constant term (independent term)
 ****************************************************************************/
 int polyFit (gsl_vector *x_fit, gsl_vector *y_fit, double *a, double *b, double *c)
 {
@@ -90,14 +90,14 @@ int polyFit (gsl_vector *x_fit, gsl_vector *y_fit, double *a, double *b, double 
 
 
 /***** SECTION 2 ************************************************************
-* polyFitLinear: This function makes a linear fitting: ax + b using the regression linear analysis
-*                To measure how well the model agrees with the data, the chi-square merit function is used
+ * polyFitLinear: This function performs a linear fit: y = a*x + b, using linear regression analysis.
+ *                The chi-square merit function is used to evaluate the goodness of fit.
 * 
 * Parameters:
-* - x_fit: Input GSL x vector
-* - y_fit: Input GSL y vector
-* - a: Fit coefficient of the quadratic term
-* - b: Fit coefficient of the linear term
+* - x_fit: Input GSL vector containing x values
+* - y_fit: Input GSL vector containing y values
+* - a: Output fit coefficient for the linear term (slope)
+* - b: Output fit coefficient for the constant term (intercept)
 ****************************************************************************/
 int polyFitLinear (gsl_vector *x_fit, gsl_vector *y_fit, double *a, double *b)
 {
@@ -130,11 +130,11 @@ int polyFitLinear (gsl_vector *x_fit, gsl_vector *y_fit, double *a, double *b)
 *    For physical applications it is important to remember that the index appearing in the DFT does not correspond
 *    directly to a physical frequency. If the time-step of the DFT is \Delta then the frequency-domain includes both
 *    positive and negative frequencies, ranging from -1/(2\Delta) through 0 to +1/(2\Delta). The positive frequencies
-*    are stored from the beginning of the array up to the middle, and the negative frequencies are stored backwards
+*    are stored from the beginning of the array up to the middle, while the negative frequencies are stored backward
 *    from the end of the array.
 *
-*    Here is a table which shows the layout of the array data, and the correspondence between the time-domain data z,
-*    and the frequency-domain data x.
+*    The following table illustrates the layout of the array data and the correspondence between the time-domain data
+*    z and the frequency-domain data x:
 *
 *     index    z               x = FFT(z)
 *
@@ -153,7 +153,7 @@ int polyFitLinear (gsl_vector *x_fit, gsl_vector *y_fit, double *a, double *b)
 * 
 * Parameters:
 * - invector: Input GSL vector
-* - outvector: Output GSL complex vector with the FFT of invector
+* - outvector: Output GSL complex vector containing the FFT of invector
 * - STD: SelectedTimeDuration=(Size of invector)/samprate
 *****************************************************************************/
 int FFT(gsl_vector *invector,gsl_vector_complex *outvector)
@@ -203,7 +203,7 @@ int FFT(gsl_vector *invector,gsl_vector_complex *outvector)
 * 
 * Parameters:
 * - invector: Input GSL complex vector
-* - outvector: Output GSL vector with the inverse FFT of invector
+* - outvector: Output GSL vector containing the inverse FFT of invector
 * - STD: SelectedTimeDuration=(Size of invector)/samprate
 *****************************************************************************/
 int FFTinverse(gsl_vector_complex *invector,gsl_vector *outvector)
@@ -242,11 +242,13 @@ int FFTinverse(gsl_vector_complex *invector,gsl_vector *outvector)
 
 
 /***** SECTION 5 ************************************************************
-* gsl_vector_sqrtIFCA: This function calculates the sqrt of the elements of a vector
+ * gsl_vector_sqrtIFCA: This function computes the square root of each element
+ *                      of the input GSL vector.
 * 
 * Parameters:
 * - cv: Input GSL vector
-* - cvnew: Output GSL vector with the square root values of the elements of cv
+* - cvnew: Output GSL vector containing the square-root values of the
+*           corresponding elements in 'cv'
 *****************************************************************************/
 void gsl_vector_sqrtIFCA(gsl_vector *cvnew,gsl_vector *cv)
 {
@@ -264,7 +266,7 @@ void gsl_vector_sqrtIFCA(gsl_vector *cvnew,gsl_vector *cv)
 * 
 * Parameters:
 * - cv: Input GSL complex vector
-* - cvnew: Output GSL vector with the absolute values of the elements of cv
+* - cvnew: Output GSL vector with the absolute values of the elements of 'cv'
 *****************************************************************************/
 void gsl_vector_complex_absIFCA(gsl_vector *cvnew,gsl_vector_complex *cv)
 {
@@ -306,7 +308,7 @@ void gsl_vector_complex_scaleIFCA(gsl_vector_complex *cv,gsl_complex z)
 * 
 * Parameters: 
 * - vin: Input GSL complex vector
-* - varg: Output GSL vector with the arguments of the elements of vin
+* - varg: Output GSL vector with the arguments of the elements of 'vin'
 *****************************************************************************/
 void gsl_vector_complex_argIFCA(gsl_vector *varg,gsl_vector_complex *vin)
 {
@@ -323,18 +325,20 @@ void gsl_vector_complex_argIFCA(gsl_vector *varg,gsl_vector_complex *vin)
 
 
 /***** SECTION 9 ************************************************************
-* gsl_vector_Sumsubvector: This function returns the sum of some elements of the input vector.
+ * gsl_vector_Sumsubvector: This function returns the sum of a subset of elements
+ *                          from the input GSL vector.
 *
-* The starting element of the sum is 'offset' from the start of the input vector.
-* It will sum up n elements.
+* The summation starts at the element located 'offset' positions from the
+* beginning of the vector, and includes 'n' consecutive elements.
 *
 * Offset can take values from 0 to invector->size.
+* The user must ensure that 'offset + n' does not exceed invector->size.
 * 
 * Parameters:
 * - invector: Input GSL vector
-* - offset: It is the first element to be summed
-* - n: Number of elements in the sum
-* - sum: Calculated output value (sum of the corresponding elements)
+* - offset: Index of the first element to be summed
+* - n: Number of elements to be included in the sum
+* - sum: Sum of the selected elements (output)
 ****************************************/
 int gsl_vector_Sumsubvector(gsl_vector *invector, long offset, long n, double *sum)
 {
@@ -460,14 +464,14 @@ bool fileExists(const std::string& name)
 
 
 /***** SECTION 14 ************************************************************
-* parabola3Pts: This function calculates the equation of a parabola given 3 points
+* parabola3Pts: This function calculates the coefficients of a parabola (y = a*x² + b*x + c) that passes through three given points.
 * 
 * Parameters:
-* - x: Input GSL x vector
-* - y: Input GSL y vector
-* - a: Fit coefficient of the quadratic term
-* - b: Fit coefficient of the linear term
-* - c: Fit coefficient (independent term)
+* - x: Input GSL vector containing the x coordinates of the three points
+* - y: Input GSL vector containing the y coordinates of the three points
+* - a: Output coefficient of the quadratic term (x²)
+* - b: Output coefficient of the linear term (x)
+* - c: Output coefficient of the constant term (independent term)
 ****************************************************************************/
 int parabola3Pts (gsl_vector *x, gsl_vector *y, double *a, double *b, double *c)
 {
@@ -490,7 +494,7 @@ int parabola3Pts (gsl_vector *x, gsl_vector *y, double *a, double *b, double *c)
 
 
 /***** SECTION 15 ************************************************************
-* isNumber: This function returns TRUE if the input string is a number or FALSE if not
+* isNumber: This function returns TRUE if the input string represents a number, or FALSE otherwise.
 * 
 * Parameters:
 * - s: Input string

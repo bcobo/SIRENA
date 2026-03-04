@@ -244,13 +244,13 @@ int checkXmls(struct Parameters* const par);
 
 char* subString (const char* input, int offset, int len, char* dest);
 
-int getSamplingrate_trigreclength (char* inputFile, struct Parameters par, double* samplingrate, int* trigreclength, int* numfits);
-int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par, double* samplingrate, int* trigreclength);
+int get_trigreclength (char* inputFile, struct Parameters par, int* trigreclength, int* numfits);
+int get_trigreclength_Filei (char* inputFile, struct Parameters par, int* trigreclength);
 
 int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, ReconstructInitSIRENA** reconstruct_init_sirena);
 
-int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim);
-int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim);
+int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim);
+int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim);
 
 int checkpreBuffer(struct Parameters* const par);
 

@@ -9,7 +9,7 @@
  *  Developers: Beatriz Cobo
  * 	            cobo@ifca.unican.es
  *              IFCA
- *              Maite Ceballos
+ // *              Maite Ceballos
  *              ceballos@ifca.unican.es
  *              IFCA
  *                                                                     
@@ -69,59 +69,60 @@
 
 #include "versionSIRENA.h"
 #include <gsl/gsl_vector_double.h>
+#include <iostream>
 
 /***** SECTION A ************************************************************
  * runDetect: This function is responsible for the detection in SIRENA, record by record.
- *            It is used both for library creation ('opmode'=0) and energy reconstruction ('opmode'=1) runnings.
- *            In CALIBRATION mode the purpose is the library creation.
+ *            It is used both for library creation ('opmode'=0) and energy reconstruction ('opmode'=1) runs.
+ *            In CALIBRATION mode the purpose is the library creation or appending.
  *
  * Conditions:
  * 
  * - If first record and PRODUCTION ('opmode=1') => 'filderLibrary'
  * - If last record and CALIBRATION ('opmode=0') => 'calculateTemplate' and 'writeLibrary'
  * - If 'reconstruct_init->intermediate'=1 => 'writeTestInfo' and 'writePulses'
- * - If CALIBRATION ('opmode=0') => Find pulses by using 'findPulsesCAL'
- * - If PRODUCTION ('opmode=1') => Find pulses by 'InitialTriggering' and 'FindSecondaries' or 'FindSecondariesSTC'
+ * - If CALIBRATION ('opmode=0') => Find pulses using 'findPulsesCAL'
+ * - If PRODUCTION ('opmode=1') => Find pulses 'InitialTriggering' and 'FindSecondaries' or 'FindSecondariesSTC'
  *
  * - Declare variables
- * - Create library if it is necessary, CALIBRATION ('opmode=0') and 'lastRecord'=1 ('createLibrary')
+ * - Create library if necessary, CALIBRATION ('opmode=0') and 'lastRecord'=1 ('createLibrary')
  * - Create intermediate output FITS file if required ('createDetectFile')
- * - (Filter and) differentiate the 'models' of the library (only for the first record in PRODUCTION 'opmode=1') ('filderLibrary')
+ * - (Filter and) differentiate the library 'models' (only for the first record in PRODUCTION 'opmode=1') ('filderLibrary')
  * - Store the input record in 'invector' ('loadRecord')
- * - Detect weird oscillations in some GSFC records providing a warning (no pulses detected in that record)
+ * - Detect unusual oscillations in some GSFC records and issue a warning (no pulses detected in that record)
  * - Convert I into R if 'EnergyMethod' = I2R or I2RFITTED ('convertI2R')
  * - Process each record ('procRecord')
  * 	- (Low-pass filter and) differentiate
  * 	- Find pulses
- * 	- Load the found pulses data in the input/output 'foundPulses' structure
- * 	- Write test info in intermediate output FITS file if 'reconstruct_init->intermediate'=1 ('writeTestInfo')
- * 	- Write pulses info in intermediate output FITS file if 'reconstruct_init->intermediate'=1 ('writePulses')
- * - From this point forward, I2R and I2RFITTED is completely equivalent to OPTFILT
+ * 	- Load found pulses data into the input/output 'foundPulses' structure
+ * 	- Write test info to intermediate output FITS file if 'reconstruct_init->intermediate'=1 ('writeTestInfo')
+ * 	- Write pulses info to intermediate output FITS file if 'reconstruct_init->intermediate'=1 ('writePulses')
+ * - From this point forward, I2R and I2RFITTED are completely equivalent to OPTFILT
  * - If last record in CALIBRATION ('opmode'=0):
  * 	- 'calculateTemplate' (and 'weightMatrix')
  * 	- 'writeLibrary'
  * - If last record and PCA
- *  - In order to not have restrictions when providing (*reconstruct_init)->energyPCAx
+ *  - To avoid restrictions when providing (*reconstruct_init)->energyPCAx
  * 	- Covariance data
  * 	- Eigenvalues and eigenvectors
  * 	- RSxN (S=2)
  * 	- AE straight line: Pto0(x,y) and Pto10(x,y)
- *  - Calculus of the rotation angle
- *  - Rotation
- *  - Histograms of the two clusters (two energies)
- *  - Conversion factor from arbitrary unit to eV
- *  - Energy calculation
- * - Close intermediate output FITS file if it is necessary
+ *  - Calculate the rotation angle
+ *  - Apply rotation
+ *  - Generate histograms of the two clusters (two energies)
+ *  - Compute conversion factor from arbitrary unit to eV
+ *  - Calculate energy
+ * - Close intermediate output FITS file if necessary
  * - Free allocated GSL vectors
  *
  * Parameters:
- * - record: Member of TesRecord' structure that contains the input record
- * - trig_reclength: Record size (just in case threading and input files with different 'ADC' lengths but the same record size indeed)
- * - lastRecord: Integer to verify whether record is the last one (=1) to be read (and thus if library file will be created)
- * - nrecord: Current record index (to know the particular record where there is a weird oscillation) 
- * - pulsesAll: Member of 'PulsesCollection' structure to successively store all the pulses used to create the library. Re-populated after each processed record
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
- * - pulsesInRecord: Member of 'PulsesCollection' structure to store all the pulses found in the input record
+ * - record: Member of 'TesRecord' structure containing the input record
+ * - trig_reclength: Record size (to handle threading and input files with different 'ADC' lengths but the same record size)
+ * - lastRecord: Integer indicating whether this is the last record (=1) to be read (to determine if the library file will be created or appended to)
+ * - nrecord: Current record index (to identify the record with unusual oscillations)
+ * - pulsesAll: Member of 'PulsesCollection' structure to store all pulses used for library creation. Re-populated after each processed record
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that initializes reconstruction parameters (pointer and values)
+ * - pulsesInRecord: Member of 'PulsesCollection' structure to store all pulses found in the input record
  ******************************************************************************/
 void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecord, PulsesCollection *pulsesAll, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord)
 {
@@ -819,7 +820,8 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
 
 
 /***** SECTION AA ************************************************************
- * th_runDetect: Run detection for the production mode only in multithread mode
+ * th_runDetect: This function is responsible for detection in SIRENA (replacing `runDetect`) when the **THREADING** execution option is selected (currently
+ *               hardcoded). It is used for both library creation and energy reconstruction runs.
  *****************************************************************************/
 std::mutex library_mut;
 std::mutex fits_file_mut;
@@ -1487,19 +1489,22 @@ void th_runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nre
 
 
 /***** SECTION A1 ************************************************************
- * createLibrary: This function creates the calibration library FITS file, if it does not exist yet. Otherwise, it opens it (to add a new row).
+ * createLibrary: This function creates the calibration library FITS file if it does not already exist.
+ *                If it exists, the function opens it to add a new row.
  *
- * - If it exists => Open it and set 'appendToLibrary' = true
- * - If it does not exist => Create it and set 'appendToLibrary' = false
- * 	- Write keyword 'EVENTCNT'=1 in the LIBRARY HDU
- * 	- Write the whole list of input parameters in "HISTORY" in the Primary HDU (by using 'HDpar_stamp')
+ * - If the file exists:
+ *      - Open it and set 'appendToLibrary' = true
+ * - If the file does not exist:
+ *      - Create it and set 'appendToLibrary' = false
+ * 	        - Write keyword 'EVENTCNT'=1 in the LIBRARY HDU
+ * 	        - Record all input parameters in the "HISTORY" of the Primary HDU (using the 'HDpar_stamp' function)
  * 
  * Parameters:
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that contains the reconstruction parameters (pointers and values)
  *                     In particular, this function uses parameters to call the library ('library_file') and to write input parameters
  *                     info in the Primary HDU of the library file
- * - appendToLibrary: Used by the function 'writeLibrary'
- * - inLibObject: Object which contains information of the library FITS file (used also by 'writeLibrary') 
+ * - appendToLibrary: Boolean flag used by 'writeLibrary'
+ * - inLibObject: Object containing information about the library FITS file (also used by 'writeLibrary')
  ****************************************************************************/
 int createLibrary(ReconstructInitSIRENA* reconstruct_init, bool *appendToLibrary, fitsfile **inLibObject)
 {
@@ -1664,19 +1669,20 @@ int createLibrary(ReconstructInitSIRENA* reconstruct_init, bool *appendToLibrary
 
 
 /***** SECTION A2 ************************************************************
- * createDetectFile function: This function creates an intermediate FITS file with some useful info (during the development phase) if the 'intermediate' input parameter is set to 1.
- *                            The intermediate FITS file will contain 2 HDUs, PULSES and TESTINFO.
- *                            The PULSES HDU will contain some info the found pulses: TSTART, I0 (the pulse itself), TEND, TAURISE, TAUFALL and QUALITY.
+ * createDetectFile function: This function creates an intermediate FITS file with some useful information (mainly for the development phase) if the 'intermediate'
+ *                            input parameter is set to 1.
+ *                            The intermediate FITS file will contain 2 HDUs: PULSES and TESTINFO.
+ *                            The PULSES HDU contains information about the detected pulses: TSTART, I0 (the pulse itself), TEND, TAURISE, TAUFALL and QUALITY.
  *                            The TESTINFO HDU contains FILDER (the low-pass filtered and differentiated records) and THRESHOLD.
  *
- * If file exists => Check 'clobber' for overwritting it or not. If it does not, then create it.
+ * If the file already exists, the 'clobber' parameter determines whether it will be overwritten. If the file does not exist, it will be created.
  * 
  * Parameters:
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
- *                     In particular, this function uses some of its values to call the intermediate file ('detectFile'), to write input parameters
- *                     info in the Primary HDU of the intermediate file and also 'clobber'
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that contains the reconstruction parameters (pointers and values)
+ *                     This function uses some of its values to determine the intermediate file name ('detectFile'), write input parameter
+ *                     info in the Primary HDU, and handle 'clobber'
  * - samprate: Sampling rate 
- * - dtcObject: Object which contains information of the intermediate FITS file (used also by 'writeTestInfo' and 'writePulses') 
+ * - dtcObject: Object containing information about the intermediate FITS file (also used by 'writeTestInfo' and 'writePulses')
  ***************************************************************************/
 int createDetectFile(ReconstructInitSIRENA* reconstruct_init, double samprate, fitsfile **dtcObject)
 {
@@ -1847,17 +1853,17 @@ int createDetectFile(ReconstructInitSIRENA* reconstruct_init, double samprate, f
 
 
 /***** SECTION A3 ************************************************************
- * filderLibrary: This function calculates the (low-pass filtered and) derivative of the models ('pulse_templates') of the library (only necessary
- *                if first record), and it stores the 'pulse_templates_filder' and the 'maxDERs' and 'samp1DERs' in the 'reconstruct_init' structure.
- *                The maximum of the (low-pass filtered and) differentiated pulse has to be compared to the 'maxDERs' to select the appropriate model.
- *                 Or, the 1st sample out of the differentiated pulse has to be compared to the 'samp1DERs' to select the appropriate model.
+ * filderLibrary: This function calculates the (low-pass filtered and) derivative of the models ('pulse_templates') in the library.
+ *                This is only necessary for the first record.
+ *                The results are stored in the 'reconstruct_init' structure as 'pulse_templates_filder', 'maxDERs' and 'samp1DERs'.
+ *                The maximum of the (low-pass filtered and) differentiated pulse is compared to 'maxDERs' to select the appropriate model.
+ *                Alternatively, the first sample of the differentiated pulse is compared to 'samp1DERs' for model selection.
  * 
- *
  * - Check if it is the first record
- * - (Low-pass filtered and) differentiate the models ('pulse_templates') of the library
+ * - Apply low-pass filtering and differentiate the models ('pulse_templates') of the library
  * - Store the (low-pass filtered) derivatives in 'pulse_templates_filder'
  * - Calculate the maximum of the (low-pass filtered and) differentiated models ('maxDERs')
- * - Locate the 1st sample of the (low-pass filtered and) differentiated models ('samp1DERs')
+ * - Locate the first sample of the (low-pass filtered and) differentiated models ('samp1DERs')
  * 
  * Parameters:
  * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
@@ -1981,14 +1987,14 @@ int filderLibrary(ReconstructInitSIRENA** reconstruct_init, double samprate, int
 
 
 /***** SECTION A4 ************************************************************
- * loadRecord: This function loads the struture 'record' in the 'adc_double' GSL vector.
+ * loadRecord: This function loads the 'record' struture into the 'adc_double' GSL vector.
  *
- * It checks if the record has been filled out with 0's => It only loads the first values (which are different from 0).
+ * It checks if the record has trailing zeros at the end and only loads the values up to the last non-zero sample.
  * 
  * Parameters:
  * - record: Member of 'TesRecord' structure that contains the input record
  * - time_record: Starting time of the record (output)
- * - adc_double: Storage of the record to be processed (input/output) 
+ * - adc_double: GSL vector used to store the record for processing (input/output)
  ******************************************************************************/
 int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
 { 
@@ -2048,46 +2054,47 @@ int loadRecord(TesRecord* record, double *time_record, gsl_vector **adc_double)
 
 
 /***** SECTION A5 ************************************************************
- * procRecord function:  This function processes the input record (detecting the pulses).
+ * procRecord function: This function processes the input record by detecting the pulses.
  *
  * - Declare and initialize variables
  * - Allocate GSL vectors
- * - (Low-pass filtering and) differentiation
- * - If there are weird oscillations in the record, it is not processed => numPulses = 0
- * - Find the events (pulses) in the record
+ * - Apply (low-pass filtering and) differentiation
+ * - If the record contains unusual oscillations, it is not processed => numPulses = 0
+ * - Find the events (pulses) in the record:
  *       - Production mode:
- *           - No detect: 'noDetect' if tStartPulse1!=0
- *           - Detect: 
+ *           - No detection: 'noDetect' if tStartPulse1!=0
+ *           - Detection:
  *               - 'InitialTriggering'
  *               - 'FindSecondaries' or 'FindSecondariesSTC'
  *       - Calibration mode: 'findPulsesCAL'
- * - Calculate the tend of the found pulses and check if the pulse is saturated
- * - Calculate the baseline (mean and standard deviation) before a pulse (in general 'before') => To be written in BSLN and RMSBSLN columns in the output FITS file
- * - Obtain the approximate rise and fall times of each pulse
- * - Load the found pulses data in the input/output 'foundPulses' structure
- * - Write test info (if 'reconstruct_init->intermediate'=1)
- * - Write pulses info in intermediate output FITS file (if 'reconstruct_init->intermediate'=1)
+ * - Compute the tend of the detected pulses and check if the pulse is saturated
+ * - Calculate the baseline (mean and standard deviation) before each pulse (generally 'before') => Values written into the BSLN and RMSBSLN columns of the output FITS file
+ * - Estimate the approximate rise and fall times of each pulse
+ * - Load the detected pulses data into the input/output 'foundPulses' structure
+ * - Write test information (if 'reconstruct_init->intermediate'=1)
+ * - Write pulses information into the intermediate output FITS file (if 'reconstruct_init->intermediate'=1)
  * - Free allocated GSL vectors
  *
  * Parameters:
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that initializes the reconstruction parameters (pointer and values)
  *                     This function uses parameters to filter ('scaleFactor'),
  *                     to find pulses ('pulse_length', 'samplesUp', 'nSgms', 'LrsT', 'LbT', 'maxPulsesPerRecord')
  *                     and to write info ('detectFile') if 'reconstruct_init->intermediate'=1
- * - tstartRecord: Starting time of the record (in order to calculate absolute times)
- * - samprate: Sampling rate (in order to low-pass filter)
- * - dtcObject: Object which contains information of the intermediate FITS file (to be written if 'intermediate'=1)
- * - record: GSL vector with signal values of input record
- * - threshold: Threshold to use with the derivative to detect
+ * - tstartRecord: Start time of the record (used to compute absolute times)
+ * - samprate: Sampling rate (used for low-pass filtering)
+ * - dtcObject: Object containing information of the intermediate FITS file (written when 'intermediate'=1)
+ * - record: GSL vector containing the signal values of the input record
+ * - threshold: Threshold applied to the derivative for pulse detection
  * - windowSize: Window size used to compute the averaged derivative
- * - offset: Window offset
- * - foundPulses: Input/output structure where the found pulses info is stored
- * - num_previousDetectedPulses: Number of previous detected pulses (to know the index to get the proper element from tstartPulse1_i in case tstartPulse1=nameFile)
+ * - offset: Window offset used to compute the averaged derivative
+ * - foundPulses: Input/output structure used to store the detected pulse information
+ * - num_previousDetectedPulses: Number of previous detected pulses (tused to index tstartPulse1_i
+ *                               when tstartPulse1 corresponds to a filename)
  * - pixid: Pixel ID (from the input file) to be propagated 
  * - phid: Photon ID (from the input file) to be propagated 
- * - oscillations: 1 (there are weird oscillations in the record) or 0 (record without weird oscillations)
+ * - oscillations: 1 if the record contains unusual oscillations, 0 otherwise
  * - nrecord: Current record index
- * - tstartPrevPulse: tstart of the previous pulse (last pulse of the previous record) (seconds)
+ * - tstartPrevPulse: Start time of the previous pulse (i.e., the last pulse of the previous record) (seconds)
  ****************************************************************************/
 int procRecord(ReconstructInitSIRENA** reconstruct_init, double tstartRecord, double samprate, fitsfile *dtcObject, gsl_vector *record,
 double threshold, int windowSize, int offset, PulsesCollection *foundPulses, long num_previousDetectedPulses, int pixid, gsl_vector *phid, int oscillations,
@@ -2108,7 +2115,7 @@ int nrecord, double tstartPrevPulse)
     gsl_vector_view temp;
     
     double scaleFactor = (*reconstruct_init)->scaleFactor;
-    int preBuffer_value = 0;  // For a low resolution filter (length 8) => preBuffer=0
+    int preBuffer_value = 0;  // For a low resolution filter (length 8) => preBuffer=0?????????????????????
     
     int sizePulse_b;
     if (((*reconstruct_init)->pulse_length<(*reconstruct_init)->OFLength) && (strcmp((*reconstruct_init)->OFStrategy,"FIXED")==0)) // 0-padding and OFStrategy=FIXED
@@ -2201,16 +2208,21 @@ int nrecord, double tstartPrevPulse)
     }
     gsl_vector_memcpy(recordDERIVATIVE,record);*/
 
-    gsl_vector *recordRaw = gsl_vector_alloc(record->size);
-    gsl_vector_memcpy(recordRaw,record);
+    //gsl_vector *recordRaw = gsl_vector_alloc(record->size);
+    //gsl_vector_memcpy(recordRaw,record);
 
     //gsl_vector *recordDerivative_causal = gsl_vector_alloc(record->size);   // To delete
     //gsl_vector_memcpy(recordDerivative_causal,record);                      // To delete
     // Causal smooth derivative
     //if (smoothDerivative_causal (&recordDerivative_causal, 4))                // To delete
-    if (smoothDerivative_causal (&record, 4))
+    /*if (smoothDerivative_causal (&record, 4))
     {
         message = "Cannot run routine smoothDerivative_causal";
+        EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+    }*/
+    if (kernelNOcausal (&record))
+    {
+        message = "Cannot run routine kernelCharles";
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
     //gsl_vector_memcpy(record,recordDerivative_causal);  // To delete
@@ -2222,11 +2234,12 @@ int nrecord, double tstartPrevPulse)
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
     /*cout<<"______Derivative:"<<endl;
-    for (int kkk=0;kkk<4000;kkk++)
+    for (int kkk=3495;kkk<3520;kkk++)
         //cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(recordDerivative_causal,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;
-        cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;*/
+        //cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;
+        cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;*/
 
-    gsl_vector_free(recordRaw);
+    //gsl_vector_free(recordRaw);
     //gsl_vector_free(recordDerivative_causal);    //To delete
 
     gsl_vector_memcpy(recordDERIVATIVE,record);
@@ -2361,6 +2374,7 @@ int nrecord, double tstartPrevPulse)
                 gsl_vector_set(tendgsl,i,gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value+sizePulse_b);	//tend_i = tstart_i + Pulse_Length
             }
         }
+
         
         if (gsl_vector_get(tendgsl,i) > recordDERIVATIVE->size)		// Truncated pulses at the end of the record
         {
@@ -2418,7 +2432,7 @@ int nrecord, double tstartPrevPulse)
         }
     }
     log_debug("procRecord: After calculating the baseline");
-    
+
     // Obtain the approximate rise and fall times of each pulse
     // It is not necessary to check the allocation because '(*reconstruct_init)->maxPulsesPerRecord'='EventListSize'(input parameter) must already be > 0
     gsl_vector *tauRisegsl = gsl_vector_alloc((*reconstruct_init)->maxPulsesPerRecord);
@@ -2431,7 +2445,7 @@ int nrecord, double tstartPrevPulse)
         EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
     }
     log_debug("procRecord: After obtaining rise and fall times");
-    
+
     // Load the found pulses data in the input/output 'foundPulses' structure
     foundPulses->ndetpulses = numPulses;
     foundPulses->pulses_detected = new PulseDetected[numPulses];
@@ -2499,6 +2513,24 @@ int nrecord, double tstartPrevPulse)
                     EP_EXIT_ERROR(message,EPFAIL);
                 }
             }
+            /*// Skip this block for 0-padding and OFStrategy=FIXED
+            if (!( ((*reconstruct_init)->pulse_length < (*reconstruct_init)->OFLength) &&
+                (strcmp((*reconstruct_init)->OFStrategy, "FIXED") == 0)))
+            {
+                for (int j=0; j<(int)((*reconstruct_init)->grading->gradeData->size1);j++)
+                {
+                    if (gsl_matrix_get((*reconstruct_init)->grading->gradeData,j,1) == (*reconstruct_init)->OFLength)
+                    {
+                        resize_mfvsposti = 1;
+                        break;
+                    }
+                }
+                if (resize_mfvsposti == 0)
+                {
+                    message = "The grading/preBuffer info of the XML file does not match the filter length";
+                    EP_EXIT_ERROR(message,EPFAIL);
+                }
+            }*/
         }
         log_debug("preBuffer_value_procRecord: %d",preBuffer_value);
 
@@ -2520,7 +2552,7 @@ int nrecord, double tstartPrevPulse)
         {
             foundPulses->pulses_detected[i].grade2 = (int)(gsl_vector_get(tstartgsl,i)-gsl_vector_get(tstartgsl,i-1));
         }
-        
+
         // 'phi' and 'lagsShift' will be known after running 'runEnergy' (but initialize for library creation!)
         foundPulses->pulses_detected[i].phi = -999;
         foundPulses->pulses_detected[i].lagsShift = -999;
@@ -2575,7 +2607,7 @@ int nrecord, double tstartPrevPulse)
                 str.clear();
                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
             }
-           
+
             if ((foundPulses->pulses_detected[i].pulse_adc_preBuffer = gsl_vector_alloc(foundPulses->pulses_detected[i].pulse_duration)) == 0)
             {
                 sprintf(valERROR,"%d",__LINE__-2);
@@ -2584,7 +2616,7 @@ int nrecord, double tstartPrevPulse)
                 str.clear();
                 EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
             }
-            
+
             if ((*reconstruct_init)->opmode == 0)
             {
                 if (gsl_vector_get(tstartgsl,i)-(*reconstruct_init)->preBuffer_max_value >= 0)
@@ -2821,7 +2853,7 @@ int writePulses(ReconstructInitSIRENA** reconstruct_init, double samprate, doubl
         // Creating I0 Column
         strcpy(obj.nameCol,"I0");
         obj.type = TDOUBLE;
-        strcpy(obj.unit,"ADC");
+        strcpy(obj.unit,"ADU");
         if (writeFitsComplex(obj, vgslout2))
         {
             message = "Cannot run routine writeFitsComplex for column IO";
@@ -2887,14 +2919,14 @@ int writePulses(ReconstructInitSIRENA** reconstruct_init, double samprate, doubl
 
 /***** SECTION A7 ************************************************************
  * writeTestInfo function: This function writes the TESTINFO HDU in the intermediate FITS file.
- *                         The written columns are FILDER (low-pass filtered and differentiated record) and THRESHOLD.
+ *                         The columns written are FILDER (low-pass filtered and differentiated record) and THRESHOLD.
  * 
  * Parameters:
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that initializes the reconstruction parameters (pointer and values)
  *                     in particular, this function uses 'detectFile'
- * - recordDERIVATIVE: GSL vector with input record (low-pass filtered and) differentiated
- * - threshold: Threshold used to find pulses
- * - dtcObject: Object which contains information of the intermediate FITS file
+ * - recordDERIVATIVE: GSL vector containing the input record (low-pass filtered and) differentiated
+ * - threshold: Threshold used to detect pulses
+ * - dtcObject: Object containing information about the intermediate FITS file
  ******************************************************************************/
 int writeTestInfo(ReconstructInitSIRENA* reconstruct_init, gsl_vector *recordDERIVATIVE, double threshold, fitsfile *dtcObject)
 {
@@ -2973,30 +3005,31 @@ int writeTestInfo(ReconstructInitSIRENA* reconstruct_init, gsl_vector *recordDER
 
 
 /***** SECTION  A8 ************************************************************
- * calculateTemplate function: This function calculates the template (PULSE column in the library) of non piled-up pulses.
- *                             Just in case in the detection process some piled-up pulses have not been distinguished as different pulses, a pulseheights histogram is built.
- *                             This function uses the pulseheights histogram (built by using the PHEIGHT column of the library), 'Tstart' and 'quality' to select the non * *               *                             piled-up pulses.
+ * calculateTemplate function: This function computes the pulse template (stored in the PULSE column of the library) using only non?piled-up pulses.
+ *                             If some piled-up events were not properly separated during the detection stage, the function builds a pulse-height histogram to help identify clean pulses.
  *
- * - Declare and initialize variables
- * - Before building the histogram, select the pulseheihts of the pulses well separated from other pulses whose 'quality'=0
- * - Create the pulseheights histogram
- * - Calculate the pulseaverage only taking into account the valid pulses
- * 	- Check if the pulse is piled-up or not
- * 	- Non piled-up pulses => Average them
- * - Calculate covariance and weight matrices
- * - Free allocated GSL vectors
+ *  The function uses the pulse-height histogram (constructed from the PHEIGHT column of the library) together with Tstart and quality information to select the valid (non?piled-up) pulses.
+ *
+ * - Declare and initialize the required variables
+ * - Before building the histogram, select pulse heights corresponding to pulses that are well separated from neighbouring pulses and have 'quality' = 0.
+ * - Create the pulse-height histogram
+ * - Compute the pulse average using only the valid pulses
+ * 	- Determine whether each pulse is piled-up or not
+ * 	- For each non?piled-up pulse, accumulate its contribution to the average
+ * - Compute the covariance and weight matrices
+ * - Free all GSL vectors previously allocated
  *
  * Parameters:
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that contains the reconstruction parameters (pointers and values)
  *                     In particular, this function uses 'pulse_length' and 'EnergyMethod'
- * - pulsesAll: Collection of pulses found in the previous records
- * - pulsesInRecord:  Collection of pulses found in the current record
+ * - pulsesAll: Collection of pulses detected in all previous records
+ * - pulsesInRecord:  Collection of pulses detected in the current record
  * - samprate: Sampling rate
- * - pulseaverage: GSL vector with the pulseaverage (template) of the non piled-up pulses
- * - pulseaverage_B0: GSL vector with the pulseaverage (template) of the non piled-up pulses (bseline subtracted)
- * - pulseaverageHeight: Height value of the pulseaverage
- * - covariance: GSL matrix with covariance matrix
- * - weight: GSL matrix with weight matrix (inverse of covariance matrix)
+ * - pulseaverage: GSL vector containing the pulse average (template) from non-piled-up pulses
+ * - pulseaverage_B0: Same as 'pulseaverage', but with the baseline subtracted
+ * - pulseaverageHeight: Height of the computed pulse template
+ * - covariance: GSL matrix containing the covariance matrix of the template
+ * - weight: GSL matrix containing the weight matrix (inverse of the covariance matrix)
  ******************************************************************************/
 int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection *pulsesAll, PulsesCollection *pulsesInRecord, double samprate, gsl_vector **pulseaverage, gsl_vector **pulseaverage_B0, double *pulseaverageHeight, gsl_matrix **covariance, gsl_matrix **weight)
 {
@@ -3225,23 +3258,23 @@ int calculateTemplate(ReconstructInitSIRENA *reconstruct_init, PulsesCollection 
 
 
 /***** SECTION A9 ************************************************************
-//  * createHisto function: This function builds the histogram of the input vector.
- *                       Histogram x-axis values are the different input vector values (pulseheights).
- *                       Histogram y-axis values are the the number of cases per unit of the variable on the horizontal axis.
+ * createHisto function: This function builds the histogram of the input vector.
+ *                       The histogram's x-axis corresponds to the unique values of the input vector (pulse heights).
+ *                       The histogram's y-axis corresponds to the number of occurrences per unit of the variable on the horizontal axis.
  *
- * - Declare variables
- * - It will work with the positive elements of the input vector -> 'invectoraux2'
- * - Check if all the values of 'invector' are the same => Histogram of only one bin
- * - Obtain 'invector_max 'and 'invector_min'
- * - Obtain 'binSize'
- * - Create histogram axis
+ * - Declare necessary variables
+ * - Work with the positive elements of the input vector (stored in 'invectoraux2')
+ * - Check if all values in 'invector' are identical; if so, create a histogram with a single bin
+ * - Determine 'invector_max 'and 'invector_min'
+ * - Calculate 'binSize'
+ * - Create the histogram axis
  * - Free allocated GSL vectors
  *
  * Parameters:
  * - invector: GSL input vector
- * - nbins: Number of bins to build the histogram
- * - xhistogsl: GSL vector with output histogram x-axis
- * - yhistogsl: GSL vector with output histogram y-axis
+ * - nbins: Number of bins for the histogram
+ * - xhistogsl: GSL vector for the histogram x-axis (output)
+ * - yhistogsl: GSL vector for the histogram y-axis (output)
  ******************************************************************************/
 int createHisto (gsl_vector *invector, int nbins, gsl_vector **xhistogsl, gsl_vector **yhistogsl)
 {
@@ -3368,26 +3401,26 @@ int createHisto (gsl_vector *invector, int nbins, gsl_vector **xhistogsl, gsl_ve
 
 
 /***** SECTION A10 ************************************************************
- * align function: This function aligns 'vector1' with 'vector2' (by delaying or moving forward 'vector2') assuming that 'vector1' and 'vector2' are shifted replicas of the same function.
+ * align function: This function aligns 'vector1' with 'vector2' (by delaying or moving forward 'vector2'), assuming that both 'vector1' and 'vector2' are shifted replicas of the same function.
  *
- * From the discrete function x[n] (n=0,...,N-1 => Length = N) and according to the time shifting property of the Fourier transform:
+ * From the discrete function x[n] (n=0,...,N-1 => Length = N) and according to the time-shifting property of the Fourier transform:
  *
  *  x[n]   <------> X[f]
  *  x[n-m] <------> X[f]·exp(-j2·pi·m/N)
  *
- *  Shift = m => Phase due to the shift = 2·pi·m/N => m = Phase due to the shift·N/(2·pi)
+ *  If Shift = m, then Phase due to the shift = 2·pi·m/N, and thus m = Phase due to the shift·N/(2·pi)
  *
  * - Declare variables
- * - FFT of 'vector1'
- * - FFT of 'vector2'
- * - Phases of the FFT_vector1 and FFT_vector2, *size/(2*pi)
- * - Shift between the input vectors
- * - 'shiftdouble' into 'shiftint' (because we are working with samples)
- * - Move forward or delay 'vector2' depending on positive or negative shift
+ * - Compute the FFT of 'vector1'
+ * - Compute the FFT of 'vector2'
+ * - Compute the phases of the FFT_vector1 and FFT_vector2, then multiply by size/(2*pi)
+ * - Determine the Shift between the input vectors
+ * - Convert the floating-point shift ('shiftdouble') into an integer value ('shiftint', since we are working with discrete samples
+ * - Move forward or delay 'vector2' depending on whether the shift is positive or negative
  *
  * Parameters:
- * - vector1: GSL vector with input vector
- * - vector2: GSL with input vector which is delayed or moved forward to be aligned with 'vector1' 
+ * - vector1: GSL vector containing the input signal
+ * - vector2: GSL vector containing the input signal that is delayed or moved forward to be aligned with 'vector1'
  ******************************************************************************/
 int align(gsl_vector **vector1, gsl_vector **vector2)
 {
@@ -3466,12 +3499,12 @@ int align(gsl_vector **vector1, gsl_vector **vector2)
 
 
 /***** SECTION A11 ************************************************************
- * shiftm function: This function returns as 'vectorout' the 'vectorin' delayed 'm' samples.
+ * shiftm function: This function returns 'vectorout' as 'vectorin' delayed by 'm' samples.
  *
  * Parameters:
- * - vectorin: GSL vector with input vector
- * - vectorout: GSL with input vector ('vectorin') is delayed by 'm' samples
- * - m: Delay in samples
+ * - vectorin: GSL vector containing the input vector
+ * - vectorout: GSL vector where the contents of 'vectorin' are delayed by 'm' samples
+ * - m: Number of samples to delay
  ******************************************************************************/
 int shiftm(gsl_vector *vectorin, gsl_vector *vectorout, int m)
 {
@@ -3522,12 +3555,12 @@ int shiftm(gsl_vector *vectorin, gsl_vector *vectorout, int m)
 
 
 /***** SECTION A12 ************************************************************
- * shift_m function: This function returns as 'vectorout' the 'vectorin' moved forward 'm' samples.
+ * shift_m function: This function returns 'vectorout' as 'vectorin' shifted forward by 'm' samples.
  *
  * Parameters:
- * - vectorin: GSL vector with input vector
- * - vectorout: GSL with input vector (:option:`vectorin`) is moved forward :option:`m` samples
- * - m: Advance in samples
+ * - vectorin: GSL vector containing the input vector
+ * - vectorout: GSL vector where the contents of 'vectorin' are shifted forward by 'm' samples
+ * - m: Number of samples to shift forward
  ******************************************************************************/
 int shift_m(gsl_vector *vectorin, gsl_vector *vectorout, int m)
 {
@@ -3578,8 +3611,8 @@ int shift_m(gsl_vector *vectorin, gsl_vector *vectorout, int m)
 
 
 /***** SECTION A13 ************************************************************
- * weightMatrix function: This function calculates the weight matrix by using the non piled-up pulses found in all the records, stored
- *                        in 'pulsesAll' (previous records) and 'pulsesInRecord' (current record). The weight matrix of each energy
+ * weightMatrix function: This function calculates the weight matrix using the non piled-up pulses found in all the records, stored
+ *                        in 'pulsesAll' (previous records) and 'pulsesInRecord' (current record). The weight matrix for each energy
  *                        (and other intermediate values) will be stored in the library by the function 'fillInLibraryData'.
  *
  * Si^p: Value of the ith-sample of the pulse p
@@ -3605,23 +3638,23 @@ int shift_m(gsl_vector *vectorin, gsl_vector *vectorout, int m)
  *
  * - Calculate the elements of the diagonal of the covariance matrix
  * - Calculate the elements out of the diagonal of the covariance matrix
- * - If saturated pulses => Covariance matrix is a singular matrix => Non invertible 
- *   In order to allow the covariance matrix to be inverted => Replacing 0's (0's are due to the saturated values, equal in the pulse and in the model)
- * 	- Elements of the diagonal: Generating a random double f1 between a range (fMin,fMax), (-NoiseStd,NoiseStd), to replace 0's with f1*f1 
- *       - Elements out of the diagonal: Generating two random doubles f1 and f2 between a range (fMin,fMax), (-NoiseStd,NoiseStd), to replace 0's with f1*f2 
+ * - If saturated pulses are present, the covariance matrix becomes singular and non-invertible
+ *   To allow inversion of the covariance matrix, zeros (caused by saturated values equal in the pulse and the model) are replaced as follows:
+ *      - Diagonal elements: Generate a random double f1 within a range (fMin,fMax), (-NoiseStd,NoiseStd), and replace zeros with f1*f1
+ *      - Off diagonal elements: Generate two random doubles f1 and f2 within a range (fMin,fMax), (-NoiseStd,NoiseStd), and replace zeros with f1*f2
  * - Calculate the weight matrix
  *
  * Parameters:
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that initializes the reconstruction parameters (pointer and values)
  *                     In particular, this function uses 'pulse_length' and 'EnergyMethod'
- * - saturatedPulses: If 'true', all the pulses (CALIBRATION => all the pulses have the same energy) are saturated
+ * - saturatedPulses: If 'true', all the pulses (CALIBRATION mode, where all pulses have the same energy) are saturated
  * - pulsesAll: Collection of pulses found in the previous records
- * - pulsesInRecord: Found pulses in the current record
+ * - pulsesInRecord: Pulses found in the current record
  * - nonpileupPulses: Number of non piled-up pulses
- * - nonpileup: GSL vector containing info about all the pulses informing if they are piled-up or not
- * - pulseaverage: GSL vector with the pulseaverage (= template or = model) of the non piled-up pulses
- * - covariance: GSL matrix with covariance matrix
- * - weight: GSL matrix with weight matrix
+ * - nonpileup: GSL vector containing information about all the pulses, indicating whether they are piled-up or not
+ * - pulseaverage: GSL vector containing the pulse average (template or model) of the non piled-up pulses
+ * - covariance: GSL matrix containing the covariance matrix
+ * - weight: GSL matrix containing the weight matrix
  ******************************************************************************/
 int weightMatrix (ReconstructInitSIRENA *reconstruct_init, bool saturatedPulses, PulsesCollection *pulsesAll, PulsesCollection *pulsesInRecord, long nonpileupPulses, gsl_vector *nonpileup, gsl_vector *pulseaverage, gsl_matrix **covariance, gsl_matrix **weight)
 {
@@ -4004,24 +4037,24 @@ int eigenVV (gsl_matrix *matrixin, gsl_matrix **eigenvectors, gsl_vector **eigen
 
 
 /***** SECTION A14 ************************************************************
- * writeLibrary function: This function writes the library (reordering if it is necessary and calculating some intermediate parameters).
+ * writeLibrary function: This function writes the library (reordering it if necessary and calculating intermediate parameters).
  *
- * - Adding a new row to the library if appendToLibrary =='true' ('readAddSortParams')
+ * - Adds a new row to the library if appendToLibrary == 'true' ('readAddSortParams')
  * - Write the first row of the library if appendToLibrary == 'false' ('addFirstRow')
  * 
  * - In both cases, the keywords 'CREADATE' and 'SIRENAV' with the date and SIRENA version are written
  * 
  * Parameters:
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that initializes the reconstruction parameters (pointer and values)
  * - samprate: Sampling rate
  * - estenergy: Pulse height of the template whose energy is going to be added to the library
- * - pulsetemplate: GSL vector with the pulse template whose energy is going to be added to the library
- * - pulsetemplate_B0: GSL vector with the pulse template whose energy is going to be added to the library (without baseline)
- * - covariance: GSL matrix with covariance 
- * - weight: GSL matrix with weight matrix
- * - appendToLibrary: 'true' if adding a new row to the library
- *                    'false' if it is the first row to be added
- * - inLibObject: FITS object containing information of the library FITS file 
+ * - pulsetemplate: GSL vector containing the pulse template whose energy is going to be added to the library
+ * - pulsetemplate_B0:  GSL vector containing the baseline-subtracted pulse template whose energy is going to be added to the library
+ * - covariance: GSL matrix containing the covariance matrix
+ * - weight: GSL matrix containing the weight matrix
+ * - appendToLibrary: 'true' to add a new row to the library
+ *                    'false' if this is the first row to be added
+ * - inLibObject: FITS object containing information about the library FITS file
  ******************************************************************************/
 int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, double estenergy, gsl_vector *pulsetemplate, gsl_vector *pulsetemplate_B0, gsl_matrix *covariance, gsl_matrix *weight, bool appendToLibrary, fitsfile **inLibObject)
 {
@@ -4289,33 +4322,31 @@ int writeLibrary(ReconstructInitSIRENA **reconstruct_init, double samprate, doub
 
 
 /***** SECTION A15 ************************************************************
- * addFirstRow function: This function writes the first row of the library (without intermediate AB-related values, because it would be necessary to have at least two rows=energies in the library). 
- * It also writes the FIXFILTT and FIXFILTF HDUs with the optimal filters in the time and frequency domain with fixed legnths (base-2 values), and the PRCLOFWN HDU with the
- * precalculated values for optimal filtering if necessary.
- * 
+ * addFirstRow function: This function writes the first row of the library (without intermediate AB-related values, since at least two rows?energies?are required in the library).
+ * It also writes the FIXFILTT and FIXFILTF HDUs containing the optimal filters in the time and frequency domains with fixed lengths (base-2 values), and the PRCLOFWN HDU with the pre-calculated values for optimal filtering and OFNoise=WEIGHTN
+ *
  * - Declare variables
- * - Write in the first row of the library FITS file some columns ENERGY, PHEIGHT, PULSE, PULSEB0, MF, MFB0 with the info provided by the input GSL vectors :E, PHEIGHT, PULSE, PULSEB0, MF and MFB0.
-    - Write in the first row of the library FITS file COVARM and WEIGHTM columns if addCOVAR`/addINTCOVAR=yes with the info provided by the input GSL vectors COVAR and WEIGHT
- * - Writing HDUs with fixed filters in time (FIXFILTT) and frequency (FIXFILTF), Tx and Fx respectively (calculating the optimal filters, 'calculus_optimalFilter')
- *   In time domain Tx are real numbers but in frequency domain Fx are complex numbers (so real and imaginary parts are written).
- * - Calculate and write the pre-calculated values by using the noise weight matrix from noise intervals (M'WM)^{-1}M'W for different lengths, OFWNx
+ * - Write the first row of the library FITS file, including ENERGY, PHEIGHT, PULSE, PULSEB0, MF, and MFB0 columns using the data provided by the input GSL vectors :E, PHEIGHT, PULSE, PULSEB0, MF and MFB0.
+    - Write the COVARM and WEIGHTM columns in the first row if addCOVAR/addINTCOVAR=yes, using the data provided by COVAR and WEIGHT
+ * - Write the HDUs with fixed filters in time (FIXFILTT) and frequency (FIXFILTF) domains, corresponding to the Tx and Fx columns respectively. These filters are computed using 'calculus_optimalFilter'
+ *   In the time domain Tx columns contains real numbers, whereas in the frequency domain, Fx columns contain complex numbers (with real parts  written in the first half of the column and imaginary parts in the second half)
+ * - Compute and write the pre-calculated values using the noise weight matrix from noise intervals (M'WM)^{-1}M'W for different lengths. These values are written in the OFWNx columns of PRCLOFWN HDU
  * 
  * Parameters: 
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that initializes the reconstruction parameters (pointer and values)
  *                     In particular, this function uses 'opmode' and 'noise_spectrum' in order to run 'calculus_optimalFilter'
- * - inLibObject: FITS object containing information of the library FITS file
+ * - inLibObject: FITS object containing the information of the library FITS file
  * - samprate: Sampling rate
  * - runF0orB0val: 'FilterMethod' = F0 => 'runF0orB0val' = 0
  *                 'FilterMethod' = B0 => 'runF0orB0val' = 1
- *                 'FilterMethod' = F0B0 => 'runF0orB0val' = 2
- * - E:	First energy to be included in the library
- * - PHEIGHT: Pulse height associated to the first energy to be included in the library
- * - PULSE: Pulse template associated to the first energy to be included in the library
- * - PULSEB0: Pulse template without baseline associated to the first energy to be included in the library
- * - MF: Matched filter associated to the first energy to be included in the library
- * - MFB0: Matched filter (baseline subtracted) associated to the first energy to be included in the library
- * - COVAR: Covariance matrix associated to the first energy to be included in the library
- * - WEIGHT: Weight matrix associated to the first energy to be included in the library
+ * - E: First energy to be included in the library
+ * - PHEIGHT: Pulse height associated with the first energy to be included in the library
+ * - PULSE: Pulse template associated with the first energy to be included in the library
+ * - PULSEB0: Baseline-subtracted pulse template associated with the first energy to be included in the library
+ * - MF: Matched filter associated with the first energy to be included in the library
+ * - MFB0: Baseline-subtracted matched filter associated with the first energy to be included in the library
+ * - COVAR: Covariance matrix associated with the first energy to be included in the library
+ * - WEIGHT: Weight matrix associated with the first energy to be included in the library
  ******************************************************************************/
 int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject, double samprate, int runF0orB0val, gsl_vector *E, gsl_vector *PHEIGHT, gsl_matrix *PULSE, gsl_matrix *PULSEB0, gsl_matrix *MF, gsl_matrix *MFB0, gsl_matrix *COVAR, gsl_matrix *WEIGHT)
 { 
@@ -4387,7 +4418,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
     
     // Creating PHEIGHT Column
     strcpy(obj.nameCol,"PHEIGHT");
-    strcpy(obj.unit,"ADC");
+    strcpy(obj.unit,"ADU");
     if (writeFitsSimple(obj, PHEIGHT))
     {
         message = "Cannot run writeFitsSimple routine for column " + string(obj.nameCol);
@@ -4396,7 +4427,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
     
     // Creating PULSE Column
     strcpy(obj.nameCol,"PULSE");
-    strcpy(obj.unit,"ADC");
+    strcpy(obj.unit,"ADU");
     if (writeFitsComplex(obj, PULSE))
     {
         message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
@@ -4405,7 +4436,7 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
     
     // Creating PULSEB0 Column
     strcpy(obj.nameCol,"PULSEB0");
-    strcpy(obj.unit,"ADC");
+    strcpy(obj.unit,"ADU");
     if (writeFitsComplex(obj, PULSEB0))
     {
         message = "Cannot run writeFitsComplex routine for column " + string(obj.nameCol);
@@ -4834,28 +4865,28 @@ int addFirstRow(ReconstructInitSIRENA *reconstruct_init, fitsfile **inLibObject,
 
 
 /***** SECTION A16 ************************************************************
- * readAddSortParams function: This function reads the library data, add new data (a new row) and sort the data according to an energy-ascending order.
+ * readAddSortParams function: This function reads the library data, adds new data (a new row) and sorts the data in ascending energy order.
  * 
  * - Declare variables
- * - Load values already in the library
+ * - Load existing values in the library
  * - Add new values 
  * - Realign
- * - Add intermeadiate values
- * - Recalculate intermediate values of some new pairs
- * - Write values in the library
+ * - Add intermediate values
+ * - Recalculate intermediate values for some new pairs
+ * - Write values to the library
  * - Free allocated GSL vectors
- * 
+ *
  * Parameters:
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that initializes the reconstruction parameters (pointer and values)
  *                     In particular, this function uses 'FilterMethod', 'pulse_length', 'library_collection', 'monoenergy', 'opmode' and 'noise_spectrum'
  * - inLibObject: FITS object containing information of the library FITS file
  * - samprate: Sampling rate
  * - eventcntLib: Number of templates in the library
- * - estenergy: Pulse height of the template whose energy is going to be added to the library
- * - pulsetemplate: GSL vector with the pulse template whose energy is going to be added to the library
- * - pulsetemplate: GSL vector with the pulse template whose energy is going to be added to the library (without baseñine)
- * - covariance: GSL matrix with covariance matrix of the energy which is going to be added to the library
- * - weight: GSL matrix with weight matrix of the energy which is going to be added to the library
+ * - estenergy: Pulse height of the template for the specific pulse energy being added
+ * - pulsetemplate: GSL vector containing the pulse template for the specific pulse energy being added
+ * - pulsetemplate: GSL vector containing the pulse template (without baseline) for the specific pulse energy being added
+ * - covariance: GSL matrix containing the covariance matrix for the specific pulse energy being added
+ * - weight: GSL matrix containing the weight matrix for the specific pulse energy being added
  ******************************************************************************/
 int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibObject,double samprate,int eventcntLib, double estenergy, gsl_vector *pulsetemplate, gsl_vector *pulsetemplate_B0, gsl_matrix *covariance, gsl_matrix *weight)
 {
@@ -6161,26 +6192,25 @@ int readAddSortParams(ReconstructInitSIRENA *reconstruct_init,fitsfile **inLibOb
 
 
 /***** SECTION A17 ************************************************************
- * calculateIntParams function: This function calculates some intermediate scalars, vectors and matrices (WAB, TV, tE, XM, YV, ZV, rE, DAB and SAB)
- *                              for the interpolation and covariance methods. It is used in 'readAddSortParams'.
+ * calculateIntParams function: This function calculates intermediate scalars, vectors, and matrices (WAB, TV, tE, XM, YV, ZV, rE, DAB and SAB) used in
+ *                              the interpolation and covariance methods. It is used in 'readAddSortParams'.
  *
  * - Declare variables and allocate GSL vectors and matrices
- * - Calculate intermediate scalars, vectors and matrices 
- * - Free allocated GSL vectors and matrices
- * 
+ * - Compute intermediate scalars, vectors and matrices
+ * - Free the allocated GSL vectors and matrices*
+ *
  * Parameters:
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
+ * - reconstruct_init: Member of the *ReconstructInitSIRENA* structure used to initialize the reconstruction parameters (pointer and values)
  *                     In particular, this function uses 'pulse_length'
- * - indexa: Lower index of the library to calculate the intermediate params
- * - indexb: Higher index of the library to calculate the intermediate params
+ * - indexa: Lower index of the library for calculating the intermediate parameters
+ * - indexb: Upper index of the library for calculating the intermediate parameters
  * - samprate: Sampling rate
  * - runF0orB0val: 'FilterMethod' = F0 => 'runF0orB0val' = 0
  *                 'FilterMethod' = B0 => 'runF0orB0val' = 1
- *                 'FilterMethod' = F0B0 => 'runF0orB0val' = 2
- * - modelsaux: GSL input matrix with model template
- * - covarianceaux: GSL input matrix with covariance matrix  
- * - weightaux: GSL input matrix with weight matrix 
- * - energycolumn: GSL input vector with list of energies
+ * - modelsaux: GSL input matrix containing the model template
+ * - covarianceaux: GSL input matrix containing the covariance matrix
+ * - weightaux: GSL input matrix containing the weight matrix
+ * - energycolumn: GSL input vector containing the list of energies
  * - Wabaux: Input/output intermediate parameters
  * - TVaux: Input/output intermediate parameters
  * - tEcolumn: Input/output intermediate parameters
@@ -6588,13 +6618,13 @@ int calculateIntParams(ReconstructInitSIRENA *reconstruct_init, int indexa, int 
 
 
 /***** SECTION A18 ************************************************************
- * matrix2vector function: This function converts an input square matrix [nxn] into an output n^2 vector.
- *                         It puts the first row of the matrix (n elements) in the first n elements of the vector (from 0 to n-1),
- *                         the second row of the matrix in the elements from n to 2n-1 of the vector and so on.
+ * matrix2vector function: This function converts an input square matrix [nxn] into an output vector of length n^2.
+ *                         It stores the first row of the matrix (n elements) in the first n elements of the vector
+ *                         (indices 0 to n-1), the second row in elements n to 2n-1, and continues similarly for all rows.
  *
  * Parameters:
- * - matrixin: GSL input square matrix whose dimensions are [nxn]
- * - vectorout: GSL output vector whose length is n^2
+ * - matrixin: GSL input square matrix of dimensions [nxn]
+ * - vectorout: GSL output vector of length is n^2
  ******************************************************************************/
 int matrix2vector (gsl_matrix *matrixin, gsl_vector **vectorout)
 {
@@ -6633,13 +6663,13 @@ int matrix2vector (gsl_matrix *matrixin, gsl_vector **vectorout)
 
 
 /***** SECTION A19 ************************************************************
- * vector2matrix function: This function converts an input n^2 vector into an output square matrix [nxn].
- *                         It puts the first n elements of the vector in the first row of the matrix,
- *                         the second group of n elements (from n to 2n-1) of the vector in the second row and so on.
+ * vector2matrix function: This function converts an input vector of length n^2 into an output square matrix [n x n].
+ *                         It places the first n elements of the vector into the first row of the matrix,
+ *                         the next n elements (from n to 2n-1) into the second row, and so on.
  *
  * Parameters:
- * - vectorin: GSL input vector whose length is n^2
- * - matrixout: GSL output matrix whose dimensions are [nxn]
+ * - vectorin: GSL input vector of length n^2
+ * - matrixout: GSL output matrix with dimensions [nxn]
  ******************************************************************************/
 int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
 {
@@ -6660,10 +6690,10 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
 
 
 /***** SECTION A20 ************************************************************
- * convertI2R: This funcion converts the current space into a quasi-resistance space. 
- *             The 'invector' filled in with currents is filled in here with resistances at the output.
+ * convertI2R: This funcion converts the current space into a quasi-resistance space.
+ *             The 'invector', which is initially filled with currents, will be filled here with resistances at the output.
  * 
- * If the ADU_CNV keyword is in the events file and 'invector' contains tha ADC column data:
+ * If the ADU_CNV keyword is present in the events file and 'invector' contains the ADC column data:
  * 
  *      I = ADU_CNV * (ADC - ADU_BIAS) + I_BIAS (ADU_CNV, ADU_BIAS and I_BIAS are keywords in the events file)
  * 
@@ -6674,10 +6704,10 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
  *      - Conversion according to 'EnergyMethod'=I2RFITTED:
  *          R/V0 = -1/(Ifit+ADC) being Ifit an input parameter
  * 
- * If the ADU_CNV keyword is not in the events file and 'invector' contains tha ADC column data:
+ * If the ADU_CNV keyword is not in the events file and 'invector' contains the ADC column data:
  *
- *      aducnv = (IMAX-IMIN)/65534 calculated by using the IMIN and IMAX keywords in the events file
- *      Quantification levels = 65534    // If this calculus changes => Change it also in GENNOISESPEC
+ *      aducnv = (IMAX-IMIN)/65534 calculated the IMIN and IMAX keywords in the events file
+ *      Quantification levels = 65534    // If this calculation changes, update it also in GENNOISESPEC
  *      
  *      - Conversion according to 'EnergyMethod'=I2R: 
  *          I = IO_START-(ADC*aducnv+IMIN) (IO_START is a column in the events file)
@@ -6690,19 +6720,22 @@ int vector2matrix (gsl_vector *vectorin, gsl_matrix **matrixout)
  * Conversion according to 'EnergyMethod'=I2RDER:
  *
  *    R = (V0-I·RL-L·dI/dt)/I
+ *
+ * A scaling factor of 10^5 has been applied in the quasi-resistance space (for both I2R and I2RFITTED transformations) to avoid rounding errors when working with very small numbers.
  *  
  * Parameters:
+ * - EnergyMethod: Quasi-resistance energy calculation method (I2R or I2RFITTED)
  * - Ibias: Initial bias current (I0_START column)
  * - Imin: Current corresponding to 0 ADU (IMIN keyword)
- * - Imax: Current corresponding to maximm ADU (IMAX keyword)
- * - ADU_CNV: Conversion factor (A/adu) (ADU_CNV keyword)
- * - ADU_BIAS: Bias currente (adu) (ADU_BIAS keyword)
+ * - Imax: Current corresponding to maximum ADU (IMAX keyword)
+ * - ADU_CNV: Conversion factor (A/ADU) (ADU_CNV keyword)
+ * - ADU_BIAS: Bias current (ADU) (ADU_BIAS keyword)
  * - I_BIAS: Bias current (A) (I_BIAS keyword)
- * - Ifit: Constant to apply the I2RFITTED conversion (adu)
+ * - Ifit: Constant used for the I2RFITTED conversion (ADU)
  * - V0: Constant voltage bias
  * - RL: Effective load resistor
  * - L: Effective inductance
- * - invector: Input current (ADC) vector & output resistance (I2R or I2RFITTED) vector
+ * - invector: Input current (ADC) vector and output resistance vector (depending on I2R or I2RFITTED conversion)
  ******************************************************************************/
 int convertI2R (char* EnergyMethod,double Ibias, double Imin, double Imax, double ADU_CNV, double ADU_BIAS, double I_BIAS, double Ifit, double V0, double RL, double L, gsl_vector **invector, int real_data)
 {
@@ -6873,34 +6906,34 @@ int convertI2R (char* EnergyMethod,double Ibias, double Imin, double Imax, doubl
 
 
 /***** SECTION A21 ************************************************************
- * obtainRiseFallTimes: This function provides an estimation of the rise and fall time of the detected pulses in a record.
+ * obtainRiseFallTimes: This function estimates the rise and fall times of the detected pulses in a record.
  * 
  * Steps:
- * - Find the maximum of each pulse: amax
- * - Baseline of each pulse: abase
- * - Find the first sample in the rising part above the 50% (amax/2): t2
- *   - Previous and post sample to t2: t1 and t3
- *   - Line by using 3 points: (t1,a1), (t2,a2) and (t3,a3)
- *   - t0 (t0,abase)
- *   - tmax (tmax,amax)
+ * - Determine the maximum amplitude of each pulse: amax
+ * - Determine the baseline of each pulse: abase
+ * - For rise time:
+ *   - Find the first sample in the rising edge above 50% of amax (amax/2): t2
+ *   - Identify previous and next samples: t1 and t3
+ *   - Fit a line through the points: (t1,a1), (t2,a2) and (t3,a3)
+ *   - Determine t0 (baseline crossing) (t0,abase) and tmax (peak) (tmax,amax)
  *   - Rise time = tmax-t0
- * - Find the previous sample in the decreasing part to the first sample below the 50% (amax/2): t2
- *   - Previous and post sample to t2: t3 and t1
- *   - Line by using 3 points: (t1,a1), (t2,a2) and (t3,a3)
- *   - t0 (t0,abase)
- *   - tmax (tmax,amax)
+ * - For fall time:
+ *   - Find the first sample in the falling edge below 50% of amax (amax/2): t2
+ *   - Identify previous and next samples: t3 and t1
+ *   - Fit a line through the points: (t1,a1), (t2,a2) and (t3,a3)
+ *   - Determine t0 (baseline crossing) (t0,abase) and tmax (peak) (tmax,amax)
  *   - Fall time = t0-tmax
  * 
  * Parameters:
- * - recordNOTFILTERED: Record neither low-pass filtered nor differentiated
+ * - recordNOTFILTERED: Original pulse record (neither low-pass filtered nor differentiated)
  * - samprate: Sampling rate
- * - tstartgsl: Starting time of the detected pulses in the record (in samples)
- * - tendgsl: Ending time of the detected pulses in the record (in samples)
- * - Bgsl: In general, sum of the Lb digitized data samples of a pulse-free interval immediately before each pulse
- * - Lbgsl: Number of samples added in Bgsl for each pulse
+ * - tstartgsl: Starting sample indices of detected pulses in the record
+ * - tendgsl: Ending sample indices of detected pulses in the record
+ * - Bgsl: Sum of Lb digitized samples of a pulse-free interval generally located immediately before each pulse
+ * - Lbgsl: Number of samples used to compute Bgsl for each pulse
  * - numPulses: Number of detected pulses in the record
- * - tauRisegsl: Rise time of the detected pulses in the record (in seconds)
- * - tauFallgsl: Fall time of the detected pulses in the record (in seconds)
+ * - tauRisegsl: Output rise time of each pulse (seconds)
+ * - tauFallgsl: Output fall time of each pulse (seconds)
  ******************************************************************************/
 int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vector *tstartgsl, gsl_vector *tendgsl, gsl_vector *Bgsl, gsl_vector *Lbgsl, int numPulses, gsl_vector **tauRisegsl, gsl_vector **tauFallgsl)
 {    
@@ -7005,52 +7038,52 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
 
 
 /***** SECTION B ************************************************************
- * runEnergy: This function calculates the pulse energy applying different methods.
+ * runEnergy: This function is responsible for the reconstruction in SIRENA.This function calculates the pulse energy applying different methods.
  *
  * - Declare variables
  * - Store the record in 'invector' ('loadRecord')
- * - Subtract the baseline if INTCOVAR
- * - Check Quality
+ * - Subtract the baseline if using INTCOVAR
+ * - Check pulse quality
  * - For each pulse:
- * 	- Establish the pulse grade (for example VeryHighRes=1, HighRes=2, IntRes=3, MedRes=4, LimRes=5, LowRes=6, Rejected=-1) and the optimal filter length
- *  - Subtract the baseline if OPTFILT/0PAD and 'runF0orB0val'= 1/2 ('FilterMethod'=B0/F0B0)
- * 	- Pulse: Load the proper piece of the record in 'pulse'
- *       - Get the low resolution energy estimator by filtering with a 8-samples-length filter:
- *           - Load the low resolution pulse in *pulse_lowres*
- *           - Get the filter
- *           - Calculate the low resolution estimator
- * 	- If 'OFIter'=1, in the first iteration ('numiteration'=0) the values of 'maxDER' and 'maxDERs' are used in 'find_matchedfilterSAB',
- *         'find_optimalfilterSAB' or 'find_Esboundary' getting the values of the 'energies' which straddle the 'maxDER' ('Ealpha' and 'Ebeta'). There will be more
- *         iterations if the calculated 'energy' is out of ['Ealpha','Ebeta']. If 'energy' is in ['Ealpha','Ebeta'] the iterative process stops.
- * 	  	- If OPTFILT/0PAD/I2R/I2RFITTED and 'OFLib'=0 and 'OFNOise=NSD':
- *	 	    - Find the matched filter and load it in 'filter' ('find_matchedfilterSAB')
+ * 	- Establish the pulse grade (for example VeryHighRes=1, HighRes=2, IntRes=3, MedRes=4, LimRes=5, LowRes=6, Rejected=-1) and determine the optimal filter length
+ *  - Subtract the baseline if using OPTFILT/0PAD and 'runF0orB0val'= 1 ('FilterMethod'=B0)
+ * 	- Load the relevant portion of the record in 'pulse'
+ *       - Obtain the low-resolution energy estimator using an 8-samples-length filter:
+ *           - Load the low-resolution pulse into *pulse_lowres*
+ *           - Load the filter
+ *           - Calculate the low-resolution energy estimator
+ * 	- If 'OFIter'=1, in the first iteration ('numiteration'=0), the values of 'maxDER' and 'maxDERs' are used in 'find_matchedfilterSAB',
+ *         'find_optimalfilterSAB', or 'find_Esboundary' to determine the energies that straddle 'maxDER' ('Ealpha' and 'Ebeta'). Further
+ *         iterations occur if the calculated energy is outside ['Ealpha','Ebeta']. The iterative process stops once energy is within ['Ealpha','Ebeta'].
+ * 	  	- If using OPTFILT/0PAD/I2R/I2RFITTED and 'OFLib'=0 and 'OFNOise=NSD':
+ *	 	    - Find the matched filter and load it into 'filter' ('find_matchedfilterSAB')
  * 		    - Calculate the optimal filter
- * 		- If OPTFILT/0PAD/I2R/I2RFITTED, and 'OFLib'=1 and 'OFNOise=NSD':
- *          - If it is necessary, choose the base-2 system value closest (lower than or equal) to the pulse length (not for 0PAD)
- *	 	    - Find the optimal filter and load it in 'optimalfilter' ('find_optimalfilterSAB')
- *		- If 'INTCOVAR' or 'COVAR':
- *		    - Get the indexes of the two energies which straddle the pulse ('find_Esboundary')
+ * 		- If using OPTFILT/0PAD/I2R/I2RFITTED, and 'OFLib'=1 and 'OFNOise=NSD':
+ *          - Choose the closest (lower or equal) base-2 system value to the pulse length if necessary (not for 0PAD)
+ *	 	    - Find the optimal filter and load it into 'optimalfilter' ('find_optimalfilterSAB')
+ *		- If using 'INTCOVAR' or 'COVAR':
+ *		    - Get the indeces of the two energies that straddle the pulse ('find_Esboundary')
  * 		    - If 'COVAR' and 'OFLib'=1:
- *                       - Choose the base-2 system value closest (lower than or equal) to the pulse length
- * 		        - 'find_prclcov' to find the appropriate values of the PRCLCOV HDU ('PRCLx' columns)
- *               - If OPTFILT/I2R/I2RFITTED,  and 'OFLib'=1 and 'OFNOise=WEIGHTN':
- *                   - Choose the base-2 system value closest (lower than or equal) to the pulse length
- * 		    - 'find_prclofwn' to find the appropriate values of the PRCLOFWN HDU ('OFWNx' columns)
- *		- Subtract the sum of the filter if 0PAD and Sum0Filt=1
- *               - Calculate the energy of each pulse
- *               - If using lags, it is necessary to modify the tstart of the pulse and the length of the filter used
- *	- Write info of the pulse in the output intemediate file if 'intermediate'=1
- * - Not valid pulse => Its info has to be also stored in the intermediate file (if 'intermediate'=1) and in the structure 'pulsesInRecord'
+ *              -  Choose the closest (lower or equal) base-2 system value to the pulse length
+ * 		        - Use 'find_prclcov' to get the appropriate PRCLCOV HDU ('PRCLx' columns)
+ *      - If using OPTFILT/I2R/I2RFITTED,  and 'OFLib'=1 and 'OFNOise=WEIGHTN':
+ *          -  Choose the closest (lower or equal) base-2 system value to the pulse length
+ * 		    - Use 'find_prclofwn' to get the appropriate PRCLOFWN HDU ('OFWNx' columns)
+ *	    - Subtract the sum of the filter if using 0PAD and Sum0Filt=1
+ *      - Calculate the energy of each pulse
+ *      - If using lags, adjust the tstart of the pulse and the length of the filter used
+ *	- Write pulse info to the the output intermediate file if 'intermediate'=1
+ * - For invalid pulses: Store their info in the intermediate file (if 'intermediate' = 1) and in the 'pulsesInRecord' structure
  * - Free allocated GSL vectors
  *
  * Parameters:
- * - record: Structure that contains the input ADC record
- * - lastRecord: Integer to verify whether record is the last one (=1)
+ * - record: Member of 'TesRecord' structure containing the input record
+ * - lastRecord: Integer indicating whether this is the last record (=1)
  * - nrecord: Current record index
- * - trig_reclength: Record size (just in case threading and input files with different 'ADC' lengths but the same record size indeed)
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
+ * - trig_reclength: Record size (to handle threading and input files with different 'ADC' lengths but the same record size)
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that initializes the reconstruction parameters (pointer and values)
  * - pulsesInRecord: Collection of pulses found in the current record
- * - pulsesAll: Member of *PulsesCollection* structure to store all the pulses found in the input FITS file. To know the index to get the proper element from 'tstartPulse1_i' in case `tstartPulse1` *              was a file name
+ * - pulsesAll: Member of *PulsesCollection* structure to store all the pulses found in the input record. (This is also used to determine the index for retrieving the correct element from 'tstartPulse1_i' when `tstartPulse1` is provided as a file name)
  ******************************************************************************/
 void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclength, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord, PulsesCollection *pulsesAll)
 {
@@ -7171,7 +7204,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     int length_lowres;
     if ((*reconstruct_init)->LagsOrNot == 1)
-        length_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1) + numlags; // Lowres estimator = Shortfilter+Lags
+        //length_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1) + numlags; // Lowres estimator = Shortfilter+Lags
+        length_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1) + numlags-1; // Lowres estimator = Shortfilter+Lags-1
     else
         length_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1); // Lowres estimator = Shortfilter
     double energy_lowres;
@@ -7269,6 +7303,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                 message = "Cannot run routine pulseGrading";
                 EP_EXIT_ERROR(message,EPFAIL);
             }
+
             if ((pulseGrade == 0) && (resize_mf == 0)) // Less than worst grading
             {
                 message = "Worse than the worst grading => SIGNAL=-999 & GRADE1=0 for pulse i=" + boost::lexical_cast<std::string>(i+1) + " in record " + boost::lexical_cast<std::string>(nrecord);
@@ -7276,7 +7311,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
 
                 (*pulsesInRecord)->pulses_detected[i].energy = -999.0;
                 (*pulsesInRecord)->pulses_detected[i].E_lowres = -999.0;
-                (*pulsesInRecord)->pulses_detected[i].grading = -2;
+                (*pulsesInRecord)->pulses_detected[i].grading = -1;
                 (*pulsesInRecord)->pulses_detected[i].phi = -999.0;
                 (*pulsesInRecord)->pulses_detected[i].lagsShift = -999.0;
             }
@@ -7381,7 +7416,10 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                             gsl_vector_free(baselinegsl); baselinegsl = 0;
                         }
 
-                        temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres-numlags2,length_lowres);
+                        if ((*reconstruct_init)->LagsOrNot == 0)
+                            temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres,length_lowres);
+                        else if ((*reconstruct_init)->LagsOrNot == 1)
+                            temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres-numlags2,length_lowres);
 
                         gsl_vector *vectoraux = gsl_vector_alloc(length_lowres);
                         gsl_vector_memcpy(vectoraux,&temp.vector);
@@ -7962,7 +8000,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                     //minimum = min((double) tstartSamplesRecord+(model->size),minimum);
                     //log_debug("Delete model from %f to %f",tstartSamplesRecord,minimum);
 
-                    // Write info of the pulse in the output intemediate file if 'intermediate'=1
+                    // Write info of the pulse in the output intermediate file if 'intermediate'=1
                     if ((*reconstruct_init)->intermediate == 1)
                     {
                         if (writeFilterHDU(reconstruct_init, i,energy, filtergsl, &dtcObject))
@@ -8070,7 +8108,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
 
 
 /***** SECTION BB ************************************************************
- * th_runEnergy: Run energy calculation only in multithread mode
+ * th_runEnergy: This function is responsible for the **reconstruction** in SIRENA (instead of :cpp:func:`runEnergy`) when the **THREADING** running option has been chosen (hardcoded at this moment). This function calculates the pulse energy using different methods.
  *****************************************************************************/
 void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord, PulsesCollection *pulsesAll)
 {
@@ -8191,7 +8229,8 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     int length_lowres;
     if ((*reconstruct_init)->LagsOrNot == 1)
-        length_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1) + numlags; // Lowres estimator = Shortfilter+Lags
+        //length_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1) + numlags; // Lowres estimator = Shortfilter+Lags
+        length_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1) + numlags-1; // Lowres estimator = Shortfilter+Lags-1
     else
         length_lowres = gsl_matrix_get((*reconstruct_init)->grading->gradeData,(*reconstruct_init)->grading->gradeData->size1-1,1); // Lowres estimator = Shortfilter
     double energy_lowres;
@@ -8289,7 +8328,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
                 message = "Cannot run routine pulseGrading";
                 EP_EXIT_ERROR(message,EPFAIL);
             }
-            if ((pulseGrade ==0) && (resize_mf == 0)) // Less than worst grading
+            if ((pulseGrade == 0) && (resize_mf == 0)) // Less than worst grading
             {
 
                 message = "Worse than the worst grading => SIGNAL=-999 & GRADE1=0 for pulse i=" + boost::lexical_cast<std::string>(i+1) + " in record " + boost::lexical_cast<std::string>(nrecord);
@@ -8297,7 +8336,7 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
 
                 (*pulsesInRecord)->pulses_detected[i].energy = -999.0;
                 (*pulsesInRecord)->pulses_detected[i].E_lowres = -999.0;
-                (*pulsesInRecord)->pulses_detected[i].grading = -999.0;
+                (*pulsesInRecord)->pulses_detected[i].grading = -1;
                 (*pulsesInRecord)->pulses_detected[i].phi = -999.0;
                 (*pulsesInRecord)->pulses_detected[i].lagsShift = -999.0;
             }
@@ -8324,7 +8363,6 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
                         EP_EXIT_ERROR(message,EPFAIL);
                     }
                 }
-            //}
 
                 if (tstartSamplesRecordStartDOUBLE-preBuffer_value+resize_mf+numlags > recordAux->size)
                 {
@@ -8402,7 +8440,10 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
                             gsl_vector_free(baselinegsl); baselinegsl = 0;
                         }
 
-                        temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres-numlags2,length_lowres);
+                        if ((*reconstruct_init)->LagsOrNot == 0)
+                            temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres,length_lowres);
+                        else if ((*reconstruct_init)->LagsOrNot == 1)
+                            temp = gsl_vector_subvector(recordAux,tstartSamplesRecord-preBuffer_value_lowres-numlags2,length_lowres);
 
                         gsl_vector *vectoraux = gsl_vector_alloc(length_lowres);
                         gsl_vector_memcpy(vectoraux,&temp.vector);
@@ -8986,10 +9027,10 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
                     double intpart;
                     (*pulsesInRecord)->pulses_detected[i].phi = modf(tstartNewDev,&intpart);
                     (*pulsesInRecord)->pulses_detected[i].lagsShift = lagsShift+intpart;
-                    if (((*pulsesInRecord)->pulses_detected[i].phi) == 0)
-                        (*pulsesInRecord)->pulses_detected[i].grading = -2; // Pile-up
-                        else
-                            (*pulsesInRecord)->pulses_detected[i].grading = pulseGrade;
+                    //if (((*pulsesInRecord)->pulses_detected[i].phi) == 0)
+                    //    (*pulsesInRecord)->pulses_detected[i].grading = -2; // Pile-up
+                    //else
+                        (*pulsesInRecord)->pulses_detected[i].grading = pulseGrade;
 
                     // Free allocated GSL vectors
                     gsl_vector_free(optimalfilter); optimalfilter = 0;
@@ -9038,74 +9079,74 @@ void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength, Reconstruc
 
 
 /***** SECTION B1 ************************************************************
- * calculus_optimalFilter: This function calculates the optimal filter for a pulse whose matched filter is provided as input parameter.
- *                         An optimal filter is just a matched filter that has been adjusted based on the noise spectrum of the system.
+ * calculus_optimalFilter: This function calculates the optimal filter for a pulse, given a matched filter (normalized template) as input via `matchedfiltergsl`.
+ *                         An optimal filter is essentially a matched filter adjusted according to the noise spectrum of the system.
  *
- * It is assumed that all pulses are scaled versions of a template. In the frequency domain (as noise can be frequency dependent), the raw data
- * can be expressed as D(f)=E·S(f)+N(f), where S(f) is the normalized model pulse shape in the frequency domain, N(f) is the power spectrum of the noise and
- * E is the scalar amplitude for the photon energy.
  *
- * The second assumption is that the noise is stationary, i.e. it does not vary with time. The amplitude of each pulse can then be estimated by 
- * minimizing (weighted least-squares sense) the difference between the noisy data and the model pulse shape, being the X^2 condition 
- * to be minimized:
- * 
+ * It is assumed that all pulses are scaled versions of a template. In the frequency domain (as noise can be frequency-dependent), the raw data can be
+ * expressed as D(f)=E·S(f)+N(f), where S(f) is the normalized model pulse shape in the frequency domain, N(f) is the noise power spectrum and E is the scalar
+ * amplitude corresponding to the photon energy.
+ *
+ *A second assumption is that the noise is stationary, i.e., it does not vary with time. The amplitude of each pulse can then be estimated by minimizing, in a
+ * weighted least-squares sense, the difference between the noisy data and the model pulse shape. The X^2 condition to be minimized is:
+ *
  *            (D(f)-E·S(f))^2
  *  X^2 = SUM ---------------- 
  *                N(f)^2
  *
- * In the time domain, the amplitude is the best weighted (optimally filtered) sum of the values in the pulse
+ * In the time domain, the amplitude is obtained as the best weighted (optimally filtered) sum of the pulse values:
  * 
  * E = k·SUM d(t)*op(t)
  * 
- * where of(t) is the time domain expression of optimal filter in frequency domain
+ * where of(t) is the time-domain expression of the optimal filter which in frequency domain
  *                          
- *                    S*(f)               1                               |S(f)|^2
+ *                    S*(f)          1                               |S(f)|^2
  * OptimalFilter(f)= -------  		--- = NormalizationFactor = SUM ---------
- *                    N(f)^2              k                               |N(f)|^2
+ *                    N(f)^2         k                               |N(f)|^2
+ *
+ * Here, k is a normalization factor to give E in units of energy.
  *
  * 
- * - FFT calculus of the matched filter (filter template)
+ * - FFT calculation of the matched filter (filter template)
  * 	- Declare variables
  *  - OPTIONAL (hardcore selected): Apply a Hanning window to reduce spectral leakage
- * 	- Complex FFT values for positive and negative frequencies
- * 	- FFT calculus
- * 	- Generation of the frequencies (positive and negative)
- * 	- Magnitude and argument for positive and negative frequencies
- *       - Free allocated GSL vectors
- * - N(f)
- * - To divide MatchedFilter(f)/N^2(f) => MatchedFilter(f) and N(f) must have the same number of points
+ * 	- Compute complex FFT values for positive and negative frequencies
+ * 	- Perform FFT calculation
+ * 	- Generate frequency values (positive and negative)
+ * 	- Compute magnitude and phase for positive and negative frequencies
+ *  - Free the allocated GSL vectors
+ * - Compute N(f)
+ * - To divide MatchedFilter(f)/N^2(f), ensure that MatchedFilter(f) and N(f) have the same number of points
  * 	- 'if (mf_size' < freqgsl->size)' 
- * 		- 'if ((freqgsl->size)%mf_size == 0)' => Decimate noise samples
- * 		- 'else' => It is necessary to work only with the positive frequencies in order to not handle the f=0
- * 		            N(f) interpolation ('interpolatePOS')
- * 	- 'else if (mf_size > freqgsl->size)' => Error: Noise spectrum must have more samples than pulse spectrum
- *	- 'else if (mf_size == freqgsl->size)' => It is not necessary to do anything
- * - OptimalFilter = MatchedFilter'(f)/N^2(f)
- * - Calculus of the normalization factor
+ * 		- 'if ((freqgsl->size)%mf_size == 0)': Decimate noise samples
+ * 		- 'else': Work only with the positive frequencies to avoid handling f=0, and interpolate N(f) using 'interpolatePOS'
+ * 	- 'else if (mf_size > freqgsl->size)': Error: Noise spectrum must have more samples than the pulse spectrum
+ *	- 'else if (mf_size == freqgsl->size)': No action is needed
+ * - Compute the optimal filter in frequency domain OptimalFilter = MatchedFilter'(f)/N^2(f)
+ * - Calculate the normalization factor
  * - Apply the normalization factor
- * - Inverse FFT (to get the expression of the optimal filter in time domain)
- *	- Complex OptimalFilter(f) => Taking into account magnitude (MatchedFilter(f)/N^2(f)) and phase (given by MatchedFilter(f))
- * - Free allocated GSL vectors
+ * - Perform inverse FFT to obtain the optimal filter in the time domain
+ *	- Construct complex OptimalFilter(f) using the magnitude (MatchedFilter(f)/N^2(f)) and the phase (given by MatchedFilter(f))
+ * - Free the allocated GSL vectors
  *
  * Parameters:
  * - TorF: 'FilterDomain' = T => 'TorF' = 0
  *         'FilterDomain' = F => 'TorF' = 1
  * - intermediate: 'intermediate' = 0 => Not write an intermediate file
  *                 'intermediate' = 1 => Write an intermediate file
- * - opmode: 'opmode' = 0 => CALIBRATION
- *           'opmode' = 1 => PRODUCTION
- * - matchedfiltergsl: Matched filter associated to the pulse (in general, from the interpolation between two matched filters of the library)
- * - mf_size: Matched filter size
+ * - opmode: 'opmode' = 0 => CALIBRATION (library creation)
+ *           'opmode' = 1 => RECONSTRUCTION (energy determination)
+ * - matchedfiltergsl: Matched filter associated with the pulse (generally obtained by interpolation between two matched filters from the library)
+ * - mf_size: Size of the matched filter
  * - samprate: Sampling rate
  * - runF0orB0val: 'FilterMethod' = F0 => 'runF0orB0val' = 0
  *                 'FilterMethod' = B0 => 'runF0orB0val' = 1
- *                 'FilterMethod' = F0B0 => 'runF0orB0val' = 2
  * - freqgsl: Frequency axis of the current noise spectral density (input)
  * - csdgsl: Current noise spectral density (input)
- * - optimal_filtergsl: Optimal filter in time domain (output)
+ * - optimal_filtergsl: Optimal filter in the time domain (output)
  * - of_f: Frequency axis of the optimal filter spectrum (output)
- * - of_FFT: Optimal filter spectrum (absolute values) (output)
- * - of_FFT_complex: Optimal filter spectrum (complex values) (output)
+ * - of_FFT: Absolute values of the optimal filter spectrum (output)
+ * - of_FFT_complex: Complex values of the optimal filter spectrum (complex values) (output)
  ****************************************/
 int calculus_optimalFilter(int TorF, int intermediate, int opmode, gsl_vector *matchedfiltergsl, long mf_size, double samprate, int runF0orB0val, gsl_vector *freqgsl, gsl_vector *csdgsl, gsl_vector **optimal_filtergsl,gsl_vector **of_f, gsl_vector **of_FFT, gsl_vector_complex **of_FFT_complex)
 {  
@@ -9332,14 +9373,16 @@ int calculus_optimalFilter(int TorF, int intermediate, int opmode, gsl_vector *m
     *of_FFT_complex = gsl_vector_complex_alloc(mf_size);
     for (int i=0;i<mf_size;i++)
     {
-        gsl_vector_complex_set(*of_FFT_complex,i,gsl_complex_div_real(gsl_vector_complex_get(mfFFTcomp_conj,i),gsl_vector_get(n_FFT_2,i)));
+        //gsl_vector_complex_set(*of_FFT_complex,i,gsl_complex_div_real(gsl_vector_complex_get(mfFFTcomp_conj,i),gsl_vector_get(n_FFT_2,i)));
+        gsl_vector_complex_set(*of_FFT_complex,i,gsl_complex_div_real(gsl_vector_complex_get(mfFFTcomp_conj,i),1));
     }
     
     // Calculus of the normalization factor
     double normalizationFactor = 0;
     for (int i=1; i<(int)(mf_f->size); i++)
     {
-        normalizationFactor = normalizationFactor + gsl_vector_get(mf_FFT_2,i)/gsl_vector_get(n_FFT_2,i);
+        //normalizationFactor = normalizationFactor + gsl_vector_get(mf_FFT_2,i)/gsl_vector_get(n_FFT_2,i);
+        normalizationFactor = normalizationFactor + gsl_vector_get(mf_FFT_2,i)/1;
     }
     
     // Apply the normalization factor
@@ -9392,22 +9435,21 @@ int calculus_optimalFilter(int TorF, int intermediate, int opmode, gsl_vector *m
 
 
 /***** SECTION B2 ************************************************************
- * interpolatePOS: This function interpolates an input vector ('x_in', 'y_in'), creating an output vector ('x_out', 'y_out') with the size and
- *                 frequency step given.
- *                 POS is due to the fact that the input spectrum only has positive frequencies (in order to not handle the f=0).
+ * interpolatePOS: This function interpolates an input vector ('x_in', 'y_in') to generate an output vector ('x_out', 'y_out') with the specified size and frequency step.
+ *                 POS indicates that the input spectrum contains only positive frequencies (to avoid handling f=0).
  *
  * - Declare and initialize variables
- * - Method applied to interpolate
+ * - Apply the chosen interpolation method
  * - Generate the interpolated output vector
- * - Free memory
+ * - Free allocated memory
  *
  * Parameters:
- * - x_in: GSL input vector with the abscissas of the vector which is going to be interpolated 
- * - y_in: GSL input vector with the ordinates of the vector which is going to be interpolated
- * - size: Size of the interpolated output vector
+ * - x_in: GSL input vector containing the abscissas of the vector to be interpolated
+ * - y_in: GSL input vector containing the ordinates of the vector to be interpolated
+ * - size: Desired size of the interpolated output vector
  * - step: Frequency step of the interpolated output vector
- * - x_out: GSL output vector with the abscissas of the interpolated vector
- * - y_out: GSL output vector with the ordinates of the interpolated vector
+ * - x_out: GSL output vector for the abscissas of the interpolated vector
+ * - y_out: GSL output vector for the ordinates of the interpolated vector
  ****************************************/
 int interpolatePOS (gsl_vector *x_in, gsl_vector *y_in, long size, double step, gsl_vector **x_out, gsl_vector **y_out)
 {
@@ -10559,27 +10601,29 @@ int find_Esboundary(double maxDER, gsl_vector *maxDERs, ReconstructInitSIRENA *r
 
 
 /***** SECTION B10 ************************************************************
- * pulseGrading: This function provides the pulse grade (Rejected=-1, HighRes=1, MidRes=2, Limres= 3, LowRes=4) and the optimal filter length by taking into account the info read from the XML file and the 'OFStrategy' (FREE, BYGRADE or FIXED). (Pileup=-2 not used)
+ * pulseGrading: This function determines the pulse grade (Rejected=-1, VeryHighRes=1, HighRes=2, IntRes=3, MidRes=4, LimRes=5, LowRes=6) and the optimal filter length,
+ *               taking into account the information read from the XML file and the 'OFStrategy' (FREE, BYGRADE or FIXED).
+ *               (Pileup=-2 is used outside this function)
  *
  * Parameters:
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values).
- *                     In particular, this function uses the 'OFLength' and 'grading'.
- * - tstart: Start time (samples)
- * - grade1: Pulse duration (length of the optimal filter applied)
- * - grade2: Difference between the start time of the pulse and the start time of the previous pulse
- * - OFlength_strategy: 'OFStrategy' (input)
- * - pulseGrade: Pulse grade (output)
- * - OFlength: Optimal filter length (='OFLength' only if 'OFStrategy'=FIXED and 'OFLength' <= grade1) (output)
- * - nrecord: Current record index (to know the particular record where there could be more than one pulse => message)
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that initializes the reconstruction parameters (pointer and values).
+ *                     In particular, this function uses the 'OFLength', 'grading' and 'OFlength_strategy'.
+ * - tstart: Start time of the pulse (samples)
+ * - grade1: Pulse duration (i.e., length of the optimal filter to be applied)
+ * - grade2: Time difference between the start of the current pulse and the start of the previous pulse
+ * - pulseGrade: Computed pulse grade (output)
+ * - OFlength: Optimal filter length (output). It is set equal to 'OFLength' only when
+ *             'OFStrategy' = FIXED and 'OFLength' <= grade1
+ * - nrecord: Current record index (used to report if a record could contain more than one pulse => message)
  ****************************************/
 int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grade1, long grade2, int *pulseGrade, long *OFlength, int nrecord)
 {
     string message = "";
     char valERROR[256];
 
-    log_debug("PulseGrading..............");
-    log_debug("grade1 %ld", grade1);
-    log_debug("grade2 %ld", grade2);
+    log_debug(" PulseGrading..............");
+    log_debug(" grade1 %ld", grade1);
+    log_debug(" grade2 %ld", grade2);
     
     gsl_vector *gradelim;
     if ((gradelim = gsl_vector_alloc(reconstruct_init->grading->ngrades)) == 0)
@@ -10600,7 +10644,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
     }*/
     for (int i=0;i<reconstruct_init->grading->ngrades;i++)
     {
-        gsl_vector_set(gradelim,i,gsl_matrix_get(reconstruct_init->grading->gradeData,i,0));	
+        gsl_vector_set(gradelim,i,gsl_matrix_get(reconstruct_init->grading->gradeData,i,0));	// First column of the XML file (grades) => Pre
     }
     int gradelim_pre = gsl_vector_max(gradelim);
     
@@ -10697,13 +10741,17 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
             pB = gsl_matrix_get(reconstruct_init->grading->gradeData,i,2);
             pBmax = gsl_matrix_get(reconstruct_init->grading->gradeData,0,2);
             if ((grade1 >= gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)) && (tstart > pB) && (gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)-gsl_matrix_get(reconstruct_init->grading->gradeData,i,2) <= grade1-pBmax))
+            //if ((grade1 >= gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)) && (tstart > pB) && (gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)-gsl_matrix_get(reconstruct_init->grading->gradeData,i,2) <= grade1-pBmax) && (grade2>pB))
             {
                 *pulseGrade = i+1;
 
                 if (log2(gsl_matrix_get(reconstruct_init->grading->gradeData,i,1))-(int)log2(gsl_matrix_get(reconstruct_init->grading->gradeData,i,1)) != 0)
+                // log2(x) - (int)log2(x) != 0
+                // x is NOT a power of 2
                 {
                     for (int j=i+1;j<reconstruct_init->grading->ngrades;j++)
                     {
+
                         if (log2(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1))-(int)log2(gsl_matrix_get(reconstruct_init->grading->gradeData,j,1)) == 0)
                         {
                             if (reconstruct_init->pulse_length < reconstruct_init->OFLength) // 0-padding
@@ -10715,7 +10763,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
                         }
                     }
                 }
-                else
+                else // x IS a power of 2
                 {
                     if (reconstruct_init->pulse_length < reconstruct_init->OFLength) // 0-padding
                     {
@@ -10723,16 +10771,19 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
                         else        *OFlength = gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
                     }
                     else
+                    {
                         *OFlength = gsl_matrix_get(reconstruct_init->grading->gradeData,i,1);
+                    }
                     nopower2 = 1;
                 }
+
                 break;
             }
         }
         if (reconstruct_init->pulse_length < reconstruct_init->OFLength) // 0-padding
             reconstruct_init->pulse_length = *OFlength;
     }
-    
+
     if ((strcmp(reconstruct_init->OFStrategy,"FIXED") != 0) && (nopower2 == 0))  // FREE or BYGRADE
     {
         //message = "No grade being a power of 2 in the XML file";
@@ -10752,18 +10803,23 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
     //if (((grade2 < gradelim_pre) || (grade1 == -1)) && (OFlength_strategy != 2))    *pulseGrade = -1;
     //if (grade2 < gradelim_pre) *pulseGrade = -1;
 
-    if (*pulseGrade != 0)
+    /*if (*pulseGrade != 0)
     {
         if (grade2 < gsl_vector_get(gradelim,*pulseGrade-1)) *pulseGrade = -1;
     }
     else
     {
         if (grade2 < gsl_vector_get(gradelim,*pulseGrade)) *pulseGrade = -1;
+    }*/
+
+    if (*pulseGrade != 0)
+    {
+        if (grade2 < gsl_vector_get(gradelim,*pulseGrade-1)) *pulseGrade = -2;
     }
     gsl_vector_free(gradelim);
 
-    log_debug("pulseGrading *pulseGrade %d", *pulseGrade);
-    log_debug("pulseGrading *OFLength %d", *OFlength);
+    log_debug(" ENDpulseGrading *pulseGrade %d", *pulseGrade);
+    log_debug(" ENDpulseGrading *OFLength %d", *OFlength);
     
     message.clear();
     
@@ -10773,33 +10829,30 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
 
 
 /***** SECTION B11 ************************************************************
- * calculateEnergy function: This function calculates the energy of a pulse ('vector') depending on
- *                           the 'EnergyMethod', 'OFNoise' and the 'FilterDomain' basically.
+ * calculateEnergy function: This function calculates the energy of a pulse ('vector'), primarily depending on the selected 'EnergyMethod', 'OFNoise' and the 'FilterDomain' input parameters.
  * 
  * OPTIONAL (hardcore selected): Apply a Hanning window to reduce spectral leakage
  *
- * OPTFILT (= I2R) or 0PAD and NSD: Optimal filter = Wiener filter
+ * OPTFILT (= I2R or I2RFITTED) or 0PAD and NSD: Optimal filter = Wiener filter
  *
- *   Once the filter template has been created ('filter' or 'filterFFT'), pulse height analysis is performed by aligning the template
- *   with a pulse and multiplying each point in the template by the corresponding point in the pulse. The sum of these products is the energy.
+ *   Once the filter template has been created ('filter' or 'filterFFT'), the pulse height analysis is performed by aligning the template
+ *   with the pulse and multiplying each point in the template by the corresponding point in the pulse. The sum of these products gives the pulse energy.
  *
- * 	Time domain: E = SUM p(t)·of(t)
+ *   In practice, the alignment of the pulse relative to the trigger is not perfectly accurate. Therefore, a number of n lags can be used to locate the peak energy
+ *   value. The n peak values are then fitted to a parabola to determine the most accurate energy and to obtain a corrected start time.
  *
- * 	Frequency domain: E = SUM P(f)·OF(f)
+ * Time domain: E = SUM p(t)·of(t)
  *
- * 	In practice, the alignment of the pulse relative to the trigger is not completely accurate, so a number of n lags could be used in
- * 	order to find the peak value of the energy. The n peak values are fitted to a parabola to find the most accurate energy and a corrected starting time.
- * 
- *       A normalization factor must be included in the energy calculus in the time domain, which is related to the FFT normalization:
- *       FFT normalization factor = 1/n => Normalization factor to the energy calculus (in time) = 1/n (being n the filter length)
+ * Frequency domain: E = SUM P(f)·OF(f)
+ *
+ *  A normalization factor must be included in the energy calculation in the time domain, which is related to the FFT normalization:
+ *  FFT normalization factor = 1/n => Normalization factor for the energy calculation (in the time domain) = 1/n, where n is the filter length.
  *
  * 	(*) IXO Onboard processing Trade-Off
  * 
- * 	If 'OFInterp'=SAB, E = SUM {(d(t)-DAB(t))·of(t)} or E = SUM {(D(f)-DAB(f))·OF(f)}
- * 
  * OPTFILT and WEIGHTN:
  * 
- * 	PRCLOFWN is =(X'.W.X)^(-1) .X'.W) being W the noise weight matrix calculated from noise intervals.
+ * 	PRCLOFWN is =(X'.R^(-1).X)^(-1) .X'.^(-1)) being R^(-1) the noise weight matrix calculated from noise intervals.
  *
  * INTCOVAR:
  *
@@ -10807,15 +10860,15 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
  * 	is optimal in both the linear and nonlinear regime. In the case of a linear detector with stationary noise, the algorithm reduces to the Wiener filter.
  *
  * 	On the transition the TES response is approximately linear, but large changes in resistance can result in a significant change in noise level.
- * 	So, modelling the response is not enough. To get the optimum performace, we must also model the system noise. We describe the noise by its covariance
+ * 	So, modeling the response is not enough. To get the optimum performance, we must also model the system noise. We describe the noise by its covariance
  * 	matrix <didj>, which for an ensemble of time series of length n, is a nxn matrix.
  *
- * 	Consider a set of measurements of the current in the dectector element, Si. An average of these is used as a model template, Mi=<Si>=(1/N)SUM(p=1,N){Sip}
- * 	(Mi is the i-sample of the pulseaverage). And the deviationsfrom this mean, Di=Si-Mi, are used to construct a covariance matrix, Vij=<DiDj> (weight
+ * 	Consider a set of measurements of the current in the detector element, Si. An average of these is used as a model template, Mi=<Si>=(1/N)SUM(p=1,N){Sip}
+ * 	(Mi is the i-sample of the pulse average). And the deviations from this mean, Di=Si-Mi, are used to construct a covariance matrix, Vij=<DiDj> (weight
  * 	matrix W=1/V). (W is the noise weight matrix calculated from the subtraction of the pulse model from the pulses)
  *
  *	Given a number of models, M, with their associated weight matrices W, only a crude estimation of signal size is sufficient to determine which two
- *	calibration points alpha and beta straddle the unkonwn signal U (the pulse whose energy we want to calculate).
+ *	calibration points alpha and beta straddle the unknown signal U (the pulse whose energy we want to calculate).
  *
  *	With a linear interpolation of the signal and weight matrix the best energy estimate is:
  *
@@ -10824,15 +10877,14 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
  *   where D=U-Salpha. U and Salpha are signals without baseline, i.e., we are assuming that the baseline is known or that the baseline is constant (it is the same in 
  *   calibration and during the measurement).
  * 
- *   The terms T=Sbeta-Salpha, t=TWalphaT, X=(Wbeta-Walpha)/t, Y=WalphaT/t, Z=XT and r=1/(ZT) can be precalculated with the calibration
+ *   The terms T=Sbeta-Salpha, t=TWalphaT, X=(Wbeta-Walpha)/t, Y=WalphaT/t, Z=XT and r=1/(ZT) can be pre-calculated with the calibration
  *   data alone.
  *
- * 	(*) Fixsen et all, "Pulse estimation in nonllinear detectors with nonstationary noise"
+ * 	(*) Fixsen et all, "Pulse estimation in nonlinear detectors with non stationary noise"
  *
  * COVAR:
  *
- *	The starting idea is the same as in INTCOVAR, i.e. minimizing (S-M)W(S-M) but without interpolating W (W is the noise weight matrix calculated from the subtraction of the pulse model from the pulses). To do that, a first order development of the pulse
- *	shape between 2 calibration points:
+ *	The starting idea is the same as in INTCOVAR, i.e. minimizing (S-M)W(S-M) but without interpolating W (W is the noise weight matrix calculated from the subtraction of the pulse model from the pulses). To do that, a first order development of the pulse shape between 2 calibration points:
  *
  *	d(E) = s(Ea) + (E-Ea)/(Eb-Ea) . (s(Eb)-s(Ea)) (s without the baseline) => d(E)- bm - s(Ea) - b0 + Ea/(Eb-Ea) . (s(Eb)-s(Ea)) = E . (s(Eb) - s(Ea))/(Eb - Ea)
  * 
@@ -10841,7 +10893,7 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
  *
  *   => d(E) - dab = E . sab + (bm-b0) => Datos = E · Modelo + Baseline => y = E·x + B (condition equation)
  *
- *   where dab = d(Ea) - Ea/(Eb-Ea) * (s(Eb)-s(Ea))  and sab = (s(Eb) - s(Ea))/(Eb - Ea) can be pre-calculated. That way, you see that if you subtract dab
+ *   where dab = s(Ea) - Ea/(Eb-Ea) * (s(Eb)-s(Ea))  and sab = (s(Eb) - s(Ea))/(Eb - Ea) can be pre-calculated. That way, you see that if you subtract dab
  *   to your data, you end up again in an optimal filter like situation with your data modeled by something that is proportional to a template
  *   (that here would be more accurately called a "differential" template).
  * 
@@ -10862,32 +10914,32 @@ int pulseGrading (ReconstructInitSIRENA *reconstruct_init, int tstart, long grad
  *   |B|                                                                              |. |           |.  1|
  *                                                                                    |ym|           |xm 1|
  *   If OFLib=no, DAB, SAB and WAB columns from the library are used to calculate (X'.W.X)^(-1) .X'.W.Y. In particular, if pulse size is different from the
- *   template length in the library, instead of wrongly cutting WAB (because of the inverse to convert V into W) it is necessary to work with COVARM column and recalculate 
- *   WAB for the appropiate length.
+ *   template length in the library, instead of wrongly cutting WAB (because of the inverse to convert V into W) it is necessary to work with COVARM column and
+ *   recalculate WAB for the appropriate length.
  *   If OFLib=yes, information in the PRCLCOV HDU (PCOVx) of the library is used (=(X'.W.X)^(-1) .X'.W).
  * 
  * Parameters:
- * - pulse: Pulse whose energy has to be determined (if LagsOrNot=1 => Pulse is numlags-1 samples longer but only filterFFT->size samples will be used each lag)
- * - filter: Optimal filter in time domain
- * - filterFFT: Optimal filter in frequency domain
- * - indexEalpha: Index of the energy lower than the energy of the pulse which is being analyzed
- * - indexEbeta: Index of the energy higher than the energy of the pulse which is being analyzed
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values)
- * - samprate: Sampling rate
+ * - pulse: Pulse whose energy is to be determined (if LagsOrNot=1 => Pulse is numlags-1 samples longer but only filterFFT->size samples will be used each lag)
+ * - filter: Optimal filter in the time domain
+ * - filterFFT: Optimal filter in the frequency domain
+ * - indexEalpha: Index of the energy value lower than the energy of the pulse being analyzedd
+ * - indexEbeta: Index of the energy value higher than the energy of the pulse being analyzed
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that initializes the reconstruction parameters (pointer and values)
+ * - samprate: Sampling rate (in Hz)
  * - Dab: DAB column in the library
- * - PRCLCOV: Appropriate PCOVx column in the library
- * - PRCLOFWN: Appropriate OFWNx column in the library
- * - calculatedEnergy: Calculated energy in eV
+ * - PRCLCOV: PCOVx column in the library
+ * - PRCLOFWN: OFWNx column in the library
+ * - calculatedEnergy: Calculated energy (in eV)
  *                     If 'pulseGrade'=-1 (rejected) the provided calculated energy is -1
- * - tstartNewDev: Additional deviation of the tstart (if lags)
+ * - tstartNewDev: Additional deviation of the staring time (if lags)
  * - lagsShift: Number of samples shifted to find the maximum of the parabola
- * - LowRes: 1 if the low resolution energy estimator (without lags) is going to be calculated
- * - productSize: Size of the scalar product to be calculated
- * - tooshortPulse_NoLags: Pulse too short to apply lags (1) or not (0)
+ * - LowRes: Flag indicating whether the low-resolution energy estimator (without lags) should be calculated (1 = yes)
+ * - productSize: Size of the scalar product to be computed
+ * - tooshortPulse_NoLags: Flag indicating whether the pulse is too short to apply lags (1 = yes, 0 = no)
  ****************************************************************************/
 int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *filterFFT, int indexEalpha, int indexEbeta, ReconstructInitSIRENA *reconstruct_init, gsl_vector *Dab, gsl_matrix *PRCLCOV, gsl_matrix *PRCLOFWN, double *calculatedEnergy, double *tstartNewDev, int *lagsShift, int LowRes, int productSize, int tooshortPulse_NoLags)
 {
-    log_trace("calculateEnergy...");    
+    log_trace("calculateEnergy...");
     if (filter)
     {
         log_debug("filter->size: %i",filter->size);
@@ -10895,6 +10947,35 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
         log_debug("pulse->size: %i",pulse->size);
         log_debug("productSize: %i",productSize);
     }
+    //cout<<"pulse->size: "<<pulse->size<<endl;
+    //cout<<"filter->size: "<<filter->size<<endl;
+    /*if (LowRes == 0)
+    {
+    for (int i=0;i<pulse->size;i++)
+        cout<<i<<" "<<gsl_vector_get(pulse,i)<<endl;
+    }*/
+
+
+    // Fill with 0's at the extreme of the pulses (those parts to be used when shifting the lags to calculate the convolution)
+    /*for (int i=0;i<reconstruct_init->nLags/2;i++)
+    {
+        //cout<<"i: "<<i<<endl;
+        //cout<<"pulse->size-1-i: "<<pulse->size-1-i<<endl;
+        gsl_vector_set(pulse,i,0.0);
+        gsl_vector_set(pulse,pulse->size-1-i,0.0);
+    }*/
+
+
+
+    /*if (LowRes == 0)
+    //{
+    cout<<"Pulse0pad: "<<endl;
+        for (int i=0;i<pulse->size;i++)
+            cout<<i<<" "<<gsl_vector_get(pulse,i)<<endl;
+    //}*/
+
+    /*for (int i=0;i<pulse->size;i++)
+        cout<<gsl_vector_get(pulse,i)<<endl;*/
 
     gsl_vector *vector;
     
@@ -10915,7 +10996,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
         message = "If tstartPulse1 starts with '@' (exact tstarts in a piximpact file) => NO lags";
         EP_PRINT_ERROR(message,-999);	// Only a warning
     }
-    
+
     *tstartNewDev = 0;
 
     int numlags = -999; // Different from numlags = nLags/2
@@ -10925,7 +11006,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
     
     if (((int)(pulse->size) <= numlags) && ((strcmp(reconstruct_init->EnergyMethod,"OPTFILT") == 0) || (strcmp(reconstruct_init->EnergyMethod,"0PAD") == 0)) && (strcmp(reconstruct_init->OFNoise,"NSD") == 0))
     {
-        *calculatedEnergy = -1.0;
+        //*calculatedEnergy = -1.0;
+        *calculatedEnergy = -999.0;
     }
     else
     {
@@ -10987,6 +11069,13 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                     {
                         vector = gsl_vector_alloc(pulse->size);
                         gsl_vector_memcpy(vector,pulse);
+
+                        // Pulse and filter should be centered to avoid distorting the parabola (subtract the mean before convolution)
+                        //center_nonzero_values(vector);
+
+                        /*vector = gsl_vector_alloc(productSize);
+                        temp = gsl_vector_subvector(pulse, (reconstruct_init->nLags)/2, productSize);
+                        gsl_vector_memcpy(vector,&temp.vector);*/
                         
                         // Apply a Hann window to reduce spectral leakage
                         /*if (hannWindow(&vector))
@@ -10998,6 +11087,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                         for (int i=0;i<productSize;i++)
                         {
                             gsl_vector_set(calculatedEnergy_vector,0,gsl_vector_get(calculatedEnergy_vector,0)+gsl_vector_get(vector,i+0)*gsl_vector_get(filter,i));
+                            //if (i<8) cout<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,0))/filter->size<<endl;
+                            //cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,0))/filter->size<<endl;
                         }
                         // Because of the FFT and FFTinverse normalization factors
                         gsl_vector_set(calculatedEnergy_vector,0,fabs(gsl_vector_get(calculatedEnergy_vector,0))/filter->size);
@@ -11028,10 +11119,16 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     message = "Cannot run hannWindow routine";
                                     EP_PRINT_ERROR(message,EPFAIL);
                                 }*/
-                                
+
+                                // Pulse and filter should be centered to avoid distorting the parabola (subtract the mean before convolution)
+                                //center_nonzero_values(vector);
+
+                                //cout<<"j: "<<j<<endl;
                                 for (int i=0;i<productSize;i++)
                                 {
                                     gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i)*gsl_vector_get(filter,i));
+                                    //if (i<8) cout<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size<<endl;
+                                    //cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size<<endl;
                                 }
 
                                 // Because of the FFT and FFTinverse normalization factors
@@ -11046,11 +11143,24 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             }
                             xmax = -b/(2*a);
                             calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
-                            
+
                             if ((xmax >= -1) && (xmax <= 1))
                             {
                                 maxParabolaFound = true;
                             }
+                            ///*if (LowRes==0)
+                            //{
+                                /*cout<<"Parabola0"<<endl;
+                                cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<endl;
+                                cout<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;
+                                //cout<<"a: "<<a<<endl;
+                                //cout<<"b: "<<b<<endl;
+                                //cout<<"c: "<<c<<endl;
+                                cout<<"indexmax: "<<indexmax<<endl;
+                                cout<<"maxvalue: "<<a*pow(xmax,2)+b*xmax+c<<endl;
+                                cout<<"xmax: "<<xmax<<endl;
+                                cout<<"maxParabolaFound1: "<<maxParabolaFound<<endl;*/
+                            //}*/
 
                             if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
                             {
@@ -11077,9 +11187,12 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     newEnergy = 0.0;
                                     temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+newLag,productSize);
                                     gsl_vector_memcpy(vector,&temp.vector);
+                                    // Pulse and filter should be centered to avoid distorting the parabola (subtract the mean before convolution)
+                                    //center_nonzero_values(vector);
                                     for (int k=0;k<productSize;k++)
                                     {
                                         newEnergy = newEnergy + gsl_vector_get(vector,k)*gsl_vector_get(filter,k);
+                                        //if (k<8) cout<<gsl_vector_get(vector,k)<<" "<<gsl_vector_get(filter,k)<<" "<<fabs(newEnergy/filter->size)<<endl;
                                     }
 
                                     newEnergy = fabs(newEnergy/filter->size);
@@ -11107,7 +11220,19 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                         maxParabolaFound = true;
                                     }
                                     else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
-
+                                    ///*if (LowRes==0)
+                                    //{
+                                        /*cout<<"Parabolai"<<endl;
+                                        cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<endl;
+                                        cout<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;
+                                        //cout<<"a: "<<a<<endl;
+                                        //cout<<"b: "<<b<<endl;
+                                        //cout<<"c: "<<c<<endl;
+                                        cout<<"indexmax: "<<indexmax<<endl;
+                                        cout<<"maxvalue: "<<a*pow(xmax,2)+b*xmax+c<<endl;
+                                        cout<<"xmax: "<<xmax<<endl;
+                                        cout<<"maxParabolaFoundi: "<<maxParabolaFound<<endl;*/
+                                    //}*/
                                 } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
                             }
 
@@ -11120,6 +11245,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             {
                                 temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,productSize);
                                 gsl_vector_memcpy(vector,&temp.vector);
+                                // Pulse and filter should be centered to avoid distorting the parabola (subtract the mean before convolution)
+                                //center_nonzero_values(vector);
 
                                 // Apply a Hann window to reduce spectral leakage
                                 /*if (hannWindow(&vector))
@@ -11128,6 +11255,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     EP_PRINT_ERROR(message,EPFAIL);
                                 }*/
                                 
+                                cout<<"j: "<<j<<endl;
                                 for (int i=0;i<productSize;i++)
                                 {
                                     gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i)*gsl_vector_get(filter,i));
@@ -11145,7 +11273,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
                             
                             if ((xmax >= -2) && (xmax <= 2)) maxParabolaFound = true;
-                            
+
                             if (((xmax < -2) || (xmax > 2)) && (reconstruct_init->nLags > 5))
                             {
                                 do
@@ -11175,6 +11303,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     newEnergy = 0.0;
                                     temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+newLag,productSize);
                                     gsl_vector_memcpy(vector,&temp.vector);
+                                    // Pulse and filter should be centered to avoid distorting the parabola (subtract the mean before convolution)
+                                    //center_nonzero_values(vector);
                                     for (int k=0;k<productSize;k++)
                                     {
                                         newEnergy = newEnergy + gsl_vector_get(vector,k)*gsl_vector_get(filter,k);
@@ -11220,8 +11350,17 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             *tstartNewDev = 0;
                             *lagsShift = 0;
                         }
+                        //cout<<"maxParabolaFound3: "<<maxParabolaFound<<" "<<*calculatedEnergy<<endl;
                         
                         log_debug("calculatedEnergyTIME: %f",*calculatedEnergy);
+                        if (LowRes==0)
+                        {
+                            log_debug("calculatedEnergytstartNewDev: %f",*tstartNewDev);
+                            log_debug("calculatedEnergylagsShift: %d",*lagsShift);
+                            //cout<<"lagsShift = "<<*lagsShift<<" LowRes = "<<LowRes<<endl;
+
+                            //if (maxParabolaFound == false)  cout<<"No maximum found for the parabola => Equivalent to not using it."<<endl;
+                        }
                     }
                 }
             }
@@ -11246,6 +11385,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                         temp = gsl_vector_subvector(pulse,0,filterFFT->size);
                         
                         gsl_vector_memcpy(vectorSHORT,&temp.vector);
+                        //center_nonzero_values(vectorSHORT);
                        
                         // Apply a Hann window to reduce spectral leakage
                         /*if (hannWindow(&vectorSHORT))
@@ -11284,8 +11424,9 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             {
                                 gsl_vector  *vectorSHORT = gsl_vector_alloc(filterFFT->size);
                                 temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-1,filterFFT->size);
-                                
+
                                 gsl_vector_memcpy(vectorSHORT,&temp.vector);
+                                //center_nonzero_values(vectorSHORT);
                                 
                                 // Apply a Hann window to reduce spectral leakage
                                 /*if (hannWindow(&vectorSHORT))
@@ -11345,6 +11486,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     gsl_vector  *vectorSHORT = gsl_vector_alloc(filterFFT->size);
                                     temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+newLag,filterFFT->size);
                                     gsl_vector_memcpy(vectorSHORT,&temp.vector);
+                                    //center_nonzero_values(vectorSHORT);
                                     if (FFT(vectorSHORT,vectorFFT))
                                     {
                                         message = "Cannot run routine FFT";
@@ -11392,6 +11534,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                 gsl_vector  *vectorSHORT = gsl_vector_alloc(filterFFT->size);
                                 temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+j-2,filterFFT->size);
                                 gsl_vector_memcpy(vectorSHORT,&temp.vector);
+                                //center_nonzero_values(vectorSHORT);
                                 
                                 // Apply a Hann window to reduce spectral leakage
                                 /*if (hannWindow(&vectorSHORT))
@@ -11454,6 +11597,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     gsl_vector  *vectorSHORT = gsl_vector_alloc(filterFFT->size);
                                     temp = gsl_vector_subvector(pulse,(reconstruct_init->nLags)/2+newLag,filterFFT->size);
                                     gsl_vector_memcpy(vectorSHORT,&temp.vector);
+                                    //center_nonzero_values(vectorSHORT);
                                     if (FFT(vectorSHORT,vectorFFT))
                                     {
                                         message = "Cannot run routine FFT";
@@ -11982,27 +12126,27 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
 
 
 /***** SECTION B12 ************************************************************
- * writeFilterHDU: This function runs in RECONSTRUCTION mode and writes the optimal filter info (in the FILTER HDU) for each pulse
- *                 if intermediate'=1 and either OFLib=no or OFLib=yes, filtEeV=0 and number of rows in the library FITS file is greater than 1.
+ * writeFilterHDU: This function runs in RECONSTRUCTION mode and writes the optimal filter information (in the FILTER HDU) for each pulse
+ *                 if intermediate'=1 and either OFLib=no, or OFLib=yes with filtEeV=0 and the number of rows in the library FITS file is greater than 1.
  *
  * - Declare variables
- * - Open intermediate FITS file
+ * - Open the intermediate FITS file
  * - If OFLib=no or OFLib=yes+filtEev=0+libraryRowsNumber>1:
- *       - Create the FILTER HDU if it is the first pulse
+ *       - Create the FILTER HDU if this is the first pulse
  *       - Write data:
- * 	     - OPTIMALF or OPTIMALFF column (in time or frequency domain)
- * 	     - OFLENGTH column
+ * 	        - OPTIMALF or OPTIMALFF column (in time or frequency domain)
+ * 	        - OFLENGTH column
  * - Write ENERGY column in PULSES HDU
- * - Close intermediate output FITS file if it is necessary
+ * - Close the intermediate FITS file if necessary
  * - Free memory
  *
  * Parameters:
- * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure to initialize the reconstruction parameters (pointer and values).
+ * - reconstruct_init: Member of 'ReconstructInitSIRENA' structure that initializes the reconstruction parameters (pointer and values)
  *                     In particular, this function uses 'detectFile', 'clobber' and 'pulse_length'
- * - pulse_index: Index of the pulse whose info is going to be written (to know if it is the first pulse)
+ * - pulse_index: Index of the pulse whose information is going to be written (used to determine whether this is the first pulse))
  * - energy: Estimated energy (eV)
- * - optimalfilter: Optimal filter (in time domain or frequency domain)
- * - dtcObject: FITS object for intermeadiate file name
+ * - optimalfilter: Optimal filter (either in the time domain or the frequency domain)
+ * - dtcObject: FITS object associated with the intermediate file
  ******************************************************************************/
 int writeFilterHDU(ReconstructInitSIRENA **reconstruct_init, int pulse_index, double energy, gsl_vector *optimalfilter, fitsfile **dtcObject)
 {
@@ -12144,3 +12288,34 @@ int writeFilterHDU(ReconstructInitSIRENA **reconstruct_init, int pulse_index, do
     return(EPOK);
 }
 /*xxxx end of SECTION B12 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+void center_nonzero_values(gsl_vector *pulse)
+{
+    const double EPS = 1e-12;
+    // 1. Calcular la media de los valores no nulos
+    double sum = 0.0;
+    int count = 0;
+    for (size_t i = 0; i < pulse->size; i++)
+    {
+        double v = gsl_vector_get(pulse, i);
+        if (std::fabs(v) > EPS)
+        {
+            // valor "no cero"
+            sum += v; count++;
+
+        }
+
+    }
+    if (count == 0) return; // nada que centrar
+    double mean_nonzero = sum / count;
+    // 2. Restar la media solo a los valores no nulos
+    for (size_t i = 0; i < pulse->size; i++)
+    {
+        double v = gsl_vector_get(pulse, i);
+        if (std::fabs(v) > EPS)
+        {
+            gsl_vector_set(pulse, i, v - mean_nonzero);
+        }
+    }
+    //std::cout << "Media de la parte útil = " << mean_nonzero << std::endl;
+}

@@ -43,6 +43,7 @@ MAP OF SECTIONS IN THIS FILE:
  - 19. noDetect
  - 20. offsetAveragingFilter
  - 21. smoothDerivative_causal
+ - 22. kernelNOcausal
 
 *******************************************************************************/
 
@@ -50,13 +51,13 @@ MAP OF SECTIONS IN THIS FILE:
 #include <limits>
 
 /***** SECTION 1 ************************************************************
-* lpf_boxcar function: This function implements a low pass filtering as a box-car function in time
+* lpf_boxcar function: This function implements a low pass filtering using a box-car (moving average) in the time domain.
 *
-* The box-car function is a temporal average window:
+* The box-car function performs a temporal average over n samples:
 *
 * x_(i-1) = (sum(i=0,n-1)(Ii))/n	x_(i) = (sum(i=1,n)(Ii))/n
 *
-* If the cut frequency of the filter is fc, the box-car length (n) is (1/fc)*samprate
+* If the filter cut-off frequency is fc, the box-car length n is approximately (1/fc) × samprate.
 *
 * According to Jan:
 * 	sinc(f1)=0.6 where f1=1/(2pi*scaleFactor)
@@ -65,14 +66,14 @@ MAP OF SECTIONS IN THIS FILE:
 *   	fc=kf1 => fc~2f1
 *
 * - Declare variables
-* - Define the LPF (frequency domain) and the box-car function (time domain)
-* - It is going to work with a longer vector to not have fake results for the last boxLength windows
+* - Define the LPF in the frequency domain and the box-car in the time domain
+* - Work with a lengthened input vector to avoid artifacts at the last boxLength windows
 * - Apply the box-car window by shifting it along the (lengthened) input vector
 * - Free allocated GSL vectors
 *
 *  The function returns:
 *    1: Function cannot run
-*    3: Cut-off frequency too high => Equivalent to not filter
+*    3: Cut-off frequency too high (effectively no filtering)
 *    4: Cut-off frequency too low
 *
 * Parameters:
@@ -176,11 +177,11 @@ int lpf_boxcar (gsl_vector **invector, int szVct, double scaleFactor, int sample
 /***** SECTION 2 ************************************************************
 * differentiate function: This function applies the derivative method (x_i-x_(i-1)) to the input vector
 *
-* The derivative method provides more sensitivity to handle with pilot pulses.
-* Moreover, little variations of the baseline will not affect.
+* The derivative method provides more greater sensitivity for handling piled-up pulses.
+* In addition, small variations in the baseline will not have a significant effect.*
 *
 * Parameters:
-* - invector: Input/Ouput GSL vector (non-differentiated input vector/differentiated input vector)
+* - invector: Input/Output GSL vector (non-differentiated vector as input, differentiated vector as output)
 * - szVct: Size of invector
 ******************************************************************************/
 int differentiate (gsl_vector **invector,int szVct)
@@ -250,26 +251,22 @@ int findMeanSigma (gsl_vector *invector, double *mean, double *sigma)
 
 
 /***** SECTION 4 ************************************************************
-* medianKappaClipping function: This function calculates a threshold in the first derivative of the record by using
+* medianKappaClipping function: This function calculates a threshold in the first derivative of the record using
 *                               a Kappa-clipping method (replacing points beyond mean+-Kappa*sigma with the median).
 *
-* First, mean and sigma are calculated and invector values out of (mean+Kappa*sigma,mean-Kappa*sigma) are replaced
-* with the median (it is trying to look for the baseline). And this process is iteratively repeated until there are
-* no points beyond mean+-Kappa *sigma. Finally, the threshold is calculated as mean+nSigmas*sigma ('+' is used because
-* if there are pulses in the input invector they are always positive).
-*
 * - Declare variables
-* - Calculate the median
-* - Iterate until there are no points out of the maximum excursion (kappa*sigma)
-* - Establish the threshold as mean+nSigmas*sigma
+* - Calculate median of the input vector
+* - Replace values out of the range (mean+-Kappa*sigma) with the median (it is trying to look for the baseline)
+* - Repeat iteratively until no points are beyond kappa*sigma
+* - Set threshold as mean+nSigmas*sigma ('+' because pulses in the derivative are assumed positive)
 *
 * Parameters:
 * - invector: First derivative of the (filtered) record
-* - Kappa: To establish the range around of the mean
-* - stopCriteria: It is given in %
-* - nSigmas: Times sigma to calculate threshold (mean+nSigmas*sigma)
+* - Kappa: Range factor around the mean
+* - stopCriteria: Maximum percentage allowed to stop the iteration (%)
+* - nSigmas: Number of sigmas to calculate the threshold (mean + nSigmas*sigma)
 * - boxLPF: Length of the low-pass filtering box-car
-* - threshold: Calculated threshold
+* - threshold: Output variable containing the calculated threshold
 ******************************************************************************/
 int medianKappaClipping (gsl_vector *invector, double kappa, double stopCriteria, double nSigmas, int boxLPF, double *threshold)
 {
@@ -1231,25 +1228,24 @@ int getB(gsl_vector *vectorin, gsl_vector *tstart, int nPulses, gsl_vector **lb,
 
 
 /***** SECTION 6 ************************************************************
-* getPulseHeight function: This function estimates the pulse height of a pulse by using a running sum filter.
-*                 It extracts from the record, vectorin, the pulse whose pulse height is going to be estimated
-*                 by using RS_filter.
+* getPulseHeight function: This function estimates the pulse height of a pulse using a running sum (RS) filter.
+*                 It extracts from the input record, vectorin, the pulse whose pulse height is to be estimated
+*                 using 'RS_filter'.
 *
 * - Declare variables
-* - Extracting from the record the pulse whose pulse height is going to be estimated
+* - Extract from the record the pulse to be analyzed
 * - Apply the running sum filter
 *
 * Parameters:
-* - vectorin: Not filtered record
-* - tstart: Starting time of the pulse whose pulse height is going to be estimated
-* - tstartnext: Starting time of the next pulse whose pulse height is going to be estimated
-* - lastPulse: It is 1 if the pulse is the last one into the record or the only one
+* - vectorin: Input record (not filtered)
+* - tstart: Starting sample of the pulse to be analyzed
+* - tstartnext: Starting sample of the next pulse (if any)
+* - lastPulse: Flag indicating if this is the last pulse in the record or the only pulse (1 = yes, 0 = no)
 * - lrs: Running sum length (equal to the 'Lrs' global_variable)
-* - lb: Baseline averaging length used for the pulse whose pulse height is going to be estimated
-* - B: In general, sum of the Lb digitized data samples of a pulse-free interval immediately before
-*      the current pulse
-* - sizepulse: Size of the pulse in samples ('PulseLength')
-* - pulseheight: Estimated pulse height of the pulse
+* - lb: Baseline averaging length for current pulse
+* - B: Sum of 'Lb' digitized samples of a pulse-free interval generally located immediately before each pulse
+* - sizepulse: Pulse length (samples) ('PulseLength')
+* - pulseheight: Estimated pulse height of the pulse (output)
 ****************************************/
 int getPulseHeight(gsl_vector *vectorin, double tstart, double tstartnext, int lastPulse, double lrs, double lb, double B, int sizepulse, double *pulseheight)
 {
@@ -1319,9 +1315,9 @@ int getPulseHeight(gsl_vector *vectorin, double tstart, double tstartnext, int l
 *                     It always works in time domain.
 *
 * A running sum filter, RS, is the sum of lrs digitized data samples. It is continuously updated upon the arrival of
-* new data point. Simultaneously a baseline filter, B, is the sum of lb digitized data samples without pulses.
+* new data points. Simultaneously a baseline filter, B, is the sum of lb digitized data samples from a pulse-free interval.
 *
-* The algorithm looks for the time when RS/lrs reaches its maximum. At that time RS is stored, RS_max, and the baseline
+* The algorithm looks for the time when RS/lrs reaches its maximum. At that time RS is stored as RS_max, and the baseline
 * is scaled with lrs, Bp (Bp=B*lrs/lb). Then, the pulse height related to the pulse pseudoenergy is given by:
 *
 *                     RS_max-Bp
@@ -1329,11 +1325,10 @@ int getPulseHeight(gsl_vector *vectorin, double tstart, double tstartnext, int l
 *                        lrs
 *
 * Parameters:
-* - vector: Not filtered pulse (extracted from the record in 'getPulseHeight')
+* - vector: Unfiltered pulse (extracted from the record in 'getPulseHeight')
 * - lrs: Running sum length (samples)
 * - lb: Baseline averaging length (samples)
-* - B: In general, sum of the lb digitized data samples of a pulse-free interval immediately before
-*      the current pulse
+* - B: In general, sum of the lb digitized samples from a pulse-free interval immediately before the current pulse
 * - pulseheight: Pulse height of the pulse
 *****************************************/
 int RS_filter (gsl_vector *vector, double lrs, double lb, double B, double *pulseheight)
@@ -1630,27 +1625,22 @@ int find_model_samp1DERs(double samp1DER, ReconstructInitSIRENA *reconstruct_ini
 
 
 /***** SECTION 10 ************************************************************
-* interpolate_model: This function interpolates the pulse model, p(t,E), between two models of the pulse models library,
-*                    p(t,E1) and p(t,E2), being E1<E<E2.
+* interpolate_model: This function interpolates the pulse model p(t,E) between two models from the pulse models library,
+*                    p(t,E1) and p(t,E2), where E1<E<E2.
 *
-* According to the interpolation method:
+* According to the interpolation weighted method:
 *
-*                p(t,E1)+p(t,E2)
-* 	1. p(t,E)= -----------------
-* 	                    2
-* 	           E2-E           E-E1
-* 	2. p(t,E)=-------p(t,E1)+-------p(t,E2)
-*                  E2-E1          E2-E1
-*
-* The more intelligent averaging (2) is used instead the simplest method (1).
+           E2-E           E-E1
+* p(t,E)=-------p(t,E1)+-------p(t,E2)
+*          E2-E1          E2-E1
 *
 * Parameters:
-* - modelFound: Found model of the pulse whose energy or maxDER is p_model
-* - p_model: Parameter (energy or maxDER) of the pulse whose model is looking for
-* - modelIn1: Model of the pulse whose parameter (energy or maxDER) is immediately lower than p_model in the library FITS file
-* - p_modelIn1: Parameter (energy or maxDER) immediately lower than p_model in the library FITS file
-* - modelIn2: Model of the pulse whose parameter (energy or maxDER) is immediately greater than p_model in the library FITS file
-* - p_modelIn2: Parameter (energy or maxDER) immediately greater than p_model in the library FITS file
+* - modelFound: Interpolated model for the pulse with parameter p_model (output)
+* - p_model: Parameter (energy or maxDER) of the pulse for which the model is being interpolated
+* - modelIn1: Model of the pulse with parameter immediately lower than p_model in the library FITS file
+* - p_modelIn1: Parameter value immediately lower than p_model in the library FITS file
+* - modelIn2: Model of the pulse with parameter immediately greater than p_model in the library FITS file
+* - p_modelIn2: Parameter value immediately greater than p_model in the library FITS file
 ****************************************/
 int interpolate_model(gsl_vector **modelFound, double p_model, gsl_vector *modelIn1, double p_modelIn1, gsl_vector *modelIn2, double p_modelIn2)
 {
@@ -1685,36 +1675,35 @@ int interpolate_model(gsl_vector **modelFound, double p_model, gsl_vector *model
 
 
 /***** SECTION 11 ************************************************************
-* findPulsesCAL: This function is going to find the pulses in a record (in the CALibration mode) by using the function findTstartCAL
+* findPulsesCAL: This function finds the pulses in a record (in CALibration mode) by using the function 'findTstartCAL'
 *
 * - Declare variables
-* - Find pulses (call findTstartCAL)
-* - If at least a pulse is found
-* 	- Get the 'pulseheight' of each found pulse (in order to be used to build the pulse templates library)
+* - Find pulses (call 'findTstartCAL')
+* - If at least a pulse is found:
+* 	- Compute the pulse height of each detected pulse (used to build the pulse templates library)
 * - Free allocated GSL vectors
 *
 * Parameters:
 * - vectorin: Not filtered record
 * - vectorinDER: Derivative of the low-pass filtered 'vectorin'
-* - tstart: Starting time of the found pulses into the record (in samples)
-* - quality: Quality of the found pulses into the record
-* - pulseheight: Pulse height of the found pulses into the record
-* - maxDERgsl: Maximum of the derivative of the found low-pass filtered pulses into the record
-* - nPulses: Number of found pulses
-* - threshold: Threshold used to find the pulses
-* - scalefactor: Scale factor to calculate the LPF box-car length
+* - tstart: Starting time of the detected pulses in the record (samples)
+* - quality: Quality of the detected pulses in the record
+* - pulseheight: Pulse height of the detected pulses in the record
+* - maxDERgsl: Maximum of the derivative of the detected low-pass filtered pulses in the record
+* - nPulses: Number of detected pulses
+* - threshold: Threshold used to detect pulses
+* - scalefactor: Scale factor used to compute the LPF box-car length
 * - samplingRate: Sampling rate
-* - samplesup: Number of consecutive samples over the threshold to locate a pulse ('samplesUp')
-* - nsgms: Number of Sigmas to establish the threshold
+* - samplesup: Number of consecutive samples above the threshold required to identify a pulse
+* - nsgms: Number of sigmas used to set the threshold
 * - lb: Vector containing the baseline averaging length used for each pulse
-* - lrs: Running sum length (equal to the 'Lrs' global_variable)
-* - reconstruct_init: Structure containing all the pointers and values to run the reconstruction stage
+* - lrs: Running sum length (equal to the global_variable 'Lrs' )
+* - reconstruct_init: Structure that initializes the reconstruction parameters (pointer and values)
 *                     This function uses 'maxPulsesPerRecord' and 'pulse_length' (and 'findTstartCAL' uses 'tstartPulse1', 'tstartPulse2' and 'tstartPulse3')
-* - stopCriteriamkc: Used in medianKappaClipping (%)
-* - kappamkc: Used in medianKappaClipping
+* - stopCriteriamkc: Stop criterion used in 'medianKappaClipping' (%)
+* - kappamkc: Kappa value used in 'medianKappaClipping'
 ****************************************/
-int findPulsesCAL
-(
+int findPulsesCAL(
 	gsl_vector *vectorin,
 	gsl_vector *vectorinDER,
 	gsl_vector **tstart,
@@ -1729,7 +1718,7 @@ int findPulsesCAL
 	double samplingRate,
 
 	int samplesUp,
-        double nsgms,
+    double nsgms,
 
 	double lb,
 	double lrs,
@@ -1828,39 +1817,36 @@ int findPulsesCAL
 
 
 /***** SECTION 12 ************************************************************
-* findTstartCAL function: This function finds the pulses tstarts in the input vector (first derivative of the filtered record)
+* findTstartCAL function: This function finds the starting times of the detected pulses in the input vector (first derivative of the filtered record)
 *
-* This function scans all values the derivative of the (low-pass filtered) record until it finds nSamplesUp consecutive values (due to the noise more than 1 value is
-* required) over the threshold. To look for more pulses, it finds nSamplesUp consecutive values
-* (due to the noise) under the threshold and then, it starts to scan again.
+* The function scans all values of the derivative (after low-pass filtering) until it finds nSamplesUp consecutive values above the threshold (more than one sample is * required due to noise). To search for additional pulses, it then looks for nSamplesUp consecutive values below the threshold before resuming the scan.
 *
 * - Declare variables
 * - Allocate GSL vectors
-* - It is possible to find the tstarts...
-* 	- Obtain tstart of each pulse in the derivative:
-* 		- If der_i>threshold and foundPulse=false, it looks for nSamplesUp consecutive samples over the threshold
-*   			- If not, it looks again for a pulse crossing over the threshold
-*	        	- If yes, a pulse is found (truncated if it is at the beginning)
-*	   	- If der_i>threshold and foundPulse=true, it looks for a sample under the threshold
-*   	  		- If not, it looks again for a sample under the threshold
-*       		- If yes, it looks for nSamplesUp consecutive samples under the threshold and again it starts to look for a pulse
-* - ...or to use the tstart provided as input parameters
-* 	- Obtain the maxDERs of the pulses whose tstarts have been provided
+* - Detect tstarts of pulses:
+* 	- If der_i>threshold and foundPulse=false, it looks for nSamplesUp consecutive samples above the threshold
+*       - If not found, continue scanning for the next pulse crossing
+*	    - If found, a pulse is detected (truncated if it occurs at the beginning)
+*	- If der_i>threshold and foundPulse=true, it looks for a sample below the threshold
+*   	- If not found, continue scanning for a sample below the threshold
+*       - If found, look for nSamplesUp consecutive samples below the threshold, then resume scanning for the next pulse
+* - Alternatively, use the tstarts provided as input parameters
+*   - Obtain the maximum derivative (maxDERs) of pulses whose tstarts were provided
+*
 *
 * Parameters:
-* - maxPulsesPerRecord: Expected maximum number of pulses per record in order to not allocate the GSL variables with the size of the input vector
+* - maxPulsesPerRecord: Expected maximum number of events per record (used to size GSL variables)
 * - der: First derivative of the (low-pass filtered) record
 * - adaptativethreshold: Threshold
-* - nSamplesUp: Number of consecutive samples over the threshold to 'find' a pulse
-* - reconstruct_init: Structure containing all the pointers and values to run the reconstruction stage
+* - nSamplesUp: Number of consecutive samples above the threshold required to detect a pulse
+* - reconstruct_init: Structure that initializes the reconstruction parameters (pointer and values)
 *                     This function uses 'pulse_length', 'tstartPulse1', 'tstartPulse2' and 'tstartPulse3'
-* - numberPulses: Number of found pulses
-* - tstartgsl: Pulses tstart (in samples)
-* - flagTruncated: Flag indicating if the pulse is truncated (inside this function only initial truncated pulses are classified)
-* - maxDERgsl: Maximum of the first derivative of the (low-pass filtered) record inside each found pulse
+* - numberPulses: Number of pulses detected
+* - tstartgsl: Starting times of detected events (samples)
+* - flagTruncated: Flag indicating truncated events (only initial truncated pulses are classified here)
+* - maxDERgsl: Maximum of the derivative of the event
 ******************************************************************************/
-int findTstartCAL
-(
+int findTstartCAL(
 	int maxPulsesPerRecord,
 
 	gsl_vector *der,
@@ -2036,28 +2022,25 @@ int findTstartCAL
 
 
 /***** SECTION 13 ************************************************************
-* InitialTriggering function: This function finds the first pulse in the input vector, first derivative of the (low-pass filtered) record
+* InitialTriggering function: This function detects the first pulse in the input vector, which is the first derivative of the (low-pass filtered) record.
 *
 * - Declare variables
-* - It is necessary to find the tstart of the first pulse...
-*   Obtain tstart of the first pulse in the derivative if der_i>threshold
-* - ...or to use the tstart provided as input parameter
+* - Determine the tstart of the first pulse by checking where derivative values exceed the threshold
+* - Alternatively, use the tstart provided as an input parameter
 *
 * Parameters:
 * - derivative: First derivative of the (low-pass filtered) record
-* - nSgms: Number of Sigmas to establish the threshold 
-* - scalefactor: Scale factor to calculate the LPF box-car length ('scaleFactor')
+* - nSgms: Number of sigmas used to establish the threshold
+* - scalefactor: Scale factor used to calculate the LPF box-car length
 * - samplingRate: Sampling rate
-* - stopCriteriamkc: Used in medianKappaClipping (%)
-* - kappamkc: Used in medianKappaClipping
-* - triggerCondition: true -> the algorithm has found the first event
-*                     false -> the algorithm has not found any event
-* - tstart: First event tstart (in samples)
-* - flagTruncated: Flag indicating if the event is truncated (inside this function only initial truncated events are classified)
-* - threshold: Calculated threshold
+* - stopCriteriamkc: Parameter used in medianKappaClipping (%)
+* - kappamkc: Parameter used in medianKappaClipping
+* - triggerCondition: Output flag; true if the first event is found, false otherwise
+* - tstart: Start time of the first event (samples)
+* - flagTruncated: Output flag indicating if the first event is truncated (only the initial truncated events are classified inside this function)
+* - threshold: Threshold value
 ****************************************/
-int InitialTriggering
-(
+int InitialTriggering(
 	gsl_vector *derivative,
 
 	double nSgms,
@@ -2106,66 +2089,56 @@ int InitialTriggering
 
 
 /***** SECTION 14 ************************************************************
-* FindSecondaries function: This function runs after InitialTriggering to find all the events (except the first one) in the record first derivative of the (low-pass filtered) record by using the Adjusted Derivative detection method
+ * FindSecondaries function: This function runs after 'InitialTriggering' to find all events (except the first one) in the first derivative
+ *                           of the (low-pass filtered) record using the Adjusted Derivative detection method.
 *
 * - Declare variables
-* - Establishing the criteria of the slope of the derivative depending on the sampling rate
-* - It looks for an event and if a pulse is found (foundPulse==true), it looks for another event
-* 
-* 	- It looks for an event since the beginning (or the previous event) to the end of the record
-*         The first condition to detect an event is that the adjustedDerivative was over the threshold
-* 
-*           - Select the model of the found pulse from the libary by using the 1st sample of the derivative (samp1DER)
-*           - Dot product between the detected pulse and the pulse template in 3 different lags
-*            
-*               - If maximum of the dot product found => Stop calculating dot products in more lags
-*               - If maximum of the dot product not found => Calculate dot products in more lags (number of lags is limited to 5)
-*            
-*           - If maximum of the dot product not found => tstart is the first sample crossing above the threshold (without jitter)
-*              
-*               - Average of the first 4 samples of the derivative
-*               - Find model in order to subtract
-*
-*           - If maximum of the dot product found => Parabola analytically defined => Locate the maximum => New tstart (with jitter)
-*            
-*               - Iterative process in order to extract the best template from the library:
-*                   - samp1DER correction
-*                   - Find the model from the libary by using the corrected samp1DER
-*                   - Dot product in 3 lags
-*                   - Locate the maximum of the parabola
+* - Establish the slope criteria of the derivative depending on the sampling rate
+* - Search for events in the record:
+*   If a pulse is found ('foundPulse' == true), continue searching for additional events
+*   Event search is performed from the beginning (or the previous event) to the end of the record
+*    - First condition to detect an event: 'adjustedDerivative' exceeds the threshold
+*       - Select the model of the detected pulse from the library using the first sample of the derivative ('samp1DER')
+*       - Compute dot product between the detected pulse and the pulse template over 3 different lags
+*           - If the maximum of the dot product is found: stop calculating more lags
+*           - If the maximum is not found: calculate additional lags (limited to 5)
+*       - If the maximum dot product is not found:
+*           - Set 'tstart' as the first sample crossing above the threshold (without jitter)
+*           - Average the first 4 samples of the derivative
+*           - Select model for subtraction (by using 'find_model_samp1DERsNoReSCLD')
+*       - If the maximum dot product is found:
+*           - Parabola analytically defined => Locate its maximum => Update 'tstart' (with jitter)
+*           - Iterative template extraction from the library:
 *               - samp1DER correction
-*               - Find model in order to subtract
+*               - Find model from the library by using corrected samp1DER
+*               - Dot product over 3 lags
+*               - Parabola (locate maximum of the parabola)
+*               - samp1DER correction
+*               - Find model to subtract
 *               - Template correction
-*               - Average of the first 4 samples of the derivative
-*                
-*           - The second condition to detect an event is meeting the criteria of the slope of the derivative
-* 
-* 	- Subtract the model from the adjusted derivative
-* 
-* 		- Select the model of the found event from the libary by using the first sample of the derivative
-* 		- Subtract
-*  
+*               - Average first 4 samples of the derivative
+*    - Second condition to detect an event: slope of the derivative meets the criteria
+*       - Subtract the model from the adjusted derivative
 * - Free allocated GSL vectors
 *
 * Parameters:
-* - maxPulsesPerRecord: Expected maximum number of events per record in order to not allocate the GSL variables with the size of the input vector ('EventListSize')
-*
-* - adjustedDerivative: First derivative of the (low-pass filtered) record 
-* - adaptativethreshold: Threshold
-* - samprate: Sampling rate
-* - reconstruct_init: Structure containing all the pointers and values to run the reconstruction stage
-*                     This function uses some parameters ('pulse_length', 'tstartPulsex', 'EnergyMethod') and the templates
-* - tstartFirstEvent: Tstart of the first event of the record (in samples) found by 'InitialTriggering'
-* - numberPulses: Number of found events
-* - tstartgsl: Staring time of the found events (in samples)
-* - flagTruncated: Flag indicating if the event is truncated (inside this function only initial truncated pulses are classified)
-* - maxDERgsl: Maximum of the derivative of the event
-*              It is going to be used by 'find_matchfilter', 'find_matchfilterDAB', 'find_optimalfilter', 'find_optimalfilterDAB' and 'find_Esboundary'
-* - samp1DERgsl: Average of the first 4 samples of the derivative of the event
-* - lagsgsl: Number of necessary lags to establish the tstart (currently limited to 5)
+*  - maxPulsesPerRecord: Expected maximum number of events per record (used to size GSL variables)('EventListSize')
+*  - adjustedDerivative: First derivative of the (low-pass filtered) record
+*  - adaptativethreshold: Threshold
+*  - samprate: Sampling rate
+*  - reconstruct_init: Structure that initializes the reconstruction parameters (pointer and values)
+*        This function uses 'pulse_length', 'tstartPulsex', 'EnergyMethod', and the templates
+*  - tstartFirstEvent: Starting time of the first event in the record (samples) (found by 'InitialTriggering')
+*  - numberPulses: Number of detected events
+*  - tstartgsl: Starting times of detected events (samples)
+*  - flagTruncated: Flag indicating truncated events (only initial truncated pulses are classified here)
+*  - maxDERgsl: Maximum of the derivative of the event
+*        Used by 'find_matchfilter', 'find_matchfilterDAB', 'find_optimalfilter',
+*        'find_optimalfilterDAB', and 'find_Esboundary'
+*  - samp1DERgsl: Average of the first 4 samples of the derivative of the event
+*  - lagsgsl: Number of lags used to establish tstart (currently limited to 5)
 ****************************************/
-int FindSecondaries
-(
+int FindSecondaries(
 	int maxPulsesPerRecord,
 
 	gsl_vector *adjustedDerivative,
@@ -2310,7 +2283,7 @@ int FindSecondaries
 
                     }
                         
-                    // Select the model of the found pulse from the libary by using the 1st sample of the derivative (samp1DER)
+                    // Select the model of the found pulse from the library by using the 1st sample of the derivative (samp1DER)
                     if (find_model_samp1DERsNoReSCLD(gsl_vector_get(*samp1DERgsl,*numberPulses-1), reconstruct_init, &modelToConvolve, &indexMinNew, &indexMaxNew))
                     {
                         message = "Cannot run find_model_samp1DERs routine";
@@ -2340,199 +2313,198 @@ int FindSecondaries
                                     }
                                     else
                                         break;
+                                }
+                            }
+                        }
+                            
+                        indexmax = gsl_vector_max_index(convolutionLags);
+                            
+                        if (indexmax == 1)
+                        // If maximum of the dot product found => Stop calculating dot products in more lags
+                        {
+                            gsl_vector_set(*lagsgsl,*numberPulses-1,numlags);
+                            exitLags = true;
+                        }
+                        else
+                            // If maximum of the dot product not found => Calculate dot products in more lags (number of lags is limited to 5)
+                        {
+                            do
+                            {
+                                indexLags = indexLags + 1;
+                                if (indexmax == 0)
+                                {
+                                    newLag = gsl_vector_get(lags_vector,0)-indexLags;
+                                    gsl_vector_set(convolutionLags,2,gsl_vector_get(convolutionLags,1));
+                                    gsl_vector_set(convolutionLags,1,gsl_vector_get(convolutionLags,0));
+                                }
+                                else
+                                {
+                                    newLag = gsl_vector_get(lags_vector,2)+indexLags;
+                                    gsl_vector_set(convolutionLags,0,gsl_vector_get(convolutionLags,1));
+                                    gsl_vector_set(convolutionLags,1,gsl_vector_get(convolutionLags,2));
+                                }
+
+                                if (gsl_vector_get(*tstartgsl,*numberPulses-1)+newLag < 0)  break;
+
+                                newconvolutionLags = 0.0;
+                                for (int k=0;k<pulse_length_ToConvolve;k++)
+                                {
+                                    if (gsl_vector_get(*tstartgsl,*numberPulses-1)+newLag < 0)
+                                        newconvolutionLags = -999.0;
+                                    else if (gsl_vector_get(*tstartgsl,*numberPulses-1)+newLag > sizeRecord)
+                                        newconvolutionLags = -999.0;
+                                    else
+                                    {
+                                        if (gsl_vector_get(*tstartgsl,*numberPulses-1)+newLag+k < sizeRecord)
+                                        {
+                                            newconvolutionLags = newconvolutionLags +                                                                                       +gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1)+newLag+k)*gsl_vector_get(modelToConvolve,k);
+                                        }
+                                        else
+                                            break;
                                     }
                                 }
-                                
-                            }
+
+                                if (indexmax == 0)
+                                {
+                                    if (newconvolutionLags < gsl_vector_get(convolutionLags,1))
+                                    {
+                                        exitLags = true;
+                                        gsl_vector_set(lags_vector,0,newLag);
+                                        gsl_vector_set(lags_vector,1,newLag+1);
+                                        gsl_vector_set(lags_vector,2,newLag+2);
+                                    }
+                                    gsl_vector_set(convolutionLags,0,newconvolutionLags);
+                                    gsl_vector_set(*lagsgsl,*numberPulses-1,fabs(newLag)+2);
+                                }
+                                else
+                                {
+                                    if (newconvolutionLags < gsl_vector_get(convolutionLags,1))
+                                    {
+                                        exitLags = true;
+                                        gsl_vector_set(lags_vector,2,newLag);
+                                        gsl_vector_set(lags_vector,1,newLag-1);
+                                        gsl_vector_set(lags_vector,0,newLag-2);
+                                    }
+                                    gsl_vector_set(convolutionLags,2,newconvolutionLags);
+                                    gsl_vector_set(*lagsgsl,*numberPulses-1,fabs(newLag)+2);
+                                }
+                            } while ((exitLags == false) && (gsl_vector_get(*lagsgsl,*numberPulses-1) < 5));
+                        }
                             
-                            indexmax = gsl_vector_max_index(convolutionLags);
-                            
-                            if (indexmax == 1)
-                                // If maximum of the dot product found => Stop calculating dot products in more lags
+                        if (exitLags == false)
+                        // If maximum of the dot product not found
+                        {
+                            // tstart is the first sample crossing above the threshold (without jitter)
+                            tstartJITTER = gsl_vector_get(*tstartgsl,*numberPulses-1);
+
+                            // Average of the first 4 samples of the derivative
+                            sum_samp1DER = 0.0;
+                            limitMin = 0;
+                            limitMax = 3;
+                            for (int index_samp1DER=limitMin;index_samp1DER<=limitMax;index_samp1DER++)
                             {
-                                gsl_vector_set(*lagsgsl,*numberPulses-1,numlags);
-                                exitLags = true;
+                                if (gsl_vector_get(*tstartgsl,*numberPulses-1)+index_samp1DER > sizeRecord-1)
+                                {
+                                    limitMax = index_samp1DER-1;
+                                    limitMin = limitMax-3;
+                                }
+                            }
+
+                            for (int index_samp1DER=limitMin;index_samp1DER<=limitMax;index_samp1DER++)
+                            {
+                                sum_samp1DER = sum_samp1DER + gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1)+index_samp1DER);
+                            }
+                            gsl_vector_set(*samp1DERgsl,*numberPulses-1,sum_samp1DER/4.0);
+
+                            // Find model in order to subtract
+                            if (find_model_samp1DERsNoReSCLD(gsl_vector_get(*samp1DERgsl,*numberPulses-1), reconstruct_init, &modelToSubtract,&indexMinNew,&indexMaxNew))
+                            {
+                                message = "Cannot run find_model_samp1DERs routine";
+                                EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                            }
+                        }
+                        else
+                        // If maximum of the dot product found
+                        {
+                            // Parabola analytically defined
+                            if (parabola3Pts (lags_vector, convolutionLags, &a, &b, &c))
+                            {
+                                message = "Cannot run routine parabola3Pts";
+                                EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+                            }
+
+                            // Maximum of the parabola
+                            xmax = -b/(2*a);
+
+                            // New tstart (with jitter)
+                            tstartJITTER = gsl_vector_get(*tstartgsl,*numberPulses-1)+xmax;
+                            if (xmax >= 0)
+                            {
+                                gsl_vector_set(*tstartgsl,*numberPulses-1,gsl_vector_get(*tstartgsl,*numberPulses-1)+floor(xmax));
+                                xmax = xmax - floor(xmax);
                             }
                             else
-                                // If maximum of the dot product not found => Calculate dot products in more lags (number of lags is limited to 5)
                             {
-                                do 
-                                {   
-                                    indexLags = indexLags + 1;
-                                    if (indexmax == 0)  
-                                    {       
-                                        newLag = gsl_vector_get(lags_vector,0)-indexLags;
-                                        gsl_vector_set(convolutionLags,2,gsl_vector_get(convolutionLags,1));
-                                        gsl_vector_set(convolutionLags,1,gsl_vector_get(convolutionLags,0));
-                                    }
-                                    else    
-                                    {
-                                        newLag = gsl_vector_get(lags_vector,2)+indexLags;
-                                        gsl_vector_set(convolutionLags,0,gsl_vector_get(convolutionLags,1));
-                                        gsl_vector_set(convolutionLags,1,gsl_vector_get(convolutionLags,2));
-                                    }
+                                gsl_vector_set(*tstartgsl,*numberPulses-1,gsl_vector_get(*tstartgsl,*numberPulses-1)+ceil(xmax));
+                                xmax = xmax - ceil(xmax);
+                            }
+                                
+                            // Iterative process in order to extract the best template from the library
+                            do
+                            {
+                                // samp1DER correction
+                                samp1DER_Aux = gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1));
+                                if (xmax < 0)
+                                {
+                                    prev_samp1DER_Aux = gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1)-1);
+                                    m = (samp1DER_Aux-prev_samp1DER_Aux);   // m=(y1-y0)/(x1-x0)    x1-x0=1
+                                    gsl_vector_set(*samp1DERgsl,*numberPulses-1,m*(1+xmax)+prev_samp1DER_Aux);
+                                }
+                                else if (xmax > 0)
+                                {
+                                    next_samp1DER_Aux = gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1)+1);
+                                    m = (next_samp1DER_Aux-samp1DER_Aux);   // m=(y1-y0)/(x1-x0)    x1-x0=1
+                                    gsl_vector_set(*samp1DERgsl,*numberPulses-1,m*xmax+samp1DER_Aux);
+                                }
+                                else
+                                {
+                                    gsl_vector_set(*samp1DERgsl,*numberPulses-1,gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-
+                                    1)));
+                                }
+
+                                gsl_vector_set(indexMin,indexM,indexMinNew);
+                                gsl_vector_set(indexMax,indexM,indexMaxNew);
                                     
-                                    if (gsl_vector_get(*tstartgsl,*numberPulses-1)+newLag < 0)  break;
-                                    
-                                    newconvolutionLags = 0.0;
+                                // Find the model from the library by using the corrected samp1DER
+                                if (find_model_samp1DERsNoReSCLD(gsl_vector_get(*samp1DERgsl,*numberPulses-1), reconstruct_init, &modelToConvolve,&indexMinNew,&indexMaxNew))
+                                {
+                                    message = "Cannot run find_model_samp1DERs routine";
+                                    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
+                                }
+
+                                // Dot product in 3 lags
+                                for (int j=0;j<numlags;j++)	gsl_vector_set(lags_vector,j,-numlags/2+j);
+                                gsl_vector_set_zero(convolutionLags);
+                                for (int j=0;j<numlags;j++)
+                                {
                                     for (int k=0;k<pulse_length_ToConvolve;k++)
                                     {
-                                        if (gsl_vector_get(*tstartgsl,*numberPulses-1)+newLag < 0) 
-                                            newconvolutionLags = -999.0;
-                                        else if (gsl_vector_get(*tstartgsl,*numberPulses-1)+newLag > sizeRecord) 
-                                            newconvolutionLags = -999.0;
+                                        if (gsl_vector_get(*tstartgsl,*numberPulses-1)+gsl_vector_get(lags_vector,j) < 0)
+                                            gsl_vector_set(convolutionLags,j,-999.0);
+                                        else if (gsl_vector_get(*tstartgsl,*numberPulses-1)+gsl_vector_get(lags_vector,j) > sizeRecord)
+                                            gsl_vector_set(convolutionLags,j,-999.0);
                                         else
                                         {
-                                            if (gsl_vector_get(*tstartgsl,*numberPulses-1)+newLag+k < sizeRecord)
+                                            if (gsl_vector_get(*tstartgsl,*numberPulses-1)+gsl_vector_get(lags_vector,j)+k < sizeRecord)
                                             {
-                                                newconvolutionLags = newconvolutionLags +                                                                                       +gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1)+newLag+k)*gsl_vector_get(modelToConvolve,k);
+                                                gsl_vector_set(convolutionLags,j,gsl_vector_get(convolutionLags,j)+gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1)+gsl_vector_get(lags_vector,j)+k)*gsl_vector_get(modelToConvolve,k));
                                             }
                                             else
                                                 break;
                                         }
                                     }
-                                    
-                                    if (indexmax == 0) 
-                                    {
-                                        if (newconvolutionLags < gsl_vector_get(convolutionLags,1))
-                                        {
-                                            exitLags = true;
-                                            gsl_vector_set(lags_vector,0,newLag);
-                                            gsl_vector_set(lags_vector,1,newLag+1);
-                                            gsl_vector_set(lags_vector,2,newLag+2);
-                                        }
-                                        gsl_vector_set(convolutionLags,0,newconvolutionLags);
-                                        gsl_vector_set(*lagsgsl,*numberPulses-1,fabs(newLag)+2);
-                                    }
-                                    else    
-                                    {       
-                                        if (newconvolutionLags < gsl_vector_get(convolutionLags,1))
-                                        {
-                                            exitLags = true;
-                                            gsl_vector_set(lags_vector,2,newLag);
-                                            gsl_vector_set(lags_vector,1,newLag-1);
-                                            gsl_vector_set(lags_vector,0,newLag-2);
-                                        }
-                                        gsl_vector_set(convolutionLags,2,newconvolutionLags);
-                                        gsl_vector_set(*lagsgsl,*numberPulses-1,fabs(newLag)+2);
-                                    }
-                                } while ((exitLags == false) && (gsl_vector_get(*lagsgsl,*numberPulses-1) < 5));
-                            }
-                            
-                            if (exitLags == false)
-                                // If maximum of the dot product not found
-                            {
-                                // tstart is the first sample crossing above the threshold (without jitter)
-                                tstartJITTER = gsl_vector_get(*tstartgsl,*numberPulses-1);
-                                
-                                // Average of the first 4 samples of the derivative
-                                sum_samp1DER = 0.0;
-                                limitMin = 0;
-                                limitMax = 3;
-                                for (int index_samp1DER=limitMin;index_samp1DER<=limitMax;index_samp1DER++)
-                                {
-                                    if (gsl_vector_get(*tstartgsl,*numberPulses-1)+index_samp1DER > sizeRecord-1)
-                                    {
-                                        limitMax = index_samp1DER-1;
-                                        limitMin = limitMax-3;
-                                    }
                                 }
-                                
-                                for (int index_samp1DER=limitMin;index_samp1DER<=limitMax;index_samp1DER++)
-                                {
-                                    sum_samp1DER = sum_samp1DER + gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1)+index_samp1DER);
-                                }
-                                gsl_vector_set(*samp1DERgsl,*numberPulses-1,sum_samp1DER/4.0);
-                                
-                                // Find model in order to subtract
-                                if (find_model_samp1DERsNoReSCLD(gsl_vector_get(*samp1DERgsl,*numberPulses-1), reconstruct_init, &modelToSubtract,&indexMinNew,&indexMaxNew))
-                                {
-                                    message = "Cannot run find_model_samp1DERs routine";
-                                    EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-                                }
-                            }
-                            else
-                                // If maximum of the dot product found
-                            {
-                                // Parabola analytically defined
-                                if (parabola3Pts (lags_vector, convolutionLags, &a, &b, &c))
-                                {
-                                    message = "Cannot run routine parabola3Pts";
-                                    EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
-                                }
-                                
-                                // Maximum of the parabola
-                                xmax = -b/(2*a);
-                                
-                                // New tstart (with jitter)
-                                tstartJITTER = gsl_vector_get(*tstartgsl,*numberPulses-1)+xmax;
-                                if (xmax >= 0)
-                                {
-                                    gsl_vector_set(*tstartgsl,*numberPulses-1,gsl_vector_get(*tstartgsl,*numberPulses-1)+floor(xmax));
-                                    xmax = xmax - floor(xmax);
-                                }
-                                else
-                                {
-                                    gsl_vector_set(*tstartgsl,*numberPulses-1,gsl_vector_get(*tstartgsl,*numberPulses-1)+ceil(xmax));
-                                    xmax = xmax - ceil(xmax);
-                                }
-                                
-                                // Iterative process in order to extract the best template from the library
-                                do 
-                                {
-                                    // samp1DER correction
-                                    samp1DER_Aux = gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1));
-                                    if (xmax < 0)
-                                    {
-                                        prev_samp1DER_Aux = gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1)-1);
-                                        m = (samp1DER_Aux-prev_samp1DER_Aux);   // m=(y1-y0)/(x1-x0)    x1-x0=1
-                                        gsl_vector_set(*samp1DERgsl,*numberPulses-1,m*(1+xmax)+prev_samp1DER_Aux);
-                                    }
-                                    else if (xmax > 0)
-                                    {
-                                        next_samp1DER_Aux = gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1)+1);
-                                        m = (next_samp1DER_Aux-samp1DER_Aux);   // m=(y1-y0)/(x1-x0)    x1-x0=1
-                                        gsl_vector_set(*samp1DERgsl,*numberPulses-1,m*xmax+samp1DER_Aux);
-                                    }
-                                    else
-                                    {
-                                        gsl_vector_set(*samp1DERgsl,*numberPulses-1,gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-
-                                        1)));
-                                    }
 
-                                    gsl_vector_set(indexMin,indexM,indexMinNew);
-                                    gsl_vector_set(indexMax,indexM,indexMaxNew);
-                                    
-                                    // Find the model from the libary by using the corrected samp1DER
-                                    if (find_model_samp1DERsNoReSCLD(gsl_vector_get(*samp1DERgsl,*numberPulses-1), reconstruct_init, &modelToConvolve,&indexMinNew,&indexMaxNew))
-                                    {
-                                        message = "Cannot run find_model_samp1DERs routine";
-                                        EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
-                                    }
-                                    
-                                    // Dot product in 3 lags
-                                    for (int j=0;j<numlags;j++)	gsl_vector_set(lags_vector,j,-numlags/2+j);
-                                    gsl_vector_set_zero(convolutionLags);
-                                    for (int j=0;j<numlags;j++)
-                                    {
-                                        for (int k=0;k<pulse_length_ToConvolve;k++)
-                                        {
-                                            if (gsl_vector_get(*tstartgsl,*numberPulses-1)+gsl_vector_get(lags_vector,j) < 0) 
-                                                gsl_vector_set(convolutionLags,j,-999.0);
-                                            else if (gsl_vector_get(*tstartgsl,*numberPulses-1)+gsl_vector_get(lags_vector,j) > sizeRecord) 
-                                                gsl_vector_set(convolutionLags,j,-999.0);
-                                            else 	
-                                            {
-                                                if (gsl_vector_get(*tstartgsl,*numberPulses-1)+gsl_vector_get(lags_vector,j)+k < sizeRecord)
-                                                {                                                                                    
-                                            gsl_vector_set(convolutionLags,j,gsl_vector_get(convolutionLags,j)+gsl_vector_get(adjustedDerivative,gsl_vector_get(*tstartgsl,*numberPulses-1)+gsl_vector_get(lags_vector,j)+k)*gsl_vector_get(modelToConvolve,k));
-                                        }
-                                        else
-                                            break;
-                                        }
-                                    }
-                                }
-                                    
                                 // Locate the maximum of the parabola
                                 if (parabola3Pts (lags_vector, convolutionLags, &a, &b, &c))
                                 {
@@ -2573,7 +2545,7 @@ int FindSecondaries
                                         break;
                                     }
                                 }
-                                    
+
                                 indexM = indexM + 1;
                             } while ((i_indexMin != i_indexMax) && (gsl_vector_get(*tstartgsl,*numberPulses-1)+1 < sizeRecord));
 
@@ -2901,33 +2873,26 @@ int smoothDerivative (gsl_vector **invector, int N)
 
 
 /***** SECTION 17 ************************************************************
-* FindSecondariesSTC function: This function runs after InitialTriggering to find all the events (except the first one) in the record first derivative of the (low-pass filtered) record by using the Single Threshold Crossing detection method
+ * FindSecondariesSTC function: This function runs after 'InitialTriggering' to find all events (except the first one) in the first derivative
+ *                           of the (low-pass filtered) record using the Single Threhold Crossing detection method.
 *
-* This function scans all values the derivative of the (low-pass filtered) record until it finds nSamplesUp consecutive values 
-* (due to the noise more than 1 value is required) over the threshold. To look for more pulses, it finds nSamplesUp consecutive values
-* (due to the noise) under the threshold and then, it starts to scan again.
-*
-* - Declare variables
-* - It looks for an event and if a pulse is found, it looks for another event
-*    
-*       - It looks for an event since the beginning (or the previous event) to the end of the record. 
-*         The condition to detect an event is that the adjustedDerivative was over the threshold at least nSamplesUp consecutive samples
+* This function scans all values of the derivative (after low-pass filtering the record) until it finds nSamplesUp consecutive values (more than one sample is required * due to noise) above the threshold. To search for additional pulses, it then looks for nSamplesUp consecutive values (also due to noise) below the threshold, and
+* afterwards it starts scanning again.
 *
 * Parameters:
-* - maxPulsesPerRecord: Expected maximum number of pulses per record in order to not allocate the GSL variables with the size of the input vector
+* - maxPulsesPerRecord: Expected maximum number of events per record (used to size GSL variables)('EventListSize')
 * - der: First derivative of the (low-pass filtered) record
 * - adaptativethreshold: Threshold
-* - reconstruct_init: Structure containing all the pointers and values to run the reconstruction stage
+* - reconstruct_init: Structure that initializes the reconstruction parameters (pointer and values)
 *                     This function uses 'pulse_length', 'tstartPulse1', 'tstartPulse2' and 'tstartPulse3'
-* - tstartFirstEvent: Tstart of the first event of the record (in samples) found by 'InitialTriggering'
-* - numberPulses: Number of found pulses
-* - tstartgsl: Pulses tstart (in samples)
-* - flagTruncated: Flag indicating if the pulse is truncated (inside this function only initial truncated pulses are classified)
-* - maxDERgsl: Maximum of the derivative of the pulse
+* - tstartFirstEvent: Staring time of the first event of the record (samples) (found by 'InitialTriggering')
+* - numberPulses: Number of detected pulses
+* - tstartgsl: Starting times of detected events (samples)
+* - flagTruncated: Flag indicating truncated events (only initial truncated pulses are classified here)
+* - maxDERgsl: Maximum of the derivative of the event
 * - samp1DERgsl: Average of the first 4 samples of the derivative of the event
 ******************************************************************************/
-int FindSecondariesSTC
-(
+int FindSecondariesSTC(
 	int maxPulsesPerRecord,
 
 	gsl_vector *der,
@@ -3079,20 +3044,22 @@ int FindSecondariesSTC
 
 
 /***** SECTION 18 ************************************************************
-* noDetect function: This function runs if the starting time of the pulses are agiven as input parameters (tstartPulse1 != 0). 
-*                    It looks for the maximum of the derivative of the pulse and the average of the first 4 samples of the derivative of the pulse.
+* noDetect function: This function runs if the starting times of the pulses are given as input parameters (tstartPulse1 != 0).
+*                    It finds the maximum of the derivative of each pulse and the average of the first 4 samples of the derivative.
 *
 * Parameters:
 * - der: First derivative of the (low-pass filtered) record
-* - reconstruct_init: Structure containing all the pointers and values to run the reconstruction stage
+* - reconstruct_init: Structure containing all pointers and values required for the reconstruction stage
 *                     This function uses 'maxDERs', 'tstartPulse1', 'tstartPulse2' and 'tstartPulse3'
 * - numberPulses: Number of pulses
-* - tstartgsl: Pulses tstart (in samples)
-* - flagTruncated: Flag indicating if the pulse is truncated (inside this function only initial truncated pulses are classified)
-* - maxDERgsl: Maximum of the derivative of the pulse
+* - tstartgsl: Pulses start times (samples)
+* - flagTruncated: Flag indicating whether the pulse is truncated
+*                  (only initially truncated pulses are classified in this function)
+* - maxDERgsl: Maximum value of the derivative of each pulse
 * - samp1DERgsl: Average of the first 4 samples of the derivative of the event
-* - num_previousDetectedPulses: Number of previous detected pulses (to know the index to get the proper element from tstartPulse1_i in case tstartPulse1=nameFile)
+* - num_previousDetectedPulses: Number of previously detected pulses (used to obtain the correct index from tstartPulse1_i when tstartPulse1=nameFile)
 * - samprate: Sampling rate
+* - tstartRecord: Start time of the record (used to compute absolute times)
 ******************************************************************************/
 int noDetect(gsl_vector *der, ReconstructInitSIRENA *reconstruct_init, int *numberPulses, gsl_vector **tstartgsl, gsl_vector **flagTruncated, gsl_vector **maxDERgsl, gsl_vector **samp1DERgsl, long num_previousDetectedPulses, double samprate, double tstartRecord)
 //int noDetect(gsl_vector *der, ReconstructInitSIRENA *reconstruct_init, int *numberPulses, gsl_vector **tstartgsl, gsl_vector **flagTruncated, gsl_vector **maxDERgsl, gsl_vector **samp1DERgsl)
@@ -3246,21 +3213,22 @@ int noDetect(gsl_vector *der, ReconstructInitSIRENA *reconstruct_init, int *numb
  * offsetAveragingFilter function: This function modifies the input vector in place by subtracting the mean of the previous N values
  *                               at a given offset. If there are not enough previous values, the value remains unchanged.
  *                               Returns 0 on success, 1 on parameter or memory error.
+ *
  *   For each index i >= N + offset:
  *
- *      mean = (1/N) * Î£_{k = i - offset - N}^{i - offset - 1} x_k
- *      x_i  â†’  x_i - mean
+ *      mean = (1/N) * SUM_{k = i - offset - N}^{i - offset - 1} x_k
+ *      x_i  =>†’  x_i - mean
  *
  *   For i < N + offset, the value x_i is left unchanged.
  *
  * Examples:
  *   - offset = 0, N = 2:
  *       mean = (x_{i-2} + x_{i-1}) / 2
- *       x_i  â†’ x_i - mean
+ *       x_i  =>†’ x_i - mean
  *
  *   - offset = 3, N = 2:
  *       mean = (x_{i-5} + x_{i-4}) / 2
- *       x_i  â†’ x_i - mean
+ *       x_i  =>†’ x_i - mean
  *
  * Parameters:
  * - invector: Input/Output GSL vector (input vector/output vector)
@@ -3272,37 +3240,37 @@ int offsetAveragingFilter(gsl_vector **invector, int N, int offset)
     if (invector == NULL || *invector == NULL)
         return 1; // Invalid input
 
-    if (N != 0)
-    {
-        size_t len = (*invector)->size;
+        if (N != 0)
+        {
+            size_t len = (*invector)->size;
 
-        // Create a temporary copy of the input vector to preserve original values for averaging
-        gsl_vector* temp = gsl_vector_alloc(len);
-        if (!temp) return 1; // Memory allocation failure
+            // Create a temporary copy of the input vector to preserve original values for averaging
+            gsl_vector* temp = gsl_vector_alloc(len);
+            if (!temp) return 1; // Memory allocation failure
 
-        gsl_vector_memcpy(temp, *invector);
+            gsl_vector_memcpy(temp, *invector);
 
-        for (size_t i = 0; i < len; ++i) {
-            double value = gsl_vector_get(temp, i);
+            for (size_t i = 0; i < len; ++i) {
+                double value = gsl_vector_get(temp, i);
 
-            if (i >= (size_t)(N + offset)) {
-                // Compute the mean of N samples at the specified offset
-                double mean = gsl_stats_mean(
-                    temp->data + temp->stride * (i - offset - N),
-                                            temp->stride,
-                                            N
-                );
-                gsl_vector_set(*invector, i, value - mean);
-            } else {
-                // Not enough previous values: leave the value unchanged
-                gsl_vector_set(*invector, i, value);
+                if (i >= (size_t)(N + offset)) {
+                    // Compute the mean of N samples at the specified offset
+                    double mean = gsl_stats_mean(
+                        temp->data + temp->stride * (i - offset - N),
+                                                 temp->stride,
+                                                 N
+                    );
+                    gsl_vector_set(*invector, i, value - mean);
+                } else {
+                    // Not enough previous values: leave the value unchanged
+                    gsl_vector_set(*invector, i, value);
+                }
             }
+
+            gsl_vector_free(temp);
         }
 
-        gsl_vector_free(temp);
-    }
-
-    return EPOK;  // Success
+        return EPOK;  // Success
 }
 /*xxxx end of SECTION 19 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
@@ -3358,3 +3326,92 @@ int smoothDerivative_causal(gsl_vector **invector, int N)
     return EPOK;
 }
 /*xxxx end of SECTION 20 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+
+/***** SECTION 21 ************************************************************
+ * generic_causalDerivative function: Applies a causal convolution filter to the input vector using the provided kernel.
+ * The kernel is applied only to past and current samples, ensuring causality.
+ *
+ * For indices i < kernel_size-1, the output is set to 0 (not enough past samples).
+ *
+ * Parameters:
+ * - invector: Input/Ouput GSL vector (input vector/differentiated input vector)
+ * - kernel: GSL vector containing the filter coefficients (length = filter size).
+ ******************************************************************************/
+int generic_causalDerivative(gsl_vector **invector, const gsl_vector *kernel)
+{
+    if (invector == NULL || *invector == NULL || kernel == NULL) {
+        std::string message = "In generic_causalDerivative(, invalid input vectors";
+        EP_PRINT_ERROR(message, EPFAIL);
+        return EPFAIL;
+    }
+
+    size_t n = (*invector)->size;
+    size_t ksize = kernel->size;
+
+    gsl_vector *newvec = gsl_vector_alloc(n);
+    if (!newvec) return EPFAIL;
+
+    // Apply convolution causally
+    for (size_t i = 0; i < n; ++i) {
+        if (i + 1 < ksize) {
+            gsl_vector_set(newvec, i, 0.0);  // Not enough history
+        } else {
+            double sum = 0.0;
+            for (size_t j = 0; j < ksize; ++j) {
+                double coeff = gsl_vector_get(kernel, j);
+                double value = gsl_vector_get(*invector, i - ksize + 1 + j);
+                sum += coeff * value;
+            }
+            gsl_vector_set(newvec, i, sum);
+        }
+    }
+
+    // Copy result back into input vector
+    gsl_vector_memcpy(*invector, newvec);
+    gsl_vector_free(newvec);
+
+    return EPOK;
+}
+/*xxxx end of SECTION 21 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+/***** SECTION 22 ************************************************************
+ * kernelNOcausal function:
+ *
+ * Parameters:
+ * - invector: Input/Ouput GSL vector (input vector/differentiated input vector)
+ ******************************************************************************/
+int kernelNOcausal(gsl_vector **invector)
+// output = -I_{i-2} - I_{i-1} + I_i + I_{i+1}
+// It is NOT causal (i+1)
+// Kernel [-1, -1, 1, 1] because IFCA pulse values are opposite to the DEMUX values
+{
+    if (invector == NULL || *invector == NULL)
+        return 1; // Invalid input
+
+        size_t n = (*invector)->size;
+
+    gsl_vector *temp = gsl_vector_alloc(n);
+    if (!temp) return 1;
+
+    gsl_vector_memcpy(temp, *invector);
+
+    // Kernel [-1, -1, 1, 1] because IFCA pulse values are opposite to the DEMUX values
+    for (size_t i = 2; i < n - 1; ++i) {
+        double result = -gsl_vector_get(temp, i - 2)
+        - gsl_vector_get(temp, i - 1)
+        + gsl_vector_get(temp, i)
+        + gsl_vector_get(temp, i + 1);
+
+        gsl_vector_set(*invector, i, result);
+    }
+
+    // Manejo de bordes: sin suficientes vecinos â†’ 0
+    gsl_vector_set(*invector, 0, 0.0);
+    gsl_vector_set(*invector, 1, 0.0);
+    gsl_vector_set(*invector, n - 1, 0.0);
+
+    gsl_vector_free(temp);
+    return 0; // Success
+}
+/*xxxx end of SECTION 22 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/

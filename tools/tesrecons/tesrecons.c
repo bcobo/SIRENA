@@ -20,67 +20,65 @@
 /***** SECTION 1 ************************************
 * MAIN function: This function is mainly a wrapper to pass a data file to the SIRENA tasks in order to reconstruct the energies.
 *
-* The user must supply the following input parameters (.par file).
-* 
-* Parameters:
-* 
-* - RecordFile: Record FITS file
-*   - If RecordFile starts with '@' it provides a file text containing several record input FITS files
+* Steps:
+*
+* - Register HEATOOL
+* - Reading all program parameters using PIL
+* - Read XML information
+* - 'get_trigreclength => Obtain 'trig_reclength'
+* - Set up the standard Sixt keywords structure
+* - Open the output FITS file
+* - Initialize data structures needed for pulse filtering
+* - Read grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
+* - Build the 'TesEventList'
+* - Call SIRENA to reconstruct the energies
+* - Save the GTI extension to the event file
+* - Free memory
+*
+* The user must provide the following input parameters (.par file):
+*
+* - RecordFile: Input record FITS file
+*   - If RecordFile starts with '@', it provides a text file containing multiple record input FITS files
 * - TesEventFile: Output event list file
-* - LibraryFile: Library FITS file to be created
-* - XMLFile: XML input FITS file with instrument definition
+* - LibraryFile: Library FITS file
+* - XMLFile: XML input file containing instrument definition
 * - EventListSize: Default size of the event list per record
-* - clobber:Overwrite or not output files if exist (1/0)
-* - history: write program parameters into output file
-* - threshold: Threshold to use with the derivative to detect (if -999 it is going to be calculated from noise)
-* - nSgms: Number of quiescent-signal standard deviations to establish the threshold (if -999 it is going to be calculated from noise)
+* - clobber: Overwrite output files if they exist (1 = yes, 0 = no)
+* - history: Write program parameters into the output file (1 = yes, 0 = no)
+* - threshold: Threshold to use with the derivative for detection (if -999, it will be calculated from noise)
+* - nSgms: Number of quiescent-signal standard deviations used to establish the threshold (if 'threshold'=-999)
 * - scaleFactor: Detection scale factor for initial filtering
-* - samplesUp: Number of consecutive samples up for threshold trespassing (only used with STC detection mode)
-* - samplesDown: Number of consecutive samples below the threshold to look for other pulse (only used with STC detection mode)
+* - samplesUp: Number of consecutive samples above the threshold to detect a pulse (used only in STC detection mode)
+* - samplesDown: Number of consecutive samples below the threshold to search for another pulse (used only in STC detection mode)
 * - windowSize: Window size used to compute the averaged derivative
-* - offset: Window offset
-* - detectionMode: Adjusted Derivative (AD) or Single Threshold Crossing (STC)
-* - detectSP: Detect secondary pulses (1) or not (0)
+* - offset: Window offset used to compute the averaged derivative
+* - detectionMode: Detection mode: Adjusted Derivative (AD) or Single Threshold Crossing (STC)
+* - detectSP: Detect secondary pulses (1 = yes, 0 = no)
 * - LbT: Baseline averaging length (seconds)
-* - intermediate: Write or not intermediate files (1/0)
-* - detectFile: Intermediate detections file (if intermediate=1)
-* - FilterDomain: Filtering Domain: Time (T) or Frequency (F)
-******* - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline) or F0B0 (deleting always the baseline)
-* - FilterMethod: Filtering Method: F0 (deleting the zero frequency bin) or B0 (deleting the baseline)
-* - EnergyMethod: Energy calculation Method: OPTFILT, 0PAD, INTCOVAR, COVAR, I2R or I2RFITTED
-* - Ifit: Constant to apply the I2RFITTED conversion
-* - OFNoise: Noise to use with Optimal Filtering: NSD or WEIGHTN
-* - LagsOrNot: Lags or no lags (1/0)
-* - nLags: Number of lags (positive odd number)
-* - Fitting35: Number of lags to analytically calculate a parabola (3) or to fit a parabola (5)
-* - OFIter: Iterate or not iterate (1/0)
-* - OFLib: Work or not with a library with optimal filters (yes/no)
-* - OFStrategy: Optimal Filter length Strategy: **FREE**, **BYGRADE** or **FIXED**
-* - OFLength: Optimal Filter length (taken into account if :option:`OFStrategy` = **FIXED**)
-* - flength_0pad: 0-padding filter length
-* - prebuff_0pad: preBuffer when 0-padding
-* - int errorT: Additional error (in samples) added to the detected time (Logically, it changes the reconstructed energies)
-* - Sum0Filt: If 0-padding, subtract the sum of the filter (1) or not (0)
-* - tstartPulse1: Integer number: Sample where the first pulse starts or nameFile: File where the tstart (seconds) of every pulse is
-* - tstartPulse2: Tstart (samples) of the second pulse
-* - tstartPulse3: Tstart (samples) of the third pulse (if 0 => PAIRS, if not 0 => TRIOS)
+* - intermediate: Write intermediate files or not (1 = yes, 0 = no)
+* - detectFile: Intermediate detections FITS file (if 'intermediate'=1)
+* - FilterDomain: Filtering domain: Time (T) or Frequency (F)
+* - FilterMethod: Filtering method: F0 (delete the zero frequency bin) or B0 (remove the baseline)
+* - EnergyMethod: Energy calculation method: OPTFILT, 0PAD, INTCOVAR, COVAR, I2R or I2RFITTED
+* - filtEeV: Energy (eV) of the library filters to be used for energy reconstruction (only for OPTFILT, I2R and I2RFITTED)
+* - Ifit: Constant used to apply the I2RFITTED conversion
+* - OFNoise: This option is only relevant if OPTFILT, and specifies whether to use the noise spectral density (NSD) or the noise weight matrix (WEIGHTN)
+* - LagsOrNot: Use lags or not (1 = yes, 0 = no)
+* - nLags: Number of lags if 'LagsOrNot'=1 (positive odd number)
+* - Fitting35: Number of lags used to analytically calculate a parabola (3) or to fit a parabola (5)
+* - OFIter: Iterate or not (1 = yes, 0 = no)
+* - OFLib: Use a library with precomputed optimal filters (yes), or alternatively perform the optimal filter calculation on-the-fly (no)
+* - OFStrategy: Optimal filter length strategy: **FREE**, **BYGRADE** or **FIXED**
+* - OFLength: Optimal filter fixed length (used if `OFStrategy`=FIXED)
+* - flength_0pad: 0-padding filter length (when using 0-padding)
+* - prebuff_0pad: preBuffer length (when using 0-padding)
+* - errorT: Additional error (samples) added to the detected time (affects reconstructed energies)
+* - Sum0Filt: If using 0-padding, subtract the sum of the filter (1 = yes, 0 = no)
+* - tstartPulse1: Sample number where the first pulse starts or file containing tstart (seconds) for each pulse
+* - tstartPulse2: Sample where the second pulse starts
+* - tstartPulse3: Sample where the third pulse starts (0 = PAIRS, non-zero = TRIOS)
 * - energyPCA1: First energy (only for PCA)
 * - energyPCA2: Second energy (only for PCA)
-* 
-* Steps:
-* 
-* - Register HEATOOL
-* - Reading all programm parameters by using PIL
-* - Read XML info
-* - getSamplingrate_trigreclength => Obtain the 'trig_reclength' and the sampling rate
-* - Sixt standard keywords structure
-* - Open output FITS file
-* - Initialize data structures needed for pulse filtering
-* - Read the grading data from the XML file and store it in 'reconstruct_init_sirena->grading'
-* - Build up TesEventList
-* - Call SIRENA to build reconstruct the energies
-* - Save GTI extension to event file
-* - Free memory
 *****************************************************/
 int tesrecons_main() {
   printf("Running TESRECONS v%s\n",SIRENA_VERSION);
@@ -116,11 +114,11 @@ int tesrecons_main() {
         
     AdvDet *det = newAdvDet(&status);
     CHECK_STATUS_BREAK(status);
-    double sampling_rate_XML = -999.; // Sampling rate from XML
+    //double sampling_rate_XML = -999.; // Sampling rate from XML
     // Read XML info
     det = loadAdvDet(par.XMLFile, &status);
     CHECK_STATUS_BREAK(status);
-    sampling_rate_XML = det->SampleFreq;
+    //sampling_rate_XML = det->SampleFreq;
     if ((strcmp(par.EnergyMethod,"0PAD") == 0) && (strcmp(par.OFStrategy,"FIXED") != 0))
     {
         printf("%s","Attention: EnergyMethod=0PAD => OFStrategy set to FIXED\n");
@@ -128,14 +126,14 @@ int tesrecons_main() {
     }
 
     // Obtain the 'trig_reclength' and the sampling rate
-    double sampling_rate = -999.0;
+    //double sampling_rate = -999.0;
     int trig_reclength = -999;
-    sampling_rate = sampling_rate_XML;
+    //sampling_rate = sampling_rate_XML;
     int numfits = -999;
-    status = getSamplingrate_trigreclength (par.RecordFile,par,&sampling_rate,&trig_reclength, &numfits);
+    status = get_trigreclength (par.RecordFile,par,&trig_reclength, &numfits);
     if (status != EXIT_SUCCESS)
     {
-        SIXT_ERROR("Error in 'getSamplingrate_trigreclength' function");
+        SIXT_ERROR("Error in 'get_trigreclength' function");
         return(EXIT_FAILURE);
     }
 
@@ -212,7 +210,7 @@ int tesrecons_main() {
     CHECK_STATUS_BREAK(status);*/
             
     // Call SIRENA to reconstruct
-    status = callSIRENA(par.RecordFile, keywords, reconstruct_init_sirena, par, sampling_rate, &trig_reclength, pulsesAll, outfile, ph_id_column_dim);
+    status = callSIRENA(par.RecordFile, keywords, reconstruct_init_sirena, par, &trig_reclength, pulsesAll, outfile, ph_id_column_dim);
 
     // Save GTI extension to event file
     GTI* gti=getGTIFromFileOrContinuous("none",keywords->tstart, keywords->tstop,keywords->mjdref, &status);
