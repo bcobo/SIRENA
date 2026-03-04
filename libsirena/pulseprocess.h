@@ -126,7 +126,7 @@
 		int smoothDerivative_causal(gsl_vector **invector, int N);
 		int offsetAveragingFilter(gsl_vector **invector, int N, int offset);
 		int generic_causalDerivative(gsl_vector **invector, const gsl_vector *kernel);
-		int kernelCharles(gsl_vector **invector);
+		int kernelNOcausal(gsl_vector **invector);
         
         int FindSecondariesSTC
         (       

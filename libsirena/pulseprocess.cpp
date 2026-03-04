@@ -43,7 +43,7 @@ MAP OF SECTIONS IN THIS FILE:
  - 19. noDetect
  - 20. offsetAveragingFilter
  - 21. smoothDerivative_causal
- - 22. kernelCharles
+ - 22. kernelNOcausal
 
 *******************************************************************************/
 
@@ -3376,12 +3376,12 @@ int generic_causalDerivative(gsl_vector **invector, const gsl_vector *kernel)
 /*xxxx end of SECTION 21 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
 
 /***** SECTION 22 ************************************************************
- * kernelCharles function:
+ * kernelNOcausal function:
  *
  * Parameters:
  * - invector: Input/Ouput GSL vector (input vector/differentiated input vector)
  ******************************************************************************/
-int kernelCharles(gsl_vector **invector)
+int kernelNOcausal(gsl_vector **invector)
 // output = -I_{i-2} - I_{i-1} + I_i + I_{i+1}
 // It is NOT causal (i+1)
 // Kernel [-1, -1, 1, 1] because IFCA pulse values are opposite to the DEMUX values

@@ -4,11 +4,11 @@
 // versionSIRENA.h
 //
 // This software is part of the grant PID2021-122955OB-C41
-// and by “ERDF A way of making Europe”.
+// and by ERDF A way of making Europe.
 
 #ifndef SIRENA_VERSION_H
 #define SIRENA_VERSION_H
 
-#define SIRENA_VERSION "14.2.0"
+#define SIRENA_VERSION "15.0.0"
 
 #endif

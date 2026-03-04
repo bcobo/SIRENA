@@ -229,13 +229,12 @@ char* subString (const char* input, int offset, int len, char* dest)
 
 
 /***** SECTION 4 ************************************************************
-* getSamplingrate_trigreclength_Filei: This function obtains the sampling rate and the trig_reclength from an input FITS file.
+* get_trigreclength_Filei: This function obtains the trig_reclength from an input FITS file.
 *
 * Steps:
 * - Open the FITS file
 * - Check if input FITS file was simulated using TESSIM or XIFUSIM
 * - Verify whether the input XML file and the XML file used to build the library for reconstruction are the same
-* - Extract the sampling rate from the HISTORY keyword in the input FITS file and compare it with the sampling rate from the XML file
 * - If the file is from XIFUSIM, retrieve 'trig_reclength' from the HISTORY keyword; 'trig_reclength' is required if SIRENA runs in THREADING mode
 * - Close the FITS file
 * - Free allocated memory
@@ -243,13 +242,10 @@ char* subString (const char* input, int offset, int len, char* dest)
 * Parameters:
 * - inputFile: Name of the input FITS file
 * - par: Input parameters
-* - samplingrate: Input sampling rate from XML file; updated with the actual sampling rate on output
 * - trigreclength: Required if SIRENA runs in THREADING mode
 ******************************************************************************/
-int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par, double* samplingrate, int* trigreclength)
+int get_trigreclength_Filei (char* inputFile, struct Parameters par, int* trigreclength)
 {
-    double samplingrate_XML = *samplingrate; // To work with a more meaningful name
-
     // Error status.
     int status=EXIT_SUCCESS;
 
@@ -299,8 +295,6 @@ int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par,
         status = checkXmls(&par);
     }
 
-    // Get the sampling rate from the HISTORY keyword from the input FITS file
-    // and check with sampling rate from XML file
     // Move to "Primary" HDU
     fits_movabs_hdu(fptr, 1, NULL, &status);
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
@@ -311,32 +305,6 @@ int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par,
     {
         free(headerPrimary);
         return(EXIT_FAILURE);
-    }
-    // Pointer to where the text "sample_rate=" is in HISTORY block
-    char *sample_rate_pointer = NULL;
-    sample_rate_pointer = strstr (headerPrimary,"sample_rate=");
-    // If no 'sample_rate' in HISTORY => sampling frequency from XML is used
-    if (sample_rate_pointer)
-    {
-        // Pointer to the next character to "sample_rate=" (12 characters)
-        sample_rate_pointer = sample_rate_pointer + 12;
-        char each_character_after_srate[125];
-        snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
-        char characters_after_srate[125];
-        snprintf(characters_after_srate,125,"%c",*sample_rate_pointer);
-        while (*sample_rate_pointer != ' ')
-        {
-            sample_rate_pointer = sample_rate_pointer + 1;
-            snprintf(each_character_after_srate,125,"%c",*sample_rate_pointer);
-            strcat(characters_after_srate,each_character_after_srate);
-        }
-        double samplingrate_HISTORY = atof(characters_after_srate);
-        if (((samplingrate_XML != -999.0) && (samplingrate_HISTORY != -999.0)) && (samplingrate_XML != samplingrate_HISTORY))
-        {
-            SIXT_ERROR("Sampling rate from input FITS file and from XML file do not match");
-            return(EXIT_FAILURE);
-        }
-        *samplingrate = samplingrate_HISTORY;
     }
 
     // If xifusim file => Get 'trig_reclength' from the HISTORY keyword from the input FITS file
@@ -379,11 +347,6 @@ int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par,
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
 
     // Free memory
-    if (sample_rate_pointer != NULL)
-    {
-        sample_rate_pointer = NULL;
-        free(sample_rate_pointer);
-    }
     if (headerPrimary != NULL)
     {
         free(headerPrimary);
@@ -395,7 +358,7 @@ int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par,
 
 
 /***** SECTION 5 ************************************************************
-* getSamplingrate_trigreclength: This function obtains the sampling rate and the 'trig_reclength',
+* get_trigreclength: This function obtains the 'trig_reclength',
 *                                whether the input consists of a single FITS file or multiple files.
 *                                The 'inputFile' may start with '@' or not. The files can be original
 *                                FITS files or simulated using TESSIM or XIFUSIM.
@@ -403,11 +366,10 @@ int getSamplingrate_trigreclength_Filei (char* inputFile, struct Parameters par,
 * Parameters:
 * - inputFile: Name of the input file or files
 * - par: Input parameters
-* - samplingrate: Input sampling rate from the XML file; updated with the actual sampling rate on output
 * - trigreclength: Required if SIRENA runs in THREADING mode
 * - numfits: Number of FITS files to process
 ******************************************************************************/
-int getSamplingrate_trigreclength (char* inputFile, struct Parameters par, double* samplingrate, int* trigreclength, int* numfits)
+int get_trigreclength (char* inputFile, struct Parameters par, int* trigreclength, int* numfits)
 {
     // Error status.
     int status=EXIT_SUCCESS;
@@ -417,7 +379,7 @@ int getSamplingrate_trigreclength (char* inputFile, struct Parameters par, doubl
     if (strcmp(firstchar,"@") != 0) // Only A input FITS file
     {
         *numfits = 1;
-        status = getSamplingrate_trigreclength_Filei(inputFile, par, samplingrate, trigreclength);
+        status = get_trigreclength_Filei(inputFile, par, trigreclength);
         if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
     }
     else // More than A input FITS file
@@ -449,7 +411,7 @@ int getSamplingrate_trigreclength (char* inputFile, struct Parameters par, doubl
             }
             strtok(filefits, "\n");     // To delete '/n' from filefits (if not, 'fits_open_file' can not open the file)
 
-            status = getSamplingrate_trigreclength_Filei(inputFile, par, samplingrate, trigreclength);
+            status = get_trigreclength_Filei(inputFile, par, trigreclength);
             if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
         }
 
@@ -619,7 +581,8 @@ int fillReconstructInitSIRENAGrading (struct Parameters par, AdvDet *det, Recons
 * - outfile: Output events FITS file
 * - ph_id_column_dim: Dimension of PH_ID column
 ******************************************************************************/
-int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim)
+//int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim)
+int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim)
 {
     // Error status.
     int status = EXIT_SUCCESS;
@@ -644,12 +607,12 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
     // Build up TesRecord to read the file
     TesRecord* record;
     record = newTesRecord(&status);
-    if ((record_file->delta_t == -999) && (sampling_rate == -999))
+    /*if ((record_file->delta_t == -999) && (sampling_rate == -999))
     {
         SIXT_ERROR("Cannot read or get the sampling rate neither from the input FITS file nor the XML file. Please, include the DELTAT keyword (inverse of sampling rate) in the input FITS file before running the task again");
         return(EXIT_FAILURE);
     }
-    if (record_file->delta_t == -999) record_file->delta_t = 1./sampling_rate;
+    if (record_file->delta_t == -999) record_file->delta_t = 1./sampling_rate;*/
     if ((*trig_reclength) == -999) *trig_reclength = record_file->trigger_size;
     allocateTesRecord(record,*trig_reclength,record_file->delta_t,0,&status);
     if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
@@ -833,7 +796,8 @@ int callSIRENA_Filei(char* inputFile, SixtStdKeywords* keywords, ReconstructInit
 * - outfile: Output FITS event file
 * - ph_id_column_dim: Dimension of the PH_ID column
 ******************************************************************************/
-int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim)
+//int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, double sampling_rate, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim)
+int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA* reconstruct_init_sirena,struct Parameters par, int *trig_reclength, PulsesCollection* pulsesAll, TesEventFileSIRENA* outfile, long ph_id_column_dim)
 {
     // Error status.
     int status=EXIT_SUCCESS;
@@ -843,7 +807,7 @@ int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA
 
     if (strcmp(firstchar,"@") != 0) // Only A input FITS file
     {
-        status = callSIRENA_Filei(inputFile, keywords, reconstruct_init_sirena, par, sampling_rate, trig_reclength, pulsesAll, outfile, ph_id_column_dim);
+        status = callSIRENA_Filei(inputFile, keywords, reconstruct_init_sirena, par, trig_reclength, pulsesAll, outfile, ph_id_column_dim);
         if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
     }
     else // More than A input FITS file
@@ -874,7 +838,7 @@ int callSIRENA(char* inputFile, SixtStdKeywords* keywords, ReconstructInitSIRENA
             }
             strtok(filefits, "\n");     // To delete '/n' from filefits (if not, 'fits_open_file' can not open the file)
 
-            status = callSIRENA_Filei(inputFile, keywords, reconstruct_init_sirena, par, sampling_rate, trig_reclength, pulsesAll, outfile, ph_id_column_dim);
+            status = callSIRENA_Filei(inputFile, keywords, reconstruct_init_sirena, par, trig_reclength, pulsesAll, outfile, ph_id_column_dim);
             if (status != EXIT_SUCCESS) return(EXIT_FAILURE);
         }
 

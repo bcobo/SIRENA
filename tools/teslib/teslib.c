@@ -60,7 +60,7 @@
 * - Register HEATOOL
 * - Reading all program parameters by using PIL
 * - Read XML information
-* - getSamplingrate_trigreclength => Obtain the 'trig_reclength' and the sampling rate
+* - get_trigreclength => Obtain the 'trig_reclength'
 * - Set up the standard Sixt keywords structure
 * - Open the output FITS file
 * - Initialize data structures needed
@@ -109,21 +109,21 @@ int teslib_main() {
         
     AdvDet *det = newAdvDet(&status);
     CHECK_STATUS_BREAK(status);
-    double sampling_rate_XML = -999.; // Sampling rate from XML
+    //double sampling_rate_XML = -999.; // Sampling rate from XML
     // Read XML info
     det = loadAdvDet(par.XMLFile, &status);
     CHECK_STATUS_BREAK(status);
-    sampling_rate_XML = det->SampleFreq;
+    //sampling_rate_XML = det->SampleFreq;
 
     // Obtain the 'trig_reclength' and the sampling rate
-    double sampling_rate = -999.0;
+    //double sampling_rate = -999.0;
     int trig_reclength = -999;
-    sampling_rate = sampling_rate_XML;
+    //sampling_rate = sampling_rate_XML;
     int numfits = -999;
-    status = getSamplingrate_trigreclength (par.RecordFile,par,&sampling_rate,&trig_reclength, &numfits);
+    status = get_trigreclength (par.RecordFile,par,&trig_reclength, &numfits);
     if (status != EXIT_SUCCESS)
     {
-        SIXT_ERROR("Error in 'getSamplingrate_trigreclength' function");
+        SIXT_ERROR("Error in 'get_trigreclength' function");
         return(EXIT_FAILURE);
     }
 
@@ -200,7 +200,7 @@ int teslib_main() {
     CHECK_STATUS_BREAK(status);*/
             
     // Call SIRENA to build the library
-    status = callSIRENA(par.RecordFile, keywords, reconstruct_init_sirena, par, sampling_rate, &trig_reclength, pulsesAll, outfile, ph_id_column_dim);
+    status = callSIRENA(par.RecordFile, keywords, reconstruct_init_sirena, par, &trig_reclength, pulsesAll, outfile, ph_id_column_dim);
     CHECK_STATUS_BREAK(status);
 
     // Save GTI extension to event file
