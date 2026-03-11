@@ -14,6 +14,11 @@ threshold,r,h,-999,,,"Threshold used with the derivative for pulse detection. If
 nSgms,r,h,3.5,,,"Number of quiescent-signal standard deviations used to set the threshold via the kappa-clipping algorithm (if 'threshold'=-999)"
 scaleFactor,r,h,0,,,"Detection scale factor for initial filtering (to enable a varying cut-off frequency of a low-pass filter)"
 samplesUp,i,h,3,,,"Number of consecutive samples the signal must exceed the threshold to trigger pulse detection"
+windowSize,i,h,2,,,"Window size used to compute the averaged derivative"
+offset,i,h,1,,,"Window offset used to compute the averaged derivative"
+
+LrsT,r,h,30E-6,,,"Running sum length for the RS raw energy estimation (seconds)"
+LbT,r,h,6.4E-3,,,"Baseline averaging length (seconds)"
 
 monoenergy,r,h,6000.,,,"Monochromatic energy of the pulses in the input FITS file (eV)"
 
