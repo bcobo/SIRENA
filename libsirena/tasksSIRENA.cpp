@@ -2232,12 +2232,12 @@ int nrecord, double tstartPrevPulse)
         message = "Cannot run routine offsetAveragingFilter";
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
-    cout<<"______Derivative:"<<endl;
-    for (int kkk=1095;kkk<1120;kkk++)
+    //cout<<"______Derivative:"<<endl;
+    /*for (int kkk=1095;kkk<1120;kkk++)
     //for (int kkk=3490;kkk<3520;kkk++)
         cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(recordDerivative,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;
         //cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;
-        //cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;
+        //cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;*/
 
     gsl_vector_free(recordRaw);//To delete
     gsl_vector_free(recordDerivative);    //To delete
@@ -2276,7 +2276,7 @@ int nrecord, double tstartPrevPulse)
                     message = "Cannot run routine InitialTriggering";
                     EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                 }
-                cout<<"threshold: "<<threshold<<endl;
+                //cout<<"threshold: "<<threshold<<endl;
                 
                 if (strcmp((*reconstruct_init)->detectionMode,"STC") == 0)
                 {
@@ -7938,12 +7938,12 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         // If using lags, it is necessary to modify the tstart of the pulse
                         if (((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0)) && tstartNewDev != -999.0)
                         {
-                            cout<<"record->delta_t: "<<record->delta_t<<endl;
+                            /*cout<<"record->delta_t: "<<record->delta_t<<endl;
                             cout<<"(*pulsesInRecord)->pulses_detected[i].Tstart: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
                             cout<<"tstartNewDev: "<<tstartNewDev<<endl;
-                            cout<<"lagsShift: "<<lagsShift<<endl;
+                            cout<<"lagsShift: "<<lagsShift<<endl;*/
                             (*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + (tstartNewDev+lagsShift)*record->delta_t; // In seconds
-                            cout<<"(*pulsesInRecord)->pulses_detected[i].Tstart: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
+                            //cout<<"(*pulsesInRecord)->pulses_detected[i].Tstart: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
                         }
                         log_debug("Tstart: %f",(*pulsesInRecord)->pulses_detected[i].Tstart);
 
@@ -11126,12 +11126,12 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                 // Pulse and filter should be centered to avoid distorting the parabola (subtract the mean before convolution)
                                 //center_nonzero_values(vector);
 
-                                cout<<"j: "<<j<<endl;
+                                //cout<<"j: "<<j<<endl;
                                 for (int i=0;i<productSize;i++)
                                 {
                                     gsl_vector_set(calculatedEnergy_vector,j,gsl_vector_get(calculatedEnergy_vector,j)+gsl_vector_get(vector,i)*gsl_vector_get(filter,i));
                                     //if (i<8) cout<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size<<endl;
-                                    cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size<<endl;
+                                    //cout<<i<<" "<<gsl_vector_get(vector,i)<<" "<<gsl_vector_get(filter,i)<<" "<<fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size<<endl;
                                 }
 
                                 // Because of the FFT and FFTinverse normalization factors
@@ -11153,7 +11153,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             }
                             ///*if (LowRes==0)
                             //{
-                                cout<<"Parabola0"<<endl;
+                                /*cout<<"Parabola0"<<endl;
                                 cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<endl;
                                 cout<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;
                                 //cout<<"a: "<<a<<endl;
@@ -11162,7 +11162,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                 cout<<"indexmax: "<<indexmax<<endl;
                                 cout<<"maxvalue: "<<a*pow(xmax,2)+b*xmax+c<<endl;
                                 cout<<"xmax: "<<xmax<<endl;
-                                cout<<"maxParabolaFound1: "<<maxParabolaFound<<endl;
+                                cout<<"maxParabolaFound1: "<<maxParabolaFound<<endl;*/
                             //}*/
 
                             if (((xmax < -1) || (xmax > 1)) && (reconstruct_init->nLags > 3))
@@ -11225,7 +11225,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     else                                indexmax = gsl_vector_max_index(calculatedEnergy_vector); 
                                     ///*if (LowRes==0)
                                     //{
-                                        cout<<"Parabolai"<<endl;
+                                        /*cout<<"Parabolai"<<endl;
                                         cout<<gsl_vector_get(lags_vector,0)<<" "<<gsl_vector_get(lags_vector,1)<<" "<<gsl_vector_get(lags_vector,2)<<endl;
                                         cout<<gsl_vector_get(calculatedEnergy_vector,0)<<" "<<gsl_vector_get(calculatedEnergy_vector,1)<<" "<<gsl_vector_get(calculatedEnergy_vector,2)<<endl;
                                         //cout<<"a: "<<a<<endl;
@@ -11234,7 +11234,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                         cout<<"indexmax: "<<indexmax<<endl;
                                         cout<<"maxvalue: "<<a*pow(xmax,2)+b*xmax+c<<endl;
                                         cout<<"xmax: "<<xmax<<endl;
-                                        cout<<"maxParabolaFoundi: "<<maxParabolaFound<<endl;
+                                        cout<<"maxParabolaFoundi: "<<maxParabolaFound<<endl;*/
                                     //}*/
                                 } while ((exitLags == false) && (indexLags < (reconstruct_init->nLags)/2-1));
                             }
