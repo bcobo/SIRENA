@@ -2232,8 +2232,8 @@ int nrecord, double tstartPrevPulse)
         message = "Cannot run routine offsetAveragingFilter";
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
-    //cout<<"______Derivative:"<<endl;
-    /*for (int kkk=1095;kkk<1120;kkk++)
+    /*cout<<"______Derivative:"<<endl;
+    for (int kkk=1095;kkk<1120;kkk++)
     //for (int kkk=3490;kkk<3520;kkk++)
         cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(recordDerivative,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;
         //cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;
@@ -2679,9 +2679,13 @@ int nrecord, double tstartPrevPulse)
             foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i);
         }
         foundPulses->pulses_detected[i].rmsbsln = gsl_vector_get(rmsBgsl,i);
+        /*cout<<"gsl_vector_get(tstartgsl,i): "<<gsl_vector_get(tstartgsl,i)<<endl;
+        cout<<"samprate: "<<samprate<<endl;
+        cout<<"tstartRecord: "<<tstartRecord<<endl;
+        cout<<"gsl_vector_get(tstartgsl,i)/samprate+tstartRecord: "<<gsl_vector_get(tstartgsl,i)/samprate+tstartRecord<<endl;
+        cout<<"foundPulses->pulses_detected[i].Tstart: "<<foundPulses->pulses_detected[i].Tstart<<endl;*/
         log_debug("tstart(samples)= %f", gsl_vector_get(tstartgsl,i));
         log_debug("tstartRecord(seconds)= %.12f", tstartRecord);
-
         log_debug("tstart(seconds)(absoluto)= %.12f", foundPulses->pulses_detected[i].Tstart);
         log_debug("tend= %f", gsl_vector_get(tendgsl,i));
         log_debug("pulse duration %d", foundPulses->pulses_detected[i].pulse_duration);
@@ -9376,16 +9380,16 @@ int calculus_optimalFilter(int TorF, int intermediate, int opmode, gsl_vector *m
     *of_FFT_complex = gsl_vector_complex_alloc(mf_size);
     for (int i=0;i<mf_size;i++)
     {
-        //gsl_vector_complex_set(*of_FFT_complex,i,gsl_complex_div_real(gsl_vector_complex_get(mfFFTcomp_conj,i),gsl_vector_get(n_FFT_2,i)));
-        gsl_vector_complex_set(*of_FFT_complex,i,gsl_complex_div_real(gsl_vector_complex_get(mfFFTcomp_conj,i),1));
+        gsl_vector_complex_set(*of_FFT_complex,i,gsl_complex_div_real(gsl_vector_complex_get(mfFFTcomp_conj,i),gsl_vector_get(n_FFT_2,i)));
+        //gsl_vector_complex_set(*of_FFT_complex,i,gsl_complex_div_real(gsl_vector_complex_get(mfFFTcomp_conj,i),1));  // N(f)=1 --> No noise
     }
     
     // Calculus of the normalization factor
     double normalizationFactor = 0;
     for (int i=1; i<(int)(mf_f->size); i++)
     {
-        //normalizationFactor = normalizationFactor + gsl_vector_get(mf_FFT_2,i)/gsl_vector_get(n_FFT_2,i);
-        normalizationFactor = normalizationFactor + gsl_vector_get(mf_FFT_2,i)/1;
+        normalizationFactor = normalizationFactor + gsl_vector_get(mf_FFT_2,i)/gsl_vector_get(n_FFT_2,i);
+        //normalizationFactor = normalizationFactor + gsl_vector_get(mf_FFT_2,i)/1;  // N(f)=1 --> No noise
     }
     
     // Apply the normalization factor
