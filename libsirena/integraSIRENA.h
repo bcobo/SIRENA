@@ -41,6 +41,9 @@ typedef struct {
 	//int * event_indexes;
 	double * event_indexes;	//SIRENA
 
+	/** Index arrival time of the photons without parabola inside a record */
+	double * event_indexes_wo_parabola;	//SIRENA
+
 	/** Pulse height of the photons */
 	double * pulse_heights;
 
@@ -84,6 +87,10 @@ typedef struct {
 
 	/** Tstart of the reconstructed photons (in time) */
 	double * tstarts;
+
+	/** Initial Tstart of the reconstructed photons (in time) without applying the parabola */
+	/** (only the threshold crossing) **/
+	double * tstarts_wo_parabola;
 
 	/** Tend of the reconstructed photons (in time) */
 	double * tends;
@@ -386,6 +393,9 @@ typedef struct PulseDetected
         
     /** Start time of the Pulse in samples */
 	double TstartSamples;
+
+	/** Start time of the Pulse */
+	double Tstart_wo_Parabola; // Tstart without applying the parabola (initial estimate based only on the threshold crossing)
 
 	/** End time of the Pulse */
 	double Tend;

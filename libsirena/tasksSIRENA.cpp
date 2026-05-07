@@ -2232,12 +2232,22 @@ int nrecord, double tstartPrevPulse)
         message = "Cannot run routine offsetAveragingFilter";
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
-    /*cout<<"______Derivative:"<<endl;
-    for (int kkk=1095;kkk<1120;kkk++)
-    //for (int kkk=3490;kkk<3520;kkk++)
+    //cout<<"______Derivative:"<<endl;
+    /*//for (int kkk=1095;kkk<1120;kkk++)
+    for (int kkk=3490;kkk<3520;kkk++)
         cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(recordDerivative,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;
         //cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;
         //cout<<kkk<<" "<<gsl_vector_get(record,kkk)<<endl;*/
+    /*if (nrecord == 1)
+    {
+        for (int kkk=1005;kkk<1015;kkk++)
+            cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(recordDerivative,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;
+    }
+    else
+    {
+        for (int kkk=3490;kkk<3520;kkk++)
+            cout<<kkk<<" "<<gsl_vector_get(recordRaw,kkk)<<" "<<gsl_vector_get(recordDerivative,kkk)<<" "<<gsl_vector_get(record,kkk)<<endl;
+    }*/
 
     gsl_vector_free(recordRaw);//To delete
     gsl_vector_free(recordDerivative);    //To delete
@@ -2276,8 +2286,7 @@ int nrecord, double tstartPrevPulse)
                     message = "Cannot run routine InitialTriggering";
                     EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
                 }
-                //cout<<"threshold: "<<threshold<<endl;
-                
+
                 if (strcmp((*reconstruct_init)->detectionMode,"STC") == 0)
                 {
                     if (FindSecondariesSTC ((*reconstruct_init)->maxPulsesPerRecord, recordDERIVATIVE, threshold, (*reconstruct_init), tstartFirstEvent, &numPulses, &tstartgsl, &qualitygsl, &maxDERgsl, &samp1DERgsl))
@@ -2657,6 +2666,7 @@ int nrecord, double tstartPrevPulse)
         }
         
         foundPulses->pulses_detected[i].Tstart = gsl_vector_get(tstartgsl,i)/samprate+tstartRecord;
+        foundPulses->pulses_detected[i].Tstart_wo_Parabola = gsl_vector_get(tstartgsl,i)/samprate+tstartRecord;
         foundPulses->pulses_detected[i].TstartSamples = gsl_vector_get(tstartgsl,i);
         foundPulses->pulses_detected[i].Tend = gsl_vector_get(tendgsl,i)/samprate+tstartRecord;
         foundPulses->pulses_detected[i].riseTime = gsl_vector_get(tauRisegsl,i);
@@ -2679,11 +2689,11 @@ int nrecord, double tstartPrevPulse)
             foundPulses->pulses_detected[i].bsln = gsl_vector_get(Bgsl,i);
         }
         foundPulses->pulses_detected[i].rmsbsln = gsl_vector_get(rmsBgsl,i);
-        /*cout<<"gsl_vector_get(tstartgsl,i): "<<gsl_vector_get(tstartgsl,i)<<endl;
-        cout<<"samprate: "<<samprate<<endl;
-        cout<<"tstartRecord: "<<tstartRecord<<endl;
-        cout<<"gsl_vector_get(tstartgsl,i)/samprate+tstartRecord: "<<gsl_vector_get(tstartgsl,i)/samprate+tstartRecord<<endl;
-        cout<<"foundPulses->pulses_detected[i].Tstart: "<<foundPulses->pulses_detected[i].Tstart<<endl;*/
+        //cout<<"gsl_vector_get(tstartgsl,i): "<<gsl_vector_get(tstartgsl,i)<<endl;
+        //cout<<"samprate: "<<samprate<<endl;
+        //cout<<"tstartRecord: "<<tstartRecord<<endl;
+        //cout<<"gsl_vector_get(tstartgsl,i)/samprate+tstartRecord: "<<gsl_vector_get(tstartgsl,i)/samprate+tstartRecord<<endl;
+        //cout<<"foundPulses->pulses_detected[i].Tstart: "<<foundPulses->pulses_detected[i].Tstart<<endl;
         log_debug("tstart(samples)= %f", gsl_vector_get(tstartgsl,i));
         log_debug("tstartRecord(seconds)= %.12f", tstartRecord);
         log_debug("tstart(seconds)(absoluto)= %.12f", foundPulses->pulses_detected[i].Tstart);
@@ -7942,10 +7952,10 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                         // If using lags, it is necessary to modify the tstart of the pulse
                         if (((strcmp((*reconstruct_init)->EnergyMethod,"OPTFILT") == 0) || (strcmp((*reconstruct_init)->EnergyMethod,"0PAD") == 0)) && tstartNewDev != -999.0)
                         {
-                            /*cout<<"record->delta_t: "<<record->delta_t<<endl;
-                            cout<<"(*pulsesInRecord)->pulses_detected[i].Tstart: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
-                            cout<<"tstartNewDev: "<<tstartNewDev<<endl;
-                            cout<<"lagsShift: "<<lagsShift<<endl;*/
+                            //cout<<"record->delta_t: "<<record->delta_t<<endl;
+                            //cout<<"(*pulsesInRecord)->pulses_detected[i].Tstart: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
+                            //cout<<"tstartNewDev: "<<tstartNewDev<<endl;
+                            //cout<<"lagsShift: "<<lagsShift<<endl;
                             (*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + (tstartNewDev+lagsShift)*record->delta_t; // In seconds
                             //cout<<"(*pulsesInRecord)->pulses_detected[i].Tstart: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
                         }

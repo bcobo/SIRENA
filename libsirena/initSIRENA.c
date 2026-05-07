@@ -901,6 +901,7 @@ TesEventListSIRENA* newTesEventListSIRENA(int* const status){
 	}
 	// Initialize pointers with NULL
 	event_list->event_indexes=NULL;
+    event_list->event_indexes_wo_parabola=NULL;
 	event_list->pulse_heights=NULL;
 	event_list->avgs_4samplesDerivative=NULL;
 	event_list->Es_lowres=NULL;
@@ -934,6 +935,7 @@ void freeTesEventListSIRENA(TesEventListSIRENA* event_list)
 
     // Free dynamically allocated arrays
     if (event_list->event_indexes) { free(event_list->event_indexes); event_list->event_indexes = NULL; }
+    if (event_list->event_indexes_wo_parabola) { free(event_list->event_indexes_wo_parabola); event_list->event_indexes_wo_parabola = NULL; }
     if (event_list->grades1) { free(event_list->grades1); event_list->grades1 = NULL; }
     if (event_list->pulse_heights) { free(event_list->pulse_heights); event_list->pulse_heights = NULL; }
     if (event_list->energies) { free(event_list->energies); event_list->energies = NULL; }
@@ -947,6 +949,7 @@ void freeTesEventListSIRENA(TesEventListSIRENA* event_list)
     if (event_list->grades2) { free(event_list->grades2); event_list->grades2 = NULL; }
     if (event_list->pix_ids) { free(event_list->pix_ids); event_list->pix_ids = NULL; }
     if (event_list->tstarts) { free(event_list->tstarts); event_list->tstarts = NULL; }
+    if (event_list->tstarts_wo_parabola) { free(event_list->tstarts_wo_parabola); event_list->tstarts_wo_parabola = NULL; }
     if (event_list->tends) { free(event_list->tends); event_list->tends = NULL; }
     if (event_list->risetimes) { free(event_list->risetimes); event_list->risetimes = NULL; }
     if (event_list->falltimes) { free(event_list->falltimes); event_list->falltimes = NULL; }
@@ -984,26 +987,27 @@ TesEventFileSIRENA* newTesEventFileSIRENA(int* const status){
 	file->nrows     =0;
 	file->timeCol   =1;
 	file->energyCol =2;
-	file->avg_4samplesDerivativeCol =3;
-	file->E_lowresCol =4;
-	file->grade1Col =5;
-	file->grade2Col =6;
-	file->phiCol =7;
-	file->lagsShiftCol =8;
-	file->bslnCol =9;
-	file->rmsbslnCol =10;
-	file->pixIDCol  =11;
-	file->phIDCol   =12;
-	file->riseCol   =13;
-	file->fallCol   =14;
-	file->raCol     =15;
-	file->decCol    =16;
-	file->detxCol   =17;
-	file->detyCol   =18;
-	file->gradingCol=19;
-	file->srcIDCol  =20;
-	file->nxtCol    =21;
-	file->extCol    =22;
+    file->time0Col   =3;
+	file->avg_4samplesDerivativeCol =4;
+	file->E_lowresCol =5;
+	file->grade1Col =6;
+	file->grade2Col =7;
+	file->phiCol =8;
+	file->lagsShiftCol =9;
+	file->bslnCol =10;
+	file->rmsbslnCol =11;
+	file->pixIDCol  =12;
+	file->phIDCol   =13;
+	file->riseCol   =14;
+	file->fallCol   =15;
+	file->raCol     =16;
+	file->decCol    =17;
+	file->detxCol   =18;
+	file->detyCol   =19;
+	file->gradingCol=20;
+	file->srcIDCol  =21;
+	file->nxtCol    =22;
+	file->extCol    =23;
 
 	return(file);
 }
@@ -1076,11 +1080,11 @@ TesEventFileSIRENA* opennewTesEventFileSIRENA(const char* const filename,
 	// Create table
     char temp[10];
     sprintf(temp, "%dJ", ph_id_size);
-	char   *ttype[]={"TIME","SIGNAL","AVG4SD","ELOWRES","GRADE1","GRADE2","PHI","LAGS","BSLN","RMSBSLN","PIXID","PH_ID","RISETIME","FALLTIME","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"};
-	char *tform[]={"1D", "1D", "1D", "1D", "1K", "1K", "1D", "1J", "1D", "1D", "1J", temp, "1D", "1D", "1D", "1D", "1E", "1E", "1I", "1J", "1I", "1D"};
-	char *tunit[]={"s", "keV", "", "keV", "", "", "", "", "", "", "", "", "s", "s", "deg", "deg", "m", "m", "", "", "", "keV"};
+	char   *ttype[]={"TIME","SIGNAL","TIME0","AVG4SD","ELOWRES","GRADE1","GRADE2","PHI","LAGS","BSLN","RMSBSLN","PIXID","PH_ID","RISETIME","FALLTIME","RA","DEC","DETX","DETY","GRADING","SRC_ID","N_XT","E_XT"};
+	char *tform[]={"1D","1D", "1D", "1D", "1D", "1K", "1K", "1D", "1J", "1D", "1D", "1J", temp, "1D", "1D", "1D", "1D", "1E", "1E", "1I", "1J", "1I", "1D"};
+	char *tunit[]={"s", "keV","s", "", "keV", "", "", "", "", "", "", "", "", "s", "s", "deg", "deg", "m", "m", "", "", "", "keV"};
 
-	fits_create_tbl(file->fptr, BINARY_TBL, 0, 22, ttype, tform, tunit,"EVENTS", status);
+	fits_create_tbl(file->fptr, BINARY_TBL, 0, 23, ttype, tform, tunit,"EVENTS", status);
 	sixt_add_fits_stdkeywords(file->fptr,2,keywords,status);
 	CHECK_STATUS_RET(*status,file);
 
@@ -1103,12 +1107,15 @@ TesEventFileSIRENA* opennewTesEventFileSIRENA(const char* const filename,
 void saveEventListToFileSIRENA(TesEventFileSIRENA* file,TesEventListSIRENA * event_list,
 double start_time,double delta_t,int* const status){
 	//Save time, PIXID and dummy grading column
-	double time;
+	double time, time_wo_parabola;
 	int dummy_grading = 0;
 	for (int i = 0 ; i<event_list->index ; i++){
 		time = start_time + delta_t*event_list->event_indexes[i];
 		fits_write_col(file->fptr, TDOUBLE, file->timeCol,
 					   file->row, 1, 1, &time, status);
+        time_wo_parabola = start_time + delta_t*event_list->event_indexes_wo_parabola[i];
+        fits_write_col(file->fptr, TDOUBLE, file->time0Col,
+                       file->row, 1, 1, &time_wo_parabola, status);
 		fits_write_col(file->fptr, TINT, file->pixIDCol,
 					file->row, 1, 1, &event_list->pix_ids[i], status);
 		fits_write_col(file->fptr, TINT, file->gradingCol,
@@ -1213,6 +1220,13 @@ void allocateTesEventListTriggerSIRENA(TesEventListSIRENA* event_list,int size, 
 		SIXT_ERROR("memory allocation for event_index array in TesEventList failed");
 		CHECK_STATUS_VOID(*status);
 	}
+
+	event_list->event_indexes_wo_parabola = malloc(size*sizeof*(event_list->event_indexes_wo_parabola));
+    if (NULL == event_list->event_indexes_wo_parabola){
+        *status=EXIT_FAILURE;
+        SIXT_ERROR("memory allocation for event_indexes_wo_parabola array in TesEventList failed");
+        CHECK_STATUS_VOID(*status);
+    }
 
 	event_list->pulse_heights = malloc(size*sizeof*(event_list->pulse_heights));
 	if (NULL == event_list->pulse_heights){

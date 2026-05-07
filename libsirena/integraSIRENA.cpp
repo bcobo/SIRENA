@@ -426,6 +426,7 @@
      event_list->pix_ids = new long[event_list->index];
      event_list->tends = new double[event_list->index];
      event_list->tstarts = new double[event_list->index];
+     event_list->tstarts_wo_parabola = new double[event_list->index];
      event_list->risetimes = new double[event_list->index];
      event_list->falltimes = new double[event_list->index];
 
@@ -439,6 +440,7 @@
          for (int ip=0; ip<pulsesInRecord->ndetpulses; ip++)
          {
              event_list->event_indexes[ip] = (pulsesInRecord->pulses_detected[ip].Tstart - record->time)/record->delta_t;
+             event_list->event_indexes_wo_parabola[ip] = (pulsesInRecord->pulses_detected[ip].Tstart_wo_Parabola - record->time)/record->delta_t;
 
              if (reconstruct_init->opmode == 1)
              {
@@ -466,6 +468,7 @@
              }
 
              event_list->tstarts[ip]  = pulsesInRecord->pulses_detected[ip].Tstart;
+             event_list->tstarts_wo_parabola[ip]  = pulsesInRecord->pulses_detected[ip].Tstart_wo_Parabola;
              event_list->tends[ip]  = pulsesInRecord->pulses_detected[ip].Tend;
              event_list->risetimes[ip]  = pulsesInRecord->pulses_detected[ip].riseTime;
              event_list->falltimes[ip]  = pulsesInRecord->pulses_detected[ip].fallTime;
@@ -504,8 +507,6 @@
              event_list->grading  = new int[event_list->index];
              event_list->grades2  = new long[event_list->index];
 
-
-
              if (pulsesInRecord->ndetpulses != 0)
              {
                  if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size)
@@ -521,7 +522,6 @@
                      event_list->ph_ids_array[i] = new long[event_list->ph_ids_array_size2];  // Allocate memory for each row
                  }
              }
-
 
              if ((*pulsesAll)->ndetpulses != 0)
              {
@@ -547,6 +547,7 @@
              for (int ip=0; ip<(*pulsesAll)->ndetpulses; ip++)
              {
                  event_list->event_indexes[ip] = ((*pulsesAll)->pulses_detected[ip].Tstart - record->time)/record->delta_t;
+                 event_list->event_indexes_wo_parabola[ip] = ((*pulsesAll)->pulses_detected[ip].Tstart_wo_Parabola - record->time)/record->delta_t;
 
                  if (reconstruct_init->opmode == 1)
                  {
@@ -2379,6 +2380,7 @@ LibraryCollection* getLibraryCollection(ReconstructInitSIRENA* reconstruct_init,
 
     if (event_list->pix_ids != NULL) 	delete [] event_list->pix_ids;
     if (event_list->tstarts != NULL) 	delete [] event_list->tstarts;
+    if (event_list->tstarts_wo_parabola != NULL) 	delete [] event_list->tstarts_wo_parabola;
     if (event_list->tends != NULL) 	        delete [] event_list->tends;
     if (event_list->risetimes != NULL)       delete [] event_list->risetimes;
     if (event_list->falltimes != NULL)       delete [] event_list->falltimes;
@@ -4262,6 +4264,7 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  pulse_adc_preBuffer(0),
  Tstart(0.0f),
  TstartSamples(0.0f),
+ Tstart_wo_Parabola(0.0f),
  Tend(0.0f),
  riseTime(0.0f),
  fallTime(0.0f),
@@ -4292,6 +4295,7 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
  pulse_adc_preBuffer(0),
  Tstart(other.Tstart),
  TstartSamples(other.TstartSamples),
+ Tstart_wo_Parabola(other.Tstart_wo_Parabola),
  Tend(other.Tend),
  riseTime(other.riseTime),
  fallTime(other.fallTime),
@@ -4343,6 +4347,7 @@ long getNumberOfTemplates (fitsfile* fptr, ReconstructInitSIRENA* reconstruct_in
          }
          Tstart = other.Tstart;
          TstartSamples = other.TstartSamples;
+         Tstart_wo_Parabola = other.Tstart_wo_Parabola;
          Tend = other.Tend;
          riseTime = other.riseTime;
          fallTime = other.fallTime;
