@@ -68,6 +68,7 @@
 #include "scheduler.h"
 
 #include "versionSIRENA.h"
+#include <cstdio>
 #include <gsl/gsl_vector_double.h>
 #include <iostream>
 
@@ -6954,28 +6955,26 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
     double thresholdlow, thresholdup;
     int indexlow;
     int indexup;
-    
+
     double m, b;
     double tmax, t0;
-    
+
     double low = 12.5;
     double up = 50.0;
     double tlow, tup;
     double alow, aup;
-    
-    bool providingRiseTime;
+
     bool providingFallTime;
-    
+
     gsl_vector_view temp;
-    
+
     for (int i=0;i<numPulses;i++)
     {
-        providingRiseTime = false;
         providingFallTime = false;
-        
+
         indexlow = -999;
         indexup = -999;
-        
+
         abase = gsl_vector_get(Bgsl,i)/gsl_vector_get(Lbgsl,i);
 
         temp = gsl_vector_subvector(recordNOTFILTERED,gsl_vector_get(tstartgsl,i),gsl_vector_get(tendgsl,i)-gsl_vector_get(tstartgsl,i));
@@ -6989,16 +6988,15 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
         {
             for (int k=0;k<(int)((&temp.vector)->size);k++)
             {
-                if (gsl_vector_get(&temp.vector,k) < thresholdlow)      providingRiseTime = true;
                 if ((gsl_vector_get(&temp.vector,k) > thresholdlow) && (indexlow == -999))      indexlow = k;
                 if (gsl_vector_get(&temp.vector,k) > thresholdup)
-                {    
+                {
                     indexup = k;
                     break;
                 }
             }
 
-            if (providingRiseTime == true)
+            if ((indexlow != -999) && (indexup != -999) && (indexup > indexlow))
             {
                 tlow = indexlow/samprate;
                 tup = indexup/samprate;
@@ -7013,14 +7011,14 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
 
                 gsl_vector_set(*tauRisegsl,i,tmax-t0);
             }
-            
+
             indexlow = -999;
             indexup = -999;
             for (int k=indexmax;k<(int)((&temp.vector)->size);k++)
             {
                 if ((gsl_vector_get(&temp.vector,k) < thresholdup) && (indexup == -999))     indexup = k;
                 if (gsl_vector_get(&temp.vector,k) < thresholdlow)
-                {    
+                {
                     indexlow = k;
                     providingFallTime = true;
                     break;
@@ -7032,10 +7030,10 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
                 tup = indexup/samprate;
                 alow = gsl_vector_get(&temp.vector,indexlow);
                 aup = gsl_vector_get(&temp.vector,indexup);
-                
+
                 m = (alow-aup)/(tlow-tup);
                 b = aup-m*tup;
-                
+
                 t0 = (abase-b)/m;
                 tmax = (amax-b)/m;
 
