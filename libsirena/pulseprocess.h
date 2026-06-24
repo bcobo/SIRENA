@@ -127,6 +127,7 @@
 		int offsetAveragingFilter(gsl_vector **invector, int N, int offset);
 		int generic_causalDerivative(gsl_vector **invector, const gsl_vector *kernel);
 		int kernelNOcausal(gsl_vector **invector);
+		int derivativeProcess(gsl_vector **record, int windowSize, int offset, DerivativeMode mode);
         
         int FindSecondariesSTC
         (       

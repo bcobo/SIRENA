@@ -44,10 +44,12 @@ MAP OF SECTIONS IN THIS FILE:
  - 20. offsetAveragingFilter
  - 21. smoothDerivative_causal
  - 22. kernelNOcausal
+ - 23. derivativeProcess
 
 *******************************************************************************/
 
 #include "pulseprocess.h"
+#include "integraSIRENA.h"
 #include <limits>
 
 /***** SECTION 1 ************************************************************
@@ -2874,7 +2876,7 @@ int smoothDerivative (gsl_vector **invector, int N)
 
 /***** SECTION 17 ************************************************************
  * FindSecondariesSTC function: This function runs after 'InitialTriggering' to find all events (except the first one) in the first derivative
- *                           of the (low-pass filtered) record using the Single Threhold Crossing detection method.
+ *                           of the (low-pass filtered) record using the Single Threshold Crossing detection method.
 *
 * This function scans all values of the derivative (after low-pass filtering the record) until it finds nSamplesUp consecutive values (more than one sample is required * due to noise) above the threshold. To search for additional pulses, it then looks for nSamplesUp consecutive values (also due to noise) below the threshold, and
 * afterwards it starts scanning again.
@@ -3415,3 +3417,45 @@ int kernelNOcausal(gsl_vector **invector)
     return 0; // Success
 }
 /*xxxx end of SECTION 22 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+
+/***** SECTION 23 ************************************************************
+ * derivativeProcess function:
+ *
+ * Parameters:
+ * - record:
+ * - windowSize:
+ * - offset:
+ * - mode
+ ******************************************************************************/
+int derivativeProcess(gsl_vector **record, int windowSize, int offset, DerivativeMode mode)
+{
+    if (mode == USE_SIMPLE_DERIVATIVE)
+    {
+        if (differentiate(record, (*record)->size)) return EPFAIL;
+    }
+    /*else if (mode == USE_SMOOTH_DERIVATIVE)
+    {
+        int N = n; //box-car length (it must be an even number)
+        if (smoothDerivative_causal(&record,N)) return EPFAIL;
+    }
+    else if (mode == USE_GENERIC_SMOOTH_DERIVATIVE)
+    {
+        int N = n;
+        cont gsl_vector* kernel = gsl_vector_alloc(N);
+        gsl_vector_set(kernel,0,k0);
+        gsl_vector_set(kernel,1,k1);
+        ...
+        gsl_vector_set(kernel,n-1,kn-1);
+        if (generic_causalDerivative(&record,kernel)) return EPFAIL;
+    }*/
+    else if (mode == USE_NO_CAUSAL_DERIVATIVE)
+    {
+        if (kernelNOcausal(record)) return EPFAIL;
+    }
+
+    if (offsetAveragingFilter(record, windowSize, offset)) return EPFAIL;
+
+    return 0;
+}
+/*xxxx end of SECTION 23 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/

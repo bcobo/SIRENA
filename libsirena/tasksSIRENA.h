@@ -26,7 +26,7 @@
 
 #include <time.h>
 
-void runDetect(TesRecord* record, 
+void runDetect(TesRecord* record,
                int trig_reclength,
                int lastRecord, 
                int nrecord,
@@ -34,7 +34,8 @@ void runDetect(TesRecord* record,
                ReconstructInitSIRENA** reconstruct_init, 
                PulsesCollection** pulsesInRecord);
 
-void th_runDetect(TesRecord* record, int trig_reclength,
+void th_runDetect(TesRecord* record,
+                  int trig_reclength,
                   int lastRecord, 
                   int nrecord,
                   PulsesCollection *pulsesAll, 
@@ -68,7 +69,8 @@ int obtainRiseFallTimes (gsl_vector *recordNOTFILTERED, double samprate, gsl_vec
 
 void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclength, ReconstructInitSIRENA** reconstruct_init, PulsesCollection** pulsesInRecord, PulsesCollection *pulsesAll);
 
-void th_runEnergy(TesRecord* record, int nrecord, int trig_reclength,
+void th_runEnergy(TesRecord* record,
+                  int nrecord, int trig_reclength,
                   ReconstructInitSIRENA** reconstruct_init,
                   PulsesCollection** pulsesInRecord,
                   PulsesCollection *pulsesAll);
@@ -87,6 +89,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
 int writeFilterHDU(ReconstructInitSIRENA **reconstruct_init, int pulse_index, double energy, gsl_vector *optimalfilter, fitsfile **dtcObject);
 
 void center_nonzero_values(gsl_vector *pulse);
+
+//double computeEnergy_lag(int lag, std::map<int,double>& energy_cache);
 
 #endif /* TASKSSIRENA_H */
 

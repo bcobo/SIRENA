@@ -63,6 +63,8 @@
  int _resize_array(int size, int pulses){ return (size * MUL_FAC  < pulses) ? pulses : size * MUL_FAC; }
  #endif
  #define resize_array(size, pulses) _resize_array(size, pulses)
+
+ DerivativeMode modeDerivative = USE_NO_CAUSAL_DERIVATIVE;
  
  /***** SECTION 1 ************************************************************
   * initializeReconstructionSIRENA: This function initializes the ReconstructInitSIRENA structure with all variables required

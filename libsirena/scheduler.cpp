@@ -17,6 +17,7 @@
 
 #include "scheduler.h"
 
+#include "integraSIRENA.h"
 #include "log.h"
 
 #include "threadsafe_queue.h"

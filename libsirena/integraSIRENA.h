@@ -27,6 +27,15 @@
 
 #include <time.h>
 
+typedef enum {
+	USE_SIMPLE_DERIVATIVE,
+	USE_SMOOTH_DERIVATIVE,
+	USE_GENERIC_SMOOTH_DERIVATIVE,
+	USE_NO_CAUSAL_DERIVATIVE
+} DerivativeMode;
+
+extern DerivativeMode modeDerivative;
+
 typedef struct {
 	/** Current size of the list */
 	int size;
