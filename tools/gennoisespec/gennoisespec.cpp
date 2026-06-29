@@ -779,6 +779,7 @@
      
      // Maximum number of noise intervals in all the records eventcnt*floor(eventsz/par.intervalMinSamples)
      noiseIntervals = gsl_matrix_alloc(eventcnt*floor(eventsz/par.intervalMinSamples),intervalMinBins);
+     ph_idgsl = gsl_vector_alloc(intervalMinBins);
      
      EventSamplesFFTMean = gsl_vector_alloc(intervalMinBins);
      gsl_vector_set_zero(EventSamplesFFTMean);
@@ -793,8 +794,8 @@
      
      long rows_per_loop = 0;		// 0: Use default: Optimum number of rows
      long offset = 0;		// 0: Process all the rows
-     iteratorCol cols [2];		// Structure of Iteration
-     int n_cols = 2; 		// Number of columns:  Time + ADC
+     iteratorCol cols [3];		// Structure of Iteration
+     int n_cols = 3; 		// Number of columns:  Time + ADC + PH_ID
      
      // Read Time column
      strcpy(straux,"TIME");
@@ -814,6 +815,15 @@
          EP_EXIT_ERROR(message,status);
      }
      
+     // Read PH_ID column
+     strcpy(straux,"PH_ID");
+     status = fits_iter_set_by_name(&cols[2], infileObject, straux, TINT, InputCol);
+     if (status)
+     {
+         message = "Cannot iterate in column " + string(straux) +" in " + string(par.inFile);
+         EP_EXIT_ERROR(message,status);
+     }
+
      // Check Boxlength
      cutFreq = 2 * (1/(2*pi*par.scaleFactor));
      boxLength = (int) ((1/cutFreq) * samprate);
@@ -829,7 +839,7 @@
          message = "Cannot iterate data using InDataTterator";
          EP_EXIT_ERROR(message,status);
      }
-     
+
      // Close input FITS file
      if (fits_close_file(infileObject,&status))
      {
@@ -843,7 +853,7 @@
      double bsln, sgm;
      gsl_vector *sigmaInterval = gsl_vector_alloc(NumMeanSamples);
      int cnt = NumMeanSamples;   // After removing the noise intervals with a too high sigma, it is going to be the number of noise intervals with a proper sigma
-     
+
      double meanThreshold;
      double sgmThreshold;
      for (int i=0;i<NumMeanSamples;i++)
@@ -878,6 +888,10 @@
              // Interval not to be taken account
              cnt --;
              gsl_vector_set(intervalsgmOK,i,0);
+             cout<<"** Removed noise record: PH_ID="<<gsl_vector_get(ph_idgsl,i)<<" **"<<endl;
+             printf("\n");
+             //cout<<"Sigma: "<<gsl_vector_get(sigmaInterval,i)<<endl;
+             //cout<<"Limits: "<<meanThreshold-nSgms_sigmaInterval*sgmThreshold<<" "<<meanThreshold+nSgms_sigmaInterval*sgmThreshold<<endl;
          }
          else
          {
@@ -908,7 +922,11 @@
              }
          }
          // Progress bar NOISE SPECTRUM
-         float progress = (float)i / (NumMeanSamples-1);
+         float progress;
+         if (NumMeanSamples == 1)
+             progress = 1;
+         else
+            progress= (float)i / (NumMeanSamples-1);
          int bar_width = 50;
          int pos = bar_width * progress;
          printf("Generating the noise spectrum |");
@@ -944,7 +962,7 @@
          }
      }
      gsl_vector_sqrtIFCA(EventSamplesFFTMean,EventSamplesFFTMean);
-     
+
      // Extra normalization (further than the FFT normalization factor,1/n) in order 
      // to get the apropriate noise level provided by Peille (54 pA/rHz)
      gsl_vector_scale(EventSamplesFFTMean,sqrt(2*intervalMinBins/samprate));
@@ -969,7 +987,7 @@
      gsl_matrix_free(matrixaux); matrixaux = 0;
      gsl_vector_free(vectoraux); vectoraux = 0;
      NumMeanSamples = cnt;
-     
+
      // Generate WEIGHT representation
      if ((par.weightMS == 1) && (NumMeanSamples != 0))
      {
@@ -1120,7 +1138,7 @@
          message = "Cannot write extensions in " +  string(par.outFile);
          EP_EXIT_ERROR(message,EPFAIL);
      }
-     
+
      // Free allocated GSL vectors
      gsl_vector_free(EventSamplesFFTMean); EventSamplesFFTMean = 0;
      gsl_vector_free(mean); mean = 0;
@@ -1129,7 +1147,9 @@
      
      gsl_vector_free(baseline); baseline = 0;
      gsl_vector_free(sigma); sigma = 0;     
-     
+
+     gsl_vector_free(ph_idgsl); ph_idgsl = 0;
+
      gsl_matrix_free(noiseIntervals); noiseIntervals = 0;
      if (weightMS == 1)
      {
@@ -1196,8 +1216,10 @@
      // To read from the input FITS file
      double *time_block, *timein;	// Vector of TIME column
      double *iout_block, *ioutin;	// Vector of ADC column
+     int *ph_id_block,*ph_idin;   // Vector of PH_ID column
      gsl_vector *timegsl_block;
      gsl_matrix *ioutgsl_block;
+     gsl_vector *ph_idgsl_block;
      
      // To differentiate
      gsl_vector *derSGN = gsl_vector_alloc(eventsz);
@@ -1234,7 +1256,8 @@
      gsl_vector *ioutgsl_aux = gsl_vector_alloc(eventsz);	//In case of working with ioutgsl without filtering
      gsl_vector *ioutgslNOTFIL = gsl_vector_alloc(eventsz);
      gsl_vector *ioutgslFIL = gsl_vector_alloc(eventsz);
-     
+     ph_idgsl_block = gsl_vector_alloc(nrows);
+
      // Read iterator
      // NOTE: fits_iter_get_array because in this fits function the 1st element
      //  of the output array is the null pixel value!
@@ -1252,7 +1275,14 @@
          message = "Cannot run routine toGslMatrix for IOUT ";
          EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
      }
-     
+     ph_idin = (int *) fits_iter_get_array(&cols[2]);
+     ph_id_block = &ph_idin[1];
+     if (toGslVector(((void **)&ph_id_block), &ph_idgsl_block, nrows, 0, TINT))
+     {
+         message = "Cannot run routine toGslVector for PH_ID vector";
+         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
+     }
+
      // Processing each record
      for (int i=0; i< nrows; i++)
      {      
@@ -1261,6 +1291,7 @@
          gsl_vector_memcpy(timegsl,timegsl_block);
          gsl_matrix_get_row(ioutgsl,ioutgsl_block,i);
          gsl_vector_scale(ioutgsl,ivcal);		//IVCAL to change arbitrary units of voltage to non-arbitrary units of current (Amps)
+         gsl_vector_set(ph_idgsl,NumMeanSamples,gsl_vector_get(ph_idgsl_block,i));
 
          // Just in case the last record has been filled out with 0's => Last record discarded
          if ((gsl_vector_get(ioutgsl,ioutgsl->size-1) == 0) && (gsl_vector_get(ioutgsl,ioutgsl->size-2) == 0))		break;
@@ -1330,7 +1361,7 @@
          }
          
          if (nPulses != 0)	pulseFound = 1;
-         
+
          nPulses = 0;
          
          if ((pulseFound == 1) || (tail_duration != 0))
@@ -1415,8 +1446,10 @@
      gsl_vector_free(ioutgsl); ioutgsl = 0;
      gsl_vector_free(ioutgsl_aux); ioutgsl_aux = 0;
      gsl_vector_free(ioutgslFIL); ioutgslFIL = 0;
+     //gsl_vector_free(ph_idgsl); ph_idgsl = 0;
      gsl_vector_free(timegsl_block); timegsl_block = 0;
      gsl_matrix_free(ioutgsl_block); ioutgsl_block = 0;
+     gsl_vector_free(ph_idgsl_block); ph_idgsl_block = 0;
      gsl_vector_free(derSGN); derSGN = 0;
      gsl_vector_free(tstartgsl); tstartgsl = 0;
      gsl_vector_free(tstartDERgsl); tstartDERgsl = 0;
@@ -1462,14 +1495,14 @@
      long start;		// Auxiliary variable, possible starting time of a pulse-free interval
      int niinc;		// Increase the number of pulse-free intervals
      *ni = 0;
-     
+
      // startinterval is allocated with the maximum possible pulse-free intervals
      // Not necessary handling division by zero because of interval being always greater than zero
      *startinterval = gsl_vector_alloc(invector->size/interval+1);
      
      if ((tail_duration != 0) && (tail_duration >= gsl_vector_get(startpulse,0)))	start = gsl_vector_get(startpulse,0);
      else										start = tail_duration;
-     
+
      for (int i=0; i<npin; i++)
      {
          //If the input vector has pulses, it looks for pulse-free intervals between pulses
@@ -1497,8 +1530,8 @@
              }
          }
      }
-     
-     if ((int) (invector->size-start) >=interval)
+
+     if ((int) (invector->size-start) >interval)
      {
          //If there are no more pulses in the event, it looks for pulse-free intervals at the end of the event
          //and the search for more pulse-free intervals is finished
@@ -2629,4 +2662,3 @@
      }
  }
  /*xxxx end of SECTION 12 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
- 

@@ -87,10 +87,10 @@ struct Parameters {
 
 // Constants
 
-	double stopCriteriaMKC = 1.0;  		// Used in medianKappaClipping
-						// Given in %
+	double stopCriteriaMKC = 1.0;  	// Used in medianKappaClipping
+									// Given in %
 	double kappaMKC = 3.0;			// Used in medianKappaClipping
-	double levelPrvPulse = 100.0;  		// Secondary pulses must be 1/levelPrvPulse times larger than the preceding pulse
+	double levelPrvPulse = 100.0;  	// Secondary pulses must be 1/levelPrvPulse times larger than the preceding pulse
 
 // INPUT FILES
 
@@ -126,6 +126,7 @@ struct Parameters {
 
 	gsl_vector *timegsl;	// GENNOISESPEC has to look at RECORDS
 	gsl_vector *ioutgsl;
+	gsl_vector *ph_idgsl;
     
 //INPUT PARAMETERS
     
