@@ -7275,6 +7275,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
     for (int i=0; i<(*pulsesInRecord)->ndetpulses ;i++)
     {
         log_debug("Pulse................................................ %d",i+1);
+        //cout<<"Pulse................................................"<<i+1<<endl;
 
         tstartSamplesRecord = (*pulsesInRecord)->pulses_detected[i].TstartSamples;
         tstartSamplesRecordStartDOUBLE = tstartSamplesRecord-numlags2;   //Si no pongo numlags2, los LAGS no salen bien (empieza desde muy atras a calcular energias)*/
@@ -8006,7 +8007,9 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                     (*pulsesInRecord)->pulses_detected[i].E_lowres = energy_lowres/1e3;
                     double intpart;
                     (*pulsesInRecord)->pulses_detected[i].phi = modf(tstartNewDev,&intpart);    // fractpart=modf(param,&intpart) Se obtiene la parte entera y decimal
-                    (*pulsesInRecord)->pulses_detected[i].lagsShift = lagsShift+intpart;
+                    //(*pulsesInRecord)->pulses_detected[i].lagsShift = lagsShift+intpart;
+                    // lagsShift is the global offset of the maximum relative to the zero position of the first parabola
+                    (*pulsesInRecord)->pulses_detected[i].lagsShift = lagsShift;
                     //if (((*pulsesInRecord)->pulses_detected[i].phi) == 0)
                     //    (*pulsesInRecord)->pulses_detected[i].grading = -2; // Pile-up
                     //else
@@ -11100,6 +11103,30 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                         int newLag = 0;
                         bool exitLags = false;
                         double newEnergy;
+
+                        std::map<int, double> energy_cache;
+
+                        auto computeEnergy_lag = [&](int lag) -> double
+                        {
+                            if (energy_cache.count(lag))
+                                return energy_cache[lag];
+
+                            double energy = 0.0;
+
+                            gsl_vector_view temp = gsl_vector_subvector(
+                                pulse,
+                                (reconstruct_init->nLags)/2 + lag,
+                                                                        productSize);
+
+                            for (int k = 0; k < productSize; k++)
+                                energy += gsl_vector_get(&temp.vector,k) * gsl_vector_get(filter,k);
+
+                            energy = fabs(energy / filter->size);
+
+                            energy_cache[lag] = energy;
+
+                            return energy;
+                        };
                         
                         if ((reconstruct_init->Fitting35) == 3)   // Parabola by using 3 points
                         {   
@@ -11130,30 +11157,6 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                 // Because of the FFT and FFTinverse normalization factors
                                 gsl_vector_set(calculatedEnergy_vector,j,fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size);
                             }
-                            std::map<int, double> energy_cache;
-
-                            auto computeEnergy_lag = [&](int lag) -> double
-                            {
-                                if (energy_cache.count(lag))
-                                    return energy_cache[lag];
-
-                                double energy = 0.0;
-
-                                gsl_vector_view temp = gsl_vector_subvector(
-                                    pulse,
-                                    (reconstruct_init->nLags)/2 + lag,
-                                                                            productSize
-                                );
-
-                                for (int k = 0; k < productSize; k++)
-                                    energy += gsl_vector_get(&temp.vector,k) * gsl_vector_get(filter,k);
-
-                                energy = fabs(energy / filter->size);
-
-                                energy_cache[lag] = energy;
-
-                                return energy;
-                            };
 
                             int lag_center = 0;
 
@@ -11171,23 +11174,28 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             gsl_vector_set(calculatedEnergy_vector, 2, right);
 
                             parabola3Pts(lags_vector, calculatedEnergy_vector, &a, &b, &c);
+                            calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
 
                             double xmax = -b / (2*a);
                             //cout<<xmax<<endl;
 
-                            int maxIter = reconstruct_init->nLags;
+                            int maxIter = reconstruct_init->nLags/2;
                             int iter = 0;
 
                             int prev_direction = 0;
 
                             while (iter++ < maxIter)
                             {
+                                //cout<<"iter: "<<iter<<endl;
                                 bool centerIsMaximum = (left < center) && (right < center);
                                 bool needMove = !centerIsMaximum;
                                 //needMove = false;
 
                                 if (!needMove)
+                                {
+                                    maxParabolaFound = true;
                                     break;
+                                }
 
                                 int direction = 0;
 
@@ -11212,6 +11220,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     left   = center;
                                     center = right;
                                     right  = computeEnergy_lag(lag_center + 1);
+                                    *lagsShift = *lagsShift + 1;
                                 }
                                 else
                                 {
@@ -11221,6 +11230,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                     right  = center;
                                     center = left;
                                     left   = computeEnergy_lag(lag_center - 1);
+                                    *lagsShift = *lagsShift - 1;
                                 }
 
                                 // Update vectors
@@ -11234,19 +11244,38 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
 
                                 parabola3Pts(lags_vector, calculatedEnergy_vector, &a, &b, &c);
 
-                                xmax = -b / (2*a);
+                                xmax = -b / (2*a); // Global offset of the maximum relative to the zero position of the first parabola
 
                                 //cout << left << " " << center << " " << right << endl;
                                 //cout << xmax << endl;
 
+                                if ((left < center) && (right < center))
+                                {
+                                    maxParabolaFound = true;
+                                    break;
+                                }
+
                                 // Limit
                                 if (std::abs(lag_center) > reconstruct_init->nLags/2 - 2)
+                                {
+                                    //cout<<"Antes del break"<<endl;
                                     break;
+                                }
                             }
-                            *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
-                            *tstartNewDev = xmax;
-                            //cout<<"*calculatedEnergy: "<<*calculatedEnergy<<endl;
-                            //cout<<"*tstartNewDev: "<<*tstartNewDev<<endl;
+
+                            if (maxParabolaFound == true)
+                            {
+                                //cout<<"Encontrada parabola"<<endl;
+                                *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
+                                *tstartNewDev = xmax;
+                            }
+                            else
+                            {
+                                //cout<<"NO Encontrada parabola"<<endl;
+                                *calculatedEnergy = calculatedEnergy_Nolags;
+                                *tstartNewDev = 0;
+                                *lagsShift = 0;
+                            }
                         }
                         else if ((reconstruct_init->Fitting35) == 5) //Fitting by using 5 points
                         {
@@ -11272,31 +11301,6 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                 gsl_vector_set(calculatedEnergy_vector,j,fabs(gsl_vector_get(calculatedEnergy_vector,j))/filter->size);
                                 //cout<<"j: "<<j<<" "<<gsl_vector_get(calculatedEnergy_vector,j)<<endl;
                             }
-
-                            std::map<int, double> energy_cache;
-
-                            auto computeEnergy_lag = [&](int lag) -> double
-                            {
-                                if (energy_cache.count(lag))
-                                    return energy_cache[lag];
-
-                                double energy = 0.0;
-
-                                gsl_vector_view temp = gsl_vector_subvector(
-                                    pulse,
-                                    (reconstruct_init->nLags)/2 + lag,
-                                                                            productSize
-                                );
-
-                                for (int k = 0; k < productSize; k++)
-                                    energy += gsl_vector_get(&temp.vector, k) * gsl_vector_get(filter, k);
-
-                                energy = fabs(energy / filter->size);
-
-                                energy_cache[lag] = energy;
-
-                                return energy;
-                            };
 
                             // --- 5-points vectors ---
                             gsl_vector* lags_vector = gsl_vector_alloc(5);
@@ -11331,11 +11335,12 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             }
 
                             double xmax = -b / (2 * a);
+                            calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
 
                             //cout << left2 <<" " << left << " " << center << " " << right << " " << right2 << endl;
                             //cout << xmax << endl;
 
-                            int maxIter = reconstruct_init->nLags;
+                            int maxIter = reconstruct_init->nLags/2;
                             int iter = 0;
                             int prev_direction = 0;
 
@@ -11347,7 +11352,10 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                 //needMove = false;
 
                                 if (!needMove)
+                                {
+                                    maxParabolaFound = true;
                                     break;
+                                }
 
                                 int direction = 0;
 
@@ -11359,6 +11367,9 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                 // Avoid oscillations
                                 if (direction == -prev_direction)
                                     break;
+
+                                if (direction > 0)      *lagsShift = *lagsShift + 1;
+                                else if (direction > 0) *lagsShift = *lagsShift - 1;
 
                                 prev_direction = direction;
 
@@ -11393,14 +11404,28 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                 //cout << left << " " << center << " " << right << endl;
                                 //cout << xmax << endl;
 
+                                if ((left < center) && (right < center))
+                                {
+                                    maxParabolaFound = true;
+                                    break;
+                                }
+
                                 // Limit
                                 if (std::abs(lag_center) > reconstruct_init->nLags / 2 - 3)
                                     break;
                             }
 
-                            // Result
-                            *calculatedEnergy = a * pow(xmax, 2.0) + b * xmax + c;
-                            *tstartNewDev = xmax;
+                            if (maxParabolaFound == true)
+                            {
+                                *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
+                                *tstartNewDev = xmax;
+                            }
+                            else
+                            {
+                                *calculatedEnergy = calculatedEnergy_Nolags;
+                                *tstartNewDev = 0;
+                                *lagsShift = 0;
+                            }
 
                             // Free memory
                             gsl_vector_free(lags_vector);
@@ -11408,14 +11433,8 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                         }
                         
                         log_debug("calculatedEnergyTIME: %f",*calculatedEnergy);
-                        //if (LowRes==0)
-                        //{
-                            log_debug("calculatedEnergytstartNewDev: %.13f",*tstartNewDev);
-                            log_debug("calculatedEnergylagsShift: %d",*lagsShift);
-                            //cout<<"lagsShift = "<<*lagsShift<<" LowRes = "<<LowRes<<endl;
-
-                            //if (maxParabolaFound == false)  cout<<"No maximum found for the parabola => Equivalent to not using it."<<endl;
-                        //}
+                        log_debug("calculatedEnergytstartNewDev: %.13f",*tstartNewDev);
+                        log_debug("calculatedEnergylagsShift: %d",*lagsShift);
                     }
                 }
             }
