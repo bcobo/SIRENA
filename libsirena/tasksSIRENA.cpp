@@ -2203,9 +2203,9 @@ int nrecord, double tstartPrevPulse)
     }
     
     // Differentiate after filtering
-    /*gsl_vector *recordRaw = gsl_vector_alloc(record->size);
-    gsl_vector_memcpy(recordRaw,record);
-    gsl_vector *recordDerivative = gsl_vector_alloc(record->size);  // To delete
+    //gsl_vector *recordRaw = gsl_vector_alloc(record->size);
+    //gsl_vector_memcpy(recordRaw,record);
+    /*gsl_vector *recordDerivative = gsl_vector_alloc(record->size);  // To delete
     if (kernelNOcausal (&record))
     {
         message = "Cannot run routine kernelCharles";
@@ -2227,8 +2227,10 @@ int nrecord, double tstartPrevPulse)
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
     /*cout<<"______Derivative:"<<endl;
-    for (int kkk=3495;kkk<3505;kkk++)
-        cout<<kkk+1<<" "<<gsl_vector_get(record,kkk+1)<<endl;*/
+    for (int kkk=3650;kkk<3670;kkk++)
+        //cout<<kkk+1<<" "<<gsl_vector_get(record,kkk+1)<<endl;
+        cout<<kkk+1<<" "<<gsl_vector_get(recordRaw,kkk+1)<<" "<<gsl_vector_get(record,kkk+1)<<endl;
+    gsl_vector_free(recordRaw); recordRaw =0;*/
 
     gsl_vector_memcpy(recordDERIVATIVE,record);
     
@@ -7152,7 +7154,7 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
 
     double energy;
     double tstartNewDev = -999.0;    	// Deviation of the starting of the pulses (in samples) respect to the tstart calculated
-    int numlags2 = floor(numlags/2); // numlags must be odd
+    int numlags2; // numlags must be odd
     int lagsShift = -999;                   // Number of samples shifted to find the maximum of the parabola
 
     int tooshortPulse_NoLags;
@@ -7276,6 +7278,47 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
     {
         log_debug("Pulse................................................ %d",i+1);
         //cout<<"Pulse................................................"<<i+1<<endl;
+
+
+        /*// Por ejemplo, mirar solo el pulso 17
+        //if (i == 17)
+        //{
+            cout<<"=== PULSO "<<i<<" ==="<<endl;
+            double prevDist= -999;
+            double nextDist=-999;
+
+            if (i > 0)
+            {
+                cout<<"Tstart anterior = "<<(*pulsesInRecord)->pulses_detected[i-1].Tstart<<" "<<(*pulsesInRecord)->pulses_detected[i-1].TstartSamples<<" "<<(*pulsesInRecord)->pulses_detected[i-1].Tstart_wo_Parabola<<endl;
+                prevDist=
+                (*pulsesInRecord)->pulses_detected[i].TstartSamples -
+                (*pulsesInRecord)->pulses_detected[i-1].TstartSamples;
+            }
+            else
+            {
+                cout<<"No hay pulso anterior"<<endl;
+            }
+
+            cout<<"Tstart actual = "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<" "<<(*pulsesInRecord)->pulses_detected[i].TstartSamples<<" "<<(*pulsesInRecord)->pulses_detected[i].Tstart_wo_Parabola<<endl;
+
+            if (i < (*pulsesInRecord)->ndetpulses - 1)
+            {
+                cout<<"Tstart posterior = "<<(*pulsesInRecord)->pulses_detected[i+1].Tstart<<" "<<(*pulsesInRecord)->pulses_detected[i+1].TstartSamples<<" "<<(*pulsesInRecord)->pulses_detected[i+1].Tstart_wo_Parabola<<endl;
+                nextDist =
+                (*pulsesInRecord)->pulses_detected[i+1].TstartSamples -
+                (*pulsesInRecord)->pulses_detected[i].TstartSamples;
+            }
+            else
+            {
+                cout<<"No hay pulso posterior"<<endl;
+            }
+
+            cout<<"Distancia al anterior = "<<prevDist<<" samples"<<endl;
+            cout<<"Distancia al posterior = "<<nextDist<<" samples"<<endl;
+
+        //}*/
+
+        numlags2 = floor(numlags/2); // numlags must be odd
 
         tstartSamplesRecord = (*pulsesInRecord)->pulses_detected[i].TstartSamples;
         tstartSamplesRecordStartDOUBLE = tstartSamplesRecord-numlags2;   //Si no pongo numlags2, los LAGS no salen bien (empieza desde muy atras a calcular energias)*/
@@ -7932,7 +7975,8 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                             //cout<<"(*pulsesInRecord)->pulses_detected[i].Tstart: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
                             //cout<<"tstartNewDev: "<<tstartNewDev<<endl;
                             //cout<<"lagsShift: "<<lagsShift<<endl;
-                            (*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + (tstartNewDev+lagsShift)*record->delta_t; // In seconds
+                            //(*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + (tstartNewDev+lagsShift)*record->delta_t; // In seconds
+                            (*pulsesInRecord)->pulses_detected[i].Tstart = (*pulsesInRecord)->pulses_detected[i].Tstart + tstartNewDev*record->delta_t; // In seconds
                             //cout<<"(*pulsesInRecord)->pulses_detected[i].Tstart: "<<(*pulsesInRecord)->pulses_detected[i].Tstart<<endl;
                         }
                         log_debug("Tstart: %.13f",(*pulsesInRecord)->pulses_detected[i].Tstart);
@@ -11164,7 +11208,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             double center = computeEnergy_lag(lag_center);
                             double right  = computeEnergy_lag(lag_center + 1);
 
-                            //cout << left << " " << center << " " << right << endl;
+                            //if (LowRes==0) cout << left << " " << center << " " << right << endl;
                             gsl_vector_set(lags_vector, 0, lag_center - 1);
                             gsl_vector_set(lags_vector, 1, lag_center);
                             gsl_vector_set(lags_vector, 2, lag_center + 1);
@@ -11177,7 +11221,7 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                             calculatedEnergy_Nolags = gsl_vector_get(calculatedEnergy_vector,numlags/2);
 
                             double xmax = -b / (2*a);
-                            //cout<<xmax<<endl;
+                            //if (LowRes==0) cout<<xmax<<endl;
 
                             int maxIter = reconstruct_init->nLags/2;
                             int iter = 0;
@@ -11246,8 +11290,11 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
 
                                 xmax = -b / (2*a); // Global offset of the maximum relative to the zero position of the first parabola
 
-                                //cout << left << " " << center << " " << right << endl;
-                                //cout << xmax << endl;
+                                /*if (LowRes==0)
+                                {
+                                    cout << left << " " << center << " " << right << endl;
+                                    cout << xmax << endl;
+                                }*/
 
                                 if ((left < center) && (right < center))
                                 {
@@ -11268,6 +11315,11 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
                                 //cout<<"Encontrada parabola"<<endl;
                                 *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
                                 *tstartNewDev = xmax;
+                                /*if (LowRes==0)
+                                {
+                                    cout<<"*calculatedEnergy: "<<*calculatedEnergy<<endl;
+                                    cout<<"*tstartNewDev: "<<*tstartNewDev<<endl;
+                                }*/
                             }
                             else
                             {

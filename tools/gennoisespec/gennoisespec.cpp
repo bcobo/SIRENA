@@ -1359,7 +1359,7 @@
              message = "Cannot run routine findPulsesNoise";
              EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
          }
-         
+
          if (nPulses != 0)	pulseFound = 1;
 
          nPulses = 0;
@@ -1382,7 +1382,7 @@
                  EP_PRINT_ERROR(message,EPFAIL);return(EPFAIL);
              }
          }
-         
+
          if (par.scaleFactor != 0)
          {
              gsl_vector_memcpy(ioutgsl,ioutgslFIL);
