@@ -2983,6 +2983,9 @@ int FindSecondariesSTC(
                         gsl_vector_set(*maxDERgsl,*numberPulses,possiblemaxDER);
                         gsl_vector_set(*tstartgsl,*numberPulses,possibleTstart);
                         gsl_vector_set(*samp1DERgsl,*numberPulses,possiblesamp1DER);
+                        //cout<<"i: "<<i<<endl;
+                        //cout<<"gsl_vector_get(*tstartgsl,*numberPulses): "<<gsl_vector_get(*tstartgsl,*numberPulses)<<endl;
+                        //cout<<"gsl_vector_get(*samp1DERgsl,*numberPulses): "<<gsl_vector_get(*samp1DERgsl,*numberPulses)<<endl;
                             
                         // Average of the first 4 samples of the derivative
                         sum_samp1DER = 0.0;
@@ -3000,8 +3003,10 @@ int FindSecondariesSTC(
                         for (int index_samp1DER=limitMin;index_samp1DER<=limitMax;index_samp1DER++)
                         {
                             sum_samp1DER = sum_samp1DER + gsl_vector_get(der,gsl_vector_get(*tstartgsl,*numberPulses)+index_samp1DER);
+                            //cout<<index_samp1DER<<" "<<gsl_vector_get(der,gsl_vector_get(*tstartgsl,*numberPulses)+index_samp1DER)<<" "<<sum_samp1DER<<endl;
                         }
                         gsl_vector_set(*samp1DERgsl,*numberPulses,sum_samp1DER/4.0);
+                        //cout<<"-1AVG4SD: "<<gsl_vector_get(*samp1DERgsl,*numberPulses)<<endl;
                             
                         if (possibleTstart == 0)	gsl_vector_set(*flagTruncated,*numberPulses,1);
                         *numberPulses = *numberPulses +1;

@@ -324,6 +324,9 @@
                 //cout<<"ph_id_i: "<<gsl_vector_get(pulsesInRecord->pulses_detected->phid_vector,i)<<endl;
             }
         }
+        //cout<<"num0s: "<<num0s<<endl;
+        //cout<<"pulsesInRecord->ndetpulses: "<<pulsesInRecord->ndetpulses<<endl;
+        //cout<<"pulsesInRecord->pulses_detected->phid_vector->size: "<<pulsesInRecord->pulses_detected->phid_vector->size<<endl;
         //if (pulsesInRecord->ndetpulses > pulsesInRecord->pulses_detected->phid_vector->size-num0s)
         if (pulsesInRecord->ndetpulses > event_list->ph_ids_array_size2-num0s)
         {
@@ -336,6 +339,7 @@
             message = "Detected pulses (" + string(str_ndetpulses) + ") greater than photons (" + string(str_ph_id_size) + ") in record " + string(str_nrecord);
             EP_PRINT_ERROR(message,-999);	// Only a warning
         }
+        //cout<<"pulsesInRecord->nfakepulses: "<<pulsesInRecord->nfakepulses<<endl;
      }
 
      /*// Free & Fill TesEventListSIRENA structure

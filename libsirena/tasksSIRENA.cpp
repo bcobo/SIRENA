@@ -288,7 +288,13 @@ void runDetect(TesRecord* record, int trig_reclength, int lastRecord, int nrecor
     }
     gsl_vector *phid = gsl_vector_alloc(record->phid_list->size);
     gsl_vector_set_all(phid,-999.0);
-    for (int i=0;i<(int)(phid->size);i++)  gsl_vector_set(phid,i,record->phid_list->phid_array[i]);
+    //cout<<"PHID: "<<endl;
+    for (int i=0;i<(int)(phid->size);i++)
+    {
+        //if (record->phid_list->phid_array[i] != 0)  cout<<record->phid_list->phid_array[i]<<endl;
+        gsl_vector_set(phid,i,record->phid_list->phid_array[i]);
+    }
+
     if (pulsesAll->ndetpulses == 0)
         procRecord(reconstruct_init, tstartRecord, 1/record->delta_t, dtcObject, invector, threshold, (*reconstruct_init)->windowSize, (*reconstruct_init)->offset, *pulsesInRecord, pulsesAll->ndetpulses, record->pixid, phid, oscillations, nrecord, -999);
     else
@@ -1991,7 +1997,7 @@ int filderLibrary(ReconstructInitSIRENA** reconstruct_init, double samprate, int
 
 
 /***** SECTION A4 ************************************************************
- * loadRecord: This function loads the 'record' struture into the 'adc_double' GSL vector.
+ * loadRecord: This function loads the 'record' structure into the 'adc_double' GSL vector.
  *
  * It checks if the record has trailing zeros at the end and only loads the values up to the last non-zero sample.
  * 
@@ -2227,7 +2233,7 @@ int nrecord, double tstartPrevPulse)
         EP_PRINT_ERROR(message,EPFAIL); return(EPFAIL);
     }
     /*cout<<"______Derivative:"<<endl;
-    for (int kkk=3650;kkk<3670;kkk++)
+    for (int kkk=3495;kkk<3505;kkk++)
         //cout<<kkk+1<<" "<<gsl_vector_get(record,kkk+1)<<endl;
         cout<<kkk+1<<" "<<gsl_vector_get(recordRaw,kkk+1)<<" "<<gsl_vector_get(record,kkk+1)<<endl;
     gsl_vector_free(recordRaw); recordRaw =0;*/
@@ -8058,20 +8064,46 @@ void runEnergy(TesRecord* record, int lastRecord, int nrecord, int trig_reclengt
                     //    (*pulsesInRecord)->pulses_detected[i].grading = -2; // Pile-up
                     //else
                         (*pulsesInRecord)->pulses_detected[i].grading = pulseGrade;
+                    //cout<<"(*pulsesInRecord)->pulses_detected[i].lagsShift: "<<(*pulsesInRecord)->pulses_detected[i].lagsShift<<endl;
+                    //cout<<"0AVG4SD: "<<(*pulsesInRecord)->pulses_detected[i].avg_4samplesDerivative<<endl;
                     if (((*pulsesInRecord)->pulses_detected[i].lagsShift) != 0)
                     {
-                        int margin = 5; // Because applying the derivative to the whole vector is not equivalent to applying it to a subvector
-                        gsl_vector *pulseToCalculateEnergy_short = gsl_vector_alloc(margin+6);
-                        if ((*reconstruct_init)->LagsOrNot == 1)
+                        //cout<<"tstartSamplesRecord: "<<tstartSamplesRecord<<endl;
+                        size_t start = (tstartSamplesRecordStartDOUBLE >= 100) ?
+                                        tstartSamplesRecordStartDOUBLE - 100 : 0;
+                        size_t end = tstartSamplesRecordStartDOUBLE + 15;
+                        size_t startPulse_pulseToCalculateAVG4SD = tstartSamplesRecord - start;
+                        //cout<<"tstartSamplesRecordStartDOUBLE: "<<tstartSamplesRecordStartDOUBLE<<endl;
+                        //cout<<"start: "<<start<<endl;
+                        //cout<<"end: "<<end<<endl;
+                        //cout<<"startPulse_pulseToCalculateAVG4SD: "<<startPulse_pulseToCalculateAVG4SD<<endl;
+                        if (end > recordAux->size)  end = recordAux->size;
+                        gsl_vector_view temp = gsl_vector_subvector(recordAux,start,end-start);
+                        gsl_vector *pulseToCalculateAVG4SD = gsl_vector_alloc(end-start);
+                        gsl_vector_memcpy(pulseToCalculateAVG4SD, &temp.vector);
+                        //cout<<"pulseToCalculateAVG4SD->size: "<<pulseToCalculateAVG4SD->size<<endl;
+                        //cout<<gsl_vector_get(pulseToCalculateAVG4SD,startPulse_pulseToCalculateAVG4SD)<<" "<<gsl_vector_get(pulseToCalculateAVG4SD,1+startPulse_pulseToCalculateAVG4SD)<<" "<<gsl_vector_get(pulseToCalculateAVG4SD,2+startPulse_pulseToCalculateAVG4SD)<<" "<<gsl_vector_get(pulseToCalculateAVG4SD,3+startPulse_pulseToCalculateAVG4SD)<<endl;
+
+                        derivativeProcess(&pulseToCalculateAVG4SD,(*reconstruct_init)->windowSize,(*reconstruct_init)->offset,modeDerivative);
+                        int starting_idx = (int) startPulse_pulseToCalculateAVG4SD + (*pulsesInRecord)->pulses_detected[i].lagsShift;
+                        if (starting_idx < 0) starting_idx = 0; // Protect the index to prevent out-of-range access
+                        if ((size_t)(starting_idx + 3) >= pulseToCalculateAVG4SD->size) // If the record ends too soon after the pulse start,
+                                                                                        // starting_idx + 3 may exceed the vector bounds when
+                                                                                        // accessing the four samples used to compute the average
+                                                                                        // of the derivative
                         {
-                            temp = gsl_vector_subvector(pulseToCalculateEnergy,preBuffer_value+numlags2+(*pulsesInRecord)->pulses_detected[i].lagsShift-margin,margin+6);
+                            (*pulsesInRecord)->pulses_detected[i].avg_4samplesDerivative = -999;
+                            message = "Record ends too soon after the pulse start => Not enough samples available to calculate AVG4SD ";
+                            EP_PRINT_ERROR(message,-999);
                         }
                         else
-                            temp = gsl_vector_subvector(pulseToCalculateEnergy,preBuffer_value+(*pulsesInRecord)->pulses_detected[i].lagsShift-margin,margin+6);
+                        {
+                            //cout<<gsl_vector_get(pulseToCalculateAVG4SD,starting_idx)<<" "<<gsl_vector_get(pulseToCalculateAVG4SD,1+starting_idx)<<" "<<gsl_vector_get(pulseToCalculateAVG4SD,2+starting_idx)<<" "<<gsl_vector_get(pulseToCalculateAVG4SD,3+starting_idx)<<endl;
 
-                        gsl_vector_memcpy(pulseToCalculateEnergy_short, &temp.vector);
-                        derivativeProcess(&pulseToCalculateEnergy_short,(*reconstruct_init)->windowSize,(*reconstruct_init)->offset,modeDerivative);
-                        (*pulsesInRecord)->pulses_detected[i].avg_4samplesDerivative = (gsl_vector_get(pulseToCalculateEnergy_short,0+margin)+gsl_vector_get(pulseToCalculateEnergy_short,1+margin)+gsl_vector_get(pulseToCalculateEnergy_short,2+margin)+gsl_vector_get(pulseToCalculateEnergy_short,3+margin))/4.0;
+                            (*pulsesInRecord)->pulses_detected[i].avg_4samplesDerivative = (gsl_vector_get(pulseToCalculateAVG4SD,starting_idx)+gsl_vector_get(pulseToCalculateAVG4SD,1+starting_idx)+gsl_vector_get(pulseToCalculateAVG4SD,2+starting_idx)+gsl_vector_get(pulseToCalculateAVG4SD,3+starting_idx))/4.0;
+                        }
+                        //cout<<"+1AVG4SD: "<<(*pulsesInRecord)->pulses_detected[i].avg_4samplesDerivative<<endl;
+                        gsl_vector_free(pulseToCalculateAVG4SD); pulseToCalculateAVG4SD = 0;
                     }
                     gsl_vector_free(pulseToCalculateEnergy); pulseToCalculateEnergy = 0;
 
@@ -11312,13 +11344,14 @@ int calculateEnergy (gsl_vector *pulse, gsl_vector *filter, gsl_vector_complex *
 
                             if (maxParabolaFound == true)
                             {
-                                //cout<<"Encontrada parabola"<<endl;
+                                //if (LowRes==0) cout<<"Encontrada parabola"<<endl;
                                 *calculatedEnergy = a*pow(xmax,2.0) + b*xmax +c;
                                 *tstartNewDev = xmax;
                                 /*if (LowRes==0)
                                 {
                                     cout<<"*calculatedEnergy: "<<*calculatedEnergy<<endl;
                                     cout<<"*tstartNewDev: "<<*tstartNewDev<<endl;
+                                    cout<<"*lagsShift: "<<*lagsShift<<endl;
                                 }*/
                             }
                             else
